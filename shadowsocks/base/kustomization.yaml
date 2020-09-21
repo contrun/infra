@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+- service.yaml
+configMapGenerator:
+- name: shadowsocks-config
+  envs:
+    - config.env
+vars:
+  - name: SHADOWSOCKS_PORT
+    objref:
+      kind: ConfigMap
+      name: shadowsocks-config
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.PORT

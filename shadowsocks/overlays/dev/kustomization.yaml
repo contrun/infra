@@ -1,0 +1,7 @@
+resources:
+- ../../base
+configMapGenerator:
+- name: shadowsocks-config
+  behavior: merge
+  envs:
+    - config.env

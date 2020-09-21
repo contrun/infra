@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shadowsocks
+  labels:
+    app.kubernetes.io/name: shadowsocks
+    app: shadowsocks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: shadowsocks
+      app: shadowsocks
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: shadowsocks
+        app: shadowsocks
+    spec:
+      containers:
+        - name: shadowsocks
+          image: shadowsocks/shadowsocks-libev:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8388
+              name: shadowsocks
+          envFrom:
+            - configMapRef:
+                name: shadowsocks-config
