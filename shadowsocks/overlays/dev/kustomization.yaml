@@ -4,4 +4,4 @@ configMapGenerator:
 - name: shadowsocks-config
   behavior: merge
   envs:
-    - config.env
+    - config.env.secret
