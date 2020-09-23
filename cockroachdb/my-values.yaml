@@ -1,0 +1,26 @@
+statefulset:
+  resources:
+    limits:
+      memory: "256Mi"
+    requests:
+      memory: "256Mi"
+conf:
+  cache: 25%
+  max-sql-memory: 25%
+tls:
+  enabled: false
+  # certs:
+  #   # Bring your own certs scenario. If provided, tls.init section will be ignored.
+  #   provided: true
+  #   # Secret name for the client root cert.
+  #   clientRootSecret: cockroachdb-root
+  #   # Secret name for node cert.
+  #   nodeSecret: cockroachdb-node
+  #   # Enable if the secret is a dedicated TLS.
+  #   # TLS secrets are created by cert-mananger, for example.
+  #   tlsSecret: false
+storage:
+  hostPath: ""
+  persistentVolume:
+    enabled: false
+    # size: 100Gi
