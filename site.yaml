@@ -5,8 +5,11 @@
         that:
           - deployments is defined
           - deployments | length > 0
+
     - set_fact:
         artifacts_dir: "{{ playbook_dir }}/artifacts"
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default(lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
+        default_namespace: "default"
 
     - name: "Ensures {{ artifacts_dir }} exists"
       file:
@@ -21,7 +24,7 @@
           - groups["backends"] | length > 0
 
     - name: Install and configure nginx
-      when: '"edge_proxies" in deployments and use_nginx'
+      when: '"edge_proxies" in deployments and (use_nginx | default(false))'
       block:
         - name: Install nginx
           include_role:
@@ -30,7 +33,7 @@
             nginx_debug_output: true
 
     - name: Install and configure envoy
-      when: '"edge_proxies" in deployments and use_envoy'
+      when: '"edge_proxies" in deployments and (use_envoy | default(true))'
       block:
         - name: Install envoy
           include_role:
@@ -57,21 +60,45 @@
     - name: Install jupyterhub
       when: '"jupyterhub" in deployments'
       block:
-        - name: Decrypt jupyterhub secrets
+        - name: Decrypt secrets
           template:
-            src: files/jupyterhub.yaml.encrypted
-            dest:  "{{ artifacts_dir }}/jupyterhub.yaml.decrypted"
+            src: "{{ item }}"
+            dest:  "{{ artifacts_dir }}"
             decrypt: true
-        - name: Install jupyterhub
+          with_fileglob:
+            - "files/jupyterhub.yaml*"
+        - name: Install
           community.kubernetes.helm:
             name: jupyterhub
-            kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default(lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
+            kubeconfig: "{{ kubeconfig }}"
             atomic: false
             chart_repo_url: "https://jupyterhub.github.io/helm-chart/"
             chart_version: "0.9.1"
             chart_ref: jupyterhub
-            release_namespace: default
+            release_namespace: "{{ default_namespace }}"
             create_namespace: true
-            values_files:
-              - "{{ artifacts_dir }}/jupyterhub.yaml.decrypted"
-              - "files/jupyterhub.yaml"
+            values_files: "{{ lookup('fileglob', '{{ artifacts_dir }}/jupyterhub.yaml*') }}"
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Install cockroachdb
+      when: '"database" in deployments and (use_cockroachdb | default(true))'
+      block:
+        - name: Decrypt secrets
+          template:
+            src: "{{ item }}"
+            dest:  "{{ artifacts_dir }}"
+            decrypt: true
+          with_fileglob:
+            - "files/cockroachdb.yaml*"
+        - name: Install
+          community.kubernetes.helm:
+            name: coachroachdb
+            chart_repo_url: "https://charts.cockroachdb.com/"
+            chart_version: "5.0.6"
+            chart_ref: cockroachdb
+            release_namespace: "{{ default_namespace }}"
+            kubeconfig: "{{ kubeconfig }}"
+            create_namespace: true
+            values_files: "{{ lookup('fileglob', '{{ artifacts_dir }}/cockroachdb.yaml*') }}"
