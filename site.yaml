@@ -1,0 +1,45 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - assert:
+        that:
+          - deployments is defined
+          - deployments | length > 0
+
+- hosts: edge_proxies
+  tasks:
+    - assert:
+        that:
+          - groups["backends"] is defined
+          - groups["backends"] | length > 0
+
+    - name: Install and configure nginx
+      when: '"edge_proxies" in deployments and use_nginx'
+      block:
+        - name: Install nginx
+          include_role:
+            name: nginxinc.nginx_core.nginx
+          vars:
+            nginx_debug_output: true
+
+    - name: Install and configure envoy
+      when: '"edge_proxies" in deployments and use_envoy'
+      block:
+        - name: Install envoy
+          include_role:
+            name: fabiocruzcoelho.envoyproxy
+        - name: Copy templates to default directory
+          template:
+            src: "{{ item.src }}"
+            dest: "{{ item.dest }}"
+            mode: "0644"
+          loop:
+            - src: envoy.yaml.j2
+              dest: /etc/envoy/envoy.yaml
+          register: envoy_config
+        - name: Start/reload Envoy Proxy
+          service:
+            name: envoyproxy
+            state: restarted
+            enabled: yes
+          when: envoy_config.changed
