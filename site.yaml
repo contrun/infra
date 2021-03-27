@@ -5,6 +5,13 @@
         that:
           - deployments is defined
           - deployments | length > 0
+    - set_fact:
+        artifacts_dir: "{{ playbook_dir }}/artifacts"
+
+    - name: "Ensures {{ artifacts_dir }} exists"
+      file:
+        path: "{{ artifacts_dir }}"
+        state: directory
 
 - hosts: edge_proxies
   tasks:
@@ -43,3 +50,28 @@
             state: restarted
             enabled: yes
           when: envoy_config.changed
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Install jupyterhub
+      when: '"jupyterhub" in deployments'
+      block:
+        - name: Decrypt jupyterhub secrets
+          template:
+            src: files/jupyterhub.yaml.encrypted
+            dest:  "{{ artifacts_dir }}/jupyterhub.yaml.decrypted"
+            decrypt: true
+        - name: Install jupyterhub
+          community.kubernetes.helm:
+            name: jupyterhub
+            kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default(lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
+            atomic: false
+            chart_repo_url: "https://jupyterhub.github.io/helm-chart/"
+            chart_version: "0.9.1"
+            chart_ref: jupyterhub
+            release_namespace: default
+            create_namespace: true
+            values_files:
+              - "{{ artifacts_dir }}/jupyterhub.yaml.decrypted"
+              - "files/jupyterhub.yaml"
