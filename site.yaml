@@ -16,6 +16,35 @@
         path: "{{ artifacts_dir }}"
         state: directory
 
+- hosts: overlay_nodes
+  tasks:
+    - assert:
+        that:
+          - groups["overlay_nodes"] is defined
+          - groups["overlay_nodes"] | length > 0
+
+    - name: Install zerotier one
+      when: '"overlay_nodes" in deployments and (use_zerotier | default(true))'
+      become: true
+      vars:
+        zerotier_register_short_hostname: "{{ zerotier_register_short_hostname | default(true) }}"
+      block:
+        - assert:
+            that:
+              - zerotier_network_id is defined
+        - include_role:
+            role: m4rcu5nl.zerotier-one
+
+    - name: Install tailscale
+      when: '"overlay_nodes" in deployments and (use_tailscale | default(true))'
+      become: true
+      block:
+        - set_fact:
+            tailscale_up_skip: true
+          when: tailscale_auth_key is not defined and tailscale_up_skip is not defined
+        - include_role:
+            role: artis3n.tailscale
+
 - hosts: edge_proxies
   tasks:
     - assert:
