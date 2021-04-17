@@ -1,7 +1,6 @@
-{% set ports = [80, 443] %}
 static_resources:
   listeners:
-{% for port in ports %}
+{% for port in tcp_forwarding_ports %}
     - name: "{{ "tcp_" ~ port }}"
       address:
         socket_address:
@@ -16,10 +15,10 @@ static_resources:
                 cluster: "{{ "tcp_" ~ port }}"
 {% endfor %}
   clusters:
-{% for port in ports %}
+{% for port in tcp_forwarding_ports %}
     - name: "{{ "tcp_" ~ port }}"
       connect_timeout: 5s
-      type: LOGICAL_DNS
+      type: STATIC
       lb_policy: ROUND_ROBIN
       load_assignment:
         cluster_name: "{{ "tcp_" ~ port }}"

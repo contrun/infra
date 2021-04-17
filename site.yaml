@@ -18,11 +18,6 @@
 
 - hosts: overlay_nodes
   tasks:
-    - assert:
-        that:
-          - groups["overlay_nodes"] is defined
-          - groups["overlay_nodes"] | length > 0
-
     - name: Install zerotier one
       when: '"overlay_nodes" in deployments and (use_zerotier | default(true))'
       become: true
@@ -51,6 +46,9 @@
         that:
           - groups["backends"] is defined
           - groups["backends"] | length > 0
+
+    - set_fact:
+        tcp_forwarding_ports: "{{ edge_proxy_tcp_forwarding_ports | default([80, 443, 4000, 5678, 8080]) }}"
 
     - name: Install and configure nginx
       when: '"edge_proxies" in deployments and (use_nginx | default(false))'
@@ -81,6 +79,7 @@
             name: envoyproxy
             state: restarted
             enabled: yes
+            daemon_reload: yes
           when: envoy_config.changed
 
 - hosts: localhost
