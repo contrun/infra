@@ -24,12 +24,12 @@ static_resources:
         cluster_name: "{{ "tcp_" ~ port }}"
         endpoints:
           - lb_endpoints:
-{% for host in groups['backends'] %}
+{% for ip in backend_ips %}
               - endpoint:
                   address:
                     socket_address:
-                      address: {{ hostvars[host]['ip_address'] | default(hostvars[host]['ansible_all_ipv4_addresses'][0]) }}
-                      port_value: {{ hostvars[host]["port_" ~ port] | default(port) }}
+                      address: {{ ip }}
+                      port_value: {{ port_mappings["tcp_" ~ port] | default(port) }}
 {% endfor %}
       transport_socket_matches:
         - name: "defaultToPlaintext"

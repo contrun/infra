@@ -44,11 +44,12 @@
   tasks:
     - assert:
         that:
-          - groups["backends"] is defined
-          - groups["backends"] | length > 0
+          - backend_ip_addresses is defined
 
     - set_fact:
         tcp_forwarding_ports: "{{ edge_proxy_tcp_forwarding_ports | default([80, 443, 4000, 5678, 8080]) }}"
+        backend_ips: "{{ backend_ip_addresses.split(',') }}"
+        port_mappings: "{{ port_mappings | default({}) }}"
 
     - name: Install and configure nginx
       when: '"edge_proxies" in deployments and (use_nginx | default(false))'
