@@ -23,8 +23,8 @@ static_resources:
       load_assignment:
         cluster_name: "{{ "tcp_" ~ port }}"
         endpoints:
-          - lb_endpoints:
 {% for ip in backend_ips %}
+          - lb_endpoints:
               - endpoint:
                   address:
                     socket_address:
