@@ -47,7 +47,7 @@
           - backend_ip_addresses is defined
 
     - set_fact:
-        tcp_forwarding_ports: "{{ edge_proxy_tcp_forwarding_ports | default([80, 443, 4000, 5678, 8080]) }}"
+        tcp_forwarding_ports: "{{ edge_proxy_tcp_forwarding_ports | default([80, 443, 4443, 4000, 5678, 8080]) }}"
         backend_ips: "{{ backend_ip_addresses.split(',') }}"
         port_mappings: "{{ port_mappings | default({}) }}"
 
