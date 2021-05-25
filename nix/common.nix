@@ -1765,7 +1765,11 @@ in {
           environmentFiles = [ "/run/secrets/gitea-env" ];
           traefikForwardingPort = 3000;
         } // mkContainer "vaultwarden" prefs.ociContainers.enableVaultwarden {
+          dependsOn = [ "postgresql" ];
           volumes = [ "/var/data/vaultwarden:/data" ];
+          environment = {
+            "DOMAIN" = "https://${prefs.getFullDomainName "vaultwarden"}";
+          };
           environmentFiles = [ "/run/secrets/vaultwarden-env" ];
           traefikForwardingPort = 80;
         } // mkContainer "homer" prefs.ociContainers.enableHomer {
