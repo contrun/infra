@@ -1,0 +1,211 @@
+---
+# tasks file for partition
+
+- meta: end_play
+  when: zfs_pool_disks == []
+
+- name: Umount {{ tmp_mount_path }} to make running idempotent
+  shell: |
+    umount -f -R {{ tmp_mount_path }} || true
+  args:
+    executable: "{{ remote_shell_executable }}"
+
+- name: Check zpool name existence when overwrite_partitions is specified to avoid potential data loss
+  shell: |
+    if zpool list "{{ zfs_pool_name }}"; then
+        echo "Dpool {{ zfs_pool_name }} already exists. Double check if you want to overwrite this pool. Below are all the pools" 1>&2
+        echo 1>&2
+        if ! zpool list 1>&2; then :; fi
+        exit 1
+    fi
+  ignore_errors: yes
+  register: check_zpool_exists
+  when: overwrite_partitions == "yes"
+
+- name: "Zpool {{ zfs_pool_name }} seems to exist. Double check if you want to overwrite this pool."
+  pause:
+    prompt: Please confirm you want to exterminate zpool {{ zfs_pool_name }}! Press return to continue. Press Ctrl+c and then 'a' to abort
+  when: check_zpool_exists is defined and check_zpool_exists.rc != 0
+
+- name: Clean up disks
+  shell: |
+    [[ "{{ use_sgdisk_clear }}" != "true" ]] || sgdisk --zap-all "{{ item }}"
+    [[ "{{ use_wipefs_all }}" != "true" ]] || wipefs -fa "{{ item }}"
+    [[ "{{ use_zero_disks }}" != "true" ]] || dd if=/dev/zero of="{{ item }}" bs=1M oflag=direct status=progress
+  with_items: "{{ zfs_pool_disks }}"
+  when: overwrite_partitions == "yes"
+
+- name: Create partitions
+  shell: |
+    set -xeu
+    disk_info="$(sgdisk -p {{ item }})"
+    if grep -E '^\s*1.*EF02\s+BIOS Boot Partition' <<< "$disk_info"; then
+        if grep -E '^\s*2.*EF00\s+Fat32 ESP Partition' <<< "$disk_info"; then
+            if grep -E '^\s*3.*8300\s+ZPOOL Partition' <<< "$disk_info"; then
+                if [[ {{ overwrite_partitions }} != 'yes' ]]; then
+                    echo "Disk {{ item }} already formatted, skipping formatting."
+                    exit 0
+                fi
+                echo "Overwriting already formatted disk {{ item }}"
+                echo "$disk_info"
+            fi
+        fi
+    fi
+    sgdisk -og "{{ item }}"
+    sgdisk -a 1 -n 1:48:2047 -c 1:"BIOS Boot Partition" -t 1:ef02 "{{ item }}"
+    sgdisk -n 2:4096:2101247 -c 2:"Fat32 ESP Partition" -t 2:ef00 "{{ item }}"
+    sgdisk -n 3:2101248:"$(sgdisk -E "{{ item }}")" -c 3:"ZPOOL Partition" -t 3:8300 "{{ item }}"
+    sgdisk -p "{{ item }}"
+    partx -u "{{ item }}" || true
+  args:
+    executable: "{{ remote_shell_executable }}"
+  with_items: "{{ zfs_pool_disks }}"
+
+- name: Get disks partitions
+  set_fact:
+    boot_partitions_glob_path: "{{ zfs_pool_disks | zip_longest([], fillvalue='*2') | map('join', '') | join(' ') }}"
+    zpool_partitions_glob_path: "{{ zfs_pool_disks | zip_longest([], fillvalue='*3') | map('join', '') | join(' ') }}"
+
+- name: Get boot partitions uuid stepstone
+  shell: |
+    set -xeu
+    blkid -s UUID -o value {{ boot_partitions_glob_path }} | sed 's#^#/dev/disk/by-uuid/#'
+  args:
+    executable: "{{ remote_shell_executable }}"
+  register: boot_partitions_blkid_result
+
+- name: Get boot partitions uuid
+  set_fact:
+    boot_partitions: "{{ boot_partitions_blkid_result.stdout_lines }}"
+
+- name: Get zpool partitions uuid stepstone
+  shell:  |
+    set -xeu
+    blkid -s UUID -o value {{ zpool_partitions_glob_path }} | sed 's#^#/dev/disk/by-uuid/#'
+  args:
+    executable: "{{ remote_shell_executable }}"
+  register: zpool_partitions_blkid_result
+
+- name: Get zpool partitions uuid
+  set_fact:
+    zpool_partitions: "{{ zpool_partitions_blkid_result.stdout_lines }}"
+
+- name: Destroy old zpool if overwrite_partition is set
+  shell: |
+    zpool destroy -f {{ zfs_pool_name }} || true
+  args:
+    executable: "{{ remote_shell_executable }}"
+  when: overwrite_partitions == "yes"
+
+- name: Import old zpool if overwrite_partition is not set
+  shell: |
+    zpool import -f {{ zfs_pool_name }}
+    zfs load-key -r {{ zfs_pool_name }} <<< '{{ zfs_passphrase }}'
+  args:
+    executable: "{{ remote_shell_executable }}"
+  when: overwrite_partitions != "yes"
+  ignore_errors: yes
+
+- name: Create zpool
+  shell: |
+    set -xeu
+    if zpool list {{ zfs_pool_name }}; then
+        echo "zpool {{ zfs_pool_name }} already exists, skipping creating."
+        exit 0;
+    fi
+    {% if zfs_passphrase is defined %} (echo "{{ zfs_passphrase }}"; echo "{{ zfs_passphrase }}") | zpool create -O encryption=aes-256-gcm -O keyformat=passphrase {% else %} zpool create {% endif %} -O compression=zstd -O atime=on -O relatime=on -O normalization=formD -O aclinherit=passthrough -O acltype=posixacl -O xattr=sa -f -o ashift=12 -m none -R {{ tmp_mount_path }} {{ zfs_pool_name }} {% if zfs_pool_type is defined %} {{ zfs_pool_type }} {% endif %} {{ zpool_partitions | join(' ') }}
+  args:
+    executable: "{{ remote_shell_executable }}"
+
+- name: Create root dataset
+  shell: |
+    set -xeu
+    mkdir -p {{ item.mountpoint }}
+    if ! zfs list "{{ item.device }}"; then
+        zfs create -o mountpoint=none -o canmount=off "$(dirname "{{ item.device }}")"
+        zfs create -o mountpoint=legacy -o canmount=on "{{ item.device }}"
+        mount -t zfs "{{ item.device }}" "{{ item.mountpoint }}"
+        zpool set bootfs="{{ zfs_pool_name }}/ROOT/nixos" "{{ zfs_pool_name }}"
+    else
+        mount -t zfs "{{ item.device }}" "{{ item.mountpoint }}"
+    fi
+  args:
+    executable: "{{ remote_shell_executable }}"
+  with_items:
+    - { device: "{{ zfs_pool_name }}/ROOT/nixos", mountpoint: "{{ tmp_mount_path }}" }
+
+- name: Create other datasets
+  shell: |
+    set -xeu
+    mkdir -p {{ item.mountpoint }}
+    if ! zfs list "{{ item.device }}"; then
+        zfs create -o mountpoint=none -o canmount=off "$(dirname "{{ item.device }}")"
+        zfs create -o mountpoint=legacy -o canmount=on "{{ item.device }}"
+    fi
+  args:
+    executable: "{{ remote_shell_executable }}"
+  with_items:
+    - { device: "{{ zfs_pool_name }}/NIX/nix", mountpoint: "{{ tmp_mount_path }}/nix" }
+    - { device: "{{ zfs_pool_name }}/VAR/var", mountpoint: "{{ tmp_mount_path }}/var" }
+    - { device: "{{ zfs_pool_name }}/HOME/home", mountpoint: "{{ tmp_mount_path }}/home" }
+
+- name: Create tmp datasets
+  shell: |
+    set -xeu
+    mkdir -p {{ item.mountpoint }}
+    if ! zfs list "{{ item.device }}"; then
+        zfs create -o mountpoint=none -o canmount=off "$(dirname "{{ item.device }}")"
+        zfs create -o mountpoint=legacy -o canmount=on -o sync=disabled -o setuid=off -o devices=off "{{ item.device }}"
+    fi
+  args:
+    executable: "{{ remote_shell_executable }}"
+  with_items:
+    - { device: "{{ zfs_pool_name }}/TMP/tmp", mountpoint: "{{ tmp_mount_path }}/tmp" }
+
+- name: Mount datasets
+  shell: |
+    set -xeu
+    mount -t zfs "{{ item.device }}" "{{ item.mountpoint }}"
+  args:
+    executable: "{{ remote_shell_executable }}"
+  with_items:
+    - { device: "{{ zfs_pool_name }}/NIX/nix", mountpoint: "{{ tmp_mount_path }}/nix" }
+    - { device: "{{ zfs_pool_name }}/VAR/var", mountpoint: "{{ tmp_mount_path }}/var" }
+    - { device: "{{ zfs_pool_name }}/HOME/home", mountpoint: "{{ tmp_mount_path }}/home" }
+    - { device: "{{ zfs_pool_name }}/TMP/tmp", mountpoint: "{{ tmp_mount_path }}/tmp" }
+
+- name: Mount boot partitions
+  shell: |
+    set -xeu
+    count=
+    for disk in {{ boot_partitions_glob_path }}; do
+        mkdir -p "{{ tmp_mount_path }}/boot${count}"
+        umount -f "{{ tmp_mount_path }}/boot${count}" || true
+        if blkid $disk | grep 'TYPE="vfat"'; then
+            if [[ {{ overwrite_partitions }} == 'yes' ]]; then
+                echo "Reformatting disk $disk"
+                mkfs.vfat -F32 $disk
+            fi
+        else
+            mkfs.vfat -F32 $disk
+        fi
+        mount "$disk" "{{ tmp_mount_path }}/boot${count}"
+        count=$(( ${count:-0} + 1 ))
+    done
+  args:
+    executable: "{{ remote_shell_executable }}"
+
+- name: Umount {{ tmp_mount_path }} when umount_after_finishing is true
+  shell: |
+    umount -v -l -f -R {{ tmp_mount_path }} || true
+  args:
+    executable: "{{ remote_shell_executable }}"
+  when: umount_after_finishing
+
+- meta: end_play
+  when: umount_after_finishing
+
+- name: Save facts for later use
+  set_fact:
+    tmp_mount_path: "{{ tmp_mount_path }}"
+    zfs_pool_name: "{{ zfs_pool_name }}"

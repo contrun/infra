@@ -1,0 +1,174 @@
+# Taken liberally from https://github.com/malob/nixpkgs/blob/master/.github/workflows/ci.yml
+name: Build Nix envs
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - 'releases/*'
+    paths:
+      - '**/*.nix'
+      - '**/flake.lock'
+      - '.github/workflows/nix.yml'
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - 'releases/*'
+    paths:
+      - '**/*.nix'
+      - '**/flake.lock'
+      - '.github/workflows/nix.yml'
+  schedule:
+    - cron: '0 6 * * 5'
+    - cron: '0 20 * * 0'
+
+jobs:
+  build-linux-env:
+    name: Build/cache Linux Nix env
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        nix-system:
+          - "x86_64-linux"
+          - "aarch64-linux"
+
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v2.3.4
+      with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v13
+      with:
+        install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20210207_fd6eaa1/install
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://cache.nixos.org/ https://hydra.iohk.io
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+
+    - name: Check inputs up to date
+      id: check-nix-inputs-update-available
+      continue-on-error: true
+      if: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && success() }}
+      run: |
+        set -xeu
+        nix flake update --recreate-lock-file
+        git status
+        if ! git diff; then
+            echo "Abort now. No updates available."
+            exit 1
+        fi
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
+        git commit --all --message "auto update nix inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+    - name: Setup Cachix
+      if: ${{ steps.check-nix-inputs-update-available.conclusion != 'failure' }}
+      uses: cachix/cachix-action@v10
+      with:
+        name: ${{ github.repository_owner }}
+        extraPullNames: iohk
+        authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        pushFilter: "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$"
+
+    - name: Install qemu for cross compilation
+      run: |
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get update -q -y
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get install -q -y qemu-system-aarch64 qemu-efi binfmt-support qemu-user-static
+        mkdir -p ~/.config/nix
+        sudo mkdir -p /etc/nix
+        cat <<EOF >> ~/.config/nix/nix.conf
+        sandbox = false
+        system = ${{ matrix.nix-system }}
+        extra-platforms = ${{ matrix.nix-system }}
+        system-features = ${{ matrix.nix-system }} arm-linux
+        EOF
+        cat ~/.config/nix/nix.conf
+      if: ${{ matrix.nix-system == 'aarch64-linux' }}
+
+    # https://github.com/actions/virtual-environments/issues/2840#issuecomment-790492173
+    # https://github.com/actions/virtual-environments/issues/709
+    - name: Free some disk space
+      if: ${{ steps.check-nix-inputs-update-available.conclusion != 'failure' }}
+      run: |
+        set +e
+        echo "=============================================================================="
+        echo "Listing 100 largest packages"
+        echo "=============================================================================="
+        dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
+        echo "=============================================================================="
+        echo "Removing large packages"
+        echo "=============================================================================="
+        sudo snap remove chromium
+        sudo snap remove gnome
+        sudo snap remove lxd
+        sudo apt-get remove -y '^ghc-.*'
+        sudo apt-get remove -y '^adoptopenjdk-.*'
+        sudo apt-get remove -y '^dotnet-.*'
+        sudo apt-get remove -y '^llvm-.*'
+        sudo apt-get remove -y 'libllvm.*'
+        sudo apt-get remove -y 'libclang.*'
+        sudo apt-get remove -y 'php.*'
+        sudo apt-get remove -y '^mysql-server.*'
+        sudo apt-get remove -y '^mongodb.*'
+        sudo apt-get remove -y azure-cli
+        sudo apt-get remove -y google-cloud-sdk
+        sudo apt-get remove -y hhvm
+        sudo apt-get remove -y google-chrome-stable
+        sudo apt-get remove -y firefox
+        sudo apt-get remove -y libgl1-mesa-dri
+        sudo apt-get remove -y powershell
+        sudo apt-get remove -y snapd
+        sudo apt-get clean
+        echo "=============================================================================="
+        echo "Removing large directories"
+        echo "=============================================================================="
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf /root/.nuget
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /usr/share/rust
+        sudo rm -rf /usr/share/swift
+        sudo rm -rf /var/lib/snapd
+        sudo rm -rf /usr/local/graalvm
+        sudo rm -rf /home/linuxbrew/.linuxbrew
+        echo "=============================================================================="
+        echo "Showing disk usage"
+        echo "=============================================================================="
+        df -h
+
+    - name: Build nixos
+      if: ${{ steps.check-nix-inputs-update-available.conclusion != 'failure' }}
+      timeout-minutes: 3000
+      run: |
+        # Prevent conflict between Cachix installed by workflow and the one installed in the config
+        nix-env --set-flag priority 1 cachix
+        # Build a minimal nixos system
+        # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
+        nix build --system ${{ matrix.nix-system }} --extra-system-features ${{ matrix.nix-system }} --extra-system-features x86_64-linux --extra-extra-platforms ${{ matrix.nix-system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel'
+        nix path-info -sShr '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel' | sort -h -k2
+        df -h
+
+    - name: Push commit with updated inputs
+      if: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.conclusion != 'failure' && success() }}
+      run: |
+        # tackle a race case
+        git pull --rebase
+        if [[ '${{ matrix.nix-system }}' == 'x86_64-linux' ]]; then git push; fi
+        git switch ${{ matrix.nix-system }}
+        git rebase --onto @{-1}
+        git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}

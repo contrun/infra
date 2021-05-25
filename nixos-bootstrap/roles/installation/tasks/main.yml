@@ -1,0 +1,98 @@
+---
+# tasks file for installation
+- name: Fail if tmp_mount_path is not a mounted path
+  shell: |
+    set -xeu
+    awk '{if ($2 == "{{ tmp_mount_path }}") print}' /proc/mounts | grep {{ tmp_mount_path }}
+
+- name: Copy some configurations to remote host
+  copy:
+    src: "{{ item }}"
+    dest: "{{ tmp_mount_path }}{{ item }}"
+    force: yes
+  with_fileglob:
+    - "/run/binfmt/*"
+    - "/etc/binfmt.d/*"
+
+    # TODO: I want to copy below files.
+    # It is not possible when the user run the ansible command can not read those files.
+    # - "/etc/ssh/ssh_host_*"
+    # - "/etc/wpa_supplicant.conf"
+    # - "/var/lib/iwd/*"
+
+- name: Build nixos
+  shell: |
+    cd {{ playbook_dir }}/../../
+    nix build --system {{ nixos_system }} --extra-system-features {{ nixos_system }} --extra-system-features x86_64-linux --extra-extra-platforms {{ nixos_system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.{{ nixos_hostname }}.config.system.build.toplevel'
+
+- name: Copy newly-built nixos files
+  shell: |
+    nixos-install --root "{{ tmp_mount_path }}" --system "$(readlink result)"
+    if [[ -f /run/binfmt/aarch64-linux ]]; then
+        nix copy --to "ssh://root@localhost?remote-store=local?root={{ tmp_mount_path }}" $(cat /run/binfmt/aarch64-linux | grep -Eo '/nix/store/(\S*)')
+    fi
+
+- name: Get bash path
+  shell: |
+    head -n1 {{ tmp_mount_path }}/nix/var/nix/profiles/system/activate | sed -E 's/#!\s*//g'
+  register: bash_path
+
+- name: Try activate the system
+  shell: |
+    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c /nix/var/nix/profiles/system/activate
+    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c '/run/current-system/bin/switch-to-configuration boot'
+  ignore_errors: yes
+
+- name: Copy some configurations to remote host again (/nix/var/nix/profiles/system/activate may erase some files)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ tmp_mount_path }}{{ item }}"
+    force: yes
+  with_fileglob:
+    - "/etc/wpa_supplicant.conf"
+    - "/run/binfmt/*"
+    - "/etc/binfmt.d/*"
+
+- name: Try activate the system again (The first time may fail becasue chroot environment does not have some files)
+  shell: |
+    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c /nix/var/nix/profiles/system/activate
+
+- name: Generate config and install bootloader
+  shell: |
+    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c /run/current-system/sw/bin/nixos-generate-config
+
+- name: Fetch the generated hardware configuration
+  ansible.builtin.fetch:
+    src: "{{ tmp_mount_path }}/etc/nixos/hardware-configuration.nix"
+    dest: "{{ playbook_dir }}/../nix/hardware/hardware-configuration.{{ nixos_hostname }}.nix"
+    flat: yes
+  register: hardware_configruation_file
+
+- name: Hardware configuration file changed, you need to manully update the repo, then build again.
+  debug:
+    var: hardware_configruation_file
+
+- meta: end_play
+  when: hardware_configruation_file.changed
+
+- name: Install bootloader
+  shell: |
+    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c '/run/current-system/bin/switch-to-configuration boot'
+
+- name: Change root password
+  shell: |
+    nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ root_password }}"; echo "{{ root_password }}") | passwd'
+  when: root_password is defined
+
+- name: Change user password
+  shell: |
+    nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ user_password }}"; echo "{{ user_password }}") | passwd {{ user }}'
+  when: (user is defined) and (user_password is defined)
+  when: user_password is defined
+
+- name: Umount {{ tmp_mount_path }} when umount_after_finishing is true
+  shell: |
+    umount -v -l -f -R {{ tmp_mount_path }} || true
+  args:
+    executable: "{{ remote_shell_executable }}"
+  when: umount_after_finishing

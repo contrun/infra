@@ -1,0 +1,15 @@
+---
+# defaults file for partition
+use_sgdisk_clear: "false" # use sgdisk --clear
+use_wipefs_all: "false" # use wipefs --all
+use_zero_disks: "false" # use dd if: /dev/zero ...
+overwrite_partitions: "no"
+tmp_mount_path: "/mnt"
+umount_after_finishing: false
+zfs_pool_name: "default"
+zfs_passphrase: "tis_is_some_2_great_PW"
+zfs_pool_disks: []
+zfs_create_pool_options: []
+zfs_pool_type: "" # use "" for single, or "mirror", "raidz1", etc.
+zfs_encrypt_pool: "true" # only set to true if you are using a nixos ISO with ZFS 0.8 or higher.
+remote_shell_executable: /bin/bash

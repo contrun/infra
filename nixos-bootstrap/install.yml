@@ -1,0 +1,20 @@
+---
+ # This playbook deploys the whole application stack in this site.
+
+- name: Make partitions
+  hosts: "{{ host }}"
+  remote_user: root
+  roles:
+    - partition
+  become: yes
+
+- name: Debug partition paths
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: "boot_partitions"
+    - debug:
+        var: "zpool_partitions"
+    - debug:
+        var: "tmp_mount_path"
