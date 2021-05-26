@@ -1770,8 +1770,6 @@ in {
             "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
             "GITEA__server__ROOT_URL" =
               "https://${prefs.getFullDomainName "gitea"}";
-            "GITEA__server__DISABLE_SSH" = "true";
-            "GITEA__services__DISABLE_REGISTRATIONDISABLE_SSH" = "true";
           };
           environmentFiles = [ "/run/secrets/gitea-env" ];
           traefikForwardingPort = 3000;
