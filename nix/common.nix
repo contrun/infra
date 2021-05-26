@@ -1575,6 +1575,11 @@ in {
               "x86_64-linux" = "docker.io/n8nio/n8n:latest";
               "aarch64-linux" = "docker.io/n8nio/n8n:latest-rpi";
             };
+            "gitea" = let image = "docker.io/gitea/gitea:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "grocy" = let image = "docker.io/linuxserver/grocy:latest";
             in {
               "x86_64-linux" = image;
@@ -1739,6 +1744,26 @@ in {
             "GROCY_MODE" = "production";
           };
           traefikForwardingPort = 80;
+        } // mkContainer "gitea" prefs.ociContainers.enableGitea {
+          volumes = [
+            "/var/data/gitea:/data"
+            "/etc/timezone:/etc/timezone:ro"
+            "/etc/localtime:/etc/localtime:ro"
+          ];
+          environment = {
+            "PUID" = "${builtins.toString prefs.ownerUid}";
+            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+            "USER_UID" = "${builtins.toString prefs.ownerUid}";
+            "USER_GID" = "${builtins.toString prefs.ownerGroupGid}";
+            "TZ" = "Asia/Shanghai";
+            "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
+            "GITEA__server__ROOT_URL" =
+              "https://${prefs.getFullDomainName "gitea"}";
+            "GITEA__server__DISABLE_SSH" = "true";
+            "GITEA__services__DISABLE_REGISTRATIONDISABLE_SSH" = "true";
+          };
+          environmentFiles = [ "/run/secrets/gitea-env" ];
+          traefikForwardingPort = 3000;
         } // mkContainer "vaultwarden" prefs.ociContainers.enableVaultwarden {
           volumes = [ "/var/data/vaultwarden:/data" ];
           environmentFiles = [ "/run/secrets/vaultwarden-env" ];
@@ -1859,6 +1884,13 @@ in {
                       subtitle = "Workflow Automation";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "n8n"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableGitea;
+                      name = "gitea";
+                      subtitle = "Version Control";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "gitea"}";
                     }
                     {
                       enable = prefs.ociContainers.enableGrocy;
@@ -2129,6 +2161,23 @@ in {
               BindPaths = "/etc/rancher/k3s/k3s.yaml:/kubeconfig.yaml";
             });
           };
+        } // pkgs.lib.optionalAttrs (prefs.enableCodeServer) {
+          "code-server" = {
+            enable = true;
+            description = "Remote VSCode Server";
+            after = [ "network.target" ];
+            wantedBy = [ "multi-user.target" ];
+            path = [ pkgs.go pkgs.git pkgs.direnv ];
+            serviceConfig = {
+              Type = "simple";
+              ExecStart =
+                "${pkgs.code-server}/bin/code-server --user-data-dir ${prefs.home}/.vscode --disable-telemetry";
+              WorkingDirectory = prefs.home;
+              NoNewPrivileges = true;
+              User = prefs.owner;
+              Group = prefs.ownerGroup;
+            };
+          };
         } // pkgs.lib.optionalAttrs
         (prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null)) {
           "aioproxy" = {
@@ -2223,6 +2272,15 @@ in {
           preStart = builtins.concatStringsSep "\n" [
             "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync/media"
             "${pkgs.coreutils}/bin/chown -vR 373:373 /var/data/etesync"
+          ];
+        };
+      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableGitea {
+        "${prefs.ociContainerBackend}-gitea" = {
+          preStart = builtins.concatStringsSep "\n" [
+            "${pkgs.coreutils}/bin/mkdir -p /var/data/gitea/gitea"
+            "${pkgs.coreutils}/bin/chown -vR ${
+              builtins.toString prefs.ownerUid
+            }:${builtins.toString prefs.ownerGroupGid} /var/data/gitea"
           ];
         };
       };

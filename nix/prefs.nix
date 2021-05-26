@@ -324,6 +324,7 @@ let
         && (self.nixosSystem == "x86_64-linux");
       enableEtesync = self.enableAllOciContainers;
       enableN8n = self.enableAllOciContainers;
+      enableGitea = self.enableAllOciContainers;
       enableGrocy = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;

@@ -85,6 +85,7 @@ let
         etesync-env = { };
         vaultwarden-env = { };
         n8n-env = { };
+        gitea-env = { };
         wallabag-env = { };
         recipes-env = { };
         wger-env = { };
