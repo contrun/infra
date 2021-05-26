@@ -328,6 +328,7 @@ let
       enableGrocy = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;
+      enableMiniflux = self.enableAllOciContainers;
       enableNextcloud = self.enableAllOciContainers;
     };
     emulatedSystems =

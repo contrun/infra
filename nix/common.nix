@@ -1590,6 +1590,11 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "miniflux" = let image = "docker.io/miniflux/miniflux:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "nextcloud" = let image = "docker.io/nextcloud:latest";
             in {
               "x86_64-linux" = image;
@@ -1755,6 +1760,7 @@ in {
             "/etc/timezone:/etc/timezone:ro"
             "/etc/localtime:/etc/localtime:ro"
           ];
+          dependsOn = [ "postgresql" ];
           environment = {
             "PUID" = "${builtins.toString prefs.ownerUid}";
             "PGID" = "${builtins.toString prefs.ownerGroupGid}";
@@ -1777,6 +1783,14 @@ in {
           };
           environmentFiles = [ "/run/secrets/vaultwarden-env" ];
           traefikForwardingPort = 80;
+        } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
+          dependsOn = [ "postgresql" ];
+          volumes = [ "/var/data/nextcloud:/var/www/html" ];
+          environment = {
+            "BASE_URL" = "https://${prefs.getFullDomainName "miniflux"}";
+          };
+          environmentFiles = [ "/run/secrets/miniflux-env" ];
+          traefikForwardingPort = 8080;
         } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
           dependsOn = [ "postgresql" ];
           volumes = [ "/var/data/nextcloud:/var/www/html" ];
@@ -1929,6 +1943,13 @@ in {
                       subtitle = "password management";
                       tag = "security";
                       url = "https://${prefs.getFullDomainName "vaultwarden"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableMiniflux;
+                      name = "miniflux";
+                      subtitle = "rss reader";
+                      tag = "reading";
+                      url = "https://${prefs.getFullDomainName "miniflux"}";
                     }
                     {
                       enable = prefs.ociContainers.enableNextcloud;
