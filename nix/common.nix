@@ -1590,6 +1590,11 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "nextcloud" = let image = "docker.io/nextcloud:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "homer" = let image = "docker.io/b4bz/homer:latest";
             in {
               "x86_64-linux" = image;
@@ -1772,6 +1777,15 @@ in {
           };
           environmentFiles = [ "/run/secrets/vaultwarden-env" ];
           traefikForwardingPort = 80;
+        } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
+          dependsOn = [ "postgresql" ];
+          volumes = [ "/var/data/nextcloud:/var/www/html" ];
+          environment = {
+            "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
+              (prefs.getFullDomainNames "nextcloud")}";
+          };
+          environmentFiles = [ "/run/secrets/nextcloud-env" ];
+          traefikForwardingPort = 80;
         } // mkContainer "homer" prefs.ociContainers.enableHomer {
           volumes = [ "/var/data/homer:/www/assets" ];
           traefikForwardingPort = 8080;
@@ -1820,43 +1834,43 @@ in {
                   (builtins.filter (x: x.enable or true) [
                     {
                       enable = prefs.ociContainers.enableCloudBeaver;
-                      name = "Cloud Beaver";
-                      subtitle = "Database Management";
+                      name = "cloud beaver";
+                      subtitle = "database management";
                       tag = "database";
                       url = "https://${prefs.getFullDomainName "cloudbeaver"}";
                     }
                     {
                       enable = prefs.ociContainers.enableAuthelia;
-                      name = "Authelia";
-                      subtitle = "Authentication and Authorization";
+                      name = "authelia";
+                      subtitle = "authentication and authorization";
                       tag = "auth";
                       url = "https://${prefs.getFullDomainName "authelia"}";
                     }
                     {
                       enable = prefs.ociContainers.enableSearx;
-                      name = "Searx";
+                      name = "searx";
                       subtitle = "self-hosted search engine";
                       tag = "search";
                       url = "https://${prefs.getFullDomainName "searx"}";
                     }
                     {
                       enable = prefs.ociContainers.enableWallabag;
-                      name = "Wallabag";
-                      subtitle = "Read it later";
+                      name = "wallabag";
+                      subtitle = "read it later";
                       tag = "reading";
                       url = "https://${prefs.getFullDomainName "wallabag"}";
                     }
                     {
                       enable = prefs.ociContainers.enableCodeServer;
-                      name = "CodeServer";
-                      subtitle = "VS Code Server";
+                      name = "code server";
+                      subtitle = "text editing";
                       tag = "coding";
                       url = "https://${prefs.getFullDomainName "codeserver"}";
                     }
                     {
                       enable = prefs.ociContainers.enableRecipes;
-                      name = "Recipes";
-                      subtitle = "Cooking Recipes";
+                      name = "recipes";
+                      subtitle = "cooking recipes";
                       tag = "house-keeping";
                       url = "https://${prefs.getFullDomainName "recipes"}";
                     }
@@ -1870,14 +1884,14 @@ in {
                     {
                       enable = prefs.ociContainers.enableEtesync;
                       name = "etesync";
-                      subtitle = "Calandar and Tasks";
+                      subtitle = "contacts, calandar and tasks";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "etesync-pim"}";
                     }
                     {
                       enable = prefs.ociContainers.enableEtesync;
                       name = "etesync notes";
-                      subtitle = "Notes";
+                      subtitle = "notes";
                       tag = "productivity";
                       url =
                         "https://${prefs.getFullDomainName "etesync-notes"}";
@@ -1885,7 +1899,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableN8n;
                       name = "n8n";
-                      subtitle = "Workflow Automation";
+                      subtitle = "workflow automation";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "n8n"}";
                     }
@@ -1899,44 +1913,51 @@ in {
                     {
                       enable = prefs.ociContainers.enableGrocy;
                       name = "grocy";
-                      subtitle = "ERP for Household";
+                      subtitle = "ERP for household";
                       tag = "house-keeping";
                       url = "https://${prefs.getFullDomainName "grocy"}";
                     }
                     {
-                      name = "Traefik";
-                      subtitle = "Traefik Dashboard";
+                      name = "traefik";
+                      subtitle = "traefik dashboard";
                       tag = "operations";
                       url = "https://${prefs.getFullDomainName "traefik"}";
                     }
                     {
                       enable = prefs.ociContainers.enableVaultwarden;
                       name = "vaultwarden";
-                      subtitle = "Password Management";
+                      subtitle = "password management";
                       tag = "security";
                       url = "https://${prefs.getFullDomainName "vaultwarden"}";
                     }
                     {
-                      name = "Keeweb";
-                      subtitle = "Password Management";
+                      enable = prefs.ociContainers.enableNextcloud;
+                      name = "nextcloud";
+                      subtitle = "file synchronization";
+                      tag = "synchronization";
+                      url = "https://${prefs.getFullDomainName "nextcloud"}";
+                    }
+                    {
+                      name = "keeweb";
+                      subtitle = "password management";
                       tag = "security";
                       url = "https://${prefs.getFullDomainName "keeweb"}";
                     }
                     {
                       name = "clash";
-                      subtitle = "Local Clash Instance Management";
+                      subtitle = "clash instance management";
                       tag = "network";
                       url = "https://${prefs.getFullDomainName "clash"}";
                     }
                     {
                       name = "aria2";
-                      subtitle = "Download Management";
+                      subtitle = "download management";
                       tag = "network";
                       url = "https://${prefs.getFullDomainName "aria2"}";
                     }
                     {
                       name = "organice";
-                      subtitle = "Org-mode Files Editing";
+                      subtitle = "org-mode files editing";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "organice"}";
                     }

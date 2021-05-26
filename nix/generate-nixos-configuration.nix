@@ -84,6 +84,7 @@ let
         authelia-users = { };
         etesync-env = { };
         vaultwarden-env = { };
+        nextcloud-env = { };
         n8n-env = { };
         gitea-env = { };
         wallabag-env = { };
