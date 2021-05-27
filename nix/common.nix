@@ -2632,6 +2632,7 @@ in {
       [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
     binaryCachePublicKeys = [ ];
     useSandbox = true;
+    sandboxPaths = [ "/bin/sh=${pkgs.bash}/bin/sh" ];
     gc = {
       automatic = true;
       options = "--delete-older-than 60d";
