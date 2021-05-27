@@ -1598,6 +1598,12 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "calibre-web" =
+              let image = "docker.io/linuxserver/calibre-web:latest";
+              in {
+                "x86_64-linux" = image;
+                "aarch64-linux" = image;
+              };
             "vaultwarden" = let image = "docker.io/vaultwarden/server:latest";
             in {
               "x86_64-linux" = image;
@@ -1767,6 +1773,19 @@ in {
             "GROCY_MODE" = "production";
           };
           traefikForwardingPort = 80;
+        } // mkContainer "calibre-web" prefs.ociContainers.enableCalibreWeb {
+          volumes = [
+            "/var/data/calibre-web:/config"
+            "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
+          ];
+          extraOptions = [ "--label=domainprefix=calibre" ];
+          environment = {
+            "PUID" = "${builtins.toString prefs.ownerUid}";
+            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+            "TZ" = "Asia/Shanghai";
+            "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
+          };
+          traefikForwardingPort = 8083;
         } // mkContainer "gitea" prefs.ociContainers.enableGitea {
           volumes = [
             "/var/data/gitea:/data"
@@ -1942,6 +1961,13 @@ in {
                       subtitle = "ERP for household";
                       tag = "house-keeping";
                       url = "https://${prefs.getFullDomainName "grocy"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableCalibreWeb;
+                      name = "calibre";
+                      subtitle = "books";
+                      tag = "reading";
+                      url = "https://${prefs.getFullDomainName "calibre"}";
                     }
                     {
                       name = "traefik";

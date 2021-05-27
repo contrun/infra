@@ -326,6 +326,7 @@ let
       enableN8n = self.enableAllOciContainers;
       enableGitea = self.enableAllOciContainers;
       enableGrocy = self.enableAllOciContainers;
+      enableCalibreWeb = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;
       enableMiniflux = self.enableAllOciContainers;
