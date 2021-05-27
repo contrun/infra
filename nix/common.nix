@@ -994,6 +994,13 @@ in {
               service = "organice";
               tls = { };
             };
+          } // lib.optionalAttrs (prefs.enableCodeServer) {
+            codeserver = {
+              rule = getRule "codeserver";
+              service = "codeserver";
+              middlewares = [ "authelia@docker" ];
+              tls = { };
+            };
           };
           middlewares = {
             aria2 = {
@@ -1045,6 +1052,12 @@ in {
               loadBalancer = {
                 passHostHeader = false;
                 servers = [{ url = "https://organice.200ok.ch/"; }];
+              };
+            };
+          } // lib.optionalAttrs (prefs.enableCodeServer) {
+            codeserver = {
+              loadBalancer = {
+                servers = [{ url = "http://localhost:4050/"; }];
               };
             };
           };
@@ -1873,7 +1886,8 @@ in {
                       url = "https://${prefs.getFullDomainName "wallabag"}";
                     }
                     {
-                      enable = prefs.ociContainers.enableCodeServer;
+                      enable = prefs.ociContainers.enableCodeServer
+                        || prefs.enableCodeServer;
                       name = "code server";
                       subtitle = "text editing";
                       tag = "coding";
@@ -2215,7 +2229,7 @@ in {
             serviceConfig = {
               Type = "simple";
               ExecStart =
-                "${pkgs.code-server}/bin/code-server --user-data-dir ${prefs.home}/.vscode --disable-telemetry";
+                "${pkgs.code-server}/bin/code-server --bind-addr 127.0.0.1:4050 --auth none --user-data-dir ${prefs.home}/.vscode --disable-telemetry --disable-update-check --verbose --cert false";
               WorkingDirectory = prefs.home;
               NoNewPrivileges = true;
               User = prefs.owner;

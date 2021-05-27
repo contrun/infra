@@ -318,7 +318,7 @@ let
       enableAuthelia = self.enableAllOciContainers;
       enableSearx = self.enableAllOciContainers;
       enableWallabag = self.enableAllOciContainers;
-      enableCodeServer = self.enableAllOciContainers;
+      enableCodeServer = self.enableAllOciContainers && !self.enableCodeServer;
       enableRecipes = self.enableAllOciContainers;
       enableWger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
@@ -500,7 +500,7 @@ let
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
         kernelPackages = pkgs.linuxPackages_rpi4;
       };
-      enableCodeServer = false;
+      enableCodeServer = true;
       enableAcme = true;
       enableZerotierone = true;
       enableTailScale = true;
