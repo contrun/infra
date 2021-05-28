@@ -104,7 +104,7 @@ let
     enableEternalTerminal = true;
     enableResolved = true;
     enableCoredns = true;
-    corednsPort = 5355;
+    corednsPort = 5322;
     enableSmartdns = false;
     enablePrivoxy = false;
     enableFallbackAccount = false;

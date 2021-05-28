@@ -248,6 +248,7 @@ let
         "gopls"
         "rust-analyzer"
         "python-language-server"
+        "pyright"
         "cargo-edit"
         "cargo-xbuild"
         "cargo-update"

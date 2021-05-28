@@ -2257,8 +2257,6 @@ in {
         } // pkgs.lib.optionalAttrs (prefs.enableResolved) {
           "systemd-resolved" = {
             serviceConfig = { Environment = "SYSTEMD_LOG_LEVEL=debug"; };
-          } // lib.optionalAttrs prefs.enableCoredns {
-            after = [ "coredns.service" ];
           };
         } // pkgs.lib.optionalAttrs (prefs.ociContainers.enableWallabag) {
           "${prefs.ociContainerBackend}-wallabag" = {
