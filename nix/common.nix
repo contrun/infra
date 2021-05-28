@@ -1602,11 +1602,14 @@ in {
     oci-containers = let
       mkContainer = name: enable: config:
         pkgs.lib.optionalAttrs enable (let
-          images = {
-            "postgresql" = {
+          images = let
+            postgresql = {
               "x86_64-linux" = "docker.io/postgres:13";
               "aarch64-linux" = "docker.io/arm64v8/postgres:13";
             };
+          in {
+            "postgresql" = postgresql;
+            "postgresql-init" = postgresql;
             "redis" = {
               "x86_64-linux" = "docker.io/redis:6";
               "aarch64-linux" = "docker.io/arm64v8/redis:6";
@@ -1733,12 +1736,20 @@ in {
       backend = prefs.ociContainerBackend;
       containers =
         mkContainer "postgresql" prefs.ociContainers.enablePostgresql {
-          volumes = [
-            "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh"
-            "/var/data/postgresql:/var/lib/postgresql/data"
-          ];
+          volumes = [ "/var/data/postgresql:/var/lib/postgresql/data" ];
           ports = [ "5432:5432" ];
           environmentFiles = [ "/run/secrets/postgresql-env" ];
+          enableTraefik = false;
+        }
+        // mkContainer "postgresql-init" prefs.ociContainers.enablePostgresql {
+          volumes =
+            [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
+          dependsOn = [ "postgresql" ];
+          environmentFiles = [
+            "/run/secrets/postgresql-env"
+            "/run/secrets/postgresql-backup-env"
+          ];
+          entrypoint = "/my/init-user-db.sh";
           enableTraefik = false;
         } // mkContainer "redis" prefs.ociContainers.enableRedis {
           # https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume
@@ -2369,25 +2380,12 @@ in {
 
     oci-containers = let
       postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
-      postgresqlBackupUnitName = "backup-${postgresqlUnitName}";
+      postgresqlInitUnitName = "${postgresqlUnitName}-init";
+      postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
     in {
       services = pkgs.lib.optionalAttrs prefs.ociContainers.enablePostgresql {
-        "${postgresqlUnitName}" = {
-          postStart = ''
-            set -xe
-            # https://github.com/moby/moby/issues/41890
-            export HOME=/root
-            retries=0
-            while ! ${prefs.ociContainerBackend} exec postgresql /my/init-user-db.sh; do
-                if (( retries > 10 )); then
-                    echo "Giving up on initializing postgresql database."
-                    exit 0
-                else
-                    retries=$(( retries + 1 ))
-                    sleep 2
-                fi
-            done
-          '';
+        "${postgresqlInitUnitName}" = {
+          serviceConfig = { Restart = lib.mkForce "on-failure"; };
         };
         "${postgresqlBackupUnitName}" = let
           backup-script = pkgs.writeShellScript "postgresql-backup-script" ''
@@ -2395,7 +2393,7 @@ in {
             umask 0077
             mkdir -p "$BACKUP_DIR"
             export HOME=/root
-            ${prefs.ociContainerBackend} exec -e PGUSER -e PGPASSWORD postgresql pg_dumpall | gzip -c > "$BACKUP_DIR/all.tmp.sql.gz"
+            ${prefs.ociContainerBackend} exec -e PGHOST -e PGUSER -e PGPASSWORD postgresql pg_dumpall | gzip -c > "$BACKUP_DIR/all.tmp.sql.gz"
             if [ -e "$BACKUP_DIR/all.sql.gz" ]; then
                 mv "$BACKUP_DIR/all.sql.gz" "$BACKUP_DIR/all.prev.sql.gz"
             fi
