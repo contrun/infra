@@ -1415,11 +1415,16 @@ in {
               "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
             introducer = true;
           };
+          jxt = {
+            id =
+              "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+            introducer = true;
+          };
         };
         folders = {
           "${prefs.home}/Storage/Calibre" = {
             id = "calibre";
-            devices = [ "ssg" "shl" ];
+            devices = [ "ssg" "shl" "jxt" ];
             ignorePerms = false;
             versioning = {
               # TODO: This does not work. Syncthing seems to be using new schema now.
