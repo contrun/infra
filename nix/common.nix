@@ -1642,6 +1642,11 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "wikijs" = let image = "docker.io/requarks/wiki:2";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "grocy" = let image = "docker.io/linuxserver/grocy:latest";
             in {
               "x86_64-linux" = image;
@@ -1812,6 +1817,9 @@ in {
           middlewares = [ "authelia" ];
           environmentFiles = [ "/run/secrets/n8n-env" ];
           traefikForwardingPort = 5678;
+        } // mkContainer "wikijs" prefs.ociContainers.enableWikijs {
+          environmentFiles = [ "/run/secrets/wikijs-env" ];
+          traefikForwardingPort = 3000;
         } // mkContainer "grocy" prefs.ociContainers.enableGrocy {
           volumes = [ "/var/data/grocy:/config" ];
           environment = {
@@ -2010,6 +2018,13 @@ in {
                       subtitle = "Version Control";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "gitea"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableWikijs;
+                      name = "wikijs";
+                      subtitle = "personal wiki";
+                      tag = "documentation";
+                      url = "https://${prefs.getFullDomainName "wikijs"}";
                     }
                     {
                       enable = prefs.ociContainers.enableGrocy;

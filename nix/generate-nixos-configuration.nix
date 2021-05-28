@@ -87,6 +87,7 @@ let
         miniflux-env = { };
         nextcloud-env = { };
         n8n-env = { };
+        wikijs-env = { };
         gitea-env = { };
         wallabag-env = { };
         recipes-env = { };

@@ -325,6 +325,7 @@ let
       enableEtesync = self.enableAllOciContainers;
       enableN8n = self.enableAllOciContainers;
       enableGitea = self.enableAllOciContainers;
+      enableWikijs = self.enableAllOciContainers;
       enableGrocy = self.enableAllOciContainers;
       enableCalibreWeb = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
