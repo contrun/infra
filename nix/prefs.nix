@@ -182,7 +182,7 @@ let
     enableClashRedir = true;
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = true;
-    enableSyncthing = false;
+    enableSyncthing = true;
     yandexConfig = {
       directory = "${self.home}/Sync";
       excludes = "";

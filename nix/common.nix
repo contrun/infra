@@ -1001,6 +1001,13 @@ in {
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
+          } // lib.optionalAttrs (prefs.enableSyncthing) {
+            syncthing = {
+              rule = getRule "syncthing";
+              service = "syncthing";
+              middlewares = [ "authelia@docker" ];
+              tls = { };
+            };
           };
           middlewares = {
             aria2 = {
@@ -1058,6 +1065,13 @@ in {
             codeserver = {
               loadBalancer = {
                 servers = [{ url = "http://localhost:4050/"; }];
+              };
+            };
+          } // lib.optionalAttrs (prefs.enableSyncthing) {
+            syncthing = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [{ url = "http://localhost:8384/"; }];
               };
             };
           };
@@ -1388,9 +1402,39 @@ in {
     syncthing = {
       enable = prefs.enableSyncthing;
       user = prefs.owner;
-      group = "users";
       dataDir = prefs.home;
-      systemService = false;
+      declarative = {
+        devices = {
+          ssg = {
+            id =
+              "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+            introducer = true;
+          };
+          shl = {
+            id =
+              "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+            introducer = true;
+          };
+        };
+        folders = {
+          "${prefs.home}/Storage/Calibre" = {
+            id = "calibre";
+            devices = [ "ssg" "shl" ];
+            ignorePerms = false;
+            versioning = {
+              # TODO: This does not work. Syncthing seems to be using new schema now.
+              # See https://github.com/syncthing/syncthing/pull/7407
+              params = {
+                cleanInterval = "3600";
+                maxAge = "315360000";
+                fsPath = "${prefs.home}/.cache/syncthing_versioning";
+                versionsPath = "${prefs.home}/.cache/syncthing_versioning";
+              };
+              type = "staggered";
+            };
+          };
+        };
+      };
     };
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;
@@ -1911,6 +1955,13 @@ in {
                       subtitle = "text editing";
                       tag = "coding";
                       url = "https://${prefs.getFullDomainName "codeserver"}";
+                    }
+                    {
+                      enable = prefs.enableSyncthing;
+                      name = "syncthing";
+                      subtitle = "file synchronization";
+                      tag = "synchronization";
+                      url = "https://${prefs.getFullDomainName "syncthing"}";
                     }
                     {
                       enable = prefs.ociContainers.enableRecipes;
