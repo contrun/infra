@@ -327,6 +327,7 @@ in {
       ++ (if (prefs.enableBtrfs) then [ btrbk btrfs-progs ] else [ ])
       ++ (if (prefs.enableClashRedir) then [ clash ] else [ ])
       ++ (if (prefs.enableK3s) then [ k3s ] else [ ])
+      ++ (if prefs.enableDocker then [ docker-buildx ] else [ ])
       ++ (if (prefs.nixosSystem == "x86_64-linux") then [
         xmobar
         hardinfo
@@ -1661,6 +1662,11 @@ in {
                 "x86_64-linux" = image;
                 "aarch64-linux" = image;
               };
+            "xwiki" = let image = "docker.io/xwiki:lts-postgres-tomcat";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "vaultwarden" = let image = "docker.io/vaultwarden/server:latest";
             in {
               "x86_64-linux" = image;
@@ -1854,6 +1860,11 @@ in {
             "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
           };
           traefikForwardingPort = 8083;
+        } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
+          dependsOn = [ "postgresql" ];
+          environmentFiles = [ "/run/secrets/xwiki-env" ];
+          volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
+          traefikForwardingPort = 8080;
         } // mkContainer "gitea" prefs.ociContainers.enableGitea {
           volumes = [
             "/var/data/gitea:/data"
@@ -2036,6 +2047,13 @@ in {
                       subtitle = "personal wiki";
                       tag = "documentation";
                       url = "https://${prefs.getFullDomainName "wikijs"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableXwiki;
+                      name = "xwiki";
+                      subtitle = "personal wiki";
+                      tag = "documentation";
+                      url = "https://${prefs.getFullDomainName "xwiki"}";
                     }
                     {
                       enable = prefs.ociContainers.enableGrocy;

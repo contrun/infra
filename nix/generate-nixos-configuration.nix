@@ -88,6 +88,7 @@ let
         nextcloud-env = { };
         n8n-env = { };
         wikijs-env = { };
+        xwiki-env = { };
         gitea-env = { };
         wallabag-env = { };
         recipes-env = { };
