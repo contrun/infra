@@ -491,6 +491,7 @@ let
         }
       ];
     } else if hostname == "shl" then {
+      enableXserver = false;
       enableAria2 = true;
       enableTraefik = true;
       enableAllOciContainers = true;
