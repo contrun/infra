@@ -747,26 +747,27 @@ in {
       };
     };
     davfs2 = { enable = prefs.enableDavfs2; };
-    coredns = {
-      enable = prefs.enableCoredns;
-      package = args.inputs.self.coredns.${config.nixpkgs.system};
-      config = let
-        getTemplate = t: ''
-          template IN ${t} ${prefs.mainDomain} {
-              match ^(|[.])(?P<p>.*)\.(?P<s>(?P<h>.*?)\.(?P<d>${prefs.mainDomain})[.])$
-              answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hubDomainPrefix}{{ else }}{{ .Group.h }}{{ end }}.{{ .Group.d }}."
-              fallthrough
+    coredns = lib.optionalAttrs
+      (args.inputs.self.coredns ? "${config.nixpkgs.system}") {
+        enable = prefs.enableCoredns;
+        package = args.inputs.self.coredns.${config.nixpkgs.system};
+        config = let
+          getTemplate = t: ''
+            template IN ${t} ${prefs.mainDomain} {
+                match ^(|[.])(?P<p>.*)\.(?P<s>(?P<h>.*?)\.(?P<d>${prefs.mainDomain})[.])$
+                answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hubDomainPrefix}{{ else }}{{ .Group.h }}{{ end }}.{{ .Group.d }}."
+                fallthrough
+            }
+          '';
+        in ''
+          .:${builtins.toString prefs.corednsPort} {
+              ${getTemplate "A"}
+              ${getTemplate "AAAA"}
+              mdns ${prefs.mainDomain}
+              alternate original NXDOMAIN,SERVFAIL,REFUSED . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
           }
-        '';
-      in ''
-        .:${builtins.toString prefs.corednsPort} {
-            ${getTemplate "A"}
-            ${getTemplate "AAAA"}
-            mdns ${prefs.mainDomain}
-            alternate original NXDOMAIN,SERVFAIL,REFUSED . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
-        }
-              '';
-    };
+                '';
+      };
     dnsmasq = {
       enable = prefs.enableDnsmasq;
       resolveLocalQueries = prefs.dnsmasqResolveLocalQueries;
@@ -779,11 +780,14 @@ in {
     };
     resolved = {
       enable = prefs.enableResolved;
-      extraConfig = ''
-        DNS=127.0.0.1:${
-          builtins.toString prefs.corednsPort
-        }#${prefs.mainDomain} 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
-      '';
+      extraConfig = builtins.concatStringsSep "\n" [
+        (if (args.inputs.self.coredns ? "${config.nixpkgs.system}")
+        && prefs.enableCoredns then ''
+          DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
+        '' else ''
+          DNS=1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
+        '')
+      ];
     };
     openssh = {
       enable = true;
