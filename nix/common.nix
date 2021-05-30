@@ -186,6 +186,7 @@ in {
         nftables
         ipset
         dnsmasq
+        (args.inputs.deploy-rs.defaultPackage.${config.nixpkgs.system} or null)
         nixFlakes
         nix-info
         nixos-generators

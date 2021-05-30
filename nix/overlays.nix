@@ -347,8 +347,6 @@
           protobuf
         ]);
 
-        aioproxy = inputs.aioproxy.defaultPackage.${super.system};
-
         lua = super.lua.withPackages
           (ps: with ps; [ busted luafilesystem luarocks lua-lsp nvim-client ]);
 
@@ -504,6 +502,9 @@
       (inputs.flake-firefox-nightly.packages ? "${super.system}") {
         firefox =
           inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin;
+      } // super.lib.optionalAttrs
+      (inputs.aioproxy.defaultPackage ? "${super.system}") {
+        aioproxy = inputs.aioproxy.defaultPackage.${super.system};
       };
     };
 

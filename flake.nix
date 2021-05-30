@@ -2,6 +2,9 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    deploy-rs.url = "github:serokell/deploy-rs";
+    deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
+    deploy-rs.inputs.utils.follows = "flake-utils";
     gomod2nix.url = "github:tweag/gomod2nix";
     gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
     gomod2nix.inputs.utils.follows = "flake-utils";
@@ -58,6 +61,21 @@
           inherit prefs inputs;
         };
 
+      generateDeployNode = hostname:
+        let p = getHostPreference hostname;
+        in {
+          "${hostname}" = {
+            hostname = p.hostname;
+            profiles = {
+              system = {
+                user = "root";
+                path = inputs.deploy-rs.lib."${p.system}".activate.nixos
+                  self.nixosConfigurations."${p.hostname}";
+              };
+            };
+          };
+        };
+
       out = system:
         let
           pkgs = import nixpkgs {
@@ -87,10 +105,23 @@
           # };
 
         };
+    in let
+      allHosts = [ "default" ] ++ [ "ssg" "jxt" "shl" ] ++ (builtins.attrNames
+        (import (getNixConfig "fixed-systems.nix")).systems);
+      deployNodes = [ "ssg" "jxt" "shl" ];
     in {
+
       nixosConfigurations = builtins.foldl'
         (acc: hostname: acc // generateHostConfigurations hostname inputs) { }
-        ([ "default" ] ++ [ "ssg" "jxt" "shl" ] ++ (builtins.attrNames
-          (import (getNixConfig "fixed-systems.nix")).systems));
+        allHosts;
+
+      deploy.nodes = builtins.foldl' (acc: hostname:
+        acc // builtins.trace (generateDeployNode hostname)
+        (generateDeployNode hostname)) { } deployNodes;
+
+      checks = builtins.mapAttrs
+        (system: deployLib: deployLib.deployChecks self.deploy)
+        inputs.deploy-rs.lib;
+
     } // (with flake-utils.lib; eachSystem defaultSystems out);
 }
