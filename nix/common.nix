@@ -1672,6 +1672,11 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "tiddlywiki" = let image = "docker.io/contrun/tiddlywiki:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "vaultwarden" = let image = "docker.io/vaultwarden/server:latest";
             in {
               "x86_64-linux" = image;
@@ -1870,6 +1875,16 @@ in {
           environmentFiles = [ "/run/secrets/xwiki-env" ];
           volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
           traefikForwardingPort = 8080;
+        } // mkContainer "tiddlywiki" prefs.ociContainers.enableTiddlyWiki {
+          volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
+          extraOptions = [
+            "--user=${builtins.toString prefs.ownerUid}:${
+              builtins.toString prefs.ownerGroupGid
+            }"
+          ];
+          cmd = [ "--listen" "host=0.0.0.0" ];
+          middlewares = [ "authelia" ];
+          traefikForwardingPort = 8080;
         } // mkContainer "gitea" prefs.ociContainers.enableGitea {
           volumes = [
             "/var/data/gitea:/data"
@@ -2059,6 +2074,13 @@ in {
                       subtitle = "personal wiki";
                       tag = "documentation";
                       url = "https://${prefs.getFullDomainName "xwiki"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableTiddlyWiki;
+                      name = "tiddlywiki";
+                      subtitle = "personal wiki";
+                      tag = "documentation";
+                      url = "https://${prefs.getFullDomainName "tiddlywiki"}";
                     }
                     {
                       enable = prefs.ociContainers.enableGrocy;
@@ -2446,6 +2468,15 @@ in {
           preStart = builtins.concatStringsSep "\n" [
             "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync/media"
             "${pkgs.coreutils}/bin/chown -vR 373:373 /var/data/etesync"
+          ];
+        };
+      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTiddlyWiki {
+        "${prefs.ociContainerBackend}-tiddlywiki" = {
+          preStart = builtins.concatStringsSep "\n" [
+            "${pkgs.coreutils}/bin/mkdir -p /var/data/tiddlywiki"
+            "${pkgs.coreutils}/bin/chown -vR ${
+              builtins.toString prefs.ownerUid
+            }:${builtins.toString prefs.ownerGroupGid} /var/data/tiddlywiki"
           ];
         };
       } // pkgs.lib.optionalAttrs prefs.ociContainers.enableGitea {

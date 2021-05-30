@@ -327,6 +327,7 @@ let
       enableGitea = self.enableAllOciContainers;
       enableWikijs = self.enableAllOciContainers;
       enableXwiki = self.enableAllOciContainers;
+      enableTiddlyWiki = self.enableAllOciContainers;
       enableGrocy = self.enableAllOciContainers;
       enableCalibreWeb = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
