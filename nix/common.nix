@@ -217,6 +217,7 @@ in {
         gcc
         gnumake
         podman
+        trash-cli
         podman-compose
         usbutils
         powertop
@@ -2781,6 +2782,15 @@ in {
         yandex-disk
       ];
     in builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } all;
+  } // {
+    tmpfiles = {
+      rules = [
+        "d /root/.cache/trash - root root 30d"
+        "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+        "d /root/.local/share/Trash - root root 30d"
+        "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+      ];
+    };
   };
 
   nix = {

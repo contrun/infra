@@ -193,6 +193,7 @@ let
         "wgetpaste"
         "ix"
         "tmux"
+        "zellij"
         "traceroute"
         "tree"
         # sl
@@ -349,7 +350,11 @@ let
         "wasm-bindgen-cli"
         "hexyl"
         "fd"
+        "trash-cli"
         "bat"
+        "delta"
+        "hyperfine"
+        "procs"
         "pastel"
         "tokei"
         "starship"
@@ -538,6 +543,7 @@ let
       priority = 25;
       packages = getPackages [
         "httpie"
+        "xh"
         "wireshark"
         "termshark"
         "nmap"
