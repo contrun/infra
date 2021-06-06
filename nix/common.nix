@@ -2563,10 +2563,11 @@ in {
                     exit 1
                 fi
             fi
-            if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG";
-                then exit 0
+            if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
+                rm "$CLASH_TEMP_CONFIG"
+                exit 0
             fi
-            cp "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+            mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
             if ! curl -X PUT -H 'content-type: application/json' -d "{\"path\": \"$CLASH_CONFIG\"}" 'http://localhost:9090/configs/'; then
                 systemctl restart ${name}
             fi
