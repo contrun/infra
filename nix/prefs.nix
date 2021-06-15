@@ -133,7 +133,7 @@ let
     enableDebugInfo = false;
     enableBtrfs = false;
     enableZfs = true;
-    enableZfsUnstable = false;
+    enableZfsUnstable = true;
     enableCrashDump = false;
     enableDnsmasq = false;
     dnsmasqListenAddress = "127.0.0.233";
