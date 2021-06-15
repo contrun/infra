@@ -457,7 +457,9 @@ let
       enableWireless = true;
       enableAcme = true;
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-        extraModulePackages = [ super.pkgsRelatedPrefs.rtl8188gu ];
+        extraModulePackages = [
+          # super.pkgsRelatedPrefs.rtl8188gu
+        ];
         consoleFont =
           "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
       };
@@ -466,7 +468,9 @@ let
     } else if hostname == "jxt" then {
       hostId = "5ee92b8d";
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-        extraModulePackages = [ super.pkgsRelatedPrefs.rtl8188gu ];
+        extraModulePackages = [
+          # super.pkgsRelatedPrefs.rtl8188gu
+        ];
       };
       enableHolePuncher = false;
       enableAutossh = false;
