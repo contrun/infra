@@ -499,7 +499,7 @@ in {
       connectDisplay = true;
     };
     pulseaudio = {
-      enable = true;
+      enable = !prefs.enablePipewire;
       package = pkgs.pulseaudioFull;
       support32Bit = true;
       systemWide = true;
@@ -719,6 +719,10 @@ in {
       enable = prefs.enableOfflineimap;
       install = true;
       path = [ pkgs.libsecret pkgs.dbus ];
+    };
+    pipewire = {
+      enable = prefs.enablePipewire;
+      pulse = { enable = true; };
     };
     restic = {
       backups = let

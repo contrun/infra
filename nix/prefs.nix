@@ -256,6 +256,7 @@ let
     enableCalibreServer = true;
     calibreServerLibraries = [ "${self.home}/Storage/Calibre" ];
     calibreServerPort = 8213;
+    enablePipewire = true;
     enableSlock = true;
     enableZSH = true;
     enableJava = true;
