@@ -1633,6 +1633,11 @@ in {
               "x86_64-linux" = "docker.io/searxng/searxng:latest";
               "aarch64-linux" = "docker.io/searxng/searxng:latest";
             };
+            "rss-bridge" = let image = "docker.io/rssbridge/rss-bridge:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "wallabag" = {
               "x86_64-linux" = "docker.io/wallabag/wallabag:2.4.2";
               "aarch64-linux" = "docker.io/ugeek/wallabag:arm-2.4";
@@ -1816,6 +1821,12 @@ in {
           volumes = [ "/var/data/searx:/etc/searx" ];
           traefikForwardingPort = 8080;
           middlewares = [ "authelia" ];
+        } // mkContainer "rss-bridge" prefs.ociContainers.enableRssBridge {
+          extraOptions = [
+            "--mount"
+            "type=bind,source=/run/secrets/rss-bridge-whitelist,target=/app/whitelist.txt"
+          ];
+          traefikForwardingPort = 80;
         } // mkContainer "wallabag" prefs.ociContainers.enableWallabag {
           dependsOn = [ "postgresql" ];
           environment = {
@@ -2000,6 +2011,13 @@ in {
                       subtitle = "self-hosted search engine";
                       tag = "search";
                       url = "https://${prefs.getFullDomainName "searx"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableRssBridge;
+                      name = "rss-bridge";
+                      subtitle = "generate rss feeds";
+                      tag = "reading";
+                      url = "https://${prefs.getFullDomainName "rss-bridge"}";
                     }
                     {
                       enable = prefs.ociContainers.enableWallabag;

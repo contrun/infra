@@ -318,6 +318,7 @@ let
         && (self.nixosSystem == "x86_64-linux");
       enableAuthelia = self.enableAllOciContainers;
       enableSearx = self.enableAllOciContainers;
+      enableRssBridge = self.enableAllOciContainers;
       enableWallabag = self.enableAllOciContainers;
       enableCodeServer = self.enableAllOciContainers && !self.enableCodeServer;
       enableRecipes = self.enableAllOciContainers;

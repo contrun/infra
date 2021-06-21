@@ -90,6 +90,7 @@ let
         wikijs-env = { };
         xwiki-env = { };
         gitea-env = { };
+        rss-bridge-whitelist = { mode = "0444"; };
         wallabag-env = { };
         recipes-env = { };
         wger-env = { };
