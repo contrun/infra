@@ -128,7 +128,7 @@ let
     sslhPort = 44443;
     enableAioproxy = true;
     aioproxyPort = 4443;
-    enableTailScale = !self.isMinimalSystem;
+    enableTailScale = false;
     enableX2goServer = false;
     enableDebugInfo = false;
     enableBtrfs = false;
@@ -478,11 +478,8 @@ let
       enableAutossh = false;
       enablePrinting = false;
       enableEternalTerminal = false;
-      enableCodeServer = false;
       enablePostfix = false;
-      # enableCrashDump = true;
       enableZerotierone = false;
-      # enableTailScale = false;
       buildMachines = super.buildMachines ++ [
         {
           hostName = "node1";
@@ -514,7 +511,7 @@ let
       enableCodeServer = true;
       enableAcme = true;
       enableZerotierone = true;
-      enableTailScale = true;
+      enableTailScale = false;
       enableVirtualboxHost = false;
       bootloader = "raspberrypi";
       isRaspberryPi = true;
