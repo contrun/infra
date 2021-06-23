@@ -36,6 +36,13 @@
       flake = false;
     };
     dotfiles.url = "github:contrun/dotfiles";
+    jtojnar-nixfiles = {
+      url = "github:jtojnar/nixfiles";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
+    };
   };
 
   outputs = { self, nixpkgs, flake-utils, gomod2nix, ... }@inputs:

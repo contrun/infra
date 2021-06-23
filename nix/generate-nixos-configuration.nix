@@ -158,6 +158,8 @@ let
     };
   };
 
+  tmpConfiguration = { config, pkgs, system, inputs, ... }: { };
+
 in {
   "${hostname}" = inputs.nixpkgs.lib.nixosSystem {
     inherit system;
@@ -174,6 +176,7 @@ in {
       inputs.home-manager.nixosModules.home-manager
       homeManagerConfiguration
       overlaysConfiguration
+      tmpConfiguration
     ];
 
     specialArgs = moduleArgs;

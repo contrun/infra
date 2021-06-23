@@ -489,6 +489,7 @@ let
         "libwebp"
         "openssl"
         "libnfnetlink"
+        "zeromq"
         "mkcert"
         "glib-networking"
         "myPackages.python2"

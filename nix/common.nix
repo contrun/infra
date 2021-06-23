@@ -341,7 +341,14 @@ in {
         prefs.kernelPackages.bpftrace
         prefs.kernelPackages.bcc
       ] else
-        [ ]);
+        [ ]) ++ (if prefs.enableActivityWatch then
+          with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [
+            aw-server-rust
+            aw-watcher-afk
+            aw-watcher-window
+          ]
+        else
+          [ ]);
     enableDebugInfo = prefs.enableDebugInfo;
     shellAliases = {
       ssh = "ssh -C";
