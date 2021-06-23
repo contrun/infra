@@ -330,7 +330,7 @@ let
       enableN8n = self.enableAllOciContainers;
       enableGitea = self.enableAllOciContainers;
       enableWikijs = self.enableAllOciContainers;
-      enableXwiki = self.enableAllOciContainers;
+      enableXwiki = false;
       enableHuginn = self.enableAllOciContainers;
       enableTiddlyWiki = self.enableAllOciContainers;
       enableGrocy = self.enableAllOciContainers;
