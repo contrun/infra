@@ -416,7 +416,6 @@ in {
     adb.enable = prefs.enableADB;
     slock.enable = prefs.enableSlock;
     bash = { enableCompletion = true; };
-    x2goserver = { enable = prefs.enableX2goServer; };
     zsh = {
       enable = prefs.enableZSH;
       enableCompletion = true;
@@ -805,6 +804,7 @@ in {
         '')
       ];
     };
+    x2goserver = { enable = prefs.enableX2goServer; };
     openssh = {
       enable = true;
       useDns = true;
@@ -1692,6 +1692,10 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "huginn" = {
+              "x86_64-linux" = "docker.io/huginn/huginn:latest";
+              "aarch64-linux" = "docker.io/zhorvath83/huginn:latest";
+            };
             "tiddlywiki" = let image = "docker.io/contrun/tiddlywiki:latest";
             in {
               "x86_64-linux" = image;
@@ -1901,6 +1905,14 @@ in {
           environmentFiles = [ "/run/secrets/xwiki-env" ];
           volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
           traefikForwardingPort = 8080;
+        } // mkContainer "huginn" prefs.ociContainers.enableHuginn {
+          dependsOn = [ "postgresql" ];
+          environmentFiles = [ "/run/secrets/huginn-env" ];
+          traefikForwardingPort = 3000;
+          environment = {
+            "TIMEZONE" = "Beijing";
+            "DOMAIN" = "https://${prefs.getFullDomainName "huginn"}";
+          };
         } // mkContainer "tiddlywiki" prefs.ociContainers.enableTiddlyWiki {
           volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
           extraOptions = [
@@ -2018,7 +2030,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableSearx;
                       name = "searx";
-                      subtitle = "self-hosted search engine";
+                      subtitle = "search engine";
                       tag = "search";
                       url = "https://${prefs.getFullDomainName "searx"}";
                     }
@@ -2107,6 +2119,13 @@ in {
                       subtitle = "personal wiki";
                       tag = "documentation";
                       url = "https://${prefs.getFullDomainName "xwiki"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableHuginn;
+                      name = "huginn";
+                      subtitle = "automation agents";
+                      tag = "automation";
+                      url = "https://${prefs.getFullDomainName "huginn"}";
                     }
                     {
                       enable = prefs.ociContainers.enableTiddlyWiki;

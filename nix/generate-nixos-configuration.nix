@@ -89,6 +89,7 @@ let
         n8n-env = { };
         wikijs-env = { };
         xwiki-env = { };
+        huginn-env = { };
         gitea-env = { };
         rss-bridge-whitelist = { mode = "0444"; };
         wallabag-env = { };
