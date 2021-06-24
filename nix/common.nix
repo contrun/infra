@@ -286,6 +286,8 @@ in {
         iotop
         iftop
         iw
+        alacritty
+        rxvt-unicode
         lsof
         age
         sops
@@ -357,7 +359,7 @@ in {
     sessionVariables = pkgs.lib.optionalAttrs (prefs.enableSessionVariables)
       (rec {
         MYSHELL = if prefs.enableZSH then "zsh" else "bash";
-        MYTERMINAL = "alacritty";
+        MYTERMINAL = if prefs.enableUrxvtd then "urxvtc" else "alacritty";
         GOPATH = "$HOME/.go";
         CABALPATH = "$HOME/.cabal";
         CARGOPATH = "$HOME/.cargo";
@@ -791,6 +793,7 @@ in {
       enable = prefs.enableSmartdns;
       settings = prefs.smartdnsSettings;
     };
+    urxvtd = { enable = prefs.enableUrxvtd; };
     resolved = {
       enable = prefs.enableResolved;
       extraConfig = builtins.concatStringsSep "\n" [

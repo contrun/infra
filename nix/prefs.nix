@@ -106,6 +106,7 @@ let
     enableCoredns = true;
     corednsPort = 5322;
     enableSmartdns = false;
+    enableUrxvtd = !self.isMinimalSystem;
     enablePrivoxy = false;
     enableFallbackAccount = false;
     buildZerotierone = !self.isMinimalSystem;
