@@ -1015,17 +1015,24 @@ in {
               service = "organice";
               tls = { };
             };
-          } // lib.optionalAttrs (prefs.enableCodeServer) {
+          } // lib.optionalAttrs prefs.enableCodeServer {
             codeserver = {
               rule = getRule "codeserver";
               service = "codeserver";
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
-          } // lib.optionalAttrs (prefs.enableSyncthing) {
+          } // lib.optionalAttrs prefs.enableSyncthing {
             syncthing = {
               rule = getRule "syncthing";
               service = "syncthing";
+              middlewares = [ "authelia@docker" ];
+              tls = { };
+            };
+          } // lib.optionalAttrs prefs.enableActivityWatch {
+            activitywatch = {
+              rule = getRule "activitywatch";
+              service = "activitywatch";
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
@@ -1082,17 +1089,23 @@ in {
                 servers = [{ url = "https://organice.200ok.ch/"; }];
               };
             };
-          } // lib.optionalAttrs (prefs.enableCodeServer) {
+          } // lib.optionalAttrs prefs.enableCodeServer {
             codeserver = {
               loadBalancer = {
                 servers = [{ url = "http://localhost:4050/"; }];
               };
             };
-          } // lib.optionalAttrs (prefs.enableSyncthing) {
+          } // lib.optionalAttrs prefs.enableSyncthing {
             syncthing = {
               loadBalancer = {
                 passHostHeader = false;
                 servers = [{ url = "http://localhost:8384/"; }];
+              };
+            };
+          } // lib.optionalAttrs prefs.enableActivityWatch {
+            activitywatch = {
+              loadBalancer = {
+                servers = [{ url = "http://localhost:5600/"; }];
               };
             };
           };
@@ -2192,6 +2205,14 @@ in {
                       subtitle = "download management";
                       tag = "network";
                       url = "https://${prefs.getFullDomainName "aria2"}";
+                    }
+                    {
+                      name = "ActivityWatch";
+                      enable = prefs.enableActivityWatch;
+                      subtitle = "device usage watch";
+                      tag = "productivity";
+                      url =
+                        "https://${prefs.getFullDomainName "activitywatch"}";
                     }
                     {
                       name = "organice";

@@ -152,7 +152,7 @@ let
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
     enableXmonad = self.xWindowManager == "xmonad";
-    xSessionCommands = ''
+    xSessionCommands = builtins.concatStringsSep "\n" ([''
       # echo "$(date -R): $@" >> ~/log
       # . ~/.xinitrc &
       keymap.sh &
@@ -160,9 +160,6 @@ let
       # alacritty &
       terminalLayout.sh 3 &
       kdeconnect-indicator &
-      aw-server &
-      aw-watcher-afk &
-      aw-watcher-window &
       feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
       # shadowsocksControl.sh restart 4 1 &
       # systemctl --user start syncthing &
@@ -174,7 +171,12 @@ let
       # autoMount.sh &
       # startupHosts.sh &
       sxhkd -c ~/.config/sxhkd/sxhkdrc &
-    '';
+    ''] ++ (if self.enableActivityWatch then [''
+      aw-server &
+      aw-watcher-afk &
+      aw-watcher-window &
+    ''] else
+      [ ]));
     # xSessionCommands = "";
     xDisplayManager = if self.enableXserver then "lightdm" else null;
     enableLightdm = self.xDisplayManager == "lightdm";
