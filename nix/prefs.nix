@@ -159,6 +159,10 @@ let
       dunst &
       # alacritty &
       terminalLayout.sh 3 &
+      kdeconnect-indicator &
+      aw-server &
+      aw-watcher-afk &
+      aw-watcher-window &
       feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
       # shadowsocksControl.sh restart 4 1 &
       # systemctl --user start syncthing &
