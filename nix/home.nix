@@ -299,7 +299,7 @@ let
         "guile"
         "myPackages.emacs"
         "mu"
-        "tsung"
+        # "tsung"
         "wrk"
         "yq-go"
         "dhall"
