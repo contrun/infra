@@ -826,6 +826,7 @@ let
         "xorg.xwd"
         "xorg.xwininfo"
         "fakeroot"
+        "libguestfs-with-appliance"
         # fbgrab
         "fbida"
         "fbv"
