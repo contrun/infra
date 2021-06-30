@@ -394,7 +394,7 @@ let
         "k9s"
         "minikube"
         "k3s"
-        # "libguestfs-with-appliance"
+        "libguestfs-with-appliance"
         "python3Packages.binwalk"
         "python3Packages.xdot"
         "binutils"
@@ -826,7 +826,6 @@ let
         "xorg.xwd"
         "xorg.xwininfo"
         "fakeroot"
-        "libguestfs-with-appliance"
         # fbgrab
         "fbida"
         "fbv"

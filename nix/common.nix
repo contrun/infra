@@ -1172,7 +1172,11 @@ in {
           };
           websecure = getEntrypoint ":443" // { http = { tls = { }; }; };
         };
-        log = { level = "DEBUG"; };
+        log = {
+          level = "INFO";
+          filePath = "/var/log/traefik/log.json";
+          format = "json";
+        };
         accessLog = {
           filePath = "/var/log/traefik/access.log.json";
           format = "json";
@@ -2207,7 +2211,7 @@ in {
                       url = "https://${prefs.getFullDomainName "aria2"}";
                     }
                     {
-                      name = "ActivityWatch";
+                      name = "activitywatch";
                       enable = prefs.enableActivityWatch;
                       subtitle = "device usage watch";
                       tag = "productivity";
