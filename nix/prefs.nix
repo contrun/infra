@@ -343,6 +343,7 @@ let
       enableCalibreWeb = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;
+      enablePleroma = self.enableAllOciContainers;
       enableMiniflux = self.enableAllOciContainers;
       enableNextcloud = self.enableAllOciContainers;
     };

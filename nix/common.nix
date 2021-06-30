@@ -1723,6 +1723,12 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "pleroma" =
+              let image = "git.pleroma.social:5050/pleroma/pleroma:latest";
+              in {
+                "x86_64-linux" = image;
+                "aarch64-linux" = image;
+              };
             "miniflux" = let image = "docker.io/miniflux/miniflux:latest";
             in {
               "x86_64-linux" = image;
@@ -1967,6 +1973,12 @@ in {
           };
           environmentFiles = [ "/run/secrets/vaultwarden-env" ];
           traefikForwardingPort = 80;
+        } // mkContainer "pleroma" prefs.ociContainers.enablePleroma {
+          dependsOn = [ "postgresql" ];
+          volumes = [ "/var/data/pleroma:/var/lib/pleroma" ];
+          environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
+          environmentFiles = [ "/run/secrets/pleroma-env" ];
+          traefikForwardingPort = 4000;
         } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
           dependsOn = [ "postgresql" ];
           volumes = [ "/var/data/nextcloud:/var/www/html" ];
@@ -2177,6 +2189,13 @@ in {
                       subtitle = "password management";
                       tag = "security";
                       url = "https://${prefs.getFullDomainName "vaultwarden"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enablePleroma;
+                      name = "pleroma";
+                      subtitle = "microblogging";
+                      tag = "social";
+                      url = "https://${prefs.getFullDomainName "pleroma"}";
                     }
                     {
                       enable = prefs.ociContainers.enableMiniflux;
@@ -2554,6 +2573,14 @@ in {
             "${pkgs.coreutils}/bin/chown -vR ${
               builtins.toString prefs.ownerUid
             }:${builtins.toString prefs.ownerGroupGid} /var/data/tiddlywiki"
+          ];
+        };
+      } // pkgs.lib.optionalAttrs prefs.ociContainers.enablePleroma {
+        "${prefs.ociContainerBackend}-pleroma" = {
+          preStart = builtins.concatStringsSep "\n" [
+            "${pkgs.coreutils}/bin/mkdir -p /var/data/pleroma"
+            # The user used in the official image is pleroma (uid 100).
+            "${pkgs.coreutils}/bin/chown -vR 100:0 /var/data/pleroma"
           ];
         };
       } // pkgs.lib.optionalAttrs prefs.ociContainers.enableGitea {
