@@ -85,6 +85,7 @@ let
         etesync-env = { };
         vaultwarden-env = { };
         pleroma-env = { };
+        joplin-env = { };
         miniflux-env = { };
         nextcloud-env = { };
         n8n-env = { };

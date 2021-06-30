@@ -1734,6 +1734,11 @@ in {
                 "x86_64-linux" = image;
                 "aarch64-linux" = image;
               };
+            "joplin" = let image = "docker.io/florider89/joplin-server:master";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "miniflux" = let image = "docker.io/miniflux/miniflux:latest";
             in {
               "x86_64-linux" = image;
@@ -1996,6 +2001,13 @@ in {
           environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
           environmentFiles = [ "/run/secrets/pleroma-env" ];
           traefikForwardingPort = 4000;
+        } // mkContainer "joplin" prefs.ociContainers.enableJoplin {
+          dependsOn = [ "postgresql" ];
+          environment = {
+            "APP_BASE_URL" = "https://${prefs.getFullDomainName "joplin"}";
+          };
+          environmentFiles = [ "/run/secrets/joplin-env" ];
+          traefikForwardingPort = 22300;
         } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
           dependsOn = [ "postgresql" ];
           volumes = [ "/var/data/nextcloud:/var/www/html" ];
@@ -2220,6 +2232,13 @@ in {
                       subtitle = "microblogging";
                       tag = "social";
                       url = "https://${prefs.getFullDomainName "pleroma"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableJoplin;
+                      name = "joplin";
+                      subtitle = "notes-taking";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "joplin"}";
                     }
                     {
                       enable = prefs.ociContainers.enableMiniflux;
