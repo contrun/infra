@@ -2880,6 +2880,7 @@ in {
       [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
     binaryCachePublicKeys = [ ];
     useSandbox = true;
+    trustedUsers = [ "root" prefs.owner "@wheel" ];
     gc = {
       automatic = true;
       options = "--delete-older-than 60d";
