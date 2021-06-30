@@ -20,6 +20,12 @@ static_resources:
       connect_timeout: 5s
       type: STATIC
       lb_policy: ROUND_ROBIN
+      health_checks:
+        - tcp_health_check: {}
+          timeout: 1s
+          interval: 60s
+          unhealthy_threshold: 3
+          healthy_threshold: 3
       load_assignment:
         cluster_name: "{{ "tcp_" ~ port }}"
         endpoints:
