@@ -1704,6 +1704,11 @@ in {
                 "x86_64-linux" = image;
                 "aarch64-linux" = image;
               };
+            "dokuwiki" = let image = "docker.io/linuxserver/dokuwiki:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "xwiki" = let image = "docker.io/xwiki:lts-postgres-tomcat";
             in {
               "x86_64-linux" = image;
@@ -1923,6 +1928,18 @@ in {
             "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
           };
           traefikForwardingPort = 8083;
+        } // mkContainer "dokuwiki" prefs.ociContainers.enableDokuwiki {
+          volumes = [
+            "/var/data/dokuwiki:/config"
+            "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
+          ];
+          environment = {
+            "PUID" = "${builtins.toString prefs.ownerUid}";
+            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+            "TZ" = "Asia/Shanghai";
+            "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
+          };
+          traefikForwardingPort = 80;
         } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
           dependsOn = [ "postgresql" ];
           environmentFiles = [ "/run/secrets/xwiki-env" ];
@@ -2176,6 +2193,13 @@ in {
                       subtitle = "books";
                       tag = "reading";
                       url = "https://${prefs.getFullDomainName "calibre"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableDokuwiki;
+                      name = "dokuwiki";
+                      subtitle = "personal wiki";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "dokuwiki"}";
                     }
                     {
                       name = "traefik";

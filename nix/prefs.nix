@@ -335,12 +335,13 @@ let
       enableEtesync = self.enableAllOciContainers;
       enableN8n = self.enableAllOciContainers;
       enableGitea = self.enableAllOciContainers;
-      enableWikijs = self.enableAllOciContainers;
+      enableWikijs = false;
       enableXwiki = false;
       enableHuginn = self.enableAllOciContainers;
       enableTiddlyWiki = self.enableAllOciContainers;
       enableGrocy = self.enableAllOciContainers;
       enableCalibreWeb = self.enableAllOciContainers;
+      enableDokuwiki = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;
       enablePleroma = self.enableAllOciContainers;
