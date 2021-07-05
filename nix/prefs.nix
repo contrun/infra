@@ -58,6 +58,7 @@ let
         ./hardware/rtl8188gu.nix { });
     };
     isMinimalSystem = false;
+    isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;
     owner = "e";
     ownerUid = 1000;
@@ -418,7 +419,7 @@ let
     } else if systems ? "${hostname}" then
       let
         nixosSystem = systems."${hostname}";
-        isForCiCd = builtins.match "cicd-(.*)" != null;
+        isForCiCd = builtins.match "cicd-(.*)" hostname != null;
       in ({
         inherit nixosSystem;
         isMinimalSystem = true;

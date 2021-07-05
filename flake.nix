@@ -114,7 +114,7 @@
         };
     in let
       allHosts = [ "default" ] ++ [ "ssg" "jxt" "shl" ] ++ (builtins.attrNames
-        (import (getNixConfig "fixed-systems.nix")).systems);
+        (import (getNixConfig "fixed-systems.nix")).systems) ++ ["bigvm" "smallvm"];
       deployNodes = [ "ssg" "jxt" "shl" ];
     in {
 

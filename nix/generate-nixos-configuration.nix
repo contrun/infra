@@ -2,9 +2,12 @@ let
   pathOr = path: default: if (builtins.pathExists path) then path else default;
 in { prefs, inputs }:
 let
-  inherit (prefs) hostname isMinimalSystem system getDotfile getNixConfig;
+  inherit (prefs)
+    hostname isMinimalSystem isVirtualMachine system getDotfile getNixConfig;
 
-  moduleArgs = { inherit inputs hostname prefs isMinimalSystem system; };
+  moduleArgs = {
+    inherit inputs hostname prefs isMinimalSystem isVirtualMachine system;
+  };
 
   systemInfo = { lib, pkgs, config, ... }: {
     system.configurationRevision = lib.mkIf (inputs.self ? rev) inputs.self.rev;
@@ -45,7 +48,9 @@ let
     else
       { });
 
-  hardwareConfiguration = if isMinimalSystem then
+  hardwareConfiguration = if isVirtualMachine then
+    { config, lib, pkgs, modulesPath, ... }: { }
+  else if isMinimalSystem then
     import
     (pathOr (getNixConfig "hardware/hardware-configuration.${hostname}.nix")
       (getNixConfig "hardware/hardware-configuration.example.nix"))
@@ -161,6 +166,56 @@ let
     };
   };
 
+  vmConfiguration = hostname:
+    let
+      vmConfigs = {
+        bigvm = {
+          module = { config, lib, pkgs, modulesPath, ... }: {
+            fileSystems."/" = {
+              label = "nixos";
+              fsType = "ext4";
+              autoResize = true;
+            };
+
+            swapDevices = [ ];
+
+            nix.maxJobs = lib.mkDefault 8;
+          };
+          imageSize = "50G";
+        };
+      };
+      vmConfig = vmConfigs."${hostname}" or null;
+    in { config, pkgs, lib, ... }:
+    with pkgs;
+    if vmConfig != null then
+      let
+        toplevel = config.system.build.toplevel;
+        db = closureInfo { rootPaths = [ toplevel ]; };
+        rootfs = config.fileSystems."/";
+      in {
+        imports = [ vmConfig.module ];
+        boot.loader.grub.device = lib.mkForce "/dev/sda";
+        system.build.image = runCommandNoCC "nixos.img" { } ''
+          set -xeu
+          export TERM=dumb
+          export HOME=$TMPDIR/home
+          export root=$TMPDIR/root
+          export NIX_STATE_DIR=$TMPDIR/state
+          ${nix}/bin/nix-store --load-db < ${db}/registration
+          ${nix}/bin/nix copy --no-check-sigs --to $root ${toplevel}
+          ${nix}/bin/nix-env --store $root -p $root/nix/var/nix/profiles/system --set ${toplevel}
+          ${fakeroot}/bin/fakeroot ${libguestfs-with-appliance}/bin/guestfish -N $out=fs:${rootfs.fsType}:${vmConfig.imageSize} -m /dev/sda1 << EOT
+          set-label /dev/sda1 ${rootfs.label}
+          copy-in $root/nix /
+          mkdir-mode /etc 0755
+          command "/nix/var/nix/profiles/system/activate"
+          command "/nix/var/nix/profiles/system/bin/switch-to-configuration boot"
+          EOT
+        '';
+      }
+    else
+      { };
+
   tmpConfiguration = { config, pkgs, system, inputs, ... }: { };
 
 in {
@@ -180,6 +235,7 @@ in {
       homeManagerConfiguration
       overlaysConfiguration
       tmpConfiguration
+      (vmConfiguration hostname)
     ];
 
     specialArgs = moduleArgs;
