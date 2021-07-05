@@ -1,17 +1,23 @@
 ---
  # This playbook deploys the whole application stack in this site.
 
-- name: Make partitions
+- name: Go
   hosts: "{{ host }}"
   gather_facts: no
-  roles:
-    - partition
-    - installation
-  when: skip_partition is not defined
+  tasks:
+    - name: Make partitions
+      become: true
+      block:
+        - include_role:
+            name: '{{ item }}'
+          loop:
+            - partition
 
-- name: Install
-  hosts: "{{ host }}"
-  gather_facts: no
-  roles:
-    - installation
-  when: skip_installation is not defined
+    - name: Install
+      when: skip_installation is not defined
+      become: true
+      block:
+        - include_role:
+            name: '{{ item }}'
+          loop:
+            - installation
