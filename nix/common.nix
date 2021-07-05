@@ -173,6 +173,8 @@ in {
         [crio]
         storage_driver = "zfs"
       '';
+    } // lib.optionalAttrs prefs.enableResolved {
+      "systemd/resolved.conf" = { mode = "0644"; };
     };
 
     extraOutputsToInstall = prefs.extraOutputsToInstall;
@@ -1464,11 +1466,16 @@ in {
               "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
             introducer = true;
           };
+          mdq = {
+            id =
+              "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+            introducer = true;
+          };
         };
         folders = {
           "${prefs.home}/Storage/Calibre" = {
             id = "calibre";
-            devices = [ "ssg" "shl" "jxt" ];
+            devices = [ "ssg" "shl" "jxt" "mdq" ];
             ignorePerms = false;
             versioning = {
               # TODO: This does not work. Syncthing seems to be using new schema now.
@@ -2692,7 +2699,7 @@ in {
             mkdir -p /etc/clash-redir
             if ! [[ -e /etc/clash-redir/config.yaml ]]; then
                 if ! [[ -e /etc/clash-redir/default.yaml ]]; then
-                    systemctl restart clash-config-update-script
+                    systemctl restart ${updaterName}
                 fi
                 ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
             fi

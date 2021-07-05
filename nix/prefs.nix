@@ -530,6 +530,9 @@ let
       isRaspberryPi = true;
       raspberryPiVersion = 4;
       enableVsftpd = false;
+    } else if hostname == "mdq" then {
+      isMinimalSystem = false;
+      hostId = "59b352bc";
     } else {
       isMinimalSystem = true;
     });
