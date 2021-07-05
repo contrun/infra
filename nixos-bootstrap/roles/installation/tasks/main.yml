@@ -5,6 +5,18 @@
     set -xeu
     awk '{if ($2 == "{{ tmp_mount_path }}") print}' /proc/mounts | grep {{ tmp_mount_path }}
 
+- name: Create target directories
+  file:
+    path: "{{ tmp_mount_path }}{{ directory }}"
+    state: directory
+    mode: 0755
+  loop:
+    - /run/binfmt/
+    - /etc/binfmt.d/
+    - /bootstrap
+  loop_control:
+    loop_var: directory
+
 - name: Copy some configurations to remote host
   copy:
     src: "{{ item }}"
@@ -14,52 +26,43 @@
     - "/run/binfmt/*"
     - "/etc/binfmt.d/*"
 
-    # TODO: I want to copy below files.
-    # It is not possible when the user run the ansible command can not read those files.
-    # - "/etc/ssh/ssh_host_*"
-    # - "/etc/wpa_supplicant.conf"
-    # - "/var/lib/iwd/*"
+- name: Set repo dir
+  set_fact:
+    repo_dir: "{{ tmp_mount_path }}/bootstrap"
 
-- name: Build nixos
+- name: Make temp directory
+  tempfile:
+    state: directory
+  register: temp_git_archive
+  delegate_to: localhost
+  become: no
+  changed_when: False
+
+- name: Extract latest git commit on branch master
+  shell: git ls-files | tar Tczf - {{ temp_git_archive.path }}/archive.tar.gz
+  args:
+    chdir: "{{ playbook_dir }}/.."
+  delegate_to: localhost
+  become: no
+  changed_when: False
+
+- name: Copy to remote
+  unarchive:
+    src: "{{ temp_git_archive.path }}/archive.tar.gz"
+    dest: "{{ repo_dir }}"
+
+- name: Delete temp directory
+  file:
+    path: "{{ temp_git_archive.path }}"
+    state: absent
+  when: temp_git_archive.path is defined
+  delegate_to: localhost
+  become: no
+  changed_when: False
+
+- name: Generate hardware configuration
   shell: |
-    cd {{ playbook_dir }}/../../
-    nix build --system {{ nixos_system }} --extra-system-features {{ nixos_system }} --extra-system-features x86_64-linux --extra-extra-platforms {{ nixos_system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.{{ nixos_hostname }}.config.system.build.toplevel'
-
-- name: Copy newly-built nixos files
-  shell: |
-    nixos-install --root "{{ tmp_mount_path }}" --system "$(readlink result)"
-    if [[ -f /run/binfmt/aarch64-linux ]]; then
-        nix copy --to "ssh://root@localhost?remote-store=local?root={{ tmp_mount_path }}" $(cat /run/binfmt/aarch64-linux | grep -Eo '/nix/store/(\S*)')
-    fi
-
-- name: Get bash path
-  shell: |
-    head -n1 {{ tmp_mount_path }}/nix/var/nix/profiles/system/activate | sed -E 's/#!\s*//g'
-  register: bash_path
-
-- name: Try activate the system
-  shell: |
-    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c /nix/var/nix/profiles/system/activate
-    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c '/run/current-system/bin/switch-to-configuration boot'
-  ignore_errors: yes
-
-- name: Copy some configurations to remote host again (/nix/var/nix/profiles/system/activate may erase some files)
-  copy:
-    src: "{{ item }}"
-    dest: "{{ tmp_mount_path }}{{ item }}"
-    force: yes
-  with_fileglob:
-    - "/etc/wpa_supplicant.conf"
-    - "/run/binfmt/*"
-    - "/etc/binfmt.d/*"
-
-- name: Try activate the system again (The first time may fail becasue chroot environment does not have some files)
-  shell: |
-    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c /nix/var/nix/profiles/system/activate
-
-- name: Generate config and install bootloader
-  shell: |
-    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c /run/current-system/sw/bin/nixos-generate-config
+    nixos-generate-config --root {{ tmp_mount_path }}
 
 - name: Fetch the generated hardware configuration
   ansible.builtin.fetch:
@@ -68,31 +71,104 @@
     flat: yes
   register: hardware_configruation_file
 
-- name: Hardware configuration file changed, you need to manully update the repo, then build again.
+- name: Check that the configuration exists
+  delegate_to: localhost
+  become: no
+  stat:
+    path: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+  register: stat_result
+
+- name: Fetch the generated nixos configuration
+  ansible.builtin.fetch:
+    src: "{{ tmp_mount_path }}/etc/nixos/configuration.nix"
+    dest: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+    flat: yes
+  when: not stat_result.stat.exists
+
+- name: "Add the following to {{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+  when: not stat_result.stat.exists
   debug:
-    var: hardware_configruation_file
+    msg: |
+      networking.hostName = "{{ nixos_hostname }}";
+      # printf "%s" "hostname: {{ nixos_hostname }}" | sha512sum | head -c 8
+      # networking.hostId = "59b352bc";
 
-- meta: end_play
-  when: hardware_configruation_file.changed
+      nix.trustedUsers = [ "root" "e" "@wheel" ];
+      services.openssh = {
+        enable = true;
+        useDns = true;
+        allowSFTP = true;
+        forwardX11 = true;
+        gatewayPorts = "yes";
+        permitRootLogin = "yes";
+        startWhenNeeded = true;
+      };
+      users.users = {
+        e = {
+          createHome = true;
+          extraGroups = [
+            "wheel"
+            "cups"
+            "video"
+            "kvm"
+            "libvirtd"
+            "qemu-libvirtd"
+            "audio"
+            "disk"
+            "keys"
+            "networkmanager"
+            "adbusers"
+            "docker"
+            "davfs2"
+            "wireshark"
+            "vboxusers"
+            "lp"
+            "input"
+            "mlocate"
+            "postfix"
+          ];
+          group = "users";
+          home = "/home/e";
+          isNormalUser = true;
+          uid = 1000;
+          initialHashedPassword =
+            "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+        };
+      };
 
-- name: Install bootloader
+- name: Nixos configuration did not exist. Edit the generated file manully, then build again.
+  meta: end_play
+  when: not stat_result.stat.exists
+
+- name: Copy nixos configuration to remote host
+  copy:
+    src: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+    dest: "{{ tmp_mount_path }}/etc/nixos/configuration.nix"
+    force: yes
+
+- name: Install nixos
   shell: |
-    chroot {{ tmp_mount_path }} {{ bash_path.stdout }} -c '/run/current-system/bin/switch-to-configuration boot'
+    (echo "{{ root_password }}"; echo "{{ root_password }}") | nixos-install --root {{ tmp_mount_path }} --show-trace
 
 - name: Change root password
   shell: |
     nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ root_password }}"; echo "{{ root_password }}") | passwd'
-  when: root_password is defined
 
 - name: Change user password
   shell: |
     nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ user_password }}"; echo "{{ user_password }}") | passwd {{ user }}'
   when: (user is defined) and (user_password is defined)
-  when: user_password is defined
 
-- name: Umount {{ tmp_mount_path }} when umount_after_finishing is true
-  shell: |
-    umount -v -l -f -R {{ tmp_mount_path }} || true
-  args:
-    executable: "{{ remote_shell_executable }}"
-  when: umount_after_finishing
+# TODO: I want to copy below files.
+# It is not possible when the user run the ansible command can not read those files.
+# - name: Check that the configuration exists
+#   delegate_to: localhost
+#   become: yes
+#   copy:
+#     src: "{{ item }}"
+#     dest: "{{ playbook_dir }}/privileged/{{ item }}"
+#     force: yes
+#   with_fileglob:
+#     - "/etc/ssh/ssh_host_*"
+#     - "/etc/wpa_supplicant.conf"
+#     - "/var/lib/iwd/*"
