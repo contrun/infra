@@ -774,11 +774,17 @@ in {
             }
           '';
         in ''
-          .:${builtins.toString prefs.corednsPort} {
+          ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
+              log
               ${getTemplate "A"}
               ${getTemplate "AAAA"}
               mdns ${prefs.mainDomain}
               alternate original NXDOMAIN,SERVFAIL,REFUSED . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
+          }
+
+          .:${builtins.toString prefs.corednsPort} {
+              log
+              forward . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
           }
                 '';
       };

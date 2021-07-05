@@ -3,6 +3,8 @@ package main
 import (
 	_ "github.com/coredns/alternate"
 	_ "github.com/coredns/coredns/plugin/template"
+	_ "github.com/coredns/coredns/plugin/log"
+	_ "github.com/coredns/coredns/plugin/whoami"
 	_ "github.com/openshift/coredns-mdns"
 
 	"github.com/coredns/coredns/core/dnsserver"
@@ -13,10 +15,12 @@ var directives = []string{
 	"template",
 	"mdns",
 	"alternate",
+	"log",
 	"whoami",
 	"startup",
 	"shutdown",
 	"reload",
+	"forward",
 }
 
 func init() {
