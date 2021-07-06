@@ -57,7 +57,7 @@ let
       rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage
         ./hardware/rtl8188gu.nix { });
     };
-    isMinimalSystem = false;
+    isMinimalSystem = true;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;
     owner = "e";
