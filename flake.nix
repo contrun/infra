@@ -113,11 +113,10 @@
 
         };
     in let
-      allHosts = [ "default" ] ++ [ "ssg" "jxt" "shl" "mdq" ]
-        ++ (builtins.attrNames
-          (import (getNixConfig "fixed-systems.nix")).systems)
-        ++ [ "bigvm" "smallvm" ];
       deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
+      vmNodes = [ "bigvm" "smallvm" ];
+      allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
+        (import (getNixConfig "fixed-systems.nix")).systems);
     in {
 
       nixosConfigurations = builtins.foldl'

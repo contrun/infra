@@ -201,7 +201,7 @@ let
       "tobeoverridden@example.com"
     else
       "webmaster@${self.mainDomain}";
-    hubDomainPrefix = "shl";
+    hubDomainPrefix = "mdq";
     domainPrefixes = let
       originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
     in (if originalPrefix == self.hubDomainPrefix then [ "hub" ] else [ ])
@@ -214,7 +214,7 @@ let
     getFullDomainNames = prefix:
       builtins.map (domain: internalGetSubDomain prefix domain) self.domains;
     mainDomain = "cont.run";
-    enableAcme = false;
+    enableAcme = self.enableTraefik;
     acmeCerts = if self.enableAcme then {
       "${self.mainDomain}" = {
         domain = self.mainDomain;
@@ -533,6 +533,9 @@ let
       enableVsftpd = false;
     } else if hostname == "mdq" then {
       isMinimalSystem = false;
+      enableAllOciContainers = true;
+      enableTraefik = true;
+      enableAcme = true;
       hostId = "59b352bc";
     } else {
       isMinimalSystem = true;

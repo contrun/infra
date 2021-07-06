@@ -16,6 +16,7 @@ var directives = []string{
 	"mdns",
 	"alternate",
 	"log",
+	"debug",
 	"whoami",
 	"startup",
 	"shutdown",
