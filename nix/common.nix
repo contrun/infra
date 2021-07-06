@@ -762,6 +762,7 @@ in {
         paths = [ "/var/data" ];
       };
     };
+    glusterfs = { enable = prefs.enableGlusterfs; };
     davfs2 = { enable = prefs.enableDavfs2; };
     coredns = lib.optionalAttrs
       (args.inputs.self.coredns ? "${config.nixpkgs.system}") {

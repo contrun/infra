@@ -246,6 +246,7 @@ let
     enableFail2ban = true;
     davfs2Secrets = "${self.home}/.davfs2/secrets";
     enableDavfs2 = true;
+    enableGlusterfs = true;
     enableSamba = true;
     enableContainerd = false;
     enableCrio = false;
