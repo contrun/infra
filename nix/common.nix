@@ -615,6 +615,11 @@ in {
   };
 
   services = {
+    udev = {
+      extraRules = ''
+        SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-5]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+      '';
+    };
     arbtt = { enable = prefs.enableArbtt; };
     compton = { enable = prefs.enableCompton; };
     connman = { enable = prefs.enableConnman; };
@@ -1883,7 +1888,7 @@ in {
           };
           volumes = [ "/var/data/searx:/etc/searx" ];
           traefikForwardingPort = 8080;
-          middlewares = [ "authelia" ];
+          # middlewares = [ "authelia" ];
         } // mkContainer "rss-bridge" prefs.ociContainers.enableRssBridge {
           extraOptions = [
             "--mount"

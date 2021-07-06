@@ -481,7 +481,7 @@ let
           "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
       };
       enableTraefik = true;
-      enableAllOciContainers = true;
+      enableAllOciContainers = false;
     } else if hostname == "jxt" then {
       isMinimalSystem = false;
       hostId = "5ee92b8d";
@@ -514,7 +514,7 @@ let
       enableXserver = false;
       enableAria2 = true;
       enableTraefik = true;
-      enableAllOciContainers = true;
+      enableAllOciContainers = false;
       installHomePackages = false; # Too slow.
       kernelParams = super.kernelParams
         ++ [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" ];
@@ -535,6 +535,7 @@ let
       enableVsftpd = false;
     } else if hostname == "mdq" then {
       isMinimalSystem = false;
+      dpi = 128;
       enableAllOciContainers = true;
       enableTraefik = true;
       enableAcme = true;
