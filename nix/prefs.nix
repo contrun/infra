@@ -462,6 +462,7 @@ let
       #   '';
       # }];
     } else if hostname == "ssg" then {
+      isMinimalSystem = false;
       hostId = "034d2ba3";
       dpi = 128;
       enableJupyter = true;
@@ -482,6 +483,7 @@ let
       enableTraefik = true;
       enableAllOciContainers = true;
     } else if hostname == "jxt" then {
+      isMinimalSystem = false;
       hostId = "5ee92b8d";
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
         extraModulePackages = [
