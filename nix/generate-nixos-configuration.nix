@@ -63,81 +63,80 @@ let
 
   overlaysConfiguration = import (getNixConfig "overlays.nix");
 
-  sopsConfiguration = let
-    sopsSecretsFile = getNixConfig "/sops/secrets.yaml";
-    enableSops = builtins.pathExists sopsSecretsFile;
-  in if enableSops then {
-    sops = {
-      validateSopsFiles = false;
-      defaultSopsFile = "${builtins.path {
-        name = "sops-secrets";
-        path = sopsSecretsFile;
-      }}";
-      secrets = {
-        clash-env = { };
-        ddns-env = {
-          mode = "0400";
-          owner = prefs.owner;
-          group = prefs.ownerGroup;
-        };
-        openldap-root-password = { };
-        postgresql-env = { };
-        postgresql-backup-env = { };
-        postgresql-initdb-script = { mode = "0500"; };
-        redis-conf = { mode = "0444"; };
-        authelia-conf = { };
-        authelia-users = { };
-        etesync-env = { };
-        vaultwarden-env = { };
-        pleroma-env = { };
-        joplin-env = { };
-        miniflux-env = { };
-        nextcloud-env = { };
-        n8n-env = { };
-        wikijs-env = { };
-        xwiki-env = { };
-        huginn-env = { };
-        gitea-env = { };
-        rss-bridge-whitelist = { mode = "0444"; };
-        wallabag-env = { };
-        recipes-env = { };
-        wger-env = { };
-        restic-password = { };
-        rclone-config = { };
-        yandex-passwd = {
-          mode = "0400";
-          owner = prefs.owner;
-          group = prefs.ownerGroup;
-        };
-        cfssl-ca-pem = { mode = "0444"; };
-      } // (if prefs.enableAcme then {
-        acme-env = {
-          mode = "0400";
-          owner = "acme";
-          group = "acme";
-        };
-      } else
-        { }) // (if prefs.enablePostgresql then {
+  sopsConfiguration = { config, pkgs, lib, inputs, ... }:
+    let
+      sopsSecretsFile = getNixConfig "/sops/secrets.yaml";
+      enableSops = builtins.pathExists sopsSecretsFile;
+    in lib.optionalAttrs enableSops {
+      sops = {
+        validateSopsFiles = false;
+        defaultSopsFile = "${builtins.path {
+          name = "sops-secrets";
+          path = sopsSecretsFile;
+        }}";
+        secrets = {
+          clash-env = { };
+          ddns-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          openldap-root-password = { };
+          postgresql-env = { };
+          postgresql-backup-env = { };
+          postgresql-initdb-script = { mode = "0500"; };
+          redis-conf = { mode = "0444"; };
+          authelia-conf = { };
+          authelia-users = { };
+          etesync-env = { };
+          vaultwarden-env = { };
+          pleroma-env = { };
+          joplin-env = { };
+          miniflux-env = { };
+          nextcloud-env = { };
+          n8n-env = { };
+          wikijs-env = { };
+          xwiki-env = { };
+          huginn-env = { };
+          gitea-env = { };
+          rss-bridge-whitelist = { mode = "0444"; };
+          wallabag-env = { };
+          recipes-env = { };
+          wger-env = { };
+          restic-password = { };
+          rclone-config = { };
+          yandex-passwd = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          cfssl-ca-pem = { mode = "0444"; };
+        } // (lib.optionalAttrs prefs.enableAcme {
+          acme-env = {
+            mode = "0400";
+            owner = "acme";
+            group = "acme";
+          };
+        }) // (lib.optionalAttrs prefs.enablePostgresql {
           postgresql-init-script = {
             mode = "0440";
             owner = "postgres";
             group = "postgres";
           };
-        } else
-          { }) // (if prefs.enableAria2 then {
-            aria2-env = {
-              mode = "0440";
-              owner = "aria2";
-              group = "aria2";
-            };
-          } else
-            { }) // (if prefs.enableCfssl then {
-              cfssl-ca-key-pem = { owner = "cfssl"; };
-            } else
-              { });
+        }) // (lib.optionalAttrs prefs.enableAria2 {
+          aria2-env = {
+            mode = "0440";
+            owner = "aria2";
+            group = "aria2";
+          };
+        }) // (lib.optionalAttrs prefs.enableCfssl {
+          cfssl-ca-key-pem = { owner = "cfssl"; };
+        }) // (lib.optionalAttrs prefs.enableGlusterfs {
+          glusterfs-cert = { };
+          glusterfs-cert-key = { };
+        });
+      };
     };
-  } else
-    { };
 
   homeManagerConfiguration = { ... }: {
     home-manager = {

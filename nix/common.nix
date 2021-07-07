@@ -767,7 +767,14 @@ in {
         paths = [ "/var/data" ];
       };
     };
-    glusterfs = { enable = prefs.enableGlusterfs; };
+    glusterfs = {
+      enable = prefs.enableGlusterfs;
+      tlsSettings = {
+        caCert = "/run/secrets/cfssl-ca-pem";
+        tlsKeyPath = "/run/secrets/glusterfs-cert-key";
+        tlsPem = "/run/secrets/glusterfs-cert";
+      };
+    };
     davfs2 = { enable = prefs.enableDavfs2; };
     coredns = lib.optionalAttrs
       (args.inputs.self.coredns ? "${config.nixpkgs.system}") {
@@ -1600,6 +1607,7 @@ in {
       "audio"
       "disk"
       "keys"
+      "aria2"
       "networkmanager"
       "adbusers"
       "docker"
