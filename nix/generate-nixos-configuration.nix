@@ -109,6 +109,7 @@ let
           owner = prefs.owner;
           group = prefs.ownerGroup;
         };
+        cfssl-ca-pem = { mode = "0444"; };
       } // (if prefs.enableAcme then {
         acme-env = {
           mode = "0400";
@@ -130,7 +131,10 @@ let
               group = "aria2";
             };
           } else
-            { });
+            { }) // (if prefs.enableCfssl then {
+              cfssl-ca-key-pem = { owner = "cfssl"; };
+            } else
+              { });
     };
   } else
     { };

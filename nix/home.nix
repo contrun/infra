@@ -926,6 +926,8 @@ let
         "rsync"
         "filezilla"
         "rclone"
+        "seaweedfs"
+        "fuse-overlayfs"
         "yandex-disk"
         "nextcloud-client"
         "gnutar"

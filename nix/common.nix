@@ -1431,7 +1431,11 @@ in {
       };
     };
 
-    cfssl = { enable = prefs.enableCfssl; };
+    cfssl = {
+      enable = prefs.enableCfssl;
+      ca = "file:/run/secrets/cfssl-ca-pem";
+      caKey = "file:/run/secrets/cfssl-ca-key-pem";
+    };
 
     sslh = {
       enable = prefs.enableSslh;
