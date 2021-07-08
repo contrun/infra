@@ -837,6 +837,10 @@ in {
       permitRootLogin = "yes";
       startWhenNeeded = true;
     };
+    ttyd = {
+      enable = prefs.enableTtyd;
+      clientOptions = { fontSize = "16"; };
+    };
     samba = {
       enable = prefs.enableSamba;
       extraConfig = ''
@@ -1059,6 +1063,12 @@ in {
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
+          } // lib.optionalAttrs prefs.enableTtyd {
+            ttyd = {
+              rule = getRule "ttyd";
+              service = "ttyd";
+              tls = { };
+            };
           };
           middlewares = {
             aria2 = {
@@ -1129,6 +1139,17 @@ in {
             activitywatch = {
               loadBalancer = {
                 servers = [{ url = "http://localhost:5600/"; }];
+              };
+            };
+          } // lib.optionalAttrs prefs.enableTtyd {
+            ttyd = {
+              loadBalancer = {
+                passHostHeader = true;
+                servers = [{
+                  url = "http://localhost:${
+                      builtins.toString config.services.ttyd.port
+                    }/";
+                }];
               };
             };
           };
@@ -2312,6 +2333,13 @@ in {
                       tag = "productivity";
                       url =
                         "https://${prefs.getFullDomainName "activitywatch"}";
+                    }
+                    {
+                      enable = prefs.enableTtyd;
+                      name = "ttyd";
+                      subtitle = "web terminal emulator";
+                      tag = "coding";
+                      url = "https://${prefs.getFullDomainName "ttyd"}";
                     }
                     {
                       name = "organice";

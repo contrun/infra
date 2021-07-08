@@ -126,6 +126,7 @@ let
       log-level = "info";
     };
     enableCfssl = false;
+    enableTtyd = true;
     enableSslh = false;
     sslhPort = 44443;
     enableAioproxy = true;
