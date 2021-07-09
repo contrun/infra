@@ -781,37 +781,39 @@ in {
         enable = prefs.enableCoredns;
         package = args.inputs.self.coredns.${config.nixpkgs.system};
         config = let
-          getTemplate = t: ''
-            template IN ${t} ${prefs.mainDomain} {
-                match ^(|[.])(?P<p>.*)\.(?P<s>(?P<h>.*?)\.(?P<d>${prefs.mainDomain})[.])$
-                answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hostAliases.hub}{{ else }}{{ .Group.h }}{{ end }}.${prefs.mainDomain}."
-                fallthrough
-            }
-          '';
+          dnsServers = "1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5";
+          rewriteAliases = lib.concatStringsSep "\n" (lib.mapAttrsToList
+            (alias: host:
+              "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto")
+            prefs.hostAliases);
         in ''
           ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
               log
               debug
-              ${getTemplate "A"}
-              ${getTemplate "AAAA"}
-
-              cancel 0.01s # fail fast on cache miss
+              # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
+              # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
+              ${rewriteAliases}
+              # Catch-all rule, lest I must rebuild all hosts on new machines.
+              rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
+              # fail fast on cache miss
+              cancel 0.01s
               epicmdns ${prefs.mainDomain} {
-                min_ttl 120
-                browse_period 60
-                browse _workstation._tcp.local
-                browse _ssh._tcp.local
+                force_unicast true
+                min_ttl 180
+                browse_period 40
+                cache_purge_period 300
+                # browse _workstation._tcp.local
                 browse _adb._tcp.local
                 # browse _etcd-server-ssl._tcp
               }
               # mdns ${prefs.mainDomain}
-              alternate original NXDOMAIN,SERVFAIL,REFUSED . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
+              alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
           }
 
           .:${builtins.toString prefs.corednsPort} {
               log
               debug
-              forward . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
+              forward . ${dnsServers}
           }
                 '';
       };
@@ -2195,7 +2197,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableWger;
                       name = "wger";
-                      subtitle = "Fitness tracking";
+                      subtitle = "fitness tracking";
                       tag = "fitness";
                       url = "https://${prefs.getFullDomainName "wger"}";
                     }
@@ -2224,7 +2226,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableGitea;
                       name = "gitea";
-                      subtitle = "Version Control";
+                      subtitle = "version Control";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "gitea"}";
                     }
