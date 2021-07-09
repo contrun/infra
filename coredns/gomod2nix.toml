@@ -1809,8 +1809,8 @@
   ["github.com/marten-seemann/qpack".fetch]
     type = "git"
     url = "https://github.com/marten-seemann/qpack"
-    rev = "f8170edcec3367407e53d6cac6035f27ee18f88c"
-    sha256 = "1rv44x75ca37arscv01arrigl8k38wb4j57g66nzgyacyrdy69ny"
+    rev = "0d168213b9ff5cee18f7ba8cf5b33b5539208fec"
+    sha256 = "sha256-WwDEZyccu11AdDcncqN0xcV5rSBAlItRlX/HYj4FPVs="
 
 ["github.com/marten-seemann/qtls"]
   sumVersion = "v0.4.1"

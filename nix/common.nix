@@ -784,7 +784,7 @@ in {
           getTemplate = t: ''
             template IN ${t} ${prefs.mainDomain} {
                 match ^(|[.])(?P<p>.*)\.(?P<s>(?P<h>.*?)\.(?P<d>${prefs.mainDomain})[.])$
-                answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hostAliases.hub}{{ else }}{{ .Group.h }}{{ end }}.mdns.home.arpa."
+                answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hostAliases.hub}{{ else }}{{ .Group.h }}{{ end }}.${prefs.mainDomain}."
                 fallthrough
             }
           '';
@@ -796,7 +796,7 @@ in {
               ${getTemplate "AAAA"}
 
               cancel 0.01s # fail fast on cache miss
-              epicmdns mdns.home.arpa {
+              epicmdns ${prefs.mainDomain} {
                 min_ttl 120
                 browse_period 60
                 browse _workstation._tcp.local

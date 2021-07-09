@@ -923,6 +923,8 @@ let
         "tigervnc"
         "wayvnc"
         "remmina"
+        "freerdp"
+        "rdesktop"
         "rsync"
         "filezilla"
         "rclone"
