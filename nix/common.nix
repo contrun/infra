@@ -802,9 +802,8 @@ in {
                 min_ttl 180
                 browse_period 40
                 cache_purge_period 300
-                # browse _workstation._tcp.local
-                browse _adb._tcp.local
-                # browse _etcd-server-ssl._tcp
+                browse _workstation._tcp.local
+                browse _ssh._tcp.local
               }
               # mdns ${prefs.mainDomain}
               alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
