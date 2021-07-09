@@ -78,7 +78,7 @@ home-manager: home-install
 	home-manager switch -v --keep-going --keep-failed
 
 nixos-deploy:
-	deploy -sd '.#$(HOST)'
+	deploy --skip-checks --debug-logs --keep-result '.#$(HOST)'
 
 nixos-build-dirty nixos-switch-dirty nixos-bootloader-dirty:
 	$(call nixos-rebuild,$@) ${NIXFLAGS}

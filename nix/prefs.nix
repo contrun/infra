@@ -52,6 +52,12 @@ let
     (builtins.hashString "sha512" "hostname: ${hostname}");
 
   default = self: {
+    normalNodes = [ "ssg" "jxt" "shl" "mdq" ];
+    hostAliases =
+      builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
+      self.normalNodes // {
+        hub = "mdq";
+      };
     pkgsRelatedPrefs = {
       kernelPackages = pkgs.linuxPackages_latest;
       rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage
@@ -202,10 +208,9 @@ let
       "tobeoverridden@example.com"
     else
       "webmaster@${self.mainDomain}";
-    hubDomainPrefix = "mdq";
     domainPrefixes = let
       originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
-    in (if originalPrefix == self.hubDomainPrefix then [ "hub" ] else [ ])
+    in (if originalPrefix == self.hostAliases.hub then [ "hub" ] else [ ])
     ++ [ originalPrefix "local" ];
     domainPrefix = builtins.elemAt self.domainPrefixes 0;
     domains = builtins.map (prefix: internalGetSubDomain prefix self.mainDomain)

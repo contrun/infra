@@ -854,6 +854,38 @@
     rev = "9eff07ddfcb4001aa1aab280648153f46e1a8ddc"
     sha256 = "0kxd3wwh3xwqk0r684hsy281xq4y71cd11d4q2hspcjbnlbwh7cy"
 
+["github.com/epiclabs-io/diff3"]
+  sumVersion = "v0.0.0-20181217103619-05282cece609"
+  ["github.com/epiclabs-io/diff3".fetch]
+    type = "git"
+    url = "https://github.com/epiclabs-io/diff3"
+    rev = "05282cece60916962ea5baeb54d53ccfd3102cee"
+    sha256 = "12cp2fd971n2wkm83ghp08lbazx7r6hcr4ky48jbf4nqzjk30gfa"
+
+["github.com/epiclabs-io/epicmdns"]
+  sumVersion = "v0.0.0-20210308225500-1dbb05ab7fcd"
+  ["github.com/epiclabs-io/epicmdns".fetch]
+    type = "git"
+    url = "https://github.com/epiclabs-io/epicmdns"
+    rev = "1dbb05ab7fcd9bd943c88448c4952b141bdd92e1"
+    sha256 = "1j04mlj43n8gfrkwv8ld3436nd0xzi3qzbh3p81aadnscwdjnc89"
+
+["github.com/epiclabs-io/ticker"]
+  sumVersion = "v0.0.0-20210217212424-32a7825c498e"
+  ["github.com/epiclabs-io/ticker".fetch]
+    type = "git"
+    url = "https://github.com/epiclabs-io/ticker"
+    rev = "32a7825c498e3ceaf3de5fc5ec086248771b2c84"
+    sha256 = "11khmq2xjj9g2ikgzh47slb3vggh2zzch4fpn621igxv5m4ph7i4"
+
+["github.com/epiclabs-io/ut"]
+  sumVersion = "v0.0.0-20210307214010-1babf69b092b"
+  ["github.com/epiclabs-io/ut".fetch]
+    type = "git"
+    url = "https://github.com/epiclabs-io/ut"
+    rev = "1babf69b092beebac4df843c28f98263cba79bfc"
+    sha256 = "1mqhvjrig1lxajh2bf7rn31gwdpnyhzgg5daxccydzlbych5xwa0"
+
 ["github.com/evanphx/json-patch"]
   sumVersion = "v4.9.0+incompatible"
   ["github.com/evanphx/json-patch".fetch]
@@ -1773,12 +1805,12 @@
     sha256 = "0x1j4cvbap45zk962qkjalc1h3axhzzdy9cdzhcjmprmm1ql4gjm"
 
 ["github.com/marten-seemann/qpack"]
-  sumVersion = "v0.2.1"
+  sumVersion = "v0.1.0"
   ["github.com/marten-seemann/qpack".fetch]
     type = "git"
     url = "https://github.com/marten-seemann/qpack"
-    rev = "4f43360ce1a6e0e4b5e85d9115407908ca8e9eed"
-    sha256 = "sha256-TBfX15fqImNw21KZoPDaeyotja8muTMqsl8S34jJPt8="
+    rev = "f8170edcec3367407e53d6cac6035f27ee18f88c"
+    sha256 = "1rv44x75ca37arscv01arrigl8k38wb4j57g66nzgyacyrdy69ny"
 
 ["github.com/marten-seemann/qtls"]
   sumVersion = "v0.4.1"
@@ -2093,12 +2125,12 @@
     sha256 = "1cpna2x5l071z1vrnk7zipdkka8dzwsjyx7m79xk0lr08rip0kcj"
 
 ["github.com/openshift/coredns-mdns"]
-  sumVersion = "v0.0.0-20210225112255-5f49dc40907c"
+  sumVersion = "v0.0.0-20210625150643-8c0b6474833f"
   ["github.com/openshift/coredns-mdns".fetch]
     type = "git"
     url = "https://github.com/openshift/coredns-mdns"
-    rev = "5f49dc40907c43e7b69dcddd51d4000d51faa5aa"
-    sha256 = "1ih9w6q94xrfa4pggl9nrwj1k3mdf8fpyc1gdyakzzrq1rghwnqb"
+    rev = "8c0b6474833f28691cea555da8fd5efc2d1fe6c8"
+    sha256 = "0hdxcy35lf68xc1qzl139fd9a8wkcp9kirhc40gcgyi8mpzxv1wj"
 
 ["github.com/openshift/mdns-publisher"]
   sumVersion = "v0.0.0-20200219161514-0e41fab1ddec"
@@ -2397,12 +2429,12 @@
     sha256 = "1gv9p2nr46z80dnfjsklc6zxbgk96349sdsxjz05f3z6wb6m5l8f"
 
 ["github.com/sirupsen/logrus"]
-  sumVersion = "v1.6.0"
+  sumVersion = "v1.7.0"
   ["github.com/sirupsen/logrus".fetch]
     type = "git"
     url = "https://github.com/sirupsen/logrus"
-    rev = "60c74ad9be0d874af0ab0daef6ab07c5c5911f0d"
-    sha256 = "1zf9is1yxxnna0d1pyag2m9ziy3l27zb2j92p9msm1gx5jjrvzzj"
+    rev = "6699a89a232f3db797f2e280639854bbc4b89725"
+    sha256 = "1a59pw7zimvm8k423iq9l4f4qjj1ia1xc6pkmhwl2mxc46y2n442"
 
 ["github.com/skratchdot/open-golang"]
   sumVersion = "v0.0.0-20160302144031-75fb7ed4208c"
@@ -2531,6 +2563,14 @@
     url = "https://github.com/stretchr/testify"
     rev = "f654a9112bbeac49ca2cd45bfbe11533c4666cf8"
     sha256 = "1yhiqqzjvi63pf01rgzx68gqkkvjx03fvl5wk30br5l6s81s090l"
+
+["github.com/tilinna/clock"]
+  sumVersion = "v1.1.0"
+  ["github.com/tilinna/clock".fetch]
+    type = "git"
+    url = "https://github.com/tilinna/clock"
+    rev = "fe9665cd0e7ba38476993e155774c335fda558a7"
+    sha256 = "1b7ibcafa5gs2a0xbc3p2jrds080v1h9djrsw5nl3qpcix85h6fp"
 
 ["github.com/timewasted/linode"]
   sumVersion = "v0.0.0-20160829202747-37e84520dcf7"

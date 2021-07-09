@@ -784,7 +784,7 @@ in {
           getTemplate = t: ''
             template IN ${t} ${prefs.mainDomain} {
                 match ^(|[.])(?P<p>.*)\.(?P<s>(?P<h>.*?)\.(?P<d>${prefs.mainDomain})[.])$
-                answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hubDomainPrefix}{{ else }}{{ .Group.h }}{{ end }}.{{ .Group.d }}."
+                answer "{{ .Name }} 60 IN CNAME {{ if eq .Group.h `hub` }}${prefs.hostAliases.hub}{{ else }}{{ .Group.h }}{{ end }}.mdns.home.arpa."
                 fallthrough
             }
           '';
@@ -794,7 +794,17 @@ in {
               debug
               ${getTemplate "A"}
               ${getTemplate "AAAA"}
-              mdns ${prefs.mainDomain}
+
+              cancel 0.01s # fail fast on cache miss
+              epicmdns mdns.home.arpa {
+                min_ttl 120
+                browse_period 60
+                browse _workstation._tcp.local
+                browse _ssh._tcp.local
+                browse _adb._tcp.local
+                # browse _etcd-server-ssl._tcp
+              }
+              # mdns ${prefs.mainDomain}
               alternate original NXDOMAIN,SERVFAIL,REFUSED . 1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
           }
 
