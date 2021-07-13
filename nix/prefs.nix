@@ -352,6 +352,7 @@ let
       enableGrocy = self.enableAllOciContainers;
       enableCalibreWeb = self.enableAllOciContainers;
       enableDokuwiki = self.enableAllOciContainers;
+      enableTrilium = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;
       enablePleroma = self.enableAllOciContainers;

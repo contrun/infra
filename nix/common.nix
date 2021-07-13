@@ -1774,6 +1774,10 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "trilium" = {
+              "x86_64-linux" = "docker.io/zadam/trilium:latest";
+              "aarch64-linux" = "docker.io/hlince/trilium:latest";
+            };
             "xwiki" = let image = "docker.io/xwiki:lts-postgres-tomcat";
             in {
               "x86_64-linux" = image;
@@ -2012,6 +2016,9 @@ in {
             "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
           };
           traefikForwardingPort = 80;
+        } // mkContainer "trilium" prefs.ociContainers.enableTrilium {
+          volumes = [ "/var/data/trilium:/home/node/trilium-data" ];
+          traefikForwardingPort = 8080;
         } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
           dependsOn = [ "postgresql" ];
           environmentFiles = [ "/run/secrets/xwiki-env" ];
@@ -2219,7 +2226,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableEtesync;
                       name = "etesync notes";
-                      subtitle = "notes";
+                      subtitle = "note-taking";
                       tag = "productivity";
                       url =
                         "https://${prefs.getFullDomainName "etesync-notes"}";
@@ -2288,6 +2295,13 @@ in {
                       url = "https://${prefs.getFullDomainName "dokuwiki"}";
                     }
                     {
+                      enable = prefs.ociContainers.enableTrilium;
+                      name = "trilium";
+                      subtitle = "note-taking";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "trilium"}";
+                    }
+                    {
                       name = "traefik";
                       subtitle = "traefik dashboard";
                       tag = "operations";
@@ -2310,7 +2324,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableJoplin;
                       name = "joplin";
-                      subtitle = "notes-taking";
+                      subtitle = "note-taking";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "joplin"}";
                     }
@@ -2701,6 +2715,13 @@ in {
           preStart = builtins.concatStringsSep "\n" [
             "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync-dav"
             "${pkgs.coreutils}/bin/chown -vR 1000:1000 /var/data/etesync-dav"
+          ];
+        };
+      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTrilium {
+        "${prefs.ociContainerBackend}-trilium" = {
+          preStart = builtins.concatStringsSep "\n" [
+            "${pkgs.coreutils}/bin/mkdir -p /var/data/trilium"
+            "${pkgs.coreutils}/bin/chown -vR 1000:1000 /var/data/trilium"
           ];
         };
       } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTiddlyWiki {

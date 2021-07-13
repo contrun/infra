@@ -738,6 +738,7 @@ let
         # "mupdf"
         "graphviz"
         "drawio"
+        "trilium-desktop"
         "impressive"
         "gnuplot"
         # "goldendict"
