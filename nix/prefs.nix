@@ -341,6 +341,8 @@ let
       enableWger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
       enableEtesync = self.enableAllOciContainers;
+      enableEtesyncDav = self.enableAllOciContainers
+        && (self.nixosSystem == "x86_64-linux");
       enableN8n = self.enableAllOciContainers;
       enableGitea = self.enableAllOciContainers;
       enableWikijs = false;

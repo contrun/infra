@@ -1824,6 +1824,8 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "etesync-dav" = let image = "docker.io/etesync/etesync-dav:latest";
+            in { "x86_64-linux" = image; };
             "codeserver" = let image = "docker.io/codercom/code-server:latest";
             in {
               "x86_64-linux" = image;
@@ -2208,6 +2210,13 @@ in {
                       url = "https://${prefs.getFullDomainName "etesync-pim"}";
                     }
                     {
+                      enable = prefs.ociContainers.enableEtesyncDav;
+                      name = "etesync dav";
+                      subtitle = "etesync dav bridge";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "etesync-dav"}";
+                    }
+                    {
                       enable = prefs.ociContainers.enableEtesync;
                       name = "etesync notes";
                       subtitle = "notes";
@@ -2370,6 +2379,12 @@ in {
           dependsOn = [ "postgresql" ];
           environmentFiles = [ "/run/secrets/etesync-env" ];
           traefikForwardingPort = 3735;
+        } // mkContainer "etesync-dav" prefs.ociContainers.enableEtesyncDav {
+          volumes = [ "/var/data/etesync-dav:/data" ];
+          traefikForwardingPort = 37358;
+          environment = {
+            "ETESYNC_URL" = "https://${prefs.getFullDomainName "etesync"}";
+          };
         } // mkContainer "codeserver" prefs.ociContainers.enableCodeServer {
           volumes = [
             "${prefs.home}:/home/coder"
@@ -2679,6 +2694,13 @@ in {
           preStart = builtins.concatStringsSep "\n" [
             "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync/media"
             "${pkgs.coreutils}/bin/chown -vR 373:373 /var/data/etesync"
+          ];
+        };
+      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableEtesyncDav {
+        "${prefs.ociContainerBackend}-etesync-dav" = {
+          preStart = builtins.concatStringsSep "\n" [
+            "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync-dav"
+            "${pkgs.coreutils}/bin/chown -vR 1000:1000 /var/data/etesync-dav"
           ];
         };
       } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTiddlyWiki {
