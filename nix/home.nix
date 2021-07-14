@@ -739,6 +739,7 @@ let
         "graphviz"
         "drawio"
         "trilium-desktop"
+        "logseq"
         "impressive"
         "gnuplot"
         # "goldendict"
