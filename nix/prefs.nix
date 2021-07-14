@@ -293,6 +293,7 @@ let
     ];
     enableNextcloudClient = false;
     enableTaskWarriorSync = true;
+    enableVdirsyncer = true;
     enableHolePuncher = true;
     enableDdns = true;
     enableWireshark = true;

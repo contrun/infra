@@ -2241,7 +2241,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableGitea;
                       name = "gitea";
-                      subtitle = "version Control";
+                      subtitle = "version control";
                       tag = "productivity";
                       url = "https://${prefs.getFullDomainName "gitea"}";
                     }
@@ -3015,6 +3015,31 @@ in {
         };
       };
 
+      vdirsyncer = let name = "vdirsyncer";
+      in {
+        services.${name} = {
+          description = "vdirsyncer sync";
+          enable = prefs.enableTaskWarriorSync;
+          serviceConfig = {
+            Type = "oneshot";
+            # ExecStartPre = ''
+            #   ${pkgs.bash}/bin/bash -c "${pkgs.coreutils}/bin/yes | ${pkgs.vdirsyncer}/bin/vdirsyncer discover"'';
+            ExecStartPre = "${pkgs.vdirsyncer}/bin/vdirsyncer discover";
+            ExecStart = "${pkgs.vdirsyncer}/bin/vdirsyncer sync";
+          };
+        };
+        timers.${name} = {
+          enable = prefs.enableVdirsyncer;
+          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
+          wantedBy = [ "default.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* *:1/3:00";
+            Unit = "${name}.service";
+            Persistent = true;
+          };
+        };
+      };
+
       yandex-disk = let
         name = "yandex-disk";
         syncFolder = "${prefs.home}/Sync";
@@ -3041,6 +3066,7 @@ in {
         nextcloud-client
         hole-puncher
         task-warrior-sync
+        vdirsyncer
         yandex-disk
       ];
     in builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } all;
