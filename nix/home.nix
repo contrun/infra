@@ -739,6 +739,8 @@ let
         "graphviz"
         "drawio"
         "trilium-desktop"
+        "joplin"
+        "joplin-desktop"
         "logseq"
         "impressive"
         "gnuplot"

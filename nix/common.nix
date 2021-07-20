@@ -1006,6 +1006,9 @@ in {
       enable = prefs.enableTraefik;
       dynamicConfigOptions = {
         http = {
+          serversTransports = {
+            insecureSkipVerify = { insecureSkipVerify = true; };
+          };
           routers = {
             traefik-dashboard = {
               rule = "${
@@ -2084,7 +2087,6 @@ in {
           traefikForwardingPort = 22300;
         } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
           dependsOn = [ "postgresql" ];
-          volumes = [ "/var/data/nextcloud:/var/www/html" ];
           environment = {
             "BASE_URL" = "https://${prefs.getFullDomainName "miniflux"}";
           };
@@ -2818,6 +2820,8 @@ in {
             CLASH_UID="$(id -u "$CLASH_USER")"
             CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
             CLASH_CONFIG=/etc/clash-redir/default.yaml
+            # We first try to download the config file on behave of "$CLASH_USER",
+            # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
             if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
                 if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
                     >&2 echo "Failed to download clash config"
@@ -2830,7 +2834,9 @@ in {
             fi
             mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
             if ! curl -X PUT -H 'content-type: application/json' -d "{\"path\": \"$CLASH_CONFIG\"}" 'http://localhost:9090/configs/'; then
-                systemctl restart ${name}
+                if systemctl is-active --quiet ${name}; then
+                    systemctl restart ${name}
+                fi
             fi
           '';
       in {
