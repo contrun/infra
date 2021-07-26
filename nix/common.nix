@@ -1744,6 +1744,12 @@ in {
             };
             "wger" = let image = "docker.io/wger/apache:2.0-dev";
             in { "x86_64-linux" = image; };
+            "freeipa" = {
+              "x86_64-linux" =
+                "docker.io/freeipa/freeipa-server:fedora-rawhide";
+              "aarch64-linux" =
+                "docker.io/blackheat/freeipa-server:fedora-34-4.9.6";
+            };
             "cloudbeaver" = {
               "x86_64-linux" = "docker.io/dbeaver/cloudbeaver:latest";
             };
@@ -1924,6 +1930,33 @@ in {
           ];
           ports = [ "9091:9091" ];
           traefikForwardingPort = 9091;
+        } // mkContainer "freeipa" prefs.ociContainers.enableFreeipa {
+          extraOptions = [
+            "-h"
+            "freeipa.home.arpa"
+            "--sysctl"
+            "net.ipv6.conf.lo.disable_ipv6=0"
+            "--label=traefik.http.services.freeipa.loadbalancer.server.scheme=https"
+            "--label=traefik.http.services.freeipa.loadbalancer.serverstransport=insecureSkipVerify@file"
+          ];
+          environment = {
+            IPA_SERVER_INSTALL_OPTS =
+              "--ds-password=The-directory-server-password --admin-password=The-admin-password";
+          };
+          cmd = [
+            "ipa-server-install"
+            "-U"
+            "--no-ntp"
+            "--domain"
+            "freeipa.home.arpa"
+            "--realm=HOME.ARPA"
+          ];
+          volumes = [ "/var/data/freeipa:/data:Z" ]
+            ++ (if prefs.ociContainerBackend == "docker" then
+              [ "/sys/fs/cgroup:/sys/fs/cgroup:ro" ]
+            else
+              [ ]);
+          traefikForwardingPort = 443;
         } // mkContainer "cloudbeaver" prefs.ociContainers.enableCloudBeaver {
           volumes =
             [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
@@ -2147,6 +2180,13 @@ in {
                 items =
                   builtins.map (attrs: builtins.removeAttrs attrs [ "enable" ])
                   (builtins.filter (x: x.enable or true) [
+                    {
+                      enable = prefs.ociContainers.enableFreeipa;
+                      name = "freeipa";
+                      subtitle = "account management";
+                      tag = "auth";
+                      url = "https://${prefs.getFullDomainName "freeipa"}";
+                    }
                     {
                       enable = prefs.ociContainers.enableCloudBeaver;
                       name = "cloud beaver";
