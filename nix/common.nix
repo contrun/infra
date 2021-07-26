@@ -2888,6 +2888,7 @@ in {
         path = [
           pkgs.coreutils
           pkgs.systemd
+          pkgs.sudo
           pkgs.curl
           pkgs.diffutils
           pkgs.libcap
