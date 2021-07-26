@@ -109,8 +109,10 @@ let
     enableBumblebee = false;
     enableMediaKeys = true;
     enableEternalTerminal = true;
+    dnsServers = [ "1.0.0.1" "8.8.4.4" "9.9.9.9" "180.76.76.76" "223.5.5.5" ];
     enableResolved = true;
     enableCoredns = true;
+    enableCorednsForResolved = self.enableCoredns;
     corednsPort = 5322;
     enableSmartdns = false;
     enableUrxvtd = !self.isMinimalSystem;
@@ -196,6 +198,7 @@ let
     maxJobs = "auto";
     proxy = null;
     enableClashRedir = true;
+    autoStartClashRedir = self.enableClashRedir;
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = true;
     enableSyncthing = true;
@@ -508,6 +511,8 @@ let
       enableEternalTerminal = false;
       enablePostfix = false;
       enableZerotierone = false;
+      autoStartClashRedir = false;
+      dnsServers = [ "10.10.61.128" "10.10.61.129" ];
       buildMachines = super.buildMachines ++ [
         {
           hostName = "node1";

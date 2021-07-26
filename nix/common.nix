@@ -800,8 +800,8 @@ in {
         enable = prefs.enableCoredns;
         package = args.inputs.self.coredns.${config.nixpkgs.system};
         config = let
-          dnsServers = "1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5";
-          rewriteAliases = lib.concatStringsSep "\n" (lib.mapAttrsToList
+          dnsServers = builtins.concatStringsSep " " prefs.dnsServers;
+          rewriteAliases = builtins.concatStringsSep "\n" (lib.mapAttrsToList
             (alias: host:
               "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto")
             prefs.hostAliases);
@@ -850,10 +850,11 @@ in {
       enable = prefs.enableResolved;
       extraConfig = builtins.concatStringsSep "\n" [
         (if (args.inputs.self.coredns ? "${config.nixpkgs.system}")
-        && prefs.enableCoredns then ''
+        && prefs.enableCorednsForResolved then ''
           DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
         '' else ''
-          DNS=1.0.0.1 8.8.4.4 9.9.9.9 180.76.76.76 223.5.5.5
+          # DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
+          DNS=${builtins.concatStringsSep " " prefs.dnsServers}
         '')
       ];
     };
@@ -2841,7 +2842,8 @@ in {
       services."${name}" = {
         description = "transparent proxy with clash";
         enable = prefs.enableClashRedir;
-        wantedBy = [ "default.target" ];
+        wantedBy =
+          if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
         wants = [ "network-online.target" ];
         after = [ "network-online.target" ];
         path = [
