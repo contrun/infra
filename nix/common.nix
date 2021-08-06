@@ -743,7 +743,14 @@ in {
       backups = let
         restic-exclude-files = pkgs.writeTextFile {
           name = "restic-excluded-files";
-          text = "/var/data/postgresql";
+          text = ''
+            ltximg
+            .stversions
+            .stfolder
+            .sync
+            .syncthing.*.tmp
+            ~syncthing~*.tmp
+          '';
         };
         go = name: conf: backend: {
           "${name}-${backend}" = {
@@ -753,7 +760,7 @@ in {
             rcloneConfigFile = "/run/secrets/rclone-config";
             timerConfig = {
               OnCalendar = "00:05";
-              RandomizedDelaySec = "5h";
+              RandomizedDelaySec = "6h";
             };
             pruneOpts = [
               "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
@@ -763,8 +770,20 @@ in {
         mkBackup = name: conf:
           go name conf "backup-primary" // go name conf "backup-secondary";
       in mkBackup "vardata" {
-        extraBackupArgs = [ "--exclude=postgresql" ];
+        extraBackupArgs = [
+          "-v=3"
+          "--exclude=/postgresql"
+          "--exclude-file=${restic-exclude-files}"
+        ];
         paths = [ "/var/data" ];
+      } // mkBackup "sync" {
+        extraBackupArgs = [
+          "-v=3"
+          "--exclude-larger-than=500G"
+          "--exclude=.git"
+          "--exclude-file=${restic-exclude-files}"
+        ];
+        paths = [ "${prefs.home}/Sync" ];
       };
     };
     glusterfs = {
@@ -3101,7 +3120,10 @@ in {
           serviceConfig = {
             Restart = "always";
             ExecStart =
-              "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${syncFolder}' --exclude-dirs='${prefs.yandexExcludedFiles}'";
+              "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${syncFolder}' ${
+                lib.concatMapStringsSep " " (dir: "--exclude-dirs='${dir}'")
+                prefs.yandexExcludedDirs
+              }";
           };
         };
       } else

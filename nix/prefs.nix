@@ -236,7 +236,8 @@ let
     } else
       { };
     enableYandexDisk = self.nixosSystem == "x86_64-linux";
-    yandexExcludedFiles = "docs/org-mode/roam/.emacs";
+    yandexExcludedDirs =
+      [ "docs/org-mode/roam/.emacs.d" "ltximg" ".stversions" ".stfolder" ];
     enableTraefik = false;
     enablePostgresql = false;
     enableRedis = false;
