@@ -482,7 +482,7 @@ let
       enableHidpi = false;
       maxJobs = 6;
       enableCfssl = true;
-      enableK3s = true;
+      # enableK3s = true;
       enableWireless = true;
       enableAcme = true;
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {

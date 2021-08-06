@@ -283,7 +283,7 @@
             # chardet
             dateutil
             setuptools
-            virtualenvwrapper
+            # virtualenvwrapper
             pycparser
             pynvim
             pyparsing
