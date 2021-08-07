@@ -65,6 +65,8 @@ jobs:
       run: |
         set -xeu
         nix flake update --recreate-lock-file
+        # Not work for now, as packages are not built in github actions yet.
+        # echo "[]" > nix/broken-packages.json
         git status
         if ! git diff; then
             echo "Abort now. No updates available."
@@ -155,11 +157,20 @@ jobs:
       if: ${{ steps.check-nix-inputs-update-available.conclusion != 'failure' }}
       timeout-minutes: 3000
       run: |
+        build() {
+            nix build --system ${{ matrix.nix-system }} --extra-system-features ${{ matrix.nix-system }} --extra-system-features x86_64-linux --extra-extra-platforms ${{ matrix.nix-system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel'
+        }
         # Prevent conflict between Cachix installed by workflow and the one installed in the config
         nix-env --set-flag priority 1 cachix
         # Build a minimal nixos system
         # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
-        nix build --system ${{ matrix.nix-system }} --extra-system-features ${{ matrix.nix-system }} --extra-system-features x86_64-linux --extra-extra-platforms ${{ matrix.nix-system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel'
+        build
+        # Not work for now, as packages are not built in github actions yet.
+        # if ! build; then
+        #     git checkout "$(git log --pretty=format:"%H" --skip 1 -1 -- nix/broken-packages.json)" -- nix/broken-packages.json
+        #     git commit --all --amend --no-edit
+        #     build
+        # fi
         nix path-info -sShr '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel' | sort -h -k2
         df -h
 
