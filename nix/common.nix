@@ -1523,45 +1523,43 @@ in {
       enable = prefs.enableSyncthing;
       user = prefs.owner;
       dataDir = prefs.home;
-      declarative = {
-        devices = {
-          ssg = {
-            id =
-              "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
-            introducer = true;
-          };
-          shl = {
-            id =
-              "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
-            introducer = true;
-          };
-          jxt = {
-            id =
-              "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
-            introducer = true;
-          };
-          mdq = {
-            id =
-              "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
-            introducer = true;
-          };
+      devices = {
+        ssg = {
+          id =
+            "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+          introducer = true;
         };
-        folders = {
-          "${prefs.home}/Storage/Calibre" = {
-            id = "calibre";
-            devices = [ "ssg" "shl" "jxt" "mdq" ];
-            ignorePerms = false;
-            versioning = {
-              # TODO: This does not work. Syncthing seems to be using new schema now.
-              # See https://github.com/syncthing/syncthing/pull/7407
-              params = {
-                cleanInterval = "3600";
-                maxAge = "315360000";
-                fsPath = "${prefs.home}/.cache/syncthing_versioning";
-                versionsPath = "${prefs.home}/.cache/syncthing_versioning";
-              };
-              type = "staggered";
+        shl = {
+          id =
+            "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+          introducer = true;
+        };
+        jxt = {
+          id =
+            "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+          introducer = true;
+        };
+        mdq = {
+          id =
+            "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+          introducer = true;
+        };
+      };
+      folders = {
+        "${prefs.home}/Storage/Calibre" = {
+          id = "calibre";
+          devices = [ "ssg" "shl" "jxt" "mdq" ];
+          ignorePerms = false;
+          versioning = {
+            # TODO: This does not work. Syncthing seems to be using new schema now.
+            # See https://github.com/syncthing/syncthing/pull/7407
+            params = {
+              cleanInterval = "3600";
+              maxAge = "315360000";
+              fsPath = "${prefs.home}/.cache/syncthing_versioning";
+              versionsPath = "${prefs.home}/.cache/syncthing_versioning";
             };
+            type = "staggered";
           };
         };
       };

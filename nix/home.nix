@@ -106,10 +106,11 @@ let
       (if !builtins.elem path brokenPackages then
         dontCheckPkg (getMyPkgOrPkg attrset path)
       else
-        builtins.trace
-        "${path} is will not be installed on a broken packages systems" null)
+        pkgs.lib.warn
+        "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
+        null)
     else if builtins.elem path brokenPackages then
-      builtins.trace "${path} will not be installed as it seems to be broken"
+      pkgs.lib.warn "${path} will not be installed as it is marked as broken"
       null
     else if prefs.isMinimalSystem && (builtins.elem path largePackages) then
       builtins.trace "${path} will not be installed in a minimal system" null
@@ -506,6 +507,7 @@ let
       packages = getPackages [
         "gifsicle"
         # "gimp"
+        "krita"
         "ncpamixer"
         "maim"
         "pavucontrol"
