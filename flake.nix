@@ -43,6 +43,10 @@
         home-manager.follows = "home-manager";
       };
     };
+    nixos-vscode-server = {
+      url = "github:msteen/nixos-vscode-server";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, flake-utils, gomod2nix, ... }@inputs:

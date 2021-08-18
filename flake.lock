@@ -372,6 +372,22 @@
         "type": "github"
       }
     },
+    "nixos-vscode-server": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1628029847,
+        "narHash": "sha256-nhuU4nExK6IZEsCHYPnyrl4Om+WOtWZ0lmzVDRcibms=",
+        "owner": "msteen",
+        "repo": "nixos-vscode-server",
+        "rev": "9ae8e9e3262c415c9c75ce1a48909180aea51606",
+        "type": "github"
+      },
+      "original": {
+        "owner": "msteen",
+        "repo": "nixos-vscode-server",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1628693817,
@@ -513,6 +529,7 @@
         "gomod2nix": "gomod2nix",
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
+        "nixos-vscode-server": "nixos-vscode-server",
         "nixpkgs": "nixpkgs",
         "nixpkgs-mozilla": "nixpkgs-mozilla_2",
         "nixpkgs-nixpkgs-unstable": "nixpkgs-nixpkgs-unstable",

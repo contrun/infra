@@ -229,6 +229,14 @@ let
     else
       { };
 
+  miscConfiguration = { config, pkgs, system, inputs, ... }:
+    let
+      nixos-vscode-server = {
+        imports = [ (import inputs.nixos-vscode-server) ];
+        services.vscode-server.enable = true;
+      };
+    in nixos-vscode-server;
+
   tmpConfiguration = { config, pkgs, system, inputs, ... }: { };
 
 in {
@@ -247,6 +255,7 @@ in {
       inputs.home-manager.nixosModules.home-manager
       homeManagerConfiguration
       overlaysConfiguration
+      miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)
     ];
