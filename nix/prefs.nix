@@ -446,7 +446,6 @@ let
           enableAcme = true;
           enableAllOciContainers = true;
         } // (if nixosSystem == "x86_64-linux" then {
-          enableJupyter = true;
           enableVirtualboxHost = true;
         } else if nixosSystem == "aarch64-linux" then {
           installHomePackages =
