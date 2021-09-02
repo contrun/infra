@@ -1731,6 +1731,7 @@ in {
               "x86_64-linux" = "docker.io/postgres:13";
               "aarch64-linux" = "docker.io/arm64v8/postgres:13";
             };
+            hledger = { "x86_64-linux" = "docker.io/dastapov/hledger:latest"; };
           in {
             "postgresql" = postgresql;
             "postgresql-init" = postgresql;
@@ -1742,6 +1743,8 @@ in {
               "x86_64-linux" = "docker.io/authelia/authelia:4";
               "aarch64-linux" = "docker.io/authelia/authelia:4";
             };
+            "hledger" = hledger;
+            "hledger-init" = hledger;
             "searx" = {
               "x86_64-linux" = "docker.io/searxng/searxng:latest";
               "aarch64-linux" = "docker.io/searxng/searxng:latest";
@@ -1933,18 +1936,16 @@ in {
           enableTraefik = false;
         } // mkContainer "authelia" prefs.ociContainers.enableAuthelia {
           extraOptions = [
-            "--mount"
-            "type=bind,source=/run/secrets/authelia-conf,target=/config/configuration.yml"
-            "--mount"
-            "type=bind,source=/run/secrets/authelia-users,target=/config/users.yml"
-            "--label"
-            "traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
+            "--mount=type=bind,source=/run/secrets/authelia-conf,target=/config/configuration.yml"
+            "--mount=type=bind,source=/run/secrets/authelia-users,target=/config/users.yml"
+            "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
               prefs.getFullDomainName "authelia"
             }"
-            "--label"
-            "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
-            "--label"
-            "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+            "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+            "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+            "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
+            "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
+            "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
           ];
           ports = [ "9091:9091" ];
           traefikForwardingPort = 9091;
@@ -1980,6 +1981,23 @@ in {
             [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
           traefikForwardingPort = 8978;
           middlewares = [ "authelia" ];
+        } // mkContainer "hledger" prefs.ociContainers.enableHledger {
+          dependsOn = [ "hledger-init" ];
+          volumes = [ "/var/data/hledger:/data" ];
+          traefikForwardingPort = 5000;
+          middlewares = [ "authelia-basic" ];
+          environment = {
+            "HLEDGER_BASE_URL" = "https://${prefs.getFullDomainName "hledger"}";
+            "HLEDGER_CAPABILITIES" = "view,add,manage";
+          };
+        } // mkContainer "hledger-init" prefs.ociContainers.enableHledger {
+          volumes = [ "/var/data/hledger:/data" ];
+          cmd = [
+            "bash"
+            "-c"
+            "sudo chown -R $(id -u) /data; echo . | hledger add -f /data/hledger.journal --no-new-accounts"
+          ];
+          enableTraefik = false;
         } // mkContainer "searx" prefs.ociContainers.enableSearx {
           environment = {
             # Generate a new searx configuration, otherwise searx will not auto use the generated config.
@@ -2218,6 +2236,13 @@ in {
                       subtitle = "authentication and authorization";
                       tag = "auth";
                       url = "https://${prefs.getFullDomainName "authelia"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableHledger;
+                      name = "hledger";
+                      subtitle = "ledger";
+                      tag = "house-keeping";
+                      url = "https://${prefs.getFullDomainName "hledger"}";
                     }
                     {
                       enable = prefs.ociContainers.enableSearx;
@@ -2783,6 +2808,13 @@ in {
             "${pkgs.coreutils}/bin/mkdir -p /var/data/trilium"
             "${pkgs.coreutils}/bin/chown -vR 1000:1000 /var/data/trilium"
           ];
+        };
+      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableHledger {
+        "${prefs.ociContainerBackend}-hledger-init" = {
+          serviceConfig = {
+            Type = lib.mkForce "oneshot";
+            Restart = lib.mkForce "on-failure";
+          };
         };
       } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTiddlyWiki {
         "${prefs.ociContainerBackend}-tiddlywiki" = {
