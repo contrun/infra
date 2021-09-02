@@ -931,6 +931,7 @@ let
         "remmina"
         "freerdp"
         "rdesktop"
+        "teamviewer"
         "rsync"
         "filezilla"
         "rclone"
