@@ -1,10 +1,7 @@
-{ config, pkgs, prefs, ... }@args:
+{ config, pkgs, lib, prefs, inputs, ... }@args:
 let
   brokenPackages = let p = ./broken-packages.nix;
-  in if builtins.pathExists p then
-    (import p)
-  else
-    [ ];
+  in if builtins.pathExists p then (import p) else [ ];
   x86OnlyPackages = let
     brokenOnArmPackages =
       [ "eclipses.eclipse-java" "hardinfo" "ltrace" "brave" "mplayer" ];
@@ -990,6 +987,22 @@ in {
   #     package = pkgs.firefox-devedition-bin;
   #   };
   # };
+
+  programs = lib.optionalAttrs (prefs.enableSmos) {
+    smos = {
+      enable = true;
+      config = { workflow-dir = "${prefs.home}/Sync/workflow"; };
+      sync = {
+        enable = false;
+        # Note we must change the password here.
+        username = "YOURUSERNAMEHERE";
+        password = "YOURPASSWORDHERE";
+        server-url = "https://smos.hub.${prefs.mainDomain}";
+      };
+      backup = { enable = true; };
+      notify = { enable = true; };
+    };
+  };
 
   home = {
     extraOutputsToInstall = [ "dev" "lib" "doc" "info" "devdoc" "out" ];

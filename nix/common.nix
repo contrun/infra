@@ -26,8 +26,47 @@ let
       nativeBuildInputs = [ pkgs.remarshal ];
     } "json2yaml -i $json -o $out";
 in {
-  imports =
-    (builtins.filter (x: builtins.pathExists x) [ ./machine.nix ./cachix.nix ]);
+  imports = let
+    smosConfiguration = { config, pkgs, lib, inputs, ... }: {
+      imports = [
+        (import (inputs.smos + "/nix/nixos-module.nix") {
+          envname = "production";
+        })
+      ];
+
+      config = {
+        nix.binaryCaches = [ "https://smos.cachix.org" ];
+        nix.binaryCachePublicKeys =
+          [ "smos.cachix.org-1:YOs/tLEliRoyhx7PnNw36cw2Zvbw5R0ASZaUlpUv+yM=" ];
+
+        services.smos = {
+          production = {
+            enable = true;
+            web-server = {
+              enable = true;
+              log-level = "Info";
+              hosts = prefs.getFullDomainNames "smos";
+              port = 8403;
+              api-url = "https://${
+                  builtins.head config.services.smos.production.api-server.hosts
+                }";
+              web-url = "https://${prefs.getFullDomainName "smos"}";
+              # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
+              # data-dir = "${prefs.home}/Sync/workflow";
+            };
+            api-server = {
+              enable = true;
+              log-level = "Info";
+              hosts = prefs.getFullDomainNames "smos-api";
+              port = 8402;
+              local-backup = { enable = true; };
+            };
+          };
+        };
+      };
+    };
+  in (builtins.filter (x: builtins.pathExists x) [ ./machine.nix ./cachix.nix ])
+  ++ (lib.optionals prefs.enableSmosServer [ smosConfiguration ]);
   security = {
     sudo = { wheelNeedsPassword = false; };
     acme = {
@@ -1090,6 +1129,17 @@ in {
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
+          } // lib.optionalAttrs prefs.enableSmosServer {
+            smos = {
+              rule = getRule "smos";
+              service = "smos";
+              tls = { };
+            };
+            smos-api = {
+              rule = getRule "smos-api";
+              service = "smos-api";
+              tls = { };
+            };
           } // lib.optionalAttrs prefs.enableActivityWatch {
             activitywatch = {
               rule = getRule "activitywatch";
@@ -1167,6 +1217,27 @@ in {
               loadBalancer = {
                 passHostHeader = false;
                 servers = [{ url = "http://localhost:8384/"; }];
+              };
+            };
+          } // lib.optionalAttrs prefs.enableSmosServer {
+            smos = {
+              loadBalancer = {
+                servers = [{
+                  url = "http://localhost:${
+                      builtins.toString
+                      config.services.smos.production.web-server.port
+                    }/";
+                }];
+              };
+            };
+            smos-api = {
+              loadBalancer = {
+                servers = [{
+                  url = "http://localhost:${
+                      builtins.toString
+                      config.services.smos.production.api-server.port
+                    }/";
+                }];
               };
             };
           } // lib.optionalAttrs prefs.enableActivityWatch {
@@ -2243,6 +2314,13 @@ in {
                       subtitle = "ledger";
                       tag = "house-keeping";
                       url = "https://${prefs.getFullDomainName "hledger"}";
+                    }
+                    {
+                      enable = prefs.enableSmosServer;
+                      name = "smos";
+                      subtitle = "self-management";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "smos"}";
                     }
                     {
                       enable = prefs.ociContainers.enableSearx;

@@ -536,7 +536,24 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur-no-pkgs": "nur-no-pkgs",
         "old-ghc-nix": "old-ghc-nix",
+        "smos": "smos",
         "sops-nix": "sops-nix"
+      }
+    },
+    "smos": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1630238597,
+        "narHash": "sha256-5nvD3IZoIsDucQ0IY7OA+TuSfnJu23/ERASn9GQYcqU=",
+        "owner": "NorfairKing",
+        "repo": "smos",
+        "rev": "d1d6ffb0eea28f5e31590bc5ce0a6f1d2a622067",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NorfairKing",
+        "repo": "smos",
+        "type": "github"
       }
     },
     "sops-nix": {

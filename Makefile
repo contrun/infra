@@ -17,8 +17,10 @@ DESTDIR.home = $(DESTDIR)
 DESTDIR.root = $(DESTROOTDIR)
 SRCDIR.home = $(DIR)
 SRCDIR.root = $(ROOTDIR)
-NIXOSREBUILD.build = nix build .\#nixosConfigurations.$(HOST).config.system.build.toplevel
-NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake .\#$(HOST) $(if $(findstring -dirty,$1),,--profile-name flake.$(shell date +%Y%m%d).$(shell git rev-parse --short HEAD))
+# TODO: Remove impure
+# error: attribute 'currentSystem' missing https://github.com/obsidiansystems/obelisk/issues/854
+NIXOSREBUILD.build = nix build --impure .\#nixosConfigurations.$(HOST).config.system.build.toplevel
+NIXOSREBUILD.switch = sudo nixos-rebuild switch --impure --flake .\#$(HOST) $(if $(findstring -dirty,$1),,--profile-name flake.$(shell date +%Y%m%d).$(shell git rev-parse --short HEAD))
 NIXOSREBUILD.bootloader = $(NIXOS.switch) --install-bootloader
 EXTRANIXFLAGS = $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),)
 NIXFLAGS = $(EXTRANIXFLAGS) --show-trace --keep-going --keep-failed
@@ -78,7 +80,7 @@ home-manager: home-install
 	home-manager switch -v --keep-going --keep-failed
 
 nixos-deploy:
-	deploy --skip-checks --debug-logs --keep-result '.#$(HOST)'
+	deploy --skip-checks --auto-rollback false --magic-rollback false --debug-logs --keep-result '.#$(HOST)' -- --impure
 
 nixos-build-dirty nixos-switch-dirty nixos-bootloader-dirty:
 	$(call nixos-rebuild,$@) ${NIXFLAGS}

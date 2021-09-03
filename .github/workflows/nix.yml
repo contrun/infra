@@ -158,7 +158,7 @@ jobs:
       timeout-minutes: 3000
       run: |
         build() {
-            nix build --system ${{ matrix.nix-system }} --extra-system-features ${{ matrix.nix-system }} --extra-system-features x86_64-linux --extra-extra-platforms ${{ matrix.nix-system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel'
+            nix build --impure --system ${{ matrix.nix-system }} --extra-system-features ${{ matrix.nix-system }} --extra-system-features x86_64-linux --extra-extra-platforms ${{ matrix.nix-system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel'
         }
         # Prevent conflict between Cachix installed by workflow and the one installed in the config
         nix-env --set-flag priority 1 cachix

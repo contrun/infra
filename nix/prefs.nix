@@ -272,6 +272,8 @@ let
     enableXserver = true;
     enableXautolock = self.enableXserver;
     enableGPGAgent = true;
+    enableSmos = (self.nixosSystem == "x86_64-linux");
+    enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
     enableCalibreServer = true;
     calibreServerLibraries = [ "${self.home}/Storage/Calibre" ];
@@ -553,11 +555,12 @@ let
       enableVsftpd = false;
     } else if hostname == "mdq" then {
       isMinimalSystem = false;
+      hostId = "59b352bc";
       dpi = 128;
       enableAllOciContainers = true;
       enableTraefik = true;
       enableAcme = true;
-      hostId = "59b352bc";
+      enableSmosServer = true;
     } else {
       isMinimalSystem = true;
     });

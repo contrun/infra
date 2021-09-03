@@ -31,6 +31,10 @@
       url = "github:mozilla/nixpkgs-mozilla";
       flake = false;
     };
+    smos = {
+      url = "github:NorfairKing/smos";
+      flake = false;
+    };
     old-ghc-nix = {
       url = "github:mpickering/old-ghc-nix";
       flake = false;

@@ -138,7 +138,7 @@ let
       };
     };
 
-  homeManagerConfiguration = { ... }: {
+  homeManagerConfiguration = { config, pkgs, lib, inputs, ... }@args: {
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;
@@ -163,7 +163,8 @@ let
                 };
               };
             })
-          ];
+          ] ++ (lib.optionals prefs.enableSmos
+            [ (inputs.smos + "/nix/home-manager-module.nix") ]);
         };
       };
     };
