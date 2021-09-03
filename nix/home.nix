@@ -1,8 +1,8 @@
 { config, pkgs, prefs, ... }@args:
 let
-  brokenPackages = let p = ./broken-packages.json;
+  brokenPackages = let p = ./broken-packages.nix;
   in if builtins.pathExists p then
-    builtins.fromJSON (builtins.readFile p)
+    (import p)
   else
     [ ];
   x86OnlyPackages = let
