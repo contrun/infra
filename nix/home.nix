@@ -992,6 +992,7 @@ in {
     smos = {
       enable = true;
       config = { workflow-dir = "${prefs.home}/Sync/workflow"; };
+      # TODO: I use a custom systemd unit instead of this, as it is more secure.
       sync = {
         enable = false;
         # Note we must change the password here.
@@ -1003,6 +1004,29 @@ in {
       notify = { enable = true; };
     };
   };
+
+  systemd.user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+    (let name = "smos-sync";
+    in lib.optionalAttrs prefs.enableSmos {
+      services.${name} = {
+        Unit = { Description = "sync smos"; };
+        Service = {
+          Type = "oneshot";
+          ExecStart =
+            "${config.programs.smos.smosPackages.smos-sync-client}/bin/smos-sync-client sync";
+          EnvironmentFile = "/run/secrets/smos-sync-env";
+        };
+      };
+      timers.${name} = {
+        Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
+        Timer = {
+          OnCalendar = "*-*-* *:1/3:00";
+          Unit = "${name}.service";
+          Persistent = true;
+        };
+      };
+    })
+  ];
 
   home = {
     extraOutputsToInstall = [ "dev" "lib" "doc" "info" "devdoc" "out" ];

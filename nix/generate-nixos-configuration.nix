@@ -129,6 +129,12 @@ let
             owner = "aria2";
             group = "aria2";
           };
+        }) // (lib.optionalAttrs prefs.enableSmos {
+          smos-sync-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
         }) // (lib.optionalAttrs prefs.enableCfssl {
           cfssl-ca-key-pem = { owner = "cfssl"; };
         }) // (lib.optionalAttrs prefs.enableGlusterfs {
