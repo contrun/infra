@@ -1019,6 +1019,7 @@ in {
       };
       timers.${name} = {
         Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
+        Install = { WantedBy = [ "default.target" ]; };
         Timer = {
           OnCalendar = "*-*-* *:1/3:00";
           Unit = "${name}.service";
