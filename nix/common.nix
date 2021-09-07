@@ -620,6 +620,18 @@ in {
         deps = [ ];
       };
 
+      # https://github.com/NixOS/nixpkgs/issues/3702
+      linger = {
+        text = ''
+          # remove all existing lingering users
+          rm -r /var/lib/systemd/linger
+          mkdir /var/lib/systemd/linger
+          # enable for the subset of declared users
+          touch /var/lib/systemd/linger/${prefs.owner}
+        '';
+        deps = [ ];
+      };
+
       # Fuck pre-built dynamic binaries
       # copied from https://github.com/NixOS/nixpkgs/pull/69057
       ldlinux = {
