@@ -830,7 +830,7 @@ in {
       } // mkBackup "sync" {
         extraBackupArgs = [
           "-v=3"
-          "--exclude-larger-than=500G"
+          "--exclude-larger-than=500M"
           "--exclude=.git"
           "--exclude-file=${restic-exclude-files}"
         ];
@@ -1051,11 +1051,13 @@ in {
       joinNetworks = prefs.zerotieroneNetworks;
     };
     system-config-printer.enable = prefs.enablePrinting;
-    logind.extraConfig = ''
-      HandlePowerKey=suspend
-      HandleLidSwitch=ignore
-      RuntimeDirectorySize=50%
-    '';
+    logind = {
+      lidSwitchExternalPower = "ignore";
+      extraConfig = ''
+        HandlePowerKey=suspend
+        RuntimeDirectorySize=50%
+      '';
+    };
     postfix = {
       enable = prefs.enablePostfix;
       rootAlias = prefs.owner;
