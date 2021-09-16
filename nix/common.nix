@@ -1016,6 +1016,161 @@ in {
       };
     };
 
+    grafana = {
+      enable = prefs.enableGrafana;
+      domain = prefs.getFullDomainName "grafana";
+      port = prefs.grafanaPort;
+      addr = "127.0.0.1";
+    };
+    prometheus = {
+      enable = prefs.enablePrometheus;
+      port = 9001;
+      exporters = { node = { enable = true; }; };
+      scrapeConfigs = [{
+        job_name = "node";
+        static_configs = [{
+          targets = [
+            "127.0.0.1:${
+              toString config.services.prometheus.exporters.node.port
+            }"
+          ];
+          labels = { instance_node = prefs.hostname; };
+        }];
+      }] ++ lib.optionals prefs.enableTraefik [{
+        job_name = "traefik";
+        static_configs = [{
+          targets =
+            [ "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}" ];
+          labels = { instance_node = prefs.hostname; };
+        }];
+      }];
+    };
+    promtail = {
+      enable = prefs.enablePromtail;
+      configuration = {
+        server = {
+          http_listen_port = prefs.promtailHttpPort;
+          grpc_listen_port = prefs.promtailGrpcPort;
+        };
+        clients = [{
+          url = "http://127.0.0.1:${
+              builtins.toString prefs.lokiHttpPort
+            }/loki/api/v1/push";
+        }];
+        positions = { "filename" = "/var/cache/promtail/positions.yaml"; };
+        scrape_configs = [{
+          job_name = "journal";
+          journal = {
+            labels = {
+              host = prefs.hostname;
+              job = "systemd-journal";
+            };
+            max_age = "12h";
+          };
+          relabel_configs = [{
+            source_labels = [ "__journal__systemd_unit" ];
+            target_label = "unit";
+          }];
+        }] ++ lib.optionals prefs.enableTraefik [
+          {
+            job_name = "traefik";
+            static_configs = [{
+              targets = [ "localhost" ];
+              labels = {
+                __path__ = "/var/log/traefik/log.json";
+                instance_node = prefs.hostname;
+                job = "traefik";
+              };
+            }];
+          }
+          {
+            job_name = "traefik-access";
+            static_configs = [{
+              targets = [ "localhost" ];
+              labels = {
+                __path__ = "/var/log/traefik/access.log.json";
+                instance_node = prefs.hostname;
+                job = "traefik-access";
+              };
+            }];
+          }
+        ];
+      };
+    };
+    loki = {
+      enable = prefs.enableLoki;
+      configuration = {
+        auth_enabled = false;
+        chunk_store_config = { max_look_back_period = "0s"; };
+        compactor = {
+          shared_store = "filesystem";
+          working_directory = "/var/lib/loki/boltdb-shipper-compactor";
+        };
+        ingester = {
+          chunk_idle_period = "1h";
+          chunk_retain_period = "30s";
+          chunk_target_size = 1048576;
+          lifecycler = {
+            address = "127.0.0.1";
+            final_sleep = "0s";
+            ring = {
+              kvstore = { store = "inmemory"; };
+              replication_factor = 1;
+            };
+          };
+          max_chunk_age = "1h";
+          max_transfer_retries = 0;
+          wal = {
+            dir = "/var/lib/loki/wal";
+            enabled = true;
+          };
+        };
+        limits_config = {
+          reject_old_samples = true;
+          reject_old_samples_max_age = "168h";
+        };
+        ruler = {
+          alertmanager_url = "http://localhost:9093";
+          enable_api = true;
+          ring = { kvstore = { store = "inmemory"; }; };
+          rule_path = "/var/lib/loki/rules-temp";
+          storage = {
+            local = { directory = "/var/lib/loki/rules"; };
+            type = "local";
+          };
+        };
+        schema_config = {
+          configs = [{
+            from = "2020-10-24";
+            index = {
+              period = "24h";
+              prefix = "index_";
+            };
+            object_store = "filesystem";
+            schema = "v11";
+            store = "boltdb-shipper";
+          }];
+        };
+        server = {
+          grpc_listen_port = prefs.lokiGrpcPort;
+          http_listen_port = prefs.lokiHttpPort;
+        };
+        storage_config = {
+          boltdb_shipper = {
+            active_index_directory = "/var/lib/loki/boltdb-shipper-active";
+            cache_location = "/var/lib/loki/boltdb-shipper-cache";
+            cache_ttl = "24h";
+            shared_store = "filesystem";
+          };
+          filesystem = { directory = "/var/lib/loki/chunks"; };
+        };
+        table_manager = {
+          retention_deletes_enabled = false;
+          retention_period = "0s";
+        };
+      };
+    };
+
     autossh = {
       sessions = pkgs.lib.optionals (prefs.enableAutossh) (let
         go = server:
@@ -1143,6 +1298,12 @@ in {
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
+          } // lib.optionalAttrs prefs.enableGrafana {
+            grafana = {
+              rule = getRule "grafana";
+              service = "grafana";
+              tls = { };
+            };
           } // lib.optionalAttrs prefs.enableSmosServer {
             smos = {
               rule = getRule "smos";
@@ -1231,6 +1392,15 @@ in {
               loadBalancer = {
                 passHostHeader = false;
                 servers = [{ url = "http://localhost:8384/"; }];
+              };
+            };
+          } // lib.optionalAttrs prefs.enableGrafana {
+            grafana = {
+              loadBalancer = {
+                servers = [{
+                  url =
+                    "http://127.0.0.1:${toString config.services.grafana.port}";
+                }];
               };
             };
           } // lib.optionalAttrs prefs.enableSmosServer {
@@ -1334,6 +1504,9 @@ in {
             };
           };
           websecure = getEntrypoint ":443" // { http = { tls = { }; }; };
+          metrics = {
+            address = "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}";
+          };
         };
         log = {
           level = "INFO";
@@ -1343,6 +1516,12 @@ in {
         accessLog = {
           filePath = "/var/log/traefik/access.log.json";
           format = "json";
+        };
+        metrics = {
+          prometheus = {
+            addEntryPointsLabels = true;
+            entryPoint = "metrics";
+          };
         };
         providers = {
           docker = {

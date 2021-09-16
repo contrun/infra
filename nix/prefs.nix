@@ -242,6 +242,16 @@ let
     yandexExcludedDirs =
       [ "docs/org-mode/roam/.emacs.d" "ltximg" ".stversions" ".stfolder" ];
     enableTraefik = false;
+    traefikMetricsPort = 8082;
+    enableGrafana = false;
+    grafanaPort = 2342;
+    enablePrometheus = false;
+    enableLoki = false;
+    lokiHttpPort = 3100;
+    lokiGrpcPort = 9096;
+    enablePromtail = false;
+    promtailHttpPort = 28183;
+    promtailGrpcPort = 0;
     enablePostgresql = false;
     enableRedis = false;
     enableVsftpd = !self.isMinimalSystem;
@@ -339,7 +349,7 @@ let
       enableRedis = self.enableAllOciContainers;
       enableCloudBeaver = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
-      enableAuthelia = self.enableAllOciContainers;
+      enableAuthelia = self.enableAllOciContainers || self.enableTraefik;
       enableFreeipa = false;
       enableHledger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
@@ -559,6 +569,10 @@ let
       dpi = 128;
       enableAllOciContainers = true;
       enableTraefik = true;
+      enableGrafana = true;
+      enablePrometheus = true;
+      enableLoki = true;
+      enablePromtail = true;
       enableAcme = true;
       enableSmosServer = true;
     } else {
