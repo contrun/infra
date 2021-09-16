@@ -1026,7 +1026,116 @@ in {
       enable = prefs.enablePrometheus;
       port = 9001;
       environmentFile = "/run/secrets/prometheus-env";
-      exporters = { node = { enable = true; }; };
+      exporters = {
+        node = { enable = true; };
+        domain = { enable = true; };
+        blackbox = {
+          enable = true;
+          configFile = toYAML "blackbox-config" {
+            modules = {
+              dns_test = {
+                dns = {
+                  ip_protocol_fallback = false;
+                  preferred_ip_protocol = "ip4";
+                  query_name = "example.com";
+                  validate_answer_rrs = {
+                    fail_if_matches_regexp = [ "test" ];
+                  };
+                };
+                prober = "dns";
+                timeout = "5s";
+              };
+              http_2xx = {
+                http = null;
+                prober = "http";
+                timeout = "5s";
+              };
+              http_header_match_origin = {
+                http = {
+                  fail_if_header_not_matches = [{
+                    allow_missing = false;
+                    header = "Access-Control-Allow-Origin";
+                    regexp = "(\\*|example\\.com)";
+                  }];
+                  headers = { Origin = "example.com"; };
+                  method = "GET";
+                };
+                prober = "http";
+                timeout = "5s";
+              };
+              http_post_2xx = {
+                http = {
+                  basic_auth = {
+                    password = "mysecret";
+                    username = "username";
+                  };
+                  method = "POST";
+                };
+                prober = "http";
+                timeout = "5s";
+              };
+              icmp_test = {
+                icmp = { preferred_ip_protocol = "ip4"; };
+                prober = "icmp";
+                timeout = "5s";
+              };
+              irc_banner = {
+                prober = "tcp";
+                tcp = {
+                  query_response = [
+                    { send = "NICK prober"; }
+                    { send = "USER prober prober prober :prober"; }
+                    {
+                      expect = "PING :([^ ]+)";
+                      send = "PONG \${1}";
+                    }
+                    { expect = "^:[^ ]+ 001"; }
+                  ];
+                };
+                timeout = "5s";
+              };
+              pop3s_banner = {
+                prober = "tcp";
+                tcp = {
+                  query_response = [{ expect = "^+OK"; }];
+                  tls = true;
+                  tls_config = { insecure_skip_verify = false; };
+                };
+              };
+              smtp_starttls = {
+                prober = "tcp";
+                tcp = {
+                  query_response = [
+                    { expect = "^220 "; }
+                    { send = "EHLO prober\r"; }
+                    { expect = "^250-STARTTLS"; }
+                    { send = "STARTTLS\r"; }
+                    { expect = "^220"; }
+                    { starttls = true; }
+                    { send = "EHLO prober\r"; }
+                    { expect = "^250-AUTH"; }
+                    { send = "QUIT\r"; }
+                  ];
+                };
+                timeout = "5s";
+              };
+              ssh_banner = {
+                prober = "tcp";
+                tcp = { query_response = [{ expect = "^SSH-2.0-"; }]; };
+                timeout = "5s";
+              };
+              tcp_connect = {
+                prober = "tcp";
+                timeout = "5s";
+              };
+            };
+          };
+        };
+        postgres = {
+          enable = prefs.ociContainers.enablePostgresql;
+          environmentFile = "/run/secrets/prometheus-postgres-env";
+        };
+      };
       remoteWrite = [{
         url = "\${REMOTE_WRITE_URL}";
         basic_auth = {
@@ -1034,7 +1143,14 @@ in {
           username = "\${REMOTE_WRITE_USERNAME}";
         };
       }];
-      scrapeConfigs = [{
+      scrapeConfigs = lib.optionals prefs.enableTraefik [{
+        job_name = "traefik";
+        static_configs = [{
+          targets =
+            [ "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}" ];
+          labels = { instance_node = prefs.hostname; };
+        }];
+      }] ++ lib.optionals config.services.prometheus.exporters.node.enable [{
         job_name = "node";
         static_configs = [{
           targets = [
@@ -1044,14 +1160,66 @@ in {
           ];
           labels = { instance_node = prefs.hostname; };
         }];
-      }] ++ lib.optionals prefs.enableTraefik [{
-        job_name = "traefik";
-        static_configs = [{
-          targets =
-            [ "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}" ];
-          labels = { instance_node = prefs.hostname; };
+      }]
+        ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
+          job_name = "blackbox";
+          metrics_path = "/probe";
+          params = { module = [ "http_2xx" ]; };
+          relabel_configs = [
+            {
+              source_labels = [ "__address__" ];
+              target_label = "__param_target";
+            }
+            {
+              source_labels = [ "__param_target" ];
+              target_label = "instance";
+            }
+            {
+              replacement = "127.0.0.1:${
+                  builtins.toString
+                  config.services.prometheus.exporters.domain.port
+                }";
+              target_label = "__address__";
+            }
+          ];
+          static_configs = [{
+            targets = [
+              "https://www.google.com"
+              "https://www.baidu.com"
+              "http://neverssl.com"
+            ] ++ prefs.getFullDomainNames "hub";
+          }];
+        }]
+        ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
+          job_name = "domain";
+          metrics_path = "/probe";
+          relabel_configs = [
+            {
+              source_labels = [ "__address__" ];
+              target_label = "__param_target";
+            }
+            {
+              replacement = "127.0.0.1:${
+                  builtins.toString
+                  config.services.prometheus.exporters.domain.port
+                }";
+              target_label = "__address__";
+            }
+          ];
+          static_configs = [{ targets = [ prefs.mainDomain ]; }];
+        }]
+        ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
+          job_name = "postgres";
+          static_configs = [{
+            targets = [
+              "127.0.0.1:${
+                builtins.toString
+                config.services.prometheus.exporters.postgres.port
+              }"
+            ];
+            labels = { instance_node = prefs.hostname; };
+          }];
         }];
-      }];
     };
     promtail = {
       enable = prefs.enablePromtail;

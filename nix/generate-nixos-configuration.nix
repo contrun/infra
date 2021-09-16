@@ -134,24 +134,30 @@ let
             mode = "0400";
             owner = "prometheus";
           };
-        }) // (lib.optionalAttrs prefs.enablePromtail {
-          promtail-env = {
-            mode = "0400";
-            owner = "promtail";
-            group = "promtail";
-          };
-        }) // (lib.optionalAttrs prefs.enableSmos {
-          smos-sync-env = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
-        }) // (lib.optionalAttrs prefs.enableCfssl {
-          cfssl-ca-key-pem = { owner = "cfssl"; };
-        }) // (lib.optionalAttrs prefs.enableGlusterfs {
-          glusterfs-cert = { };
-          glusterfs-cert-key = { };
-        });
+        }) // (lib.optionalAttrs
+          (prefs.enablePrometheus && prefs.ociContainers.enablePostgresql) {
+            prometheus-postgres-env = {
+              mode = "0400";
+              owner = "postgres-exporter";
+            };
+          }) // (lib.optionalAttrs prefs.enablePromtail {
+            promtail-env = {
+              mode = "0400";
+              owner = "promtail";
+              group = "promtail";
+            };
+          }) // (lib.optionalAttrs prefs.enableSmos {
+            smos-sync-env = {
+              mode = "0400";
+              owner = prefs.owner;
+              group = prefs.ownerGroup;
+            };
+          }) // (lib.optionalAttrs prefs.enableCfssl {
+            cfssl-ca-key-pem = { owner = "cfssl"; };
+          }) // (lib.optionalAttrs prefs.enableGlusterfs {
+            glusterfs-cert = { };
+            glusterfs-cert-key = { };
+          });
       };
     };
 
