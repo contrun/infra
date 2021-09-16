@@ -129,6 +129,17 @@ let
             owner = "aria2";
             group = "aria2";
           };
+        }) // (lib.optionalAttrs prefs.enablePrometheus {
+          prometheus-env = {
+            mode = "0400";
+            owner = "prometheus";
+          };
+        }) // (lib.optionalAttrs prefs.enablePromtail {
+          promtail-env = {
+            mode = "0400";
+            owner = "promtail";
+            group = "promtail";
+          };
         }) // (lib.optionalAttrs prefs.enableSmos {
           smos-sync-env = {
             mode = "0400";

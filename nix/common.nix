@@ -1025,7 +1025,15 @@ in {
     prometheus = {
       enable = prefs.enablePrometheus;
       port = 9001;
+      environmentFile = "/run/secrets/prometheus-env";
       exporters = { node = { enable = true; }; };
+      remoteWrite = [{
+        url = "\${REMOTE_WRITE_URL}";
+        basic_auth = {
+          password = "\${REMOTE_WRITE_PASSWORD}";
+          username = "\${REMOTE_WRITE_USERNAME}";
+        };
+      }];
       scrapeConfigs = [{
         job_name = "node";
         static_configs = [{
@@ -1047,16 +1055,20 @@ in {
     };
     promtail = {
       enable = prefs.enablePromtail;
+      extraFlags = [ "-config.expand-env=true" ];
       configuration = {
         server = {
           http_listen_port = prefs.promtailHttpPort;
           grpc_listen_port = prefs.promtailGrpcPort;
         };
-        clients = [{
-          url = "http://127.0.0.1:${
-              builtins.toString prefs.lokiHttpPort
-            }/loki/api/v1/push";
-        }];
+        clients = [
+          {
+            url = "http://127.0.0.1:${
+                builtins.toString prefs.lokiHttpPort
+              }/loki/api/v1/push";
+          }
+          { url = "\${LOKI_URL}"; }
+        ];
         positions = { "filename" = "/var/cache/promtail/positions.yaml"; };
         scrape_configs = [{
           job_name = "journal";
@@ -2925,6 +2937,10 @@ in {
               Environment = "ARIA2_RPC_SECRET=token_nekot";
               EnvironmentFile = "/run/secrets/aria2-env";
             };
+          };
+        } // pkgs.lib.optionalAttrs (prefs.enablePromtail) {
+          "promtail" = {
+            serviceConfig = { EnvironmentFile = "/run/secrets/promtail-env"; };
           };
         } // pkgs.lib.optionalAttrs (prefs.enableResolved) {
           "systemd-resolved" = {
