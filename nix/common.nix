@@ -1784,7 +1784,7 @@ in {
         providers = {
           docker = {
             defaultRule = getRule
-              ''{{ (or (index .Labels "domainprefix") .Name) | normalize }}'';
+              "{{ (or (index .Labels `domainprefix`) .Name) | normalize }}";
             endpoint = if (prefs.ociContainerBackend == "docker") then
               "unix:///var/run/docker.sock"
             else
@@ -3094,6 +3094,39 @@ in {
             fi
           '';
         };
+
+        local-transparent-proxy-setup = {
+          enable = true;
+          description =
+            "Setup route table and route rule for local transparent proxy";
+          after = [ "network.target" ];
+          path = [ pkgs.iproute pkgs.procps pkgs.iptables ];
+
+          # TODO: Dont't know why `ip route show table 100` results will disappear.
+          # The error of `ip route show table 100` is
+          # Error: ipv4: FIB table does not exist.
+          # Dump terminatedp
+          # Sleeping is dirty, but it seems to be working.
+          script = ''
+            set -xu
+            set +e
+            sysctl -w net.ipv4.conf.default.route_localnet=1
+            sysctl -w net.ipv4.conf.all.route_localnet=1
+            for i in $(seq 1 30); do
+                ip route show table 100
+                if [[ -z "$(ip rule list from 127.0.0.1/8 iif lo table 100)" ]]; then
+                    ip rule add from 127.0.0.1/8 iif lo table 100;
+                fi
+                ip route replace local 0.0.0.0/0 dev lo table 100
+                ip route show table 100
+                sleep 10
+            done
+          '';
+          serviceConfig = {
+            Type = "oneshot";
+            Environment = "TMP_FILE=%T/%n";
+          };
+        };
       } // lib.optionalAttrs prefs.enableWstunnel {
         # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
         "wstunnel" = {
@@ -3259,30 +3292,15 @@ in {
             description = "All-in-one Reverse Proxy";
             after = [ "network.target" ];
             wantedBy = [ "multi-user.target" ];
-            path = [
-              pkgs.myPackages.aioproxy
-              pkgs.iproute
-              pkgs.procps
-              pkgs.iptables
-            ];
-
             serviceConfig = {
               Type = "simple";
               ExecStart =
                 "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${
                   builtins.toString prefs.aioproxyPort
                 } -u 127.0.0.1:8000 -p both -ssh 127.0.0.1:22 -eternal-terminal 127.0.0.1:2022 -http 127.0.0.1:8080 -tls 127.0.0.1:30443";
-              ExecStartPost = let
-                script = pkgs.writeShellScript "aioproxy-post-start" ''
-                  set -eu
-                  sysctl -w net.ipv4.conf.default.route_localnet=1
-                  sysctl -w net.ipv4.conf.all.route_localnet=1
-                  if [[ -z "$(ip rule list from 127.0.0.1/8 iif lo table 100)" ]]; then
-                      ip rule add from 127.0.0.1/8 iif lo table 100;
-                  fi
-                  ip route replace local 0.0.0.0/0 dev lo table 100
-                '';
-              in [ script ];
+              ExecStartPost = [
+                "-${pkgs.systemd}/bin/systemctl start --no-block local-transparent-proxy-setup"
+              ];
             };
           };
         };
