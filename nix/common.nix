@@ -3003,6 +3003,7 @@ in {
         };
     };
   };
+
   # powerManagement = {
   #   enable = true;
   #   cpuFreqGovernor = "ondemand";
@@ -3021,74 +3022,8 @@ in {
         };
       };
     };
-
-    myMounts = {
-      automounts = let
-        nextcloud = {
-          enable = prefs.enableNextcloud;
-          description = "Automount nextcloud sync directory.";
-          where = prefs.nextcloudWhere;
-          wantedBy = [ "multi-user.target" ];
-        };
-        yandex = {
-          enable = prefs.enableYandex;
-          description = "Automount yandex sync directory.";
-          where = prefs.yandexWhere;
-          wantedBy = [ "multi-user.target" ];
-        };
-      in [ nextcloud yandex ];
-      mounts = let
-        nextcloud = {
-          enable = prefs.enableNextcloud;
-          where = prefs.nextcloudWhere;
-          what = prefs.nextcloudWhat;
-          type = "davfs";
-          options = "rw,uid=${builtins.toString prefs.ownerUid},gid=${
-              builtins.toString prefs.ownerGroupGid
-            }";
-          wants = [ "network-online.target" ];
-          wantedBy = [ "remote-fs.target" ];
-          after = [ "network-online.target" ];
-          unitConfig = { path = [ pkgs.utillinux ]; };
-        };
-        yandex = {
-          enable = prefs.enableYandex;
-          where = prefs.yandexWhere;
-          what = prefs.yandexWhat;
-          type = "davfs";
-          options = "rw,user=uid=${builtins.toString prefs.ownerUid},gid=${
-              builtins.toString prefs.ownerGroupGid
-            }";
-          wants = [ "network-online.target" ];
-          wantedBy = [ "remote-fs.target" ];
-          after = [ "network-online.target" ];
-          unitConfig = { paths = [ pkgs.utillinux ]; };
-        };
-      in [ nextcloud yandex ];
-    };
-
-    myPackages = {
-      packages = let
-        usrLocalPrefix = "/usr/local/lib/systemd/system";
-        etcPrefix = "/etc/systemd/system";
-        makeUnit = from: to: unit:
-          pkgs.writeTextFile {
-            name = builtins.replaceStrings [ "@" ] [ "__" ] unit;
-            text = builtins.readFile "${from}/${unit}";
-            destination = "${to}/${unit}";
-          };
-        getAllUnits = from: to:
-          let
-            files = builtins.readDir from;
-            units = pkgs.lib.attrNames
-              (pkgs.lib.filterAttrs (n: v: v == "regular" || v == "symlink")
-                files);
-            newUnits = map (unit: makeUnit from to unit) units;
-          in pkgs.lib.optionals (builtins.pathExists from) newUnits;
-      in getAllUnits usrLocalPrefix etcPrefix;
-    };
-
-    myServices = {
+  in (builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
+    {
       services = notify-systemd-unit-failures // {
         init-oci-container-network = {
           description = "Create oci container networks";
@@ -3251,9 +3186,179 @@ in {
             };
           };
         };
-    };
+    }
 
-    oci-containers = let
+    {
+      automounts = let
+        nextcloud = {
+          enable = prefs.enableNextcloud;
+          description = "Automount nextcloud sync directory.";
+          where = prefs.nextcloudWhere;
+          wantedBy = [ "multi-user.target" ];
+        };
+        yandex = {
+          enable = prefs.enableYandex;
+          description = "Automount yandex sync directory.";
+          where = prefs.yandexWhere;
+          wantedBy = [ "multi-user.target" ];
+        };
+      in [ nextcloud yandex ];
+      mounts = let
+        nextcloud = {
+          enable = prefs.enableNextcloud;
+          where = prefs.nextcloudWhere;
+          what = prefs.nextcloudWhat;
+          type = "davfs";
+          options = "rw,uid=${builtins.toString prefs.ownerUid},gid=${
+              builtins.toString prefs.ownerGroupGid
+            }";
+          wants = [ "network-online.target" ];
+          wantedBy = [ "remote-fs.target" ];
+          after = [ "network-online.target" ];
+          unitConfig = { path = [ pkgs.utillinux ]; };
+        };
+        yandex = {
+          enable = prefs.enableYandex;
+          where = prefs.yandexWhere;
+          what = prefs.yandexWhat;
+          type = "davfs";
+          options = "rw,user=uid=${builtins.toString prefs.ownerUid},gid=${
+              builtins.toString prefs.ownerGroupGid
+            }";
+          wants = [ "network-online.target" ];
+          wantedBy = [ "remote-fs.target" ];
+          after = [ "network-online.target" ];
+          unitConfig = { paths = [ pkgs.utillinux ]; };
+        };
+      in [ nextcloud yandex ];
+    }
+
+    # The following is not pure, disable it for now.
+    # {
+    #   packages = let
+    #     usrLocalPrefix = "/usr/local/lib/systemd/system";
+    #     etcPrefix = "/etc/systemd/system";
+    #     makeUnit = from: to: unit:
+    #       pkgs.writeTextFile {
+    #         name = builtins.replaceStrings [ "@" ] [ "__" ] unit;
+    #         text = builtins.readFile "${from}/${unit}";
+    #         destination = "${to}/${unit}";
+    #       };
+    #     getAllUnits = from: to:
+    #       let
+    #         files = builtins.readDir from;
+    #         units = pkgs.lib.attrNames
+    #           (pkgs.lib.filterAttrs (n: v: v == "regular" || v == "symlink")
+    #             files);
+    #         newUnits = map (unit: makeUnit from to unit) units;
+    #       in pkgs.lib.optionals (builtins.pathExists from) newUnits;
+    #   in getAllUnits usrLocalPrefix etcPrefix;
+    # }
+
+    (let
+      name = "clash-redir";
+      updaterName = "${name}-config-updater";
+      script = builtins.path {
+        inherit name;
+        path = prefs.getDotfile "dot_bin/executable_clash-redir";
+      };
+    in {
+      services."${name}" = {
+        description = "transparent proxy with clash";
+        enable = prefs.enableClashRedir;
+        wantedBy =
+          if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
+        wants = [ "network-online.target" ];
+        after = [ "network-online.target" ];
+        path = [
+          pkgs.coreutils
+          pkgs.clash
+          pkgs.curl
+          pkgs.procps
+          pkgs.libcap
+          pkgs.iptables
+          pkgs.iproute
+          pkgs.bash
+          pkgs.gawk
+        ];
+        serviceConfig = {
+          Type = "forking";
+          ExecStartPre = "${pkgs.writeShellScript "clash-redir-prestart" ''
+            set -euxo pipefail
+            mkdir -p /etc/clash-redir
+            if ! [[ -e /etc/clash-redir/config.yaml ]]; then
+                if ! [[ -e /etc/clash-redir/default.yaml ]]; then
+                    systemctl restart ${updaterName}
+                fi
+                ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
+            fi
+          ''}";
+          ExecStart = "${script} start";
+          ExecStop = "${script} stop";
+        };
+      };
+      services."${updaterName}" = let
+        clash-config-update-script =
+          pkgs.writeShellScript "clash-config-update-script" ''
+            set -xeu
+            CLASH_USER=clash
+            CLASH_UID="$(id -u "$CLASH_USER")"
+            CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
+            CLASH_CONFIG=/etc/clash-redir/default.yaml
+            # We first try to download the config file on behave of "$CLASH_USER",
+            # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
+            if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                    >&2 echo "Failed to download clash config"
+                    exit 1
+                fi
+            fi
+            if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
+                rm "$CLASH_TEMP_CONFIG"
+                exit 0
+            fi
+            mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+            if ! curl -X PUT -H 'content-type: application/json' -d "{\"path\": \"$CLASH_CONFIG\"}" 'http://localhost:9090/configs/'; then
+                if systemctl is-active --quiet ${name}; then
+                    systemctl restart ${name}
+                fi
+            fi
+          '';
+      in {
+        description = "update clash config";
+        enable = prefs.enableClashRedir;
+        wantedBy = [ "default.target" ];
+        wants = [ "network-online.target" ];
+        after = [ "network-online.target" ];
+        path = [
+          pkgs.coreutils
+          pkgs.systemd
+          pkgs.sudo
+          pkgs.curl
+          pkgs.diffutils
+          pkgs.libcap
+          pkgs.utillinux
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${clash-config-update-script}";
+          EnvironmentFile = "/run/secrets/clash-env";
+          Restart = "on-failure";
+        };
+      };
+      timers."${updaterName}" = {
+        enable = prefs.enableClashRedir;
+        wantedBy = [ "default.target" ];
+        onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
+        timerConfig = {
+          OnCalendar = "hourly";
+          Unit = "${updaterName}.service";
+          Persistent = true;
+        };
+      };
+    })
+
+    (let
       postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
       postgresqlInitUnitName = "${postgresqlUnitName}-init";
       postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
@@ -3364,122 +3469,11 @@ in {
       };
 
       extraConfig = "DefaultTimeoutStopSec=10s";
-    };
-
-    clash-redir = let
-      name = "clash-redir";
-      updaterName = "${name}-config-updater";
-      script = builtins.path {
-        inherit name;
-        path = prefs.getDotfile "dot_bin/executable_clash-redir";
-      };
-    in {
-      services."${name}" = {
-        description = "transparent proxy with clash";
-        enable = prefs.enableClashRedir;
-        wantedBy =
-          if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
-        wants = [ "network-online.target" ];
-        after = [ "network-online.target" ];
-        path = [
-          pkgs.coreutils
-          pkgs.clash
-          pkgs.curl
-          pkgs.procps
-          pkgs.libcap
-          pkgs.iptables
-          pkgs.iproute
-          pkgs.bash
-          pkgs.gawk
-        ];
-        serviceConfig = {
-          Type = "forking";
-          ExecStartPre = "${pkgs.writeShellScript "clash-redir-prestart" ''
-            set -euxo pipefail
-            mkdir -p /etc/clash-redir
-            if ! [[ -e /etc/clash-redir/config.yaml ]]; then
-                if ! [[ -e /etc/clash-redir/default.yaml ]]; then
-                    systemctl restart ${updaterName}
-                fi
-                ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
-            fi
-          ''}";
-          ExecStart = "${script} start";
-          ExecStop = "${script} stop";
-        };
-      };
-      services."${updaterName}" = let
-        clash-config-update-script =
-          pkgs.writeShellScript "clash-config-update-script" ''
-            set -xeu
-            CLASH_USER=clash
-            CLASH_UID="$(id -u "$CLASH_USER")"
-            CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
-            CLASH_CONFIG=/etc/clash-redir/default.yaml
-            # We first try to download the config file on behave of "$CLASH_USER",
-            # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-            if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                    >&2 echo "Failed to download clash config"
-                    exit 1
-                fi
-            fi
-            if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
-                rm "$CLASH_TEMP_CONFIG"
-                exit 0
-            fi
-            mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
-            if ! curl -X PUT -H 'content-type: application/json' -d "{\"path\": \"$CLASH_CONFIG\"}" 'http://localhost:9090/configs/'; then
-                if systemctl is-active --quiet ${name}; then
-                    systemctl restart ${name}
-                fi
-            fi
-          '';
-      in {
-        description = "update clash config";
-        enable = prefs.enableClashRedir;
-        wantedBy = [ "default.target" ];
-        wants = [ "network-online.target" ];
-        after = [ "network-online.target" ];
-        path = [
-          pkgs.coreutils
-          pkgs.systemd
-          pkgs.sudo
-          pkgs.curl
-          pkgs.diffutils
-          pkgs.libcap
-          pkgs.utillinux
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${clash-config-update-script}";
-          EnvironmentFile = "/run/secrets/clash-env";
-          Restart = "on-failure";
-        };
-      };
-      timers."${updaterName}" = {
-        enable = prefs.enableClashRedir;
-        wantedBy = [ "default.target" ];
-        onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
-        timerConfig = {
-          OnCalendar = "hourly";
-          Unit = "${updaterName}.service";
-          Persistent = true;
-        };
-      };
-    };
-
-    all = [
-      myMounts
-      # The following is not pure, disable it for now.
-      # myPackages
-      myServices
-      clash-redir
-      oci-containers
-    ];
-  in (builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } all) // {
-    user = let
-      ddns = let
+    })
+  ]) // {
+    user = builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
+      { services = notify-systemd-unit-failures; }
+      (let
         name = "ddns";
         unitName = "${name}@";
         script = pkgs.writeShellScript "ddns" ''
@@ -3527,9 +3521,9 @@ in {
             Persistent = true;
           };
         };
-      };
+      })
 
-      nextcloud-client = {
+      {
         services.nextcloud-client = {
           enable = prefs.enableNextcloudClient;
           description = "nextcloud client";
@@ -3547,9 +3541,9 @@ in {
             done
           '';
         };
-      };
+      }
 
-      hole-puncher = let
+      (let
         name = "hole-puncher";
         unitName = "${name}@";
         script = pkgs.writeShellScript "hole-puncher" ''
@@ -3594,9 +3588,8 @@ in {
             Persistent = true;
           };
         };
-      };
-
-      task-warrior-sync = let name = "task-warrior-sync";
+      })
+      (let name = "task-warrior-sync";
       in {
         services.${name} = {
           description = "sync task warrior tasks";
@@ -3616,9 +3609,9 @@ in {
             Persistent = true;
           };
         };
-      };
+      })
 
-      vdirsyncer = let name = "vdirsyncer";
+      (let name = "vdirsyncer";
       in {
         services.${name} = {
           description = "vdirsyncer sync";
@@ -3641,9 +3634,9 @@ in {
             Persistent = true;
           };
         };
-      };
+      })
 
-      yandex-disk = let
+      (let
         name = "yandex-disk";
         syncFolder = "${prefs.home}/Sync";
       in if prefs.enableYandexDisk then {
@@ -3664,18 +3657,8 @@ in {
           };
         };
       } else
-        { };
-
-      all = [
-        { services = notify-systemd-unit-failures; }
-        ddns
-        nextcloud-client
-        hole-puncher
-        task-warrior-sync
-        vdirsyncer
-        yandex-disk
-      ];
-    in builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } all;
+        { })
+    ];
   } // {
     tmpfiles = {
       rules = [
