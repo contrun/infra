@@ -1025,18 +1025,13 @@ in {
         enable = true;
         datasources = lib.optionals prefs.enablePrometheus [{
           access = "proxy";
-          basicAuth = false;
           isDefault = true;
           jsonData = { httpMethod = "POST"; };
           name = "Prometheus";
           type = "prometheus";
-          url = "http://127.0.0.1:${
-              builtins.toString config.services.prometheus.port
-            }";
+          url = "http://127.0.0.1:${builtins.toString prefs.prometheusPort}";
         }] ++ lib.optionals prefs.enableLoki [{
           access = "proxy";
-          basicAuth = false;
-          isDefault = false;
           jsonData = { };
           name = "Loki";
           type = "loki";
@@ -1046,6 +1041,7 @@ in {
     };
     prometheus = {
       enable = prefs.enablePrometheus;
+      port = prefs.prometheusPort;
       environmentFile = "/run/secrets/prometheus-env";
       exporters = {
         node = { enable = true; };
@@ -1209,7 +1205,8 @@ in {
               "https://www.baidu.com"
               "http://neverssl.com"
             ] ++ lib.optionals prefs.enableTraefik
-              (prefs.getFullDomainNames "traefik");
+              (builtins.map (x: "https://${x}")
+                (prefs.getFullDomainNames "traefik"));
           }];
         }]
         ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{

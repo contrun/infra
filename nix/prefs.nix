@@ -246,6 +246,7 @@ let
     enableGrafana = false;
     grafanaPort = 2342;
     enablePrometheus = false;
+    prometheusPort = 9001;
     enableLoki = false;
     lokiHttpPort = 3100;
     lokiGrpcPort = 9096;
