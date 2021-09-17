@@ -140,6 +140,11 @@ let
               mode = "0400";
               owner = "postgres-exporter";
             };
+          }) // (lib.optionalAttrs (prefs.enableGrafana) {
+            grafana-env = {
+              mode = "0400";
+              owner = "grafana";
+            };
           }) // (lib.optionalAttrs prefs.enablePromtail {
             promtail-env = {
               mode = "0400";

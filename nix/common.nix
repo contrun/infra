@@ -1018,12 +1018,30 @@ in {
 
     grafana = {
       enable = prefs.enableGrafana;
-      domain = prefs.getFullDomainName "grafana";
+      rootUrl = "https://${prefs.getFullDomainName "grafana"}";
       port = prefs.grafanaPort;
       addr = "127.0.0.1";
       provision = {
         enable = true;
-        datasources = lib.optionals prefs.enablePrometheus [{
+        datasources = [{
+          access = "proxy";
+          url = "\${PROMETHEUS_URL}";
+          basicAuth = true;
+          basicAuthUser = "\${PROMETHEUS_USERNAME}";
+          basicAuthPassword = "\${PROMETHEUS_PASSWORD}";
+          jsonData = { httpMethod = "POST"; };
+          name = "Prometheus Remote";
+          type = "prometheus";
+        }] ++ [{
+          access = "proxy";
+          url = "\${LOKI_URL}";
+          basicAuth = true;
+          basicAuthUser = "\${LOKI_USERNAME}";
+          basicAuthPassword = "\${LOKI_PASSWORD}";
+          jsonData = { };
+          name = "Loki Remote";
+          type = "loki";
+        }] ++ lib.optionals prefs.enablePrometheus [{
           access = "proxy";
           isDefault = true;
           jsonData = { httpMethod = "POST"; };
@@ -3135,6 +3153,10 @@ in {
         } // pkgs.lib.optionalAttrs (prefs.enablePromtail) {
           "promtail" = {
             serviceConfig = { EnvironmentFile = "/run/secrets/promtail-env"; };
+          };
+        } // pkgs.lib.optionalAttrs (prefs.enableGrafana) {
+          "grafana" = {
+            serviceConfig = { EnvironmentFile = "/run/secrets/grafana-env"; };
           };
         } // pkgs.lib.optionalAttrs (prefs.enableResolved) {
           "systemd-resolved" = {
