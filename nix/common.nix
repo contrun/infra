@@ -1510,11 +1510,19 @@ in {
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableWstunnel {
-            # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
+            wstunnel-with-auth = {
+              rule = "(${
+                  getRule "wstunnel"
+                }) && !PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
+              middlewares = [ "authelia@docker" "wstunnel" ];
+              service = "dummy";
+              tls = { };
+            };
+          } // lib.optionalAttrs prefs.enableWstunnel {
             wstunnel = {
               rule = "(${
                   getRule "wstunnel"
-                }) && PathPrefix(`/${prefs.wstunnelPath}`)";
+                }) && PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
               service = "wstunnel";
               tls = { };
             };
@@ -1563,8 +1571,22 @@ in {
                 replacement = "/webui-aria2/$1";
               };
             };
+            wstunnel = {
+              redirectRegex = {
+                regex = "^https?://(.*?)/(.*)";
+                replacement = "https://\${1}/{{ env `WSTUNNEL_PATH` }}";
+              };
+            };
           };
           services = {
+            # Dummy service to satisfy traefik (each route requires a service).
+            dummy = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers =
+                  [{ url = "https://${prefs.getFullDomainName "dummy"}"; }];
+              };
+            };
             keeweb = {
               loadBalancer = {
                 passHostHeader = false;
@@ -2754,6 +2776,13 @@ in {
                       url = "https://${prefs.getFullDomainName "smos"}";
                     }
                     {
+                      enable = prefs.enableWstunnel;
+                      name = "wstunnel";
+                      subtitle = "websocket tunnel";
+                      tag = "network";
+                      url = "https://${prefs.getFullDomainName "wstunnel"}";
+                    }
+                    {
                       enable = prefs.ociContainers.enableSearx;
                       name = "searx";
                       subtitle = "search engine";
@@ -2763,7 +2792,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableRssBridge;
                       name = "rss-bridge";
-                      subtitle = "generate rss feeds";
+                      subtitle = "rss feeds generator";
                       tag = "reading";
                       url = "https://${prefs.getFullDomainName "rss-bridge"}";
                     }
@@ -2884,7 +2913,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableCalibreWeb;
                       name = "calibre";
-                      subtitle = "books";
+                      subtitle = "digital books";
                       tag = "reading";
                       url = "https://${prefs.getFullDomainName "calibre"}";
                     }
@@ -2964,7 +2993,7 @@ in {
                     {
                       name = "activitywatch";
                       enable = prefs.enableActivityWatch;
-                      subtitle = "device usage watch";
+                      subtitle = "device usage monitor";
                       tag = "productivity";
                       url =
                         "https://${prefs.getFullDomainName "activitywatch"}";
@@ -3066,6 +3095,7 @@ in {
           '';
         };
       } // lib.optionalAttrs prefs.enableWstunnel {
+        # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
         "wstunnel" = {
           description = "wstunnel server";
           before = let
@@ -3191,8 +3221,10 @@ in {
           "traefik" = {
             serviceConfig = {
               LogsDirectory = "traefik";
+              EnvironmentFile = "/run/secrets/traefik-env";
+              SupplementaryGroups = "keys acme";
             } // (lib.optionalAttrs (prefs.ociContainerBackend == "docker") {
-              SupplementaryGroups = "keys docker acme";
+              SupplementaryGroups = "keys acme docker";
             }) // (lib.optionalAttrs (prefs.ociContainerBackend == "podman") {
               User = lib.mkForce "root";
             }) // (lib.optionalAttrs (prefs.enableK3s) {

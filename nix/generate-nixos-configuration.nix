@@ -129,6 +129,11 @@ let
             owner = "aria2";
             group = "aria2";
           };
+        }) // (lib.optionalAttrs prefs.enableTraefik {
+          traefik-env = {
+            mode = "0400";
+            owner = "traefik";
+          };
         }) // (lib.optionalAttrs prefs.enablePrometheus {
           prometheus-env = {
             mode = "0400";
