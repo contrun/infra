@@ -2166,6 +2166,7 @@ in {
         "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
     };
     clash = {
+      group = "clash";
       createHome = false;
       isNormalUser = false;
       isSystemUser = true;
@@ -2173,6 +2174,7 @@ in {
   } // (if prefs.enableFallbackAccount then {
     # Fallback user when "${prefs.owner}" encounters problems
     fallback = {
+      group = "fallback";
       createHome = true;
       isNormalUser = true;
       useDefaultShell = true;
