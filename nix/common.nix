@@ -1021,10 +1021,31 @@ in {
       domain = prefs.getFullDomainName "grafana";
       port = prefs.grafanaPort;
       addr = "127.0.0.1";
+      provision = {
+        enable = true;
+        datasources = lib.optionals prefs.enablePrometheus [{
+          access = "proxy";
+          basicAuth = false;
+          isDefault = true;
+          jsonData = { httpMethod = "POST"; };
+          name = "Prometheus";
+          type = "prometheus";
+          url = "http://127.0.0.1:${
+              builtins.toString config.services.prometheus.port
+            }";
+        }] ++ lib.optionals prefs.enableLoki [{
+          access = "proxy";
+          basicAuth = false;
+          isDefault = false;
+          jsonData = { };
+          name = "Loki";
+          type = "loki";
+          url = "http://127.0.0.1:${builtins.toString prefs.lokiHttpPort}";
+        }];
+      };
     };
     prometheus = {
       enable = prefs.enablePrometheus;
-      port = 9001;
       environmentFile = "/run/secrets/prometheus-env";
       exporters = {
         node = { enable = true; };
@@ -1187,7 +1208,8 @@ in {
               "https://www.google.com"
               "https://www.baidu.com"
               "http://neverssl.com"
-            ] ++ prefs.getFullDomainNames "hub";
+            ] ++ lib.optionals prefs.enableTraefik
+              (prefs.getFullDomainNames "traefik");
           }];
         }]
         ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
@@ -2684,7 +2706,7 @@ in {
                     {
                       enable = prefs.ociContainers.enableHledger;
                       name = "hledger";
-                      subtitle = "ledger";
+                      subtitle = "online ledger";
                       tag = "house-keeping";
                       url = "https://${prefs.getFullDomainName "hledger"}";
                     }
@@ -2730,6 +2752,13 @@ in {
                       subtitle = "file synchronization";
                       tag = "synchronization";
                       url = "https://${prefs.getFullDomainName "syncthing"}";
+                    }
+                    {
+                      enable = prefs.enableGrafana;
+                      name = "grafana";
+                      subtitle = "monitoring dashboard";
+                      tag = "operation";
+                      url = "https://${prefs.getFullDomainName "grafana"}";
                     }
                     {
                       enable = prefs.ociContainers.enableRecipes;
