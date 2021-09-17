@@ -373,6 +373,7 @@ in {
       ++ (if (prefs.enableClashRedir) then [ clash ] else [ ])
       ++ (if (prefs.enableK3s) then [ k3s ] else [ ])
       ++ (if prefs.enableDocker then [ docker-buildx ] else [ ])
+      ++ (if prefs.enableWstunnel then [ wstunnel ] else [ ])
       ++ (if (prefs.nixosSystem == "x86_64-linux") then [
         xmobar
         hardinfo
@@ -1508,6 +1509,15 @@ in {
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
+          } // lib.optionalAttrs prefs.enableWstunnel {
+            # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
+            wstunnel = {
+              rule = "(${
+                  getRule "wstunnel"
+                }) && PathPrefix(`/${prefs.wstunnelPath}`)";
+              service = "wstunnel";
+              tls = { };
+            };
           } // lib.optionalAttrs prefs.enableSyncthing {
             syncthing = {
               rule = getRule "syncthing";
@@ -1601,14 +1611,23 @@ in {
           } // lib.optionalAttrs prefs.enableCodeServer {
             codeserver = {
               loadBalancer = {
-                servers = [{ url = "http://localhost:4050/"; }];
+                servers = [{ url = "http://127.0.0.1:4050/"; }];
+              };
+            };
+          } // lib.optionalAttrs prefs.enableWstunnel {
+            wstunnel = {
+              loadBalancer = {
+                servers = [{
+                  url =
+                    "http://127.0.0.1:${builtins.toString prefs.wstunnelPort}/";
+                }];
               };
             };
           } // lib.optionalAttrs prefs.enableSyncthing {
             syncthing = {
               loadBalancer = {
                 passHostHeader = false;
-                servers = [{ url = "http://localhost:8384/"; }];
+                servers = [{ url = "http://127.0.0.1:8384/"; }];
               };
             };
           } // lib.optionalAttrs prefs.enableGrafana {
@@ -3044,6 +3063,55 @@ in {
                     echo "creating network failed"
                 fi
             fi
+          '';
+        };
+      } // lib.optionalAttrs prefs.enableWstunnel {
+        "wstunnel" = {
+          description = "wstunnel server";
+          before = let
+            wg-quick = map (iface: "wg-quick-${iface}.service")
+              (lib.attrNames config.networking.wg-quick.interfaces);
+            wireguard = lib.optionals config.networking.wireguard.enable
+              (map (iface: "wireguard-${iface}.service")
+                (lib.attrNames config.networking.wireguard.interfaces));
+          in wg-quick ++ wireguard;
+          after = [ "network.target" ];
+          wantedBy = [ "multi-user.target" ];
+          path = [ pkgs.wstunnel ];
+          serviceConfig = {
+            Restart = "always";
+            RestartSec = "1s";
+            # User
+            DynamicUser = true;
+            # Capabilities
+            AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+            CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+            # Security
+            NoNewPrivileges = true;
+            # Sandboxing
+            ProtectSystem = "strict";
+            ProtectHome = lib.mkDefault true;
+            PrivateTmp = true;
+            PrivateDevices = true;
+            ProtectHostname = true;
+            ProtectKernelTunables = true;
+            ProtectKernelModules = true;
+            ProtectControlGroups = true;
+            RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+            RestrictNamespaces = true;
+            LockPersonality = true;
+            MemoryDenyWriteExecute = true;
+            RestrictRealtime = true;
+            RestrictSUIDSGID = true;
+            RemoveIPC = true;
+            PrivateMounts = true;
+            # System Call Filtering
+            SystemCallArchitectures = "native";
+          };
+          script = ''
+            exec wstunnel --verbose --server 127.0.0.1:${
+              builtins.toString prefs.wstunnelPort
+            }
           '';
         };
       } // pkgs.lib.optionalAttrs

@@ -136,6 +136,10 @@ let
     enableCfssl = false;
     enableTtyd = true;
     enableSslh = false;
+    enableWstunnel = !self.isMinimalSystem;
+    wstunnelPort = 3275;
+    # security hole opened by wstunnel
+    wstunnelPath = "a-huge-sinkhole";
     sslhPort = 44443;
     enableAioproxy = true;
     aioproxyPort = 4443;
