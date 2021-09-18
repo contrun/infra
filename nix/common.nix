@@ -1445,6 +1445,9 @@ in {
       getRuleByPrefix = domainPrefix:
         lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
         (prefs.getFullDomainNames domainPrefix);
+      getBareDomainRule =
+        lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
+        prefs.domains;
       getRule = domainPrefixes:
         lib.concatMapStringsSep " || " getRuleByPrefix
         (lib.splitString "," domainPrefixes);
@@ -1500,6 +1503,12 @@ in {
             organice = {
               rule = getRule "organice";
               service = "organice";
+              tls = { };
+            };
+          } // lib.optionalAttrs prefs.ociContainers.enableHomer {
+            homer = {
+              rule = getBareDomainRule;
+              service = "homer@docker";
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableCodeServer {
