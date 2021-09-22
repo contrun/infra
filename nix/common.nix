@@ -1948,21 +1948,21 @@ in {
         #   language = "R";
         # });
 
-        ansibleKernel = (let
-          env = (pkgs.python3.withPackages
-            (p: with p; [ ansible-kernel ansible ])).override
-            (args: { ignoreCollisions = true; });
-        in {
-          displayName = "Ansible";
-          argv = [
-            "${env.interpreter}"
-            "-m"
-            "ansible_kernel"
-            "-f"
-            "{connection_file}"
-          ];
-          language = "ansible";
-        });
+        # ansibleKernel = (let
+        #   env = (pkgs.python3.withPackages
+        #     (p: with p; [ ansible-kernel ansible ])).override
+        #     (args: { ignoreCollisions = true; });
+        # in {
+        #   displayName = "Ansible";
+        #   argv = [
+        #     "${env.interpreter}"
+        #     "-m"
+        #     "ansible_kernel"
+        #     "-f"
+        #     "{connection_file}"
+        #   ];
+        #   language = "ansible";
+        # });
 
         bashKernel =
           (let env = pkgs.python3.withPackages (p: with p; [ bash_kernel ]);
