@@ -3315,23 +3315,16 @@ in {
         };
     }
 
-    {
-      automounts = let
-        nextcloud = {
+    (lib.foldAttrs (n: a: n ++ a) [ ] [
+      # nextcloud
+      {
+        automounts = [{
           enable = prefs.enableNextcloud;
           description = "Automount nextcloud sync directory.";
           where = prefs.nextcloudWhere;
           wantedBy = [ "multi-user.target" ];
-        };
-        yandex = {
-          enable = prefs.enableYandex;
-          description = "Automount yandex sync directory.";
-          where = prefs.yandexWhere;
-          wantedBy = [ "multi-user.target" ];
-        };
-      in [ nextcloud yandex ];
-      mounts = let
-        nextcloud = {
+        }];
+        mounts = [{
           enable = prefs.enableNextcloud;
           where = prefs.nextcloudWhere;
           what = prefs.nextcloudWhat;
@@ -3343,8 +3336,17 @@ in {
           wantedBy = [ "remote-fs.target" ];
           after = [ "network-online.target" ];
           unitConfig = { path = [ pkgs.utillinux ]; };
-        };
-        yandex = {
+        }];
+      }
+      # yandex
+      {
+        automounts = [{
+          enable = prefs.enableYandex;
+          description = "Automount yandex sync directory.";
+          where = prefs.yandexWhere;
+          wantedBy = [ "multi-user.target" ];
+        }];
+        mounts = [{
           enable = prefs.enableYandex;
           where = prefs.yandexWhere;
           what = prefs.yandexWhat;
@@ -3356,9 +3358,9 @@ in {
           wantedBy = [ "remote-fs.target" ];
           after = [ "network-online.target" ];
           unitConfig = { paths = [ pkgs.utillinux ]; };
-        };
-      in [ nextcloud yandex ];
-    }
+        }];
+      }
+    ])
 
     # The following is not pure, disable it for now.
     # {
