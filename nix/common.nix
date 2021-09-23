@@ -52,7 +52,7 @@ in {
                 }";
               web-url = "https://${prefs.getFullDomainName "smos"}";
               # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
-              # data-dir = "${prefs.home}/Sync/workflow";
+              # data-dir = "${prefs.syncFolder}/workflow";
             };
             api-server = {
               enable = true;
@@ -221,6 +221,7 @@ in {
       builtins.filter (x: x != null) [
         manpages
         fuse
+        bindfs
         iptables
         iproute
         ethtool
@@ -835,7 +836,7 @@ in {
           "--exclude=.git"
           "--exclude-file=${restic-exclude-files}"
         ];
-        paths = [ "${prefs.home}/Sync" ];
+        paths = [ "${prefs.syncFolder}" ];
       };
     };
     glusterfs = {
@@ -2696,7 +2697,10 @@ in {
           traefikForwardingPort = 8080;
         } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
           dependsOn = [ "postgresql" ];
-          volumes = [ "/var/data/nextcloud:/var/www/html" ];
+          volumes = [
+            "/var/data/nextcloud:/var/www/html"
+            "${prefs.nextcloudMirrorWhere}:/var/www/html/data/e/files"
+          ];
           environment = {
             "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
               (prefs.getFullDomainNames "nextcloud")}";
@@ -3316,6 +3320,26 @@ in {
     }
 
     (lib.foldAttrs (n: a: n ++ a) [ ] [
+      # nextcloud container files owner
+      # See also https://github.com/nextcloud/docker/pull/1278
+      {
+        automounts = [{
+          enable = prefs.ociContainers.enableNextcloud;
+          description = "Automount nextcloud container files directory.";
+          where = prefs.nextcloudMirrorWhere;
+          wantedBy = [ "multi-user.target" ];
+        }];
+        mounts = [{
+          enable = prefs.ociContainers.enableNextcloud;
+          where = prefs.nextcloudMirrorWhere;
+          what = prefs.syncFolder;
+          type = "fuse.bindfs";
+          options = "map=${builtins.toString prefs.ownerUid}/33:@${
+              builtins.toString prefs.ownerGroupGid
+            }/@33";
+          unitConfig = { RequiresMountsFor = prefs.syncFolder; };
+        }];
+      }
       # nextcloud
       {
         automounts = [{
@@ -3335,7 +3359,6 @@ in {
           wants = [ "network-online.target" ];
           wantedBy = [ "remote-fs.target" ];
           after = [ "network-online.target" ];
-          unitConfig = { path = [ pkgs.utillinux ]; };
         }];
       }
       # yandex
@@ -3357,7 +3380,6 @@ in {
           wants = [ "network-online.target" ];
           wantedBy = [ "remote-fs.target" ];
           after = [ "network-online.target" ];
-          unitConfig = { paths = [ pkgs.utillinux ]; };
         }];
       }
     ])
@@ -3765,9 +3787,7 @@ in {
         };
       })
 
-      (let
-        name = "yandex-disk";
-        syncFolder = "${prefs.home}/Sync";
+      (let name = "yandex-disk";
       in if prefs.enableYandexDisk then {
         services.${name} = {
           enable = true;
@@ -3775,11 +3795,11 @@ in {
           onFailure = [ "notify-systemd-unit-failures@%i.service" ];
           after = [ "network.target" ];
           wantedBy = [ "default.target" ];
-          unitConfig.RequiresMountsFor = syncFolder;
+          unitConfig.RequiresMountsFor = prefs.syncFolder;
           serviceConfig = {
             Restart = "always";
             ExecStart =
-              "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${syncFolder}' ${
+              "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${prefs.syncFolder}' ${
                 lib.concatMapStringsSep " " (dir: "--exclude-dirs='${dir}'")
                 prefs.yandexExcludedDirs
               }";

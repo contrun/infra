@@ -991,7 +991,7 @@ in {
   programs = lib.optionalAttrs (prefs.enableSmos) {
     smos = {
       enable = true;
-      config = { workflow-dir = "${prefs.home}/Sync/workflow"; };
+      config = { workflow-dir = "${prefs.syncFolder}/workflow"; };
       # TODO: I use a custom systemd unit instead of this, as it is more secure.
       sync = {
         enable = false;

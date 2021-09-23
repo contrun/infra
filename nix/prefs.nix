@@ -71,6 +71,7 @@ let
     ownerGroup = "users";
     ownerGroupGid = 100;
     home = "/home/${self.owner}";
+    syncFolder = "${self.home}/Sync";
     nixosSystem = "x86_64-linux";
     getNixConfig = path: ./. + "/${path}";
     getDotfile = args.inputs.dotfiles.getDotfile;
@@ -279,6 +280,7 @@ let
     enableNextcloud = false;
     enableYandex = false;
     nextcloudWhere = "/nc/sync";
+    nextcloudMirrorWhere = "/nc/mirror";
     nextcloudWhat = "https://uuuuuu.ocloud.de/remote.php/webdav/sync/";
     yandexWhere = "${self.home}/yandex";
     yandexWhat = "https://webdav.yandex.com/sync/";
