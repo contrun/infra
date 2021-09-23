@@ -280,7 +280,9 @@ let
     enableNextcloud = false;
     enableYandex = false;
     nextcloudWhere = "/nc/sync";
-    nextcloudMirrorWhere = "/nc/mirror";
+    nextcloudContainerDataDirectory = "/var/data/nextcloud-data";
+    ownerNextcloudContainerDataDirectory =
+      "${self.nextcloudContainerDataDirectory}/${self.owner}/files";
     nextcloudWhat = "https://uuuuuu.ocloud.de/remote.php/webdav/sync/";
     yandexWhere = "${self.home}/yandex";
     yandexWhat = "https://webdav.yandex.com/sync/";

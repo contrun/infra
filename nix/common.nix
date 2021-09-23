@@ -826,6 +826,7 @@ in {
         extraBackupArgs = [
           "-v=3"
           "--exclude=/postgresql"
+          "--exclude=/nextcloud-data"
           "--exclude-file=${restic-exclude-files}"
         ];
         paths = [ "/var/data" ];
@@ -2715,16 +2716,27 @@ in {
           environmentFiles = [ "/run/secrets/miniflux-env" ];
           traefikForwardingPort = 8080;
         } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
-          dependsOn = [ "postgresql" ];
+          # Need to initialize the database manually,
+          # cat $(systemctl cat docker-nextcloud.service | awk -F= '/ExecStart=/ {print $2}') | grep -v nextcloud-data
+          # see also https://help.nextcloud.com/t/the-username-is-already-being-used-after-reinstalling-nextcloud-version-20-0-7-1/108219/3
+          dependsOn =
+            lib.optionals prefs.ociContainers.enablePostgresql [ "postgresql" ]
+            ++ lib.optionals prefs.ociContainers.enableRedis [ "redis" ];
           volumes = [
             "/var/data/nextcloud:/var/www/html"
-            "${prefs.nextcloudMirrorWhere}:/var/www/html/data/e/files"
+            "${prefs.nextcloudContainerDataDirectory}:/var/www/html/data"
           ];
           environment = {
             "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
               (prefs.getFullDomainNames "nextcloud")}";
           };
-          environmentFiles = [ "/run/secrets/nextcloud-env" ];
+          environmentFiles = [ "/run/secrets/nextcloud-env" ]
+            ++ (if prefs.ociContainers.enablePostgresql then
+              [ "/run/secrets/nextcloud-postgres-env" ]
+            else
+              [ "/run/secrets/nextcloud-sqlite-env" ])
+            ++ (lib.optionals prefs.ociContainers.enableRedis
+              [ "/run/secrets/nextcloud-redis-env" ]);
           traefikForwardingPort = 80;
         } // mkContainer "homer" prefs.ociContainers.enableHomer {
           volumes = [ "/var/data/homer:/www/assets" ];
@@ -3345,12 +3357,12 @@ in {
         automounts = [{
           enable = prefs.ociContainers.enableNextcloud;
           description = "Automount nextcloud container files directory.";
-          where = prefs.nextcloudMirrorWhere;
+          where = prefs.ownerNextcloudContainerDataDirectory;
           wantedBy = [ "multi-user.target" ];
         }];
         mounts = [{
           enable = prefs.ociContainers.enableNextcloud;
-          where = prefs.nextcloudMirrorWhere;
+          where = prefs.ownerNextcloudContainerDataDirectory;
           what = prefs.syncFolder;
           type = "fuse.bindfs";
           options = "map=${builtins.toString prefs.ownerUid}/33:@${
@@ -3830,6 +3842,10 @@ in {
   } // {
     tmpfiles = {
       rules = [
+        # Otherwise the parent directory's owner is root.
+        # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
+        "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
+        "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
         "d /root/.cache/trash - root root 30d"
         "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
         "d /root/.local/share/Trash - root root 30d"

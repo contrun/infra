@@ -99,6 +99,9 @@ let
           joplin-env = { };
           miniflux-env = { };
           nextcloud-env = { };
+          nextcloud-sqlite-env = { };
+          nextcloud-postgres-env = { };
+          nextcloud-redis-env = { };
           n8n-env = { };
           wikijs-env = { };
           xwiki-env = { };
