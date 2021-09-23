@@ -2468,22 +2468,41 @@ in {
           ports = [ "6379:6379" ];
           cmd = [ "redis-server" "/etc/redis.conf" ];
           enableTraefik = false;
-        } // mkContainer "authelia" prefs.ociContainers.enableAuthelia {
-          extraOptions = [
-            "--mount=type=bind,source=/run/secrets/authelia-conf,target=/config/configuration.yml"
-            "--mount=type=bind,source=/run/secrets/authelia-users,target=/config/users.yml"
-            "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
-              prefs.getFullDomainName "authelia"
-            }"
-            "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
-            "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
-            "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
-            "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
-            "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
-          ];
+        } // mkContainer "authelia" prefs.ociContainers.enableAuthelia (let
+          configs = ([ "authelia-conf" ]
+            ++ (lib.optionals prefs.ociContainers.enableAutheliaLocalUsers
+              [ "authelia-local-users-conf" ])
+            ++ (lib.optionals (!prefs.ociContainers.enableAutheliaLocalUsers)
+              [ "authelia-ldap-users-conf" ])
+            ++ (lib.optionals prefs.ociContainers.enablePostgresql
+              [ "authelia-postgres-conf" ])
+            ++ (lib.optionals (!prefs.ociContainers.enablePostgresql)
+              [ "authelia-sqlite-conf" ])
+            ++ (lib.optionals prefs.ociContainers.enableRedis
+              [ "authelia-redis-conf" ]));
+        in {
+          volumes = [ "/var/data/authelia:/config" ];
+          cmd =
+            lib.concatMap (x: [ "--config" ] ++ [ "/myconfig/${x}" ]) configs;
+          environment = {
+            AUTHELIA_DEFAULT_REDIRECTION_URL = "https://${prefs.domain}";
+            AUTHELIA_TOTP_ISSUER = prefs.getFullDomainName "authelia";
+          };
+          extraOptions = (builtins.map (x:
+            "--mount=type=bind,source=/run/secrets/${x},target=/myconfig/${x}")
+            ([ "authelia-users" ] ++ configs)) ++ [
+              "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
+                prefs.getFullDomainName "authelia"
+              }"
+              "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+              "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+              "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
+              "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
+              "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+            ];
           ports = [ "9091:9091" ];
           traefikForwardingPort = 9091;
-        } // mkContainer "freeipa" prefs.ociContainers.enableFreeipa {
+        }) // mkContainer "freeipa" prefs.ociContainers.enableFreeipa {
           extraOptions = [
             "-h"
             "freeipa.home.arpa"

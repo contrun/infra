@@ -88,6 +88,11 @@ let
           redis-conf = { mode = "0444"; };
           authelia-conf = { };
           authelia-users = { };
+          authelia-local-users-conf = {};
+          authelia-ldap-users-conf = {};
+          authelia-sqlite-conf = { };
+          authelia-postgres-conf = { };
+          authelia-redis-conf = { };
           etesync-env = { };
           vaultwarden-env = { };
           pleroma-env = { };

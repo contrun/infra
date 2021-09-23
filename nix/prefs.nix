@@ -355,6 +355,7 @@ let
       enableCloudBeaver = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
       enableAuthelia = self.enableAllOciContainers || self.enableTraefik;
+      enableAutheliaLocalUsers = true;
       enableFreeipa = false;
       enableHledger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
@@ -378,7 +379,7 @@ let
       enableCalibreWeb = self.enableAllOciContainers;
       enableDokuwiki = self.enableAllOciContainers;
       enableTrilium = self.enableAllOciContainers;
-      enableHomer = self.enableAllOciContainers;
+      enableHomer = self.enableAllOciContainers || self.enableTraefik;
       enableVaultwarden = self.enableAllOciContainers;
       enablePleroma = self.enableAllOciContainers;
       enableJoplin = self.enableAllOciContainers;
