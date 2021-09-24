@@ -1517,7 +1517,7 @@ in {
             codeserver = {
               rule = getRule "codeserver";
               service = "codeserver";
-              middlewares = [ "authelia@docker" ];
+              middlewares = [ ];
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableWstunnel {
@@ -3342,7 +3342,8 @@ in {
             serviceConfig = {
               Type = "simple";
               ExecStart =
-                "${pkgs.code-server}/bin/code-server --bind-addr 127.0.0.1:4050 --auth none --user-data-dir ${prefs.home}/.vscode --disable-telemetry --disable-update-check --verbose --cert false";
+                "${pkgs.code-server}/bin/code-server --disable-telemetry --disable-update-check --user-data-dir ${prefs.home}/.vscode --extensions-dir ${prefs.home}/.vscode/extensions --home https://${prefs.domain} --bind-addr 127.0.0.1:4050 --auth password";
+              EnvironmentFile = "/run/secrets/code-server-env";
               WorkingDirectory = prefs.home;
               NoNewPrivileges = true;
               User = prefs.owner;

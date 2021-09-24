@@ -81,6 +81,11 @@ let
             owner = prefs.owner;
             group = prefs.ownerGroup;
           };
+          code-server-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
           openldap-root-password = { };
           postgresql-env = { };
           postgresql-backup-env = { };

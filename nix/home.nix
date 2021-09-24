@@ -401,6 +401,7 @@ let
         "cht-sh"
         "autokey"
         "automake"
+        "cloudflared"
         "autossh"
         "mosh"
         "eternal-terminal"
