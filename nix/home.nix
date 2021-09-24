@@ -672,6 +672,8 @@ let
         "iotop"
         "inotifyTools"
         "noti"
+        "ntfy"
+        "apprise"
         "barrier"
         "gnutls"
         "iw"

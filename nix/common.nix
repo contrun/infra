@@ -1541,7 +1541,7 @@ in {
             syncthing = {
               rule = getRule "syncthing";
               service = "syncthing";
-              middlewares = [ "authelia@docker" ];
+              middlewares = [ "authelia@docker" "syncthing" ];
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableGrafana {
@@ -1580,6 +1580,14 @@ in {
               replacePathRegex = {
                 regex = "^/(.*)";
                 replacement = "/webui-aria2/$1";
+              };
+            };
+            # Use this only for syncthing GUI (not restful api).
+            syncthing = {
+              headers = {
+                customRequestHeaders = {
+                  Authorization = "{{ env `SYNCTHING_AUTHORIZATION` }}";
+                };
               };
             };
             wstunnel = {
@@ -2056,26 +2064,38 @@ in {
       enable = prefs.enableSyncthing;
       user = prefs.owner;
       dataDir = prefs.home;
+      extraOptions = {
+        gui = {
+          user = "e";
+          # TODO: didn't find way to hide it, but this password has enough entropy.
+          password =
+            "$2a$10$20ol/13Gghbqq/tsEkEyGO.kJLgKsz2cJmC4Cccx.0Z1ECSYHO80O";
+        };
+      };
       devices = {
         ssg = {
           id =
             "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
           introducer = true;
+          autoAcceptFolders = true;
         };
         shl = {
           id =
             "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
           introducer = true;
+          autoAcceptFolders = true;
         };
         jxt = {
           id =
             "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
           introducer = true;
+          autoAcceptFolders = true;
         };
         mdq = {
           id =
             "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
           introducer = true;
+          autoAcceptFolders = true;
         };
       };
       folders = {
