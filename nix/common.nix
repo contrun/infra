@@ -2049,7 +2049,7 @@ in {
       package = pkgs.myPackages.emacs or pkgs.emacs;
     };
 
-    syncthing = {
+    syncthing = rec {
       enable = prefs.enableSyncthing;
       user = prefs.owner;
       dataDir = prefs.home;
@@ -2061,49 +2061,55 @@ in {
             "$2a$10$20ol/13Gghbqq/tsEkEyGO.kJLgKsz2cJmC4Cccx.0Z1ECSYHO80O";
         };
       };
+      # Don't enable autoAcceptFolders, as the folder path may not be desirable.
       devices = {
         ssg = {
           id =
             "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
           introducer = true;
-          autoAcceptFolders = true;
         };
         shl = {
           id =
             "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
           introducer = true;
-          autoAcceptFolders = true;
         };
         jxt = {
           id =
             "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
           introducer = true;
-          autoAcceptFolders = true;
         };
         mdq = {
           id =
             "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
           introducer = true;
-          autoAcceptFolders = true;
         };
       };
-      folders = {
-        "${prefs.home}/Storage/Calibre" = {
-          id = "calibre";
-          devices = [ "ssg" "shl" "jxt" "mdq" ];
-          ignorePerms = false;
-          versioning = {
-            # TODO: This does not work. Syncthing seems to be using new schema now.
-            # See https://github.com/syncthing/syncthing/pull/7407
-            params = {
-              cleanInterval = "3600";
-              maxAge = "315360000";
-              fsPath = "${prefs.home}/.cache/syncthing_versioning";
-              versionsPath = "${prefs.home}/.cache/syncthing_versioning";
-            };
-            type = "staggered";
+
+      folders = let
+        allDevices = [ "ssg" "shl" "jxt" "mdq" ];
+        getVersioningPolicy = id: {
+          type = "staggered";
+          # TODO: This does not work. Syncthing seems to be using new schema now.
+          # See https://github.com/syncthing/syncthing/pull/7407
+          # cleanIntervalS = 3600;
+          # fsPath = "${prefs.home}/.cache/syncthing_versioning/${id}";
+          # fsType = "basic";
+          params = {
+            cleanInterval = "3600";
+            maxAge = "315360000";
           };
         };
+        getFolderConfig = id: path: rec {
+          inherit id path;
+          devices = allDevices;
+          ignorePerms = false;
+          versioning = getVersioningPolicy id;
+        };
+      in {
+        "${prefs.calibreFolder}" =
+          getFolderConfig "calibre" prefs.calibreFolder;
+
+        "${prefs.syncFolder}" = getFolderConfig "sync" prefs.syncFolder;
       };
     };
 

@@ -241,7 +241,7 @@ let
       };
     } else
       { };
-    enableYandexDisk = self.nixosSystem == "x86_64-linux";
+    enableYandexDisk = false;
     yandexExcludedDirs =
       [ "docs/org-mode/roam/.emacs.d" "ltximg" ".stversions" ".stfolder" ];
     enableTraefik = false;
@@ -293,8 +293,9 @@ let
     enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
     enableCalibreServer = true;
-    calibreServerLibraries = [ "${self.home}/Storage/Calibre" ];
+    calibreServerLibraries = [ self.calibreFolder ];
     calibreServerPort = 8213;
+    calibreFolder = "${self.home}/Storage/Calibre" ;
     enablePipewire = true;
     enableSlock = true;
     enableZSH = true;
