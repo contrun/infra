@@ -359,6 +359,7 @@ let
       enableAuthelia = self.enableAllOciContainers || self.enableTraefik;
       enableAutheliaLocalUsers = true;
       enableFreeipa = false;
+      enableKeeweb = self.enableAllOciContainers;
       enableHledger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
       enableSearx = self.enableAllOciContainers;

@@ -1470,11 +1470,6 @@ in {
               service = "api@internal";
               tls = { };
             };
-            keeweb = {
-              rule = getRule "keeweb";
-              service = "keeweb";
-              tls = { };
-            };
             etesync-pim = {
               rule = getRule "etesync-pim";
               service = "etesync-pim";
@@ -1604,12 +1599,6 @@ in {
                 passHostHeader = false;
                 servers =
                   [{ url = "https://${prefs.getFullDomainName "dummy"}"; }];
-              };
-            };
-            keeweb = {
-              loadBalancer = {
-                passHostHeader = false;
-                servers = [{ url = "https://app.keeweb.info/"; }];
               };
             };
             etesync-pim = {
@@ -2415,6 +2404,12 @@ in {
             };
             "etesync-dav" = let image = "docker.io/etesync/etesync-dav:latest";
             in { "x86_64-linux" = image; };
+            "keeweb" =
+              let image = "docker.io/contrun/keeweb-local-server:latest";
+              in {
+                "x86_64-linux" = image;
+                "aarch64-linux" = image;
+              };
             "codeserver" = let image = "docker.io/codercom/code-server:latest";
             in {
               "x86_64-linux" = image;
@@ -3038,6 +3033,7 @@ in {
                     }
                     {
                       name = "keeweb";
+                      enable = prefs.ociContainers.enableKeeweb;
                       subtitle = "password management";
                       tag = "security";
                       url = "https://${prefs.getFullDomainName "keeweb"}";
@@ -3093,6 +3089,12 @@ in {
           environment = {
             "ETESYNC_URL" = "https://${prefs.getFullDomainName "etesync"}";
           };
+        } // mkContainer "keeweb" prefs.ociContainers.enableKeeweb {
+          volumes = [
+            "${prefs.syncFolder}/private/keepass:/var/www/keeweb-local-server/databases"
+          ];
+          environmentFiles = [ "/run/secrets/keeweb-env" ];
+          traefikForwardingPort = 8080;
         } // mkContainer "codeserver" prefs.ociContainers.enableCodeServer {
           volumes = [
             "${prefs.home}:/home/coder"
