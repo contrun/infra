@@ -2743,6 +2743,9 @@ in {
           dependsOn =
             lib.optionals prefs.ociContainers.enablePostgresql [ "postgresql" ]
             ++ lib.optionals prefs.ociContainers.enableRedis [ "redis" ];
+          # TODO: We need to periodically run `./occ files:scan --all` to keep
+          # nextcloud database and the underlying directory tree structure in synchronization.
+          # see https://github.com/nextcloud/server/issues/17550
           volumes = [
             "/var/data/nextcloud:/var/www/html"
             "${prefs.nextcloudContainerDataDirectory}:/var/www/html/data"

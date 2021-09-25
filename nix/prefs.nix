@@ -577,6 +577,7 @@ let
       isMinimalSystem = false;
       hostId = "59b352bc";
       dpi = 128;
+      enableEmacs = false;
       enableAllOciContainers = true;
       enableTraefik = true;
       enableGrafana = true;
