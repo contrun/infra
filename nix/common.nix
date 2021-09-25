@@ -25,6 +25,16 @@ let
       json = builtins.toFile "${name}.json" (builtins.toJSON attrs);
       nativeBuildInputs = [ pkgs.remarshal ];
     } "json2yaml -i $json -o $out";
+
+  getTraefikBareDomainRule =
+    lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains;
+  getTraefikRuleByDomainPrefix = let
+    getRuleByPrefix = domainPrefix:
+      lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
+      (prefs.getFullDomainNames domainPrefix);
+  in domainPrefixes:
+  lib.concatMapStringsSep " || " getRuleByPrefix
+  (lib.splitString "," domainPrefixes);
 in {
   imports = let
     smosConfiguration = { config, pkgs, lib, inputs, ... }: {
@@ -827,6 +837,8 @@ in {
           "-v=3"
           "--exclude=/postgresql"
           "--exclude=/nextcloud-data"
+          "--exclude=/sftpgo/data"
+          "--exclude=/sftpgo/backups"
           "--exclude-file=${restic-exclude-files}"
         ];
         paths = [ "/var/data" ];
@@ -1443,17 +1455,7 @@ in {
         mynetworks_style = host
       '';
     };
-    traefik = let
-      getRuleByPrefix = domainPrefix:
-        lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
-        (prefs.getFullDomainNames domainPrefix);
-      getBareDomainRule =
-        lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
-        prefs.domains;
-      getRule = domainPrefixes:
-        lib.concatMapStringsSep " || " getRuleByPrefix
-        (lib.splitString "," domainPrefixes);
-    in {
+    traefik = {
       enable = prefs.enableTraefik;
       dynamicConfigOptions = {
         http = {
@@ -1463,7 +1465,7 @@ in {
           routers = {
             traefik-dashboard = {
               rule = "${
-                  getRule "traefik"
+                  getTraefikRuleByDomainPrefix "traefik"
                 } && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))";
               middlewares = [ "authelia@docker" ];
               entryPoints = [ "websecure" ];
@@ -1471,46 +1473,48 @@ in {
               tls = { };
             };
             etesync-pim = {
-              rule = getRule "etesync-pim";
+              rule = getTraefikRuleByDomainPrefix "etesync-pim";
               service = "etesync-pim";
               tls = { };
             };
             etesync-notes = {
-              rule = getRule "etesync-notes";
+              rule = getTraefikRuleByDomainPrefix "etesync-notes";
               service = "etesync-notes";
               tls = { };
             };
             clash = {
-              rule = getRule "clash";
+              rule = getTraefikRuleByDomainPrefix "clash";
               middlewares = [ "authelia@docker" ];
               service = "clash";
               tls = { };
             };
             aria2rpc = {
-              rule = "(${getRule "aria2"}) && PathPrefix(`/jsonrpc`)";
+              rule = "(${
+                  getTraefikRuleByDomainPrefix "aria2"
+                }) && PathPrefix(`/jsonrpc`)";
               service = "aria2rpc";
               tls = { };
             };
             aria2 = {
-              rule = getRule "aria2";
+              rule = getTraefikRuleByDomainPrefix "aria2";
               middlewares = [ "aria2" ];
               service = "aria2";
               tls = { };
             };
             organice = {
-              rule = getRule "organice";
+              rule = getTraefikRuleByDomainPrefix "organice";
               service = "organice";
               tls = { };
             };
           } // lib.optionalAttrs prefs.ociContainers.enableHomer {
             homer = {
-              rule = getBareDomainRule;
+              rule = getTraefikBareDomainRule;
               service = "homer@docker";
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableCodeServer {
             codeserver = {
-              rule = getRule "codeserver";
+              rule = getTraefikRuleByDomainPrefix "codeserver";
               service = "codeserver";
               middlewares = [ ];
               tls = { };
@@ -1518,7 +1522,7 @@ in {
           } // lib.optionalAttrs prefs.enableWstunnel {
             wstunnel-with-auth = {
               rule = "(${
-                  getRule "wstunnel"
+                  getTraefikRuleByDomainPrefix "wstunnel"
                 }) && !PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
               middlewares = [ "authelia@docker" "wstunnel" ];
               service = "dummy";
@@ -1527,45 +1531,45 @@ in {
           } // lib.optionalAttrs prefs.enableWstunnel {
             wstunnel = {
               rule = "(${
-                  getRule "wstunnel"
+                  getTraefikRuleByDomainPrefix "wstunnel"
                 }) && PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
               service = "wstunnel";
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableSyncthing {
             syncthing = {
-              rule = getRule "syncthing";
+              rule = getTraefikRuleByDomainPrefix "syncthing";
               service = "syncthing";
               middlewares = [ "authelia@docker" "syncthing" ];
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableGrafana {
             grafana = {
-              rule = getRule "grafana";
+              rule = getTraefikRuleByDomainPrefix "grafana";
               service = "grafana";
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableSmosServer {
             smos = {
-              rule = getRule "smos";
+              rule = getTraefikRuleByDomainPrefix "smos";
               service = "smos";
               tls = { };
             };
             smos-api = {
-              rule = getRule "smos-api";
+              rule = getTraefikRuleByDomainPrefix "smos-api";
               service = "smos-api";
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableActivityWatch {
             activitywatch = {
-              rule = getRule "activitywatch";
+              rule = getTraefikRuleByDomainPrefix "activitywatch";
               service = "activitywatch";
               middlewares = [ "authelia@docker" ];
               tls = { };
             };
           } // lib.optionalAttrs prefs.enableTtyd {
             ttyd = {
-              rule = getRule "ttyd";
+              rule = getTraefikRuleByDomainPrefix "ttyd";
               service = "ttyd";
               tls = { };
             };
@@ -1791,7 +1795,7 @@ in {
         };
         providers = {
           docker = {
-            defaultRule = getRule
+            defaultRule = getTraefikRuleByDomainPrefix
               "{{ (or (index .Labels `domainprefix`) .Name) | normalize }}";
             endpoint = if (prefs.ociContainerBackend == "docker") then
               "unix:///var/run/docker.sock"
@@ -2409,6 +2413,11 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "sftpgo" = let image = "ghcr.io/drakkan/sftpgo:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "homer" = let image = "docker.io/b4bz/homer:latest";
             in {
               "x86_64-linux" = image;
@@ -2773,6 +2782,29 @@ in {
             ++ (lib.optionals prefs.ociContainers.enableRedis
               [ "/run/secrets/nextcloud-redis-env" ]);
           traefikForwardingPort = 80;
+        } // mkContainer "sftpgo" prefs.ociContainers.enableSftpgo {
+          extraOptions = [
+            "--user=${builtins.toString prefs.ownerUid}:${
+              builtins.toString prefs.ownerGroupGid
+            }"
+            "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
+            "--label=traefik.http.routers.sftpgo-webdav.rule=${
+              getTraefikRuleByDomainPrefix "webdav"
+            }"
+            "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
+            "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
+          ];
+          ports = [ "2122:2022" ];
+          volumes = [
+            "/var/data/sftpgo/config:/var/lib/sftpgo"
+            "/var/data/sftpgo/data:/srv/sftpgo/data"
+            "${prefs.home}:/srv/sftpgo/data/${prefs.owner}"
+            "${prefs.syncFolder}:/srv/sftpgo/data/sync"
+            "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
+            "/var/data/sftpgo/backups:/srv/sftpgo/backups"
+          ];
+          environment = { "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080"; };
+          traefikForwardingPort = 8080;
         } // mkContainer "homer" prefs.ociContainers.enableHomer {
           volumes = [ "/var/data/homer:/www/assets" ];
           traefikForwardingPort = 8080;
@@ -3052,6 +3084,20 @@ in {
                       url = "https://${prefs.getFullDomainName "nextcloud"}";
                     }
                     {
+                      enable = prefs.ociContainers.enableSftpgo;
+                      name = "sftpgo";
+                      subtitle = "file synchronization";
+                      tag = "synchronization";
+                      url = "https://${prefs.getFullDomainName "sftpgo"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableSftpgo;
+                      name = "webdav";
+                      subtitle = "file synchronization";
+                      tag = "synchronization";
+                      url = "https://${prefs.getFullDomainName "webdav"}";
+                    }
+                    {
                       name = "keeweb";
                       enable = prefs.ociContainers.enableKeeweb;
                       subtitle = "password management";
@@ -3171,6 +3217,11 @@ in {
           "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
           "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
           "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
+        ] ++ pkgs.lib.optionals prefs.ociContainers.enableSftpgo [
+          "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
+          "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
+          "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
+          "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
         ] ++ pkgs.lib.optionals prefs.ociContainers.enableEtesync [
           "d /var/data/etesync - 373 373 -"
           "d /var/data/etesync/media - 373 373 -"

@@ -295,7 +295,7 @@ let
     enableCalibreServer = true;
     calibreServerLibraries = [ self.calibreFolder ];
     calibreServerPort = 8213;
-    calibreFolder = "${self.home}/Storage/Calibre" ;
+    calibreFolder = "${self.home}/Storage/Calibre";
     enablePipewire = true;
     enableSlock = true;
     enableZSH = true;
@@ -389,6 +389,7 @@ let
       enableJoplin = self.enableAllOciContainers;
       enableMiniflux = self.enableAllOciContainers;
       enableNextcloud = self.enableAllOciContainers;
+      enableSftpgo = self.enableAllOciContainers;
     };
     emulatedSystems =
       if (self.nixosSystem == "x86_64-linux") then [ "aarch64-linux" ] else [ ];
@@ -520,6 +521,7 @@ let
       };
       enableTraefik = true;
       enableAllOciContainers = false;
+      ociContainers = super.ociContainers // { };
     } else if hostname == "jxt" then {
       isMinimalSystem = false;
       hostId = "5ee92b8d";
@@ -550,6 +552,7 @@ let
           supportedFeatures = [ "kvm" "big-parallel" ];
         }
       ];
+      ociContainers = super.ociContainers // { };
     } else if hostname == "shl" then {
       enableXserver = false;
       enableAria2 = true;
