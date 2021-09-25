@@ -2418,6 +2418,8 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "filestash" = let image = "docker.io/machines/filestash:latest";
+            in { "x86_64-linux" = image; };
             "homer" = let image = "docker.io/b4bz/homer:latest";
             in {
               "x86_64-linux" = image;
@@ -2805,6 +2807,12 @@ in {
           ];
           environment = { "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080"; };
           traefikForwardingPort = 8080;
+        } // mkContainer "filestash" prefs.ociContainers.enableFilestash {
+          environment = {
+            APPLICATION_URL = prefs.getFullDomainName "filestash";
+          };
+          volumes = [ "/var/data/filestash:/app/data/state" ];
+          traefikForwardingPort = 8334;
         } // mkContainer "homer" prefs.ociContainers.enableHomer {
           volumes = [ "/var/data/homer:/www/assets" ];
           traefikForwardingPort = 8080;
@@ -3098,6 +3106,13 @@ in {
                       url = "https://${prefs.getFullDomainName "webdav"}";
                     }
                     {
+                      enable = prefs.ociContainers.enableFilestash;
+                      name = "filestash";
+                      subtitle = "file manager";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "filestash"}";
+                    }
+                    {
                       name = "keeweb";
                       enable = prefs.ociContainers.enableKeeweb;
                       subtitle = "password management";
@@ -3233,6 +3248,8 @@ in {
           [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ]
           ++ pkgs.lib.optionals prefs.ociContainers.enablePleroma
           [ "d /var/data/pleroma - 100 0 -" ]
+          ++ pkgs.lib.optionals prefs.ociContainers.enableFilestash
+          [ "d /var/data/filestash - 1000 1000 -" ]
           ++ pkgs.lib.optionals prefs.ociContainers.enableGitea [
             "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
             "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"

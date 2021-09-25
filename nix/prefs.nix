@@ -390,6 +390,8 @@ let
       enableMiniflux = self.enableAllOciContainers;
       enableNextcloud = self.enableAllOciContainers;
       enableSftpgo = self.enableAllOciContainers;
+      enableFilestash = self.enableAllOciContainers
+        && (self.nixosSystem == "x86_64-linux");
     };
     emulatedSystems =
       if (self.nixosSystem == "x86_64-linux") then [ "aarch64-linux" ] else [ ];
