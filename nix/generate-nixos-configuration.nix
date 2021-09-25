@@ -20,11 +20,11 @@ let
   nixpkgsOverlay = { config, pkgs, system, inputs, ... }: {
     nixpkgs.overlays = [
       (self: super: {
-        unstable = import inputs.nixpkgs-unstable {
+        unstable = import inputs.nixos-unstable {
           inherit system;
           config = super.config;
         };
-        stable = import inputs.nixpkgs-stable {
+        stable = import inputs.nixos-stable {
           inherit system;
           config = super.config;
         };

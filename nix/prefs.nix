@@ -316,7 +316,7 @@ let
       "openjdk8"
     ];
     enableNextcloudClient = false;
-    enableTaskWarriorSync = true;
+    enableTaskWarriorSync = false;
     enableVdirsyncer = true;
     enableHolePuncher = true;
     enableDdns = true;
