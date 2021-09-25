@@ -3147,6 +3147,22 @@ in {
     };
   in (builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
     {
+      extraConfig = "DefaultTimeoutStopSec=10s";
+      tmpfiles = {
+        rules = [
+          # Otherwise the parent directory's owner is root.
+          # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
+          "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
+          "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
+          "d /root/.cache/trash - root root 30d"
+          "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+          "d /root/.local/share/Trash - root root 30d"
+          "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+        ];
+      };
+    }
+
+    {
       services = notify-systemd-unit-failures // {
         init-oci-container-network = {
           description = "Create oci container networks";
@@ -3572,47 +3588,8 @@ in {
       };
     })
 
-    (let
-      postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
-      postgresqlInitUnitName = "${postgresqlUnitName}-init";
-      postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
-    in {
-      services = pkgs.lib.optionalAttrs prefs.ociContainers.enablePostgresql {
-        "${postgresqlInitUnitName}" = {
-          serviceConfig = { Restart = lib.mkForce "on-failure"; };
-        };
-        "${postgresqlBackupUnitName}" = let
-          backup-script = pkgs.writeShellScript "postgresql-backup-script" ''
-            set -xeu -o pipefail
-            umask 0077
-            mkdir -p "$BACKUP_DIR"
-            export HOME=/root
-            ${prefs.ociContainerBackend} exec -e PGHOST -e PGUSER -e PGPASSWORD postgresql pg_dumpall | gzip -c > "$BACKUP_DIR/all.tmp.sql.gz"
-            if [ -e "$BACKUP_DIR/all.sql.gz" ]; then
-                mv "$BACKUP_DIR/all.sql.gz" "$BACKUP_DIR/all.prev.sql.gz"
-            fi
-            mv $BACKUP_DIR/all.tmp.sql.gz $BACKUP_DIR/all.sql.gz
-          '';
-        in {
-          description =
-            "Backup ${prefs.ociContainerBackend} postgresql database";
-          enable = true;
-          wants = [ "network-online.target" "${postgresqlUnitName}.service" ];
-          after = [ "network-online.target" "${postgresqlUnitName}.service" ];
-          path =
-            [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
-            ++ (lib.optionals (prefs.ociContainerBackend == "docker")
-              [ config.virtualisation.docker.package ])
-            ++ (lib.optionals (prefs.ociContainerBackend == "podman")
-              [ config.virtualisation.podman.package ]);
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${backup-script}";
-            EnvironmentFile = "/run/secrets/postgresql-backup-env";
-            Restart = "on-failure";
-          };
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableEtesync {
+    ({
+      services = pkgs.lib.optionalAttrs prefs.ociContainers.enableEtesync {
         "${prefs.ociContainerBackend}-etesync" = {
           preStart = builtins.concatStringsSep "\n" [
             "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync/media"
@@ -3667,6 +3644,49 @@ in {
           ];
         };
       };
+    })
+
+    (let
+      postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
+      postgresqlInitUnitName = "${postgresqlUnitName}-init";
+      postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
+    in {
+      services = pkgs.lib.optionalAttrs prefs.ociContainers.enablePostgresql {
+        "${postgresqlInitUnitName}" = {
+          serviceConfig = { Restart = lib.mkForce "on-failure"; };
+        };
+        "${postgresqlBackupUnitName}" = let
+          backup-script = pkgs.writeShellScript "postgresql-backup-script" ''
+            set -xeu -o pipefail
+            umask 0077
+            mkdir -p "$BACKUP_DIR"
+            export HOME=/root
+            ${prefs.ociContainerBackend} exec -e PGHOST -e PGUSER -e PGPASSWORD postgresql pg_dumpall | gzip -c > "$BACKUP_DIR/all.tmp.sql.gz"
+            if [ -e "$BACKUP_DIR/all.sql.gz" ]; then
+                mv "$BACKUP_DIR/all.sql.gz" "$BACKUP_DIR/all.prev.sql.gz"
+            fi
+            mv $BACKUP_DIR/all.tmp.sql.gz $BACKUP_DIR/all.sql.gz
+          '';
+        in {
+          description =
+            "Backup ${prefs.ociContainerBackend} postgresql database";
+          enable = true;
+          wants = [ "network-online.target" "${postgresqlUnitName}.service" ];
+          after = [ "network-online.target" "${postgresqlUnitName}.service" ];
+          path =
+            [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
+            ++ (lib.optionals (prefs.ociContainerBackend == "docker")
+              [ config.virtualisation.docker.package ])
+            ++ (lib.optionals (prefs.ociContainerBackend == "podman")
+              [ config.virtualisation.podman.package ]);
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${backup-script}";
+            EnvironmentFile = "/run/secrets/postgresql-backup-env";
+            Restart = "on-failure";
+          };
+        };
+      };
       timers = pkgs.lib.optionalAttrs prefs.ociContainers.enablePostgresql {
         "${postgresqlBackupUnitName}" = {
           enable = true;
@@ -3681,8 +3701,6 @@ in {
           };
         };
       };
-
-      extraConfig = "DefaultTimeoutStopSec=10s";
     })
   ]) // {
     user = builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
@@ -3871,19 +3889,6 @@ in {
       } else
         { })
     ];
-  } // {
-    tmpfiles = {
-      rules = [
-        # Otherwise the parent directory's owner is root.
-        # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
-        "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
-        "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
-        "d /root/.cache/trash - root root 30d"
-        "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-        "d /root/.local/share/Trash - root root 30d"
-        "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-      ];
-    };
   };
 
   nix = {
