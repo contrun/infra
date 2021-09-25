@@ -3150,15 +3150,31 @@ in {
       extraConfig = "DefaultTimeoutStopSec=10s";
       tmpfiles = {
         rules = [
+          "d /root/.cache/trash - root root 30d"
+          "d /root/.local/share/Trash - root root 30d"
+          "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+          "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+        ] ++ [
           # Otherwise the parent directory's owner is root.
           # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
           "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
+          "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
           "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
-          "d /root/.cache/trash - root root 30d"
-          "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-          "d /root/.local/share/Trash - root root 30d"
-          "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-        ];
+        ] ++ pkgs.lib.optionals prefs.ociContainers.enableEtesync [
+          "d /var/data/etesync - 373 373 -"
+          "d /var/data/etesync/media - 373 373 -"
+        ] ++ pkgs.lib.optionals prefs.ociContainers.enableEtesyncDav
+          [ "d /var/data/etesync-dav - 1000 1000 -" ]
+          ++ pkgs.lib.optionals prefs.ociContainers.enableTrilium
+          [ "d /var/data/trilium - 1000 1000 -" ]
+          ++ pkgs.lib.optionals prefs.ociContainers.enableTiddlyWiki
+          [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ]
+          ++ pkgs.lib.optionals prefs.ociContainers.enablePleroma
+          [ "d /var/data/pleroma - 100 0 -" ]
+          ++ pkgs.lib.optionals prefs.ociContainers.enableGitea [
+            "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
+            "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
+          ];
       };
     }
 
@@ -3589,59 +3605,12 @@ in {
     })
 
     ({
-      services = pkgs.lib.optionalAttrs prefs.ociContainers.enableEtesync {
-        "${prefs.ociContainerBackend}-etesync" = {
-          preStart = builtins.concatStringsSep "\n" [
-            "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync/media"
-            "${pkgs.coreutils}/bin/chown -vR 373:373 /var/data/etesync"
-          ];
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableEtesyncDav {
-        "${prefs.ociContainerBackend}-etesync-dav" = {
-          preStart = builtins.concatStringsSep "\n" [
-            "${pkgs.coreutils}/bin/mkdir -p /var/data/etesync-dav"
-            "${pkgs.coreutils}/bin/chown -vR 1000:1000 /var/data/etesync-dav"
-          ];
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTrilium {
-        "${prefs.ociContainerBackend}-trilium" = {
-          preStart = builtins.concatStringsSep "\n" [
-            "${pkgs.coreutils}/bin/mkdir -p /var/data/trilium"
-            "${pkgs.coreutils}/bin/chown -vR 1000:1000 /var/data/trilium"
-          ];
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableHledger {
+      services = pkgs.lib.optionalAttrs prefs.ociContainers.enableHledger {
         "${prefs.ociContainerBackend}-hledger-init" = {
           serviceConfig = {
             Type = lib.mkForce "oneshot";
             Restart = lib.mkForce "on-failure";
           };
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableTiddlyWiki {
-        "${prefs.ociContainerBackend}-tiddlywiki" = {
-          preStart = builtins.concatStringsSep "\n" [
-            "${pkgs.coreutils}/bin/mkdir -p /var/data/tiddlywiki"
-            "${pkgs.coreutils}/bin/chown -vR ${
-              builtins.toString prefs.ownerUid
-            }:${builtins.toString prefs.ownerGroupGid} /var/data/tiddlywiki"
-          ];
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enablePleroma {
-        "${prefs.ociContainerBackend}-pleroma" = {
-          preStart = builtins.concatStringsSep "\n" [
-            "${pkgs.coreutils}/bin/mkdir -p /var/data/pleroma"
-            # The user used in the official image is pleroma (uid 100).
-            "${pkgs.coreutils}/bin/chown -vR 100:0 /var/data/pleroma"
-          ];
-        };
-      } // pkgs.lib.optionalAttrs prefs.ociContainers.enableGitea {
-        "${prefs.ociContainerBackend}-gitea" = {
-          preStart = builtins.concatStringsSep "\n" [
-            "${pkgs.coreutils}/bin/mkdir -p /var/data/gitea/gitea"
-            "${pkgs.coreutils}/bin/chown -vR ${
-              builtins.toString prefs.ownerUid
-            }:${builtins.toString prefs.ownerGroupGid} /var/data/gitea"
-          ];
         };
       };
     })
