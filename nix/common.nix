@@ -3627,6 +3627,46 @@ in {
     })
 
     (let
+      nextcloudUnitName = "${prefs.ociContainerBackend}-nextcloud";
+      nextcloudMaintenanceUnitName = "${nextcloudUnitName}-maintenance";
+    in {
+      services = pkgs.lib.optionalAttrs prefs.ociContainers.enableNextcloud {
+        "${nextcloudMaintenanceUnitName}" = let
+          maintain-script = pkgs.writeShellScript "nextcloud-maintain-script" ''
+            ${prefs.ociContainerBackend} exec --user 33 nextcloud ./occ files:scan e
+          '';
+        in {
+          description = "Maintain ${prefs.ociContainerBackend} nextcloud";
+          enable = true;
+          wants = [ "network-online.target" "${nextcloudUnitName}.service" ];
+          after = [ "network-online.target" "${nextcloudUnitName}.service" ];
+          path =
+            [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
+            ++ (lib.optionals (prefs.ociContainerBackend == "docker")
+              [ config.virtualisation.docker.package ])
+            ++ (lib.optionals (prefs.ociContainerBackend == "podman")
+              [ config.virtualisation.podman.package ]);
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${maintain-script}";
+            Restart = "on-failure";
+          };
+        };
+      };
+      timers = pkgs.lib.optionalAttrs prefs.ociContainers.enableNextcloud {
+        "${nextcloudMaintenanceUnitName}" = {
+          enable = true;
+          wantedBy = [ "default.target" ];
+          timerConfig = {
+            OnCalendar = "hourly";
+            Unit = "${nextcloudMaintenanceUnitName}.service";
+            Persistent = true;
+          };
+        };
+      };
+    })
+
+    (let
       postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
       postgresqlInitUnitName = "${postgresqlUnitName}-init";
       postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
