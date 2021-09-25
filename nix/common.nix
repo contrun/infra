@@ -2197,61 +2197,72 @@ in {
 
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
 
-  users.users = let
-    extraGroups = [
-      "wheel"
-      "cups"
-      "video"
-      "kvm"
-      "libvirtd"
-      "qemu-libvirtd"
-      "audio"
-      "disk"
-      "keys"
-      "aria2"
-      "networkmanager"
-      "adbusers"
-      "docker"
-      "davfs2"
-      "wireshark"
-      "vboxusers"
-      "lp"
-      "input"
-      "mlocate"
-      "postfix"
-    ];
-  in {
-    "${prefs.owner}" = {
-      createHome = true;
-      inherit extraGroups;
-      group = prefs.ownerGroup;
-      home = prefs.home;
-      isNormalUser = true;
-      uid = prefs.ownerUid;
-      shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
-      initialHashedPassword =
-        "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
-    };
-    clash = {
-      group = "clash";
-      createHome = false;
-      isNormalUser = false;
-      isSystemUser = true;
-    };
-  } // (if prefs.enableFallbackAccount then {
-    # Fallback user when "${prefs.owner}" encounters problems
-    fallback = {
-      group = "fallback";
-      createHome = true;
-      isNormalUser = true;
-      useDefaultShell = true;
-      initialHashedPassword =
-        "$6$nstJFDdZZ$uENeWO2lup09Je7UzVlJpwPlU1SvLwzTrbm/Gr.4PUpkKUuGcNEFmUrfgotWF3HoofVrGg1ENW.uzTGT6kX3v1";
-    };
-  } else
-    { });
-
-  users.groups."${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; };
+  users = builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
+    {
+      users = let
+        extraGroups = [
+          "wheel"
+          "cups"
+          "video"
+          "kvm"
+          "libvirtd"
+          "qemu-libvirtd"
+          "audio"
+          "disk"
+          "keys"
+          "aria2"
+          "networkmanager"
+          "adbusers"
+          "docker"
+          "davfs2"
+          "wireshark"
+          "vboxusers"
+          "lp"
+          "input"
+          "mlocate"
+          "postfix"
+        ];
+      in {
+        "${prefs.owner}" = {
+          createHome = true;
+          inherit extraGroups;
+          group = prefs.ownerGroup;
+          home = prefs.home;
+          isNormalUser = true;
+          uid = prefs.ownerUid;
+          shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
+          initialHashedPassword =
+            "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+        };
+      };
+      groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
+    }
+    {
+      users = {
+        clash = {
+          group = "clash";
+          createHome = false;
+          isNormalUser = false;
+          isSystemUser = true;
+        };
+      };
+      groups = { clash = { name = "clash"; }; };
+    }
+    (lib.optionalAttrs prefs.enableFallbackAccount {
+      users = {
+        # Fallback user when "${prefs.owner}" encounters problems
+        fallback = {
+          group = "fallback";
+          createHome = true;
+          isNormalUser = true;
+          useDefaultShell = true;
+          initialHashedPassword =
+            "$6$nstJFDdZZ$uENeWO2lup09Je7UzVlJpwPlU1SvLwzTrbm/Gr.4PUpkKUuGcNEFmUrfgotWF3HoofVrGg1ENW.uzTGT6kX3v1";
+        };
+      };
+      groups = { fallback = { name = "fallback"; }; };
+    })
+  ];
 
   virtualisation = {
     libvirtd = { enable = prefs.enableLibvirtd; };
