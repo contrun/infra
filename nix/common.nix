@@ -2803,12 +2803,16 @@ in {
             "${prefs.home}:/srv/sftpgo/data/${prefs.owner}"
             "${prefs.syncFolder}:/srv/sftpgo/data/sync"
             "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
+            "${prefs.syncFolder}/docs/org-mode:/srv/sftpgo/data/orgmode"
             "/var/data/sftpgo/backups:/srv/sftpgo/backups"
           ];
           environment = {
-            "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
             "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
             "SFTPGO_COMMON__0__PROXY_ALLOWED" = "1";
+            "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
+            "SFTPGO_WEBDAVD__CORS_ENABLED" = "true";
+            "SFTPGO_WEBDAVD__CORS__0__ALLOWED_ORIGINS" =
+              "*.${prefs.mainDomain}";
           } // builtins.listToAttrs (lib.imap0 (i: v: {
             name = "SFTPGO_COMMON__${builtins.toString i}__PROXY_ALLOWED";
             value = v;
