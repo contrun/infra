@@ -2053,7 +2053,30 @@ in {
       package = pkgs.myPackages.emacs or pkgs.emacs;
     };
 
-    syncthing = rec {
+    syncthing = let
+      devices = {
+        ssg = {
+          id =
+            "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+        };
+        shl = {
+          id =
+            "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+        };
+        jxt = {
+          id =
+            "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+        };
+        mdq = {
+          id =
+            "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+        };
+        gcv = {
+          id =
+            "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
+        };
+      };
+    in {
       enable = prefs.enableSyncthing;
       user = prefs.owner;
       dataDir = prefs.home;
@@ -2064,35 +2087,19 @@ in {
           password =
             "$2a$10$20ol/13Gghbqq/tsEkEyGO.kJLgKsz2cJmC4Cccx.0Z1ECSYHO80O";
         };
+        # I need allowedNetwork so I will use extraOptions instead of devices.
+        devices = let
+          mkDevice = { name, id, introducer ? true
+            , allowedNetworks ? [ "!10.144.0.0/16" "0.0.0.0/0" ], ... }: {
+              deviceID = id;
+              inherit name introducer allowedNetworks;
+            };
+          list = lib.mapAttrsToList (name: value: value // { inherit name; })
+            devices;
+        in builtins.map mkDevice list;
       };
-      # Don't enable autoAcceptFolders, as the folder path may not be desirable.
-      devices = {
-        ssg = {
-          id =
-            "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
-          introducer = true;
-        };
-        shl = {
-          id =
-            "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
-          introducer = true;
-        };
-        jxt = {
-          id =
-            "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
-          introducer = true;
-        };
-        mdq = {
-          id =
-            "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
-          introducer = true;
-        };
-        gcv = {
-          id =
-            "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
-          introducer = true;
-        };
-      };
+
+      inherit devices;
 
       folders = let
         allDevices = builtins.attrNames devices;
