@@ -2805,7 +2805,21 @@ in {
             "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
             "/var/data/sftpgo/backups:/srv/sftpgo/backups"
           ];
-          environment = { "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080"; };
+          environment = {
+            "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
+            "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
+            "SFTPGO_COMMON__0__PROXY_ALLOWED" = "1";
+          } // builtins.listToAttrs (lib.imap0 (i: v: {
+            name = "SFTPGO_COMMON__${builtins.toString i}__PROXY_ALLOWED";
+            value = v;
+          }) [
+            "127.0.0.0/8"
+            "10.0.0.0/8"
+            "100.64.0.0/10"
+            "169.254.0.0/16"
+            "172.16.0.0/12"
+            "192.168.0.0/16"
+          ]);
           traefikForwardingPort = 8080;
         } // mkContainer "filestash" prefs.ociContainers.enableFilestash {
           environment = {
