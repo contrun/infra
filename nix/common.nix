@@ -1595,6 +1595,19 @@ in {
                 replacement = "https://\${1}/{{ env `WSTUNNEL_PATH` }}";
               };
             };
+            cors = {
+              headers = {
+                accessControlAllowMethods = [ "*" ];
+                accessControlAllowHeaders = [ "*" ];
+                accessControlAllowOriginListRegex =
+                  let postfix = ".${prefs.mainDomain}";
+                  in lib.optionals (prefs.mainDomain != "") [
+                    "^.*${builtins.replaceStrings [ "." ] [ "\\." ] postfix}$"
+                  ];
+                accessControlMaxAge = 3600;
+                addVaryHeader = true;
+              };
+            };
           };
           services = {
             # Dummy service to satisfy traefik (each route requires a service).
@@ -2807,11 +2820,12 @@ in {
               builtins.toString prefs.ownerGroupGid
             }"
             "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
+            "--label=traefik.http.routers.sftpgo-webdav.middlewares=cors@file"
+            "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
             "--label=traefik.http.routers.sftpgo-webdav.rule=${
               getTraefikRuleByDomainPrefix "webdav"
             }"
             "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
-            "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
           ];
           ports = [ "2122:2022" ];
           volumes = [
@@ -2824,23 +2838,15 @@ in {
             "/var/data/sftpgo/backups:/srv/sftpgo/backups"
           ];
           environment = {
-            "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
-            "SFTPGO_COMMON__0__PROXY_ALLOWED" = "1";
             "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
-            "SFTPGO_WEBDAVD__CORS_ENABLED" = "true";
-            "SFTPGO_WEBDAVD__CORS__0__ALLOWED_ORIGINS" =
-              "*.${prefs.mainDomain}";
-          } // builtins.listToAttrs (lib.imap0 (i: v: {
-            name = "SFTPGO_COMMON__${builtins.toString i}__PROXY_ALLOWED";
-            value = v;
-          }) [
-            "127.0.0.0/8"
-            "10.0.0.0/8"
-            "100.64.0.0/10"
-            "169.254.0.0/16"
-            "172.16.0.0/12"
-            "192.168.0.0/16"
-          ]);
+            "SFTPGO_WEBDAVD__CORS__ENABLED" = "true";
+            "SFTPGO_WEBDAVD__CORS__ALLOWED_ORIGINS" = "*.${prefs.mainDomain}";
+            # Not working for now. See https://github.com/rs/cors/pull/120
+            "SFTPGO_WEBDAVD__CORS__ALLOWED_METHODS" = "*";
+            "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
+            # This is in the container world. It is presumably safe to do this.
+            "SFTPGO_COMMON__PROXY_ALLOWED" = "0.0.0.0/0";
+          };
           traefikForwardingPort = 8080;
         } // mkContainer "filestash" prefs.ociContainers.enableFilestash {
           environment = {
