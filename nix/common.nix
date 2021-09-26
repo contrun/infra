@@ -2087,10 +2087,15 @@ in {
             "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
           introducer = true;
         };
+        gcv = {
+          id =
+            "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
+          introducer = true;
+        };
       };
 
       folders = let
-        allDevices = [ "ssg" "shl" "jxt" "mdq" ];
+        allDevices = builtins.attrNames devices;
         getVersioningPolicy = id: {
           type = "staggered";
           # TODO: This does not work. Syncthing seems to be using new schema now.
@@ -2103,17 +2108,22 @@ in {
             maxAge = "315360000";
           };
         };
-        getFolderConfig = id: path: rec {
+        getFolderConfig = { id, path, excludedDevices ? [ ] }: rec {
           inherit id path;
-          devices = allDevices;
+          devices = lib.subtractLists excludedDevices allDevices;
           ignorePerms = false;
           versioning = getVersioningPolicy id;
         };
       in {
-        "${prefs.calibreFolder}" =
-          getFolderConfig "calibre" prefs.calibreFolder;
+        "${prefs.calibreFolder}" = getFolderConfig {
+          id = "calibre";
+          path = prefs.calibreFolder;
+        };
 
-        "${prefs.syncFolder}" = getFolderConfig "sync" prefs.syncFolder;
+        "${prefs.syncFolder}" = getFolderConfig {
+          id = "sync";
+          path = prefs.syncFolder;
+        };
       };
     };
 
