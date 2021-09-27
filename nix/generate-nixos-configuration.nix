@@ -92,6 +92,7 @@ let
             group = prefs.ownerGroup;
           };
           openldap-root-password = { };
+          vault-ssh-ca-setup-env = { };
           postgresql-env = { };
           postgresql-backup-env = { };
           postgresql-initdb-script = { mode = "0500"; };
