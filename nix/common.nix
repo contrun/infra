@@ -836,6 +836,7 @@ in {
         extraBackupArgs = [
           "-v=3"
           "--exclude=/postgresql"
+          "--exclude=/vault/logs"
           "--exclude=/nextcloud-data"
           "--exclude=/sftpgo/data"
           "--exclude=/sftpgo/backups"
@@ -2378,6 +2379,11 @@ in {
               "x86_64-linux" = image;
               "aarch64-linux" = image;
             };
+            "vault" = let image = "docker.io/vault:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "wikijs" = let image = "docker.io/requarks/wiki:2";
             in {
               "x86_64-linux" = image;
@@ -2854,6 +2860,19 @@ in {
           };
           volumes = [ "/var/data/filestash:/app/data/state" ];
           traefikForwardingPort = 8334;
+        } // mkContainer "vault" prefs.ociContainers.enableVault {
+          extraOptions = [ "--cap-add=IPC_LOCK" ];
+          cmd = [ "server" ];
+          environment = {
+            VAULT_API_ADDR = "https://${prefs.getFullDomainName "vault"}";
+          };
+          volumes = [
+            "/var/data/vault/config:/vault/config"
+            "/var/data/vault/logs:/vault/logs"
+            "/var/data/vault/file:/vault/file"
+          ];
+          environmentFiles = [ "/run/secrets/vault-env" ];
+          traefikForwardingPort = 8200;
         } // mkContainer "homer" prefs.ociContainers.enableHomer {
           volumes = [ "/var/data/homer:/www/assets" ];
           traefikForwardingPort = 8080;
@@ -3103,6 +3122,13 @@ in {
                       subtitle = "password management";
                       tag = "security";
                       url = "https://${prefs.getFullDomainName "vaultwarden"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableVault;
+                      name = "vault";
+                      subtitle = "secrets management";
+                      tag = "security";
+                      url = "https://${prefs.getFullDomainName "vault"}";
                     }
                     {
                       enable = prefs.ociContainers.enablePleroma;

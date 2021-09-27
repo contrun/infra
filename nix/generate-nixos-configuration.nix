@@ -98,8 +98,8 @@ let
           redis-conf = { mode = "0444"; };
           authelia-conf = { };
           authelia-users = { };
-          authelia-local-users-conf = {};
-          authelia-ldap-users-conf = {};
+          authelia-local-users-conf = { };
+          authelia-ldap-users-conf = { };
           authelia-sqlite-conf = { };
           authelia-postgres-conf = { };
           authelia-redis-conf = { };
@@ -129,63 +129,112 @@ let
             group = prefs.ownerGroup;
           };
           cfssl-ca-pem = { mode = "0444"; };
-        } // (lib.optionalAttrs prefs.enableAcme {
-          acme-env = {
-            mode = "0400";
-            owner = "acme";
-            group = "acme";
-          };
-        }) // (lib.optionalAttrs prefs.enablePostgresql {
-          postgresql-init-script = {
-            mode = "0440";
-            owner = "postgres";
-            group = "postgres";
-          };
-        }) // (lib.optionalAttrs prefs.enableAria2 {
-          aria2-env = {
-            mode = "0440";
-            owner = "aria2";
-            group = "aria2";
-          };
-        }) // (lib.optionalAttrs prefs.enableTraefik {
-          traefik-env = {
-            mode = "0400";
-            owner = "traefik";
-          };
-        }) // (lib.optionalAttrs prefs.enablePrometheus {
-          prometheus-env = {
-            mode = "0400";
-            owner = "prometheus";
-          };
-        }) // (lib.optionalAttrs
-          (prefs.enablePrometheus && prefs.ociContainers.enablePostgresql) {
-            prometheus-postgres-env = {
-              mode = "0400";
-              owner = "postgres-exporter";
-            };
-          }) // (lib.optionalAttrs (prefs.enableGrafana) {
-            grafana-env = {
-              mode = "0400";
-              owner = "grafana";
-            };
-          }) // (lib.optionalAttrs prefs.enablePromtail {
-            promtail-env = {
-              mode = "0400";
-              owner = "promtail";
-              group = "promtail";
-            };
-          }) // (lib.optionalAttrs prefs.enableSmos {
-            smos-sync-env = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-          }) // (lib.optionalAttrs prefs.enableCfssl {
-            cfssl-ca-key-pem = { owner = "cfssl"; };
-          }) // (lib.optionalAttrs prefs.enableGlusterfs {
-            glusterfs-cert = { };
-            glusterfs-cert-key = { };
-          });
+        } // builtins.foldl' (acc: e:
+          let go = e: if e.enable or true then e.config else { };
+          in acc // go e) { } [
+            {
+              enable = prefs.enableAcme;
+              config = {
+                acme-env = {
+                  mode = "0400";
+                  owner = "acme";
+                  group = "acme";
+                };
+              };
+            }
+            {
+              enable = prefs.ociContainers.enableVault;
+              config = { vault-env = { }; };
+            }
+            {
+              enable = prefs.enablePostgresql;
+              config = {
+                postgresql-init-script = {
+                  mode = "0440";
+                  owner = "postgres";
+                  group = "postgres";
+                };
+              };
+            }
+            {
+              enable = prefs.enableAria2;
+              config = {
+                aria2-env = {
+                  mode = "0440";
+                  owner = "aria2";
+                  group = "aria2";
+                };
+              };
+            }
+            {
+              enable = prefs.enableTraefik;
+              config = {
+                traefik-env = {
+                  mode = "0400";
+                  owner = "traefik";
+                };
+              };
+            }
+            {
+              enable = prefs.enablePrometheus;
+              config = {
+                prometheus-env = {
+                  mode = "0400";
+                  owner = "prometheus";
+                };
+              };
+            }
+            {
+              enable = prefs.enablePrometheus
+                && prefs.ociContainers.enablePostgresql;
+              config = {
+                prometheus-postgres-env = {
+                  mode = "0400";
+                  owner = "postgres-exporter";
+                };
+              };
+            }
+            {
+              enable = prefs.enableGrafana;
+              config = {
+                grafana-env = {
+                  mode = "0400";
+                  owner = "grafana";
+                };
+              };
+            }
+            {
+              enable = prefs.enablePromtail;
+              config = {
+                promtail-env = {
+                  mode = "0400";
+                  owner = "promtail";
+                  group = "promtail";
+                };
+              };
+            }
+            {
+              enable = prefs.enableSmos;
+              config = {
+                smos-sync-env = {
+                  mode = "0400";
+                  owner = prefs.owner;
+                  group = prefs.ownerGroup;
+                };
+              };
+            }
+            {
+              enable = prefs.enableCfssl;
+              config = { cfssl-ca-key-pem = { owner = "cfssl"; }; };
+            }
+            {
+              enable = prefs.enableGlusterfs;
+              config = {
+                glusterfs-cert = { };
+                glusterfs-cert-key = { };
+              };
+            }
+          ];
       };
     };
 

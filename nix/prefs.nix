@@ -364,6 +364,7 @@ let
       enableHledger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
       enableSearx = self.enableAllOciContainers;
+      enableVault = self.enableAllOciContainers;
       enableRssBridge = self.enableAllOciContainers;
       enableWallabag = self.enableAllOciContainers;
       enableCodeServer = self.enableAllOciContainers && !self.enableCodeServer;
