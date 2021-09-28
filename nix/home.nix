@@ -35,15 +35,36 @@ let
     "kubernetes"
     "minikube"
     "k3s"
+    "brave"
     "gitkraken"
     "flink"
     "postman"
     "libreoffice"
     "myPackages.haskell"
+    "libguestfs-with-appliance"
     "androidStudioPackages.dev"
     "confluent-platform"
     "qemu"
+    "tdesktop"
+    "teams"
+    "nheko"
+    "jitsi-meet-electron"
+    "feedreader"
+    "inkscape"
+    "ccls"
     "clang"
+    "clang-analyzer"
+    "racket"
+    "ocaml"
+    "haskellPackages.cabalg"
+    "haskellPackages.implicit-hie"
+    "haskellPackages.hie-bios"
+    "haskellPackages.ormolu"
+    "haskellPackages.hlint"
+    "haskellPackages.cabal-fmt"
+    "haskellPackages.ghcid"
+    "haskellPackages.haskell-language-server"
+    "myPackages.idris"
     "llvmPackages_latest.llvm"
     "termonad-with-packages"
     "steam"
@@ -51,8 +72,24 @@ let
     "vagrant"
     "firecracker"
     "code-server"
+    "eclipses.eclipse-java"
     "myPackages.texLive"
     "clojure-lsp"
+    "clojure"
+    "coursier"
+    "leiningen"
+    "ammonite"
+    "joplin"
+    "joplin-desktop"
+    "texmacs"
+    "qute-browser"
+    "dbeaver"
+    "vscodium"
+    "krita"
+    "plantuml"
+    "briss"
+    "bookworm"
+    "xmind"
   ];
   # To avoid clash within the buildEnv of home-manager
   overridePkg = pkg: func:
@@ -109,8 +146,10 @@ let
     else if builtins.elem path brokenPackages then
       pkgs.lib.warn "${path} will not be installed as it is marked as broken"
       null
-    else if prefs.isMinimalSystem && (builtins.elem path largePackages) then
-      builtins.trace "${path} will not be installed in a minimal system" null
+    else if !prefs.useLargePackages && (builtins.elem path largePackages) then
+      builtins.trace "${path} will not be installed as useLargePackages is ${
+        builtins.toString prefs.useLargePackages
+      }" null
     else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" ])
     && (builtins.elem path x86OnlyPackages) then
       builtins.trace
@@ -145,7 +184,6 @@ let
         "pgcli"
         "mycli"
         "sdcv"
-        "ammonite"
         "autojump"
         "remind"
         "ranger"
@@ -398,7 +436,7 @@ let
         "python3Packages.xdot"
         "binutils"
         "bison"
-        "tldr-hs"
+        "tealdeer"
         "cht-sh"
         "autokey"
         "automake"
@@ -428,7 +466,6 @@ let
         "haskellPackages.hlint"
         "haskellPackages.cabal-fmt"
         "haskellPackages.ghcid"
-        "haskellPackages.implicit-hie"
         "solargraph"
         "python-language-server"
         "nodePackages.dockerfile-language-server-nodejs"
@@ -442,6 +479,7 @@ let
         "ocaml"
         "sqlint"
         "sbt-extras"
+        "ammonite"
         "gradle"
         "maven"
         "ant"

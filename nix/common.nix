@@ -274,7 +274,6 @@ in {
         usbutils
         powertop
         fail2ban
-        qemu
         ldns
         bind
         tree
@@ -385,8 +384,8 @@ in {
       ++ (if (prefs.enableK3s) then [ k3s ] else [ ])
       ++ (if prefs.enableDocker then [ docker-buildx ] else [ ])
       ++ (if prefs.enableWstunnel then [ wstunnel ] else [ ])
+      ++ (if prefs.enableXmonad then [ xmobar ] else [ ])
       ++ (if (prefs.nixosSystem == "x86_64-linux") then [
-        xmobar
         hardinfo
         # steam-run-native
         # aqemu

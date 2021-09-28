@@ -64,6 +64,7 @@ let
         ./hardware/rtl8188gu.nix { });
     };
     isMinimalSystem = true;
+    useLargePackages = !self.isMinimalSystem;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;
     owner = "e";
@@ -91,6 +92,7 @@ let
         servers = map (x: removePrefix "Host " x) autosshLines;
       in filter (x: x != "autossh") servers;
     enableSessionVariables = true;
+    enableAllFirmware = self.isMinimalSystem;
     dpi = 144;
     enableHidpi = true;
     enableIPv6 = true;
@@ -581,8 +583,12 @@ let
       enableVsftpd = false;
     } else if hostname == "mdq" then {
       isMinimalSystem = false;
+      useLargePackages = false;
       hostId = "59b352bc";
       dpi = 128;
+      xWindowManager = "i3";
+      enableAllFirmware = false;
+      linkedJdks = [ "openjdk8" ];
       enableEmacs = false;
       enableAllOciContainers = true;
       enableTraefik = true;
