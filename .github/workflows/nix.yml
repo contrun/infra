@@ -30,7 +30,7 @@ on:
     - cron: '0 20 * * 0'
 
 jobs:
-  build-linux-env:
+  build:
     name: Build/cache Linux Nix env
     runs-on: ubuntu-latest
     strategy:
@@ -51,9 +51,10 @@ jobs:
     - name: Install Nix
       uses: cachix/install-nix-action@v14
       with:
-        install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20210207_fd6eaa1/install
+        nix_path: nixpkgs=channel:nixos-unstable
+        install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.4pre20210823_af94b54/install
         extra_nix_config: |
-          experimental-features = nix-command flakes
+          experimental-features = nix-command flakes ca-references
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
           substituters = https://cache.nixos.org/ https://hydra.iohk.io
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
@@ -148,6 +149,7 @@ jobs:
         sudo rm -rf /var/lib/snapd
         sudo rm -rf /usr/local/graalvm
         sudo rm -rf /home/linuxbrew/.linuxbrew
+        sudo rm -rf /usr/local/.ghcup/ghc
         echo "=============================================================================="
         echo "Showing disk usage"
         echo "=============================================================================="
@@ -155,13 +157,17 @@ jobs:
 
     - name: Build nixos
       if: ${{ steps.check-nix-inputs-update-available.conclusion != 'failure' }}
-      timeout-minutes: 3000
       run: |
+        if [[ '${{ matrix.nix-system }}' == 'x86_64-linux' ]]; then
+            make nixos-build HOST=mdq
+            nix path-info --impure -sShr '.#nixosConfigurations.mdq.config.system.build.toplevel' > path-info
+            sort -h -k2 < path-info
+            sort -h -k3 < path-info
+        fi
+
         build() {
             nix build --impure --system ${{ matrix.nix-system }} --extra-system-features ${{ matrix.nix-system }} --extra-system-features x86_64-linux --extra-extra-platforms ${{ matrix.nix-system }} --extra-extra-platforms x86_64-linux --no-sandbox --show-trace --keep-going --keep-failed --fallback '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel'
         }
-        # Prevent conflict between Cachix installed by workflow and the one installed in the config
-        nix-env --set-flag priority 1 cachix
         # Build a minimal nixos system
         # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
         build
@@ -171,7 +177,7 @@ jobs:
         #     git commit --all --amend --no-edit
         #     build
         # fi
-        nix path-info -sShr '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel' | sort -h -k2
+        nix path-info --impure -sShr '.#nixosConfigurations.cicd-${{ matrix.nix-system }}.config.system.build.toplevel' | sort -h -k2
         df -h
 
     - name: Push commit with updated inputs
@@ -182,3 +188,58 @@ jobs:
         if [[ '${{ matrix.nix-system }}' == 'x86_64-linux' ]]; then git push; fi
         git switch -C ${{ matrix.nix-system }}
         git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}
+
+
+  # TODO: I may need to deploy a non-x86 host some time.
+  deploy:
+    name: Deploy Nix to Hosts
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        deployment-hosts:
+          - mdq
+
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v2.3.4
+      with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v14
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+        install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.4pre20210823_af94b54/install
+        extra_nix_config: |
+          experimental-features = nix-command flakes ca-references
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://cache.nixos.org/ https://hydra.iohk.io
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+
+    - name: Import vault token
+      uses: hashicorp/vault-action@v2.3.1
+      with:
+        method: approle
+        url: ${{ secrets.VAULT_ADDR }}
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportToken: true
+        exportEnv: false
+        secrets: |
+          auth/token/lookup-self display_name
+
+    - name: Deploy
+      env:
+        VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
+        DEPLOYMENT_HOST: ${{ matrix.deployment-hosts }}
+      run: |
+        nix profile install -f '<nixpkgs>' vault wstunnel openssh
+        ssh-keygen -f $HOME/.ssh/id_ed25519 -t ed25519 -P ""
+        vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
+        echo "$SSH_CONFIG" >> ~/.ssh/config
+        nix run github:serokell/deploy-rs -- --skip-checks --fast-connection=false --auto-rollback=true --magic-rollback=true --debug-logs ".#$DEPLOYMENT_HOST" -- --impure

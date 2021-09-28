@@ -80,7 +80,7 @@ home-manager: home-install
 	home-manager switch -v --keep-going --keep-failed
 
 nixos-deploy:
-	deploy --skip-checks --auto-rollback false --magic-rollback false --debug-logs --keep-result '.#$(HOST)' -- --impure
+	deploy --skip-checks --debug-logs --keep-result '.#$(HOST)' -- --impure
 
 nixos-build-dirty nixos-switch-dirty nixos-bootloader-dirty:
 	$(call nixos-rebuild,$@) ${NIXFLAGS}
@@ -91,7 +91,7 @@ nixos-build nixos-switch nixos-bootloader:
 # Filters do not work yet, as cachix will upload the closure.
 cachix-push:
 	if ! make HOST=$(HOST) -C ${DIR} nixos-build-dirty; then :; fi
-	nix show-derivation -r .#nixosConfigurations.$(HOST).config.system.build.toplevel | jq -r '.[].outputs[].path' | xargs -i sh -c 'test -f "{}" && echo "{}"' | grep -vE 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$$|-source$$' | cachix push contrun
+	nix show-derivation --impure -r .#nixosConfigurations.$(HOST).config.system.build.toplevel | jq -r '.[].outputs[].path' | xargs -i sh -c 'test -f "{}" && echo "{}"' | grep -vE 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$$|-source$$' | cachix push contrun
 
 cachix-push-all:
 	make HOST=cicd-x86_64-linux -C ${DIR} cachix-push
