@@ -82,6 +82,11 @@ home-manager: home-install
 nixos-deploy:
 	deploy --skip-checks --debug-logs --keep-result '.#$(HOST)' -- --impure
 
+nixos-profile-path-info:
+	nix path-info --impure -sShr '.#nixosConfigurations.$(HOST).config.system.build.toplevel' > nixos-profile-path-info.$(HOST)
+	sort -h -k2 < nixos-profile-path-info.$(HOST)
+	sort -h -k3 < nixos-profile-path-info.$(HOST)
+
 nixos-build-dirty nixos-switch-dirty nixos-bootloader-dirty:
 	$(call nixos-rebuild,$@) ${NIXFLAGS}
 
