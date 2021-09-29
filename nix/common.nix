@@ -861,46 +861,45 @@ in {
       };
     };
     davfs2 = { enable = prefs.enableDavfs2; };
-    coredns = lib.optionalAttrs
-      (args.inputs.self.coredns ? "${config.nixpkgs.system}") {
-        enable = prefs.enableCoredns;
-        package = args.inputs.self.coredns.${config.nixpkgs.system};
-        config = let
-          dnsServers = builtins.concatStringsSep " " prefs.dnsServers;
-          rewriteAliases = builtins.concatStringsSep "\n" (lib.mapAttrsToList
-            (alias: host:
-              "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto")
-            prefs.hostAliases);
-        in ''
-          ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
-              log
-              debug
-              # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
-              # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
-              ${rewriteAliases}
-              # Catch-all rule, lest I must rebuild all hosts on new machines.
-              rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
-              # fail fast on cache miss
-              cancel 0.01s
-              epicmdns ${prefs.mainDomain} {
-                force_unicast true
-                min_ttl 180
-                browse_period 40
-                cache_purge_period 300
-                browse _workstation._tcp.local
-                browse _ssh._tcp.local
-              }
-              # mdns ${prefs.mainDomain}
-              alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
-          }
+    coredns = {
+      enable = prefs.enableCoredns;
+      package = args.inputs.self.packages.${config.nixpkgs.system}.coredns;
+      config = let
+        dnsServers = builtins.concatStringsSep " " prefs.dnsServers;
+        rewriteAliases = builtins.concatStringsSep "\n" (lib.mapAttrsToList
+          (alias: host:
+            "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto")
+          prefs.hostAliases);
+      in ''
+        ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
+            log
+            debug
+            # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
+            # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
+            ${rewriteAliases}
+            # Catch-all rule, lest I must rebuild all hosts on new machines.
+            rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
+            # fail fast on cache miss
+            cancel 0.01s
+            epicmdns ${prefs.mainDomain} {
+              force_unicast true
+              min_ttl 180
+              browse_period 40
+              cache_purge_period 300
+              browse _workstation._tcp.local
+              browse _ssh._tcp.local
+            }
+            # mdns ${prefs.mainDomain}
+            alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
+        }
 
-          .:${builtins.toString prefs.corednsPort} {
-              log
-              debug
-              forward . ${dnsServers}
-          }
-                '';
-      };
+        .:${builtins.toString prefs.corednsPort} {
+            log
+            debug
+            forward . ${dnsServers}
+        }
+              '';
+    };
     dnsmasq = {
       enable = prefs.enableDnsmasq;
       resolveLocalQueries = prefs.dnsmasqResolveLocalQueries;
@@ -915,8 +914,7 @@ in {
     resolved = {
       enable = prefs.enableResolved;
       extraConfig = builtins.concatStringsSep "\n" [
-        (if (args.inputs.self.coredns ? "${config.nixpkgs.system}")
-        && prefs.enableCorednsForResolved then ''
+        (if prefs.enableCorednsForResolved then ''
           DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
         '' else ''
           # DNS=127.0.0.1:${builtins.toString prefs.corednsPort}

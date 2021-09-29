@@ -90,42 +90,17 @@
             };
           };
         };
-
-      out = system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ gomod2nix.overlay ];
-          };
-        in {
-
-          devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
-
-          coredns = pkgs.buildGoApplication {
-            pname = "coredns";
-            version = "latest";
-            goPackagePath = "github.com/contrun/infra/coredns";
-            src = ./coredns;
-            modules = ./coredns/gomod2nix.toml;
-          };
-
-          # TODO: gomod2nix failed with
-          #
-          # caddy = pkgs.buildGoApplication {
-          #   pname = "caddy";
-          #   version = "latest";
-          #   goPackagePath = "github.com/contrun/infra/caddy";
-          #   src = ./caddy;
-          #   modules = ./caddy/gomod2nix.toml;
-          # };
-
-        };
     in let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
       vmNodes = [ "bigvm" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
     in {
+      # TODO: need lib.recursiveUpdate for apps to be not overridden.
+      # TODO: nix run --impure .#deploy-rs
+      # failed with error: attribute 'currentSystem' missing
+      apps = inputs.deploy-rs.apps;
+    } // {
 
       nixosConfigurations = builtins.foldl'
         (acc: hostname: acc // generateHostConfigurations hostname inputs) { }
@@ -139,5 +114,34 @@
         (system: deployLib: deployLib.deployChecks self.deploy)
         inputs.deploy-rs.lib;
 
-    } // (with flake-utils.lib; eachSystem defaultSystems out);
+    } // (with flake-utils.lib;
+      eachSystem defaultSystems (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ gomod2nix.overlay ];
+          };
+        in {
+
+          devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
+
+          packages = {
+            coredns = pkgs.buildGoApplication {
+              pname = "coredns";
+              version = "latest";
+              goPackagePath = "github.com/contrun/infra/coredns";
+              src = ./coredns;
+              modules = ./coredns/gomod2nix.toml;
+            };
+
+            # TODO: gomod2nix failed
+            # caddy = pkgs.buildGoApplication {
+            #   pname = "caddy";
+            #   version = "latest";
+            #   goPackagePath = "github.com/contrun/infra/caddy";
+            #   src = ./caddy;
+            #   modules = ./caddy/gomod2nix.toml;
+            # };
+          };
+        }));
 }
