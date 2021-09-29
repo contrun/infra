@@ -61,7 +61,9 @@
     },
     "deploy-rs": {
       "inputs": {
-        "flake-compat": "flake-compat",
+        "flake-compat": [
+          "flake-compat"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -152,19 +154,20 @@
         "type": "github"
       }
     },
-    "flake-compat_2": {
+    "flake-compat-result": {
       "flake": false,
       "locked": {
-        "lastModified": 1627913399,
-        "narHash": "sha256-hY8g6H2KFL8ownSiFeMOjwPC8P0ueXpCVEbxgda3pko=",
-        "owner": "edolstra",
+        "lastModified": 1631705391,
+        "narHash": "sha256-PzP6vikNJZiS7yANC6sZWQlIDf4E2MTckvAsJxwV0DQ=",
+        "owner": "teto",
         "repo": "flake-compat",
-        "rev": "12c64ca55c1014cdc1b16ed5a804aa8576601ff2",
+        "rev": "8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed",
         "type": "github"
       },
       "original": {
-        "owner": "edolstra",
+        "owner": "teto",
         "repo": "flake-compat",
+        "rev": "8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed",
         "type": "github"
       }
     },
@@ -252,7 +255,9 @@
     "jtojnar-nixfiles": {
       "inputs": {
         "dwarffs": "dwarffs",
-        "flake-compat": "flake-compat_2",
+        "flake-compat": [
+          "flake-compat"
+        ],
         "home-manager": [
           "home-manager"
         ],
@@ -501,6 +506,8 @@
         "deploy-rs": "deploy-rs",
         "dotfiles": "dotfiles",
         "emacs-overlay": "emacs-overlay",
+        "flake-compat": "flake-compat",
+        "flake-compat-result": "flake-compat-result",
         "flake-firefox-nightly": "flake-firefox-nightly",
         "flake-utils": "flake-utils",
         "gomod2nix": "gomod2nix",

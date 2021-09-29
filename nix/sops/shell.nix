@@ -1,13 +1,14 @@
-with import <nixpkgs> { };
-# Enroll gpg key with
-# nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
-# Edit secrets.yaml file with
-# nix-shell -p sops --run "sops secrets.yaml"
-mkShell {
-  sopsPGPKeyDirs = [ ./keys ];
-  nativeBuildInputs = [
-    (pkgs.callPackage "${builtins.fetchTarball
-      "https://github.com/Mic92/sops-nix/archive/master.tar.gz"}"
-      { }).sops-import-keys-hook
-  ];
-}
+{ system ? builtins.currentSystem or "unknown-system" }:
+
+let rootDirectory = ./../..;
+in (import (let
+  lock = builtins.fromJSON (builtins.readFile "${rootDirectory}/flake.lock");
+  locked = lock.nodes.flake-compat-result.locked;
+in fetchTarball {
+  url =
+    "https://github.com/${locked.owner}/${locked.repo}/archive/${locked.rev}.tar.gz";
+  sha256 = locked.narHash;
+}) {
+  src = rootDirectory;
+  inherit system;
+}).result.packages.${system}.sopsShell

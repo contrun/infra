@@ -2,9 +2,19 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
+    # Waiting for https://github.com/edolstra/flake-compat/pull/26
+    flake-compat-result = {
+      url = "github:teto/flake-compat/8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed";
+      flake = false;
+    };
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
     deploy-rs.inputs.utils.follows = "flake-utils";
+    deploy-rs.inputs.flake-compat.follows = "flake-compat";
     gomod2nix.url = "github:tweag/gomod2nix";
     gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
     gomod2nix.inputs.utils.follows = "flake-utils";
@@ -45,6 +55,7 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
+        flake-compat.follows = "flake-compat";
       };
     };
     nixos-vscode-server = {
@@ -132,6 +143,17 @@
               goPackagePath = "github.com/contrun/infra/coredns";
               src = ./coredns;
               modules = ./coredns/gomod2nix.toml;
+            };
+
+            # Enroll gpg key with
+            # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
+            # Edit secrets.yaml file with
+            # nix-shell -p sops --run "sops secrets.yaml"
+            sopsShell = pkgs.mkShell {
+              sopsPGPKeyDirs = [ ./nix/sops/keys ];
+              nativeBuildInputs = [
+                (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
+              ];
             };
 
             # TODO: gomod2nix failed
