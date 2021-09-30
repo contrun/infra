@@ -1071,6 +1071,7 @@ in {
         }];
       };
     };
+
     prometheus = {
       enable = prefs.enablePrometheus;
       port = prefs.prometheusPort;
@@ -1272,6 +1273,7 @@ in {
           }];
         }];
     };
+
     promtail = {
       enable = prefs.enablePromtail;
       extraFlags = [ "-config.expand-env=true" ];
@@ -1280,14 +1282,12 @@ in {
           http_listen_port = prefs.promtailHttpPort;
           grpc_listen_port = prefs.promtailGrpcPort;
         };
-        clients = [
-          {
+        clients = [{ url = "\${LOKI_URL}"; }]
+          ++ (lib.optionals prefs.enableLoki [{
             url = "http://127.0.0.1:${
                 builtins.toString prefs.lokiHttpPort
               }/loki/api/v1/push";
-          }
-          { url = "\${LOKI_URL}"; }
-        ];
+          }]);
         positions = { "filename" = "/var/cache/promtail/positions.yaml"; };
         scrape_configs = [{
           job_name = "journal";
@@ -1328,6 +1328,7 @@ in {
         ];
       };
     };
+
     loki = {
       enable = prefs.enableLoki;
       configuration = {

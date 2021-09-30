@@ -515,6 +515,8 @@ let
       maxJobs = 6;
       enableCfssl = true;
       # enableK3s = true;
+      enablePrometheus = true;
+      enablePromtail = true;
       enableWireless = true;
       enableAcme = true;
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
@@ -535,6 +537,8 @@ let
           # super.pkgsRelatedPrefs.rtl8188gu
         ];
       };
+      enablePrometheus = true;
+      enablePromtail = true;
       enableHolePuncher = false;
       enableAutossh = false;
       enablePrinting = false;
