@@ -392,7 +392,8 @@ in {
         wine
         bpftool
         prefs.kernelPackages.perf
-        prefs.kernelPackages.bpftrace
+        # TODO: broken for now, see https://github.com/NixOS/nixpkgs/issues/140358
+        # prefs.kernelPackages.bpftrace
         prefs.kernelPackages.bcc
       ] else
         [ ]) ++ (if prefs.enableActivityWatch then
