@@ -823,7 +823,7 @@ in {
             rcloneConfigFile = "/run/secrets/rclone-config";
             timerConfig = {
               OnCalendar = "00:05";
-              RandomizedDelaySec = "6h";
+              RandomizedDelaySec = 3600 * 6;
             };
             pruneOpts = [
               "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
@@ -3828,6 +3828,8 @@ in {
       timers."${updaterName}" = {
         enable = prefs.enableClashRedir;
         wantedBy = [ "default.target" ];
+        wants = [ "network-online.target" ];
+        after = [ "network-online.target" ];
         onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
         timerConfig = {
           OnCalendar = "hourly";
@@ -3881,6 +3883,7 @@ in {
           wantedBy = [ "default.target" ];
           timerConfig = {
             OnCalendar = "hourly";
+            RandomizedDelaySec = 10 * 60;
             Unit = "${nextcloudMaintenanceUnitName}.service";
             Persistent = true;
           };
@@ -3938,6 +3941,7 @@ in {
           ];
           timerConfig = {
             OnCalendar = "daily";
+            RandomizedDelaySec = 2 * 60 * 60;
             Unit = "${postgresqlBackupUnitName}.service";
             Persistent = true;
           };
@@ -4116,7 +4120,8 @@ in {
           enable = true;
           description = "Yandex-disk server";
           onFailure = [ "notify-systemd-unit-failures@%i.service" ];
-          after = [ "network.target" ];
+          wants = [ "network-online.target" ];
+          after = [ "network-online.target" ];
           wantedBy = [ "default.target" ];
           unitConfig.RequiresMountsFor = prefs.syncFolder;
           serviceConfig = {
