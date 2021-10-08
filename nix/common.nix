@@ -3684,7 +3684,6 @@ in {
           options = "rw,uid=${builtins.toString prefs.ownerUid},gid=${
               builtins.toString prefs.ownerGroupGid
             }";
-          wants = [ "network-online.target" ];
           wantedBy = [ "remote-fs.target" ];
           after = [ "network-online.target" ];
         }];
@@ -3705,7 +3704,6 @@ in {
           options = "rw,user=uid=${builtins.toString prefs.ownerUid},gid=${
               builtins.toString prefs.ownerGroupGid
             }";
-          wants = [ "network-online.target" ];
           wantedBy = [ "remote-fs.target" ];
           after = [ "network-online.target" ];
         }];
@@ -3747,7 +3745,6 @@ in {
         enable = prefs.enableClashRedir;
         wantedBy =
           if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
-        wants = [ "network-online.target" ];
         after = [ "network-online.target" ];
         path = [
           pkgs.coreutils
@@ -3807,7 +3804,6 @@ in {
         description = "update clash config";
         enable = prefs.enableClashRedir;
         wantedBy = [ "default.target" ];
-        wants = [ "network-online.target" ];
         after = [ "network-online.target" ];
         path = [
           pkgs.coreutils
@@ -3828,7 +3824,6 @@ in {
       timers."${updaterName}" = {
         enable = prefs.enableClashRedir;
         wantedBy = [ "default.target" ];
-        wants = [ "network-online.target" ];
         after = [ "network-online.target" ];
         onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
         timerConfig = {
@@ -3862,7 +3857,7 @@ in {
         in {
           description = "Maintain ${prefs.ociContainerBackend} nextcloud";
           enable = true;
-          wants = [ "network-online.target" "${nextcloudUnitName}.service" ];
+          wants = [ "${nextcloudUnitName}.service" ];
           after = [ "network-online.target" "${nextcloudUnitName}.service" ];
           path =
             [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
@@ -3916,7 +3911,7 @@ in {
           description =
             "Backup ${prefs.ociContainerBackend} postgresql database";
           enable = true;
-          wants = [ "network-online.target" "${postgresqlUnitName}.service" ];
+          wants = [ "${postgresqlUnitName}.service" ];
           after = [ "network-online.target" "${postgresqlUnitName}.service" ];
           path =
             [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
@@ -4120,7 +4115,6 @@ in {
           enable = true;
           description = "Yandex-disk server";
           onFailure = [ "notify-systemd-unit-failures@%i.service" ];
-          wants = [ "network-online.target" ];
           after = [ "network-online.target" ];
           wantedBy = [ "default.target" ];
           unitConfig.RequiresMountsFor = prefs.syncFolder;
