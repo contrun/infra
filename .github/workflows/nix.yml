@@ -12,6 +12,7 @@ on:
       - "releases/*"
     paths:
       - "**/*.nix"
+      - "nix/**"
       - "**/flake.lock"
       - ".github/workflows/nix.yml"
   push:
@@ -23,6 +24,7 @@ on:
       - "releases/*"
     paths:
       - "**/*.nix"
+      - "nix/**"
       - "**/flake.lock"
       - ".github/workflows/nix.yml"
   schedule:
