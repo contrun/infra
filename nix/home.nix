@@ -296,6 +296,7 @@ let
         "vagrant"
         "shellcheck"
         # "zig"
+        "nim"
         "stdmanpages"
         "ccls"
         "astyle"
@@ -655,6 +656,8 @@ let
         "luakit"
         "firefox"
         "tridactyl-native"
+        "brotab"
+        "buku"
         "sshuttle"
         "youtube-dl"
         "offlineimap"
@@ -1045,6 +1048,8 @@ in {
       notify = { enable = true; };
     };
   };
+
+  services = { kdeconnect = { enable = true; }; };
 
   systemd.user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     (let name = "smos-sync";
