@@ -1234,6 +1234,7 @@ in {
             }
           ];
           static_configs = [{
+            labels = { instance_node = prefs.hostname; };
             targets = [
               "https://www.google.com"
               "https://www.baidu.com"
