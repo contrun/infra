@@ -203,6 +203,7 @@ let
     maxJobs = "auto";
     proxy = null;
     enableClashRedir = true;
+    enableNetworkWatchdog = false;
     autoStartClashRedir = self.enableClashRedir;
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = true;
@@ -595,6 +596,7 @@ let
       linkedJdks = [ "openjdk8" ];
       enableEmacs = false;
       enableAllOciContainers = true;
+      enableNetworkWatchdog = true;
       enableTraefik = true;
       enableGrafana = true;
       enablePrometheus = true;

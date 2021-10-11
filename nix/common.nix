@@ -3711,6 +3711,46 @@ in {
       }
     ])
 
+    # For some currently unfathomable reason, wireless network periodically fails.
+    (let name = "network-watchdog";
+    in {
+      services."${name}" = {
+        description = "network watchdog";
+        enable = prefs.enableNetworkWatchdog;
+        wantedBy = [ "default.target" ];
+        after = [ "network-online.target" ];
+        path = [ pkgs.coreutils pkgs.systemd pkgs.iputils pkgs.utillinux ]
+          ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
+        script = ''
+          set -xeuo pipefail
+
+          if ping -c3 _gateway; then
+              exit 0
+          fi
+
+          if systemctl is-active iwd && [[ -n "$(iwctl station list | awk '{if ($2 ~ /connected/) {print $1}}')" ]]; then
+              systemctl restart iwd
+          fi
+        '';
+        serviceConfig = {
+          Type = "oneshot";
+          Restart = "on-failure";
+        };
+      };
+
+      timers."${name}" = {
+        enable = prefs.enableNetworkWatchdog;
+        wantedBy = [ "default.target" ];
+        after = [ "network-online.target" ];
+        onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
+        timerConfig = {
+          RandomizedDelaySec = 60;
+          OnCalendar = "*-*-* *:2/3:00";
+          Unit = "${name}.service";
+        };
+      };
+    })
+
     # The following is not pure, disable it for now.
     # {
     #   packages = let
