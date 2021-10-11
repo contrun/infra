@@ -359,6 +359,29 @@
         "type": "github"
       }
     },
+    "nix-ld": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "utils": [
+          "flake-utils"
+        ]
+      },
+      "locked": {
+        "lastModified": 1631525093,
+        "narHash": "sha256-wIPvR8Cr4B2kqDmbJLndJx/bepf4RwcbezCD7TnPiso=",
+        "owner": "Mic92",
+        "repo": "nix-ld",
+        "rev": "6b7c79223bd1e22c94bc71f4656dcd3da3231e5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "nix-ld",
+        "type": "github"
+      }
+    },
     "nixgl": {
       "flake": false,
       "locked": {
@@ -533,6 +556,7 @@
         "gomod2nix": "gomod2nix",
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
+        "nix-ld": "nix-ld",
         "nixos-vscode-server": "nixos-vscode-server",
         "nixpkgs": "nixpkgs",
         "nixpkgs-mozilla": "nixpkgs-mozilla_2",

@@ -419,6 +419,20 @@ in {
         NODE_PATH = "$HOME/.node";
         PERLBREW_ROOT = "$HOME/.perlbrew-root";
         LOCALBINPATH = "$HOME/.local/bin";
+
+        NIX_LD_LIBRARY_PATH = lib.makeLibraryPath (with pkgs; [
+          stdenv.cc.cc
+          openssl
+          zlib
+          gsasl
+          fuse
+          fuse3
+          gmp
+          zeromq
+        ]);
+        NIX_LD =
+          builtins.readFile "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+
         # help building locally compiled programs
         LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
         # Don't set LD_LIBRARY_PATH here, there will be various problems.
