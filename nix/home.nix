@@ -654,6 +654,7 @@ let
         "midori"
         "palemoon"
         "luakit"
+        "nyxt"
         "firefox"
         "tridactyl-native"
         "brotab"
