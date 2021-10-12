@@ -213,7 +213,7 @@ jobs:
           vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
           echo "$SSH_CONFIG" >> ~/.ssh/config
           echo "@cert-authority * $SSH_CA_PUBLIC_KEY" >> ~/.ssh/known_hosts
-          nix run github:serokell/deploy-rs -- --debug-logs --skip-checks --ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true ".#${{ steps.variables.outputs.deployHost }}" -- --impure
+          make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ steps.variables.outputs.deployHost }}"
 
       - name: Push commit with updated inputs
         if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update-nix-inputs == 'yes')) }}
