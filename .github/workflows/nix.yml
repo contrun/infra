@@ -2,7 +2,12 @@
 name: nix
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      update-nix-inputs:
+        description: "Whether to update nix flake inputs"
+        required: false
+        default: "yes"
   pull_request:
     branches:
       - master
@@ -11,10 +16,10 @@ on:
       - ci
       - "releases/*"
     paths:
+      - "*.nix"
       - "**/*.nix"
       - "nix/**"
-      - "**/flake.lock"
-      - ".github/workflows/nix.yml"
+      - "flake.lock"
   push:
     branches:
       - master
@@ -23,10 +28,10 @@ on:
       - ci
       - "releases/*"
     paths:
+      - "*.nix"
       - "**/*.nix"
       - "nix/**"
-      - "**/flake.lock"
-      - ".github/workflows/nix.yml"
+      - "flake.lock"
   schedule:
     - cron: "0 16 * * 1"
     - cron: "0 16 * * 3"
@@ -69,7 +74,7 @@ jobs:
 
       - name: Check inputs up to date
         id: check-nix-inputs-update-available
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update-nix-inputs == 'yes')) }}
         run: |
           set -xeuo pipefail
           nix flake update
@@ -184,7 +189,7 @@ jobs:
           $HOME/work/_actions/cachix/cachix-action/*/dist/main/list-nix-store.sh "$HOME/.nix-profile/bin/cachix" "${{ steps.variables.outputs.cachixName }}" "${{ steps.variables.outputs.cachixPushfilter }}"
 
       - name: Import vault token
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
         uses: hashicorp/vault-action@v2.3.1
         with:
           method: approle
@@ -200,7 +205,7 @@ jobs:
         env:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
         run: |
           set -euo pipefail
           nix profile install -f '<nixpkgs>' vault wstunnel openssh
@@ -211,7 +216,7 @@ jobs:
           nix run github:serokell/deploy-rs -- --debug-logs --skip-checks --ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true ".#${{ steps.variables.outputs.deployHost }}" -- --impure
 
       - name: Push commit with updated inputs
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update-nix-inputs == 'yes')) }}
         run: |
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
