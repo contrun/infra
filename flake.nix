@@ -14,6 +14,9 @@
     nix-ld.url = "github:Mic92/nix-ld";
     nix-ld.inputs.nixpkgs.follows = "nixpkgs";
     nix-ld.inputs.utils.follows = "flake-utils";
+    nix-autobahn.url = "github:Lassulus/nix-autobahn";
+    nix-autobahn.inputs.nixpkgs.follows = "nixpkgs";
+    nix-autobahn.inputs.flake-utils.follows = "flake-utils";
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
     deploy-rs.inputs.utils.follows = "flake-utils";

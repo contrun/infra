@@ -239,6 +239,7 @@ in {
         ipset
         dnsmasq
         (args.inputs.deploy-rs.defaultPackage.${config.nixpkgs.system} or null)
+        (args.inputs.nix-autobahn.defaultPackage.${config.nixpkgs.system} or null)
         nixFlakes
         nix-info
         nixos-generators

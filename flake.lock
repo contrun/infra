@@ -359,6 +359,29 @@
         "type": "github"
       }
     },
+    "nix-autobahn": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1626347411,
+        "narHash": "sha256-Q1WefDhkHBbsArFYuyCqLpFGU5Y2FXmabPqoRwPB1Sc=",
+        "owner": "Lassulus",
+        "repo": "nix-autobahn",
+        "rev": "74b45f936935433d3f8cc03be37b2ccf70f32a37",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Lassulus",
+        "repo": "nix-autobahn",
+        "type": "github"
+      }
+    },
     "nix-ld": {
       "inputs": {
         "nixpkgs": [
@@ -556,6 +579,7 @@
         "gomod2nix": "gomod2nix",
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
+        "nix-autobahn": "nix-autobahn",
         "nix-ld": "nix-ld",
         "nixos-vscode-server": "nixos-vscode-server",
         "nixpkgs": "nixpkgs",
