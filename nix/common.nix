@@ -3734,6 +3734,7 @@ in {
         enable = prefs.enableNetworkWatchdog;
         wantedBy = [ "default.target" ];
         after = [ "network-online.target" ];
+        onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
         path = [ pkgs.coreutils pkgs.systemd pkgs.iputils pkgs.utillinux ]
           ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
         script = ''
@@ -3757,7 +3758,6 @@ in {
         enable = prefs.enableNetworkWatchdog;
         wantedBy = [ "default.target" ];
         after = [ "network-online.target" ];
-        onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
         timerConfig = {
           RandomizedDelaySec = 60;
           OnCalendar = "*-*-* *:2/3:00";
@@ -3791,6 +3791,7 @@ in {
     (let
       name = "clash-redir";
       updaterName = "${name}-config-updater";
+      watchdogName = "${name}-watchdog";
       script = builtins.path {
         inherit name;
         path = prefs.getDotfile "dot_bin/executable_clash-redir";
@@ -3827,40 +3828,16 @@ in {
           ''}";
           ExecStart = "${script} start";
           ExecStop = "${script} stop";
+          ExecReload = "${script} reload";
         };
       };
-      services."${updaterName}" = let
-        clash-config-update-script =
-          pkgs.writeShellScript "clash-config-update-script" ''
-            set -xeu
-            CLASH_USER=clash
-            CLASH_UID="$(id -u "$CLASH_USER")"
-            CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
-            CLASH_CONFIG=/etc/clash-redir/default.yaml
-            # We first try to download the config file on behave of "$CLASH_USER",
-            # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-            if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                    >&2 echo "Failed to download clash config"
-                    exit 1
-                fi
-            fi
-            if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
-                rm "$CLASH_TEMP_CONFIG"
-                exit 0
-            fi
-            mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
-            if ! curl -X PUT -H 'content-type: application/json' -d "{\"path\": \"$CLASH_CONFIG\"}" 'http://localhost:9090/configs/'; then
-                if systemctl is-active --quiet ${name}; then
-                    systemctl restart ${name}
-                fi
-            fi
-          '';
-      in {
+
+      services."${updaterName}" = {
         description = "update clash config";
         enable = prefs.enableClashRedir;
         wantedBy = [ "default.target" ];
         after = [ "network-online.target" ];
+        onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
         path = [
           pkgs.coreutils
           pkgs.systemd
@@ -3870,9 +3847,31 @@ in {
           pkgs.libcap
           pkgs.utillinux
         ];
+        script = ''
+          set -xeu
+          CLASH_USER=clash
+          CLASH_UID="$(id -u "$CLASH_USER")"
+          CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
+          CLASH_CONFIG=/etc/clash-redir/default.yaml
+          # We first try to download the config file on behave of "$CLASH_USER",
+          # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
+          if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+              if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                  >&2 echo "Failed to download clash config"
+                  exit 1
+              fi
+          fi
+          if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
+              rm "$CLASH_TEMP_CONFIG"
+              exit 0
+          fi
+          mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+          if systemctl is-active --quiet ${name}; then
+              systemctl reload ${name} || systemctl restart ${name}
+          fi
+        '';
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${clash-config-update-script}";
           EnvironmentFile = "/run/secrets/clash-env";
           Restart = "on-failure";
         };
@@ -3881,11 +3880,51 @@ in {
         enable = prefs.enableClashRedir;
         wantedBy = [ "default.target" ];
         after = [ "network-online.target" ];
-        onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
         timerConfig = {
           OnCalendar = "hourly";
           Unit = "${updaterName}.service";
           Persistent = true;
+        };
+      };
+
+      services."${watchdogName}" = {
+        description = "watch for clash redir running status";
+        enable = prefs.enableClashRedir;
+        after = [ "network-online.target" ];
+        onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
+        path = [ pkgs.coreutils pkgs.systemd pkgs.curl ];
+        script = ''
+          set -xeuo pipefail
+          if [[ -f "/tmp/stop-bother-${name}" ]]; then exit 0; fi
+
+          # Don't use http websites, as we may be behind a captive portal.
+          has_intranet_connectivity() {
+              curl -o /dev/null -sS https://www.baidu.com || curl -o /dev/null -sS https://223.6.6.6
+          }
+
+          # Don't use frequently-visited websites, as this kind of robot activities may affect normal access.
+          has_internet_connectivity() {
+              curl -o /dev/null -sS --retry 3 --retry-all-errors https://startpage.com || curl -o /dev/null -sS --retry 3 --retry-all-errors https://streamable.com
+          }
+
+          if has_internet_connectivity; then exit 0; fi
+
+          if ! has_intranet_connectivity; then exit 0; fi
+
+          systemctl start ${updaterName} ${name}
+          if ! has_internet_connectivity; then systemctl stop ${name}; fi
+        '';
+        serviceConfig = { Type = "oneshot"; };
+      };
+      timers."${watchdogName}" = {
+        enable = prefs.enableClashRedir;
+        wantedBy =
+          if prefs.enableClashRedirWatchdog then [ "default.target" ] else [ ];
+        after = [ "network-online.target" ];
+        timerConfig = {
+          RandomizedDelaySec = 2 * 60;
+          OnCalendar = "*-*-* *:3/5:00";
+          Unit = "${watchdogName}.service";
         };
       };
     })
@@ -3969,6 +4008,9 @@ in {
           enable = true;
           wants = [ "${postgresqlUnitName}.service" ];
           after = [ "network-online.target" "${postgresqlUnitName}.service" ];
+          onFailure = [
+            "notify-systemd-unit-failures@${postgresqlBackupUnitName}.service"
+          ];
           path =
             [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
             ++ (lib.optionals (prefs.ociContainerBackend == "docker")
@@ -3987,9 +4029,6 @@ in {
         "${postgresqlBackupUnitName}" = {
           enable = true;
           wantedBy = [ "default.target" ];
-          onFailure = [
-            "notify-systemd-unit-failures@${postgresqlBackupUnitName}.service"
-          ];
           timerConfig = {
             OnCalendar = "daily";
             RandomizedDelaySec = 2 * 60 * 60;
@@ -4024,6 +4063,7 @@ in {
           description = "ddns worker";
           enable = prefs.enableDdns;
           wantedBy = [ "default.target" ];
+          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
           path = [
             pkgs.coreutils
             pkgs.inetutils
@@ -4043,7 +4083,6 @@ in {
         timers.${unitName} = {
           enable = prefs.enableDdns;
           wantedBy = [ "default.target" ];
-          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
           timerConfig = {
             OnCalendar = "*-*-* *:2/10:43";
             Unit = "${unitName}%i.service";
@@ -4095,6 +4134,7 @@ in {
           description = "NAT traversal worker";
           enable = prefs.enableHolePuncher && prefs.enableSslh;
           wantedBy = [ "default.target" ];
+          onFailure = [ "notify-systemd-unit-failures@${unitName}_%i.service" ];
           path = [
             pkgs.coreutils
             pkgs.parallel
@@ -4110,7 +4150,6 @@ in {
         timers.${unitName} = {
           enable = prefs.enableHolePuncher;
           wantedBy = [ "default.target" ];
-          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
           timerConfig = {
             OnCalendar = "*-*-* *:3/20:00";
             Unit = "${unitName}%i.service";
@@ -4123,6 +4162,7 @@ in {
         services.${name} = {
           description = "sync task warrior tasks";
           enable = prefs.enableTaskWarriorSync;
+          onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "${pkgs.taskwarrior}/bin/task synchronize";
@@ -4130,7 +4170,6 @@ in {
         };
         timers.${name} = {
           enable = prefs.enableTaskWarriorSync;
-          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
           wantedBy = [ "default.target" ];
           timerConfig = {
             OnCalendar = "*-*-* *:1/3:00";
@@ -4145,6 +4184,7 @@ in {
         services.${name} = {
           description = "vdirsyncer sync";
           enable = prefs.enableTaskWarriorSync;
+          onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
           serviceConfig = {
             Type = "oneshot";
             # ExecStartPre = ''
@@ -4155,7 +4195,6 @@ in {
         };
         timers.${name} = {
           enable = prefs.enableVdirsyncer;
-          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
           wantedBy = [ "default.target" ];
           timerConfig = {
             OnCalendar = "*-*-* *:1/3:00";
