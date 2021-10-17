@@ -432,7 +432,7 @@ in {
           zeromq
         ]);
         NIX_LD =
-          builtins.readFile "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+          lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
 
         # help building locally compiled programs
         LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
