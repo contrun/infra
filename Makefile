@@ -14,7 +14,7 @@ EXTRADEPLOYFLAGS ?=
 DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs --keep-result $(EXTRADEPLOYFLAGS))
 
 NIXOSREBUILD.build = nix build ".\#nixosConfigurations.$(HOST).config.system.build.toplevel"
-NIXOSREBUILD.switch = $(strip sudo nixos-rebuild switch --flake ".#$(HOST)" $(if $(shell git diff --quiet --exit-code && echo repo_clean),--profile-name flake.$(shell date +%Y%m%d).$(shell git rev-parse --short HEAD),))
+NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".#$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
