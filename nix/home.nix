@@ -114,7 +114,7 @@ let
         lib.warn "Package ${path} does not exists" null) attrset
     (pkgs.lib.splitString "." path);
   getMyPkgOrPkg = attrset: path:
-    builtins.trace "Installing ${path}" (let
+    (let
       vanillaPackage = getAttr attrset path;
       tryNewPath = newPath:
         if (newPath == path) then
@@ -144,8 +144,7 @@ let
         "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
         null)
     else if builtins.elem path brokenPackages then
-      lib.warn "${path} will not be installed as it is marked as broken"
-      null
+      lib.warn "${path} will not be installed as it is marked as broken" null
     else if !prefs.useLargePackages && (builtins.elem path largePackages) then
       builtins.trace "${path} will not be installed as useLargePackages is ${
         builtins.toString prefs.useLargePackages

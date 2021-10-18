@@ -17,16 +17,8 @@ let
   hasPkgs = args ? pkgs;
   hasInputs = args ? inputs;
   hasHostname = args ? hostname;
-  pkgs = builtins.trace
-    "calling prefs ${if hasPkgs then "with" else "without"} argument pkgs, ${
-      if hasInputs then "with" else "without"
-    } argument inputs, ${
-      if hasHostname then
-        ("with argument hostname " + args.hostname)
-      else
-        "without argument hostname"
-    }" (args.pkgs or (builtins.throw
-      "Forcing pkgs in prefs.nix without given in the input parameter"));
+  pkgs = (args.pkgs or (builtins.throw
+    "Forcing pkgs in prefs.nix without given in the input parameter"));
 
   hostname = args.hostname or (let
     # LC_CTYPE=C tr -dc 'a-z' < /dev/urandom | head -c3 | tee /tmp/hostname

@@ -40,20 +40,25 @@ update-upstreams:
 	nix flake update
 
 clean:
-	rm nixos-profile-path-info.*
-	[[ -d tmp ]] && sudo rm -rf tmp/
+	[[ -d tmp ]] && rm -rf tmp/
 	if [[ "$(realpath result)" == /nix/store/* ]]; then rm -f result; fi
 
 sops:
 	nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
 
+create-dirs:
+	mkdir -p tmp
+
+nixos-prefs: create-dirs
+	nix eval --raw --impure --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | tee tmp/prefs.$(HOST).json
+
 nixos-deploy:
 	$(DEPLOY) $(DEPLOYFLAGS) ".#$(HOST)" -- $(NIXFLAGS)
 
-nixos-profile-path-info:
-	nix path-info $(NIXFLAGS) -sShr ".#nixosConfigurations.$(HOST).config.system.build.toplevel" > nixos-profile-path-info.$(HOST)
-	sort -h -k2 < nixos-profile-path-info.$(HOST)
-	sort -h -k3 < nixos-profile-path-info.$(HOST)
+nixos-profile-path-info: create-dirs
+	nix path-info $(NIXFLAGS) -sShr ".#nixosConfigurations.$(HOST).config.system.build.toplevel" | tee tmp/nixos-profile-path-info.$(HOST)
+	sort -h -k2 < tmp/nixos-profile-path-info.$(HOST)
+	sort -h -k3 < tmp/nixos-profile-path-info.$(HOST)
 
 nixos-build nixos-switch nixos-bootloader:
 	$(call nixos-rebuild,$@) $(NIXFLAGS)

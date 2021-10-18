@@ -1,10 +1,7 @@
 { config, pkgs, lib, inputs, ... }@args:
 let
-  prefs = let
-    p = import ./prefs.nix args;
-    all = p.all;
-  in builtins.trace "final configuration for host ${all.hostname}"
-  (builtins.trace all all);
+  prefsAttr = import ./prefs.nix args;
+  prefs = prefsAttr.all;
   stable = pkgs.stable;
   unstable = pkgs.unstable;
   impure = {
@@ -36,6 +33,11 @@ let
   lib.concatMapStringsSep " || " getRuleByPrefix
   (lib.splitString "," domainPrefixes);
 in {
+  passthru = {
+    inherit prefs;
+    prefsJson = builtins.toJSON (lib.filterAttrsRecursive
+      (n: v: !builtins.elem (builtins.typeOf v) [ "lambda" ]) prefsAttr.pure);
+  };
   imports = let
     smosConfiguration = { config, pkgs, lib, inputs, ... }: {
       imports = [
