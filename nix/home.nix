@@ -111,7 +111,7 @@ let
       if acc ? ${x} then
         acc.${x}
       else
-        pkgs.lib.warn "Package ${path} does not exists" null) attrset
+        lib.warn "Package ${path} does not exists" null) attrset
     (pkgs.lib.splitString "." path);
   getMyPkgOrPkg = attrset: path:
     builtins.trace "Installing ${path}" (let
@@ -120,7 +120,7 @@ let
         if (newPath == path) then
           null
         else
-          pkgs.lib.warn "Package ${path} does not exists, trying ${newPath}"
+          lib.warn "Package ${path} does not exists, trying ${newPath}"
           (getAttr attrset newPath);
       nixpkgsPackage =
         tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
@@ -140,11 +140,11 @@ let
       (if !builtins.elem path brokenPackages then
         dontCheckPkg (getMyPkgOrPkg attrset path)
       else
-        pkgs.lib.warn
+        lib.warn
         "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
         null)
     else if builtins.elem path brokenPackages then
-      pkgs.lib.warn "${path} will not be installed as it is marked as broken"
+      lib.warn "${path} will not be installed as it is marked as broken"
       null
     else if !prefs.useLargePackages && (builtins.elem path largePackages) then
       builtins.trace "${path} will not be installed as useLargePackages is ${

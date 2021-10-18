@@ -92,11 +92,10 @@ in {
         "Certification Authority of WoSign G2"
       ];
       certificateFiles = let
-        mitmCA = pkgs.lib.optionals (builtins.pathExists impure.mitmproxyCAFile)
-          [
-            (builtins.toFile "mitmproxy-ca.pem"
-              (builtins.readFile impure.mitmproxyCAFile))
-          ];
+        mitmCA = lib.optionals (builtins.pathExists impure.mitmproxyCAFile) [
+          (builtins.toFile "mitmproxy-ca.pem"
+            (builtins.readFile impure.mitmproxyCAFile))
+        ];
         CAs = [ ];
       in mitmCA ++ CAs;
     };
@@ -144,7 +143,7 @@ in {
       # userControlled = { enable = true; };
       iwd.enable = prefs.enableIwd;
     };
-    supplicant = pkgs.lib.optionalAttrs prefs.enableSupplicant {
+    supplicant = lib.optionalAttrs prefs.enableSupplicant {
       "WLAN" = {
         configFile = let
           defaultPath = "/etc/wpa_supplicant.conf";
@@ -410,64 +409,52 @@ in {
       ssh = "ssh -C";
       bc = "bc -l";
     };
-    sessionVariables = pkgs.lib.optionalAttrs (prefs.enableSessionVariables)
-      (rec {
-        MYSHELL = if prefs.enableZSH then "zsh" else "bash";
-        MYTERMINAL = if prefs.enableUrxvtd then "urxvtc" else "alacritty";
-        GOPATH = "$HOME/.go";
-        CABALPATH = "$HOME/.cabal";
-        CARGOPATH = "$HOME/.cargo";
-        NODE_PATH = "$HOME/.node";
-        PERLBREW_ROOT = "$HOME/.perlbrew-root";
-        LOCALBINPATH = "$HOME/.local/bin";
+    sessionVariables = lib.optionalAttrs (prefs.enableSessionVariables) (rec {
+      MYSHELL = if prefs.enableZSH then "zsh" else "bash";
+      MYTERMINAL = if prefs.enableUrxvtd then "urxvtc" else "alacritty";
+      GOPATH = "$HOME/.go";
+      CABALPATH = "$HOME/.cabal";
+      CARGOPATH = "$HOME/.cargo";
+      NODE_PATH = "$HOME/.node";
+      PERLBREW_ROOT = "$HOME/.perlbrew-root";
+      LOCALBINPATH = "$HOME/.local/bin";
 
-        NIX_LD_LIBRARY_PATH = lib.makeLibraryPath (with pkgs; [
-          stdenv.cc.cc
-          openssl
-          zlib
-          gsasl
-          fuse
-          fuse3
-          gmp
-          zeromq
-        ]);
-        NIX_LD =
-          lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+      NIX_LD_LIBRARY_PATH = lib.makeLibraryPath
+        (with pkgs; [ stdenv.cc.cc openssl zlib gsasl fuse fuse3 gmp zeromq ]);
+      NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
 
-        # help building locally compiled programs
-        LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
-        # Don't set LD_LIBRARY_PATH here, there will be various problems.
-        MY_LD_LIBRARY_PATH =
-          "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
-        # cmake does not respect LIBRARY_PATH
-        CMAKE_LIBRARY_PATH =
-          "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
-        # Linking can sometimes fails because ld is unable to find libraries like libstdc++.
-        # export LIBRARY_PATH="$LIBRARY_PATH:$CC_LIBRARY_PATH"
-        CC_LIBRARY_PATH = "/local/lib";
-        # header files
-        CPATH = "$HOME/.nix-profile/include:/run/current-system/sw/include";
-        C_INCLUDE_PATH =
-          "$HOME/.nix-profile/include:/run/current-system/sw/include";
-        CPLUS_INCLUDE_PATH =
-          "$HOME/.nix-profile/include:/run/current-system/sw/include";
-        CMAKE_INCLUDE_PATH =
-          "$HOME/.nix-profile/include:/run/current-system/sw/include";
-        # pkg-config
-        PKG_CONFIG_PATH =
-          "$HOME/.nix-profile/lib/pkgconfig:$HOME/.nix-profile/share/pkgconfig:/run/current-system/sw/lib/pkgconfig:/run/current-system/sw/share/pkgconfig";
-        PATH = [ "$HOME/.bin" "$HOME/.local/bin" ]
-          ++ (map (x: x + "/bin") [ CABALPATH CARGOPATH GOPATH ])
-          ++ [ "${NODE_PATH}/node_modules/.bin" ] ++ [ "/usr/local/bin" ];
-        LESS = "-F -X -R";
-        EDITOR = "nvim";
-      } // pkgs.lib.optionalAttrs (pkgs ? myPackages) {
-        # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
-        MYPYTHONPATH =
-          (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
-          [ (pkgs.myPackages.python or pkgs.python) ];
-        PAGER = "nvimpager";
-      });
+      # help building locally compiled programs
+      LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
+      # Don't set LD_LIBRARY_PATH here, there will be various problems.
+      MY_LD_LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
+      # cmake does not respect LIBRARY_PATH
+      CMAKE_LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
+      # Linking can sometimes fails because ld is unable to find libraries like libstdc++.
+      # export LIBRARY_PATH="$LIBRARY_PATH:$CC_LIBRARY_PATH"
+      CC_LIBRARY_PATH = "/local/lib";
+      # header files
+      CPATH = "$HOME/.nix-profile/include:/run/current-system/sw/include";
+      C_INCLUDE_PATH =
+        "$HOME/.nix-profile/include:/run/current-system/sw/include";
+      CPLUS_INCLUDE_PATH =
+        "$HOME/.nix-profile/include:/run/current-system/sw/include";
+      CMAKE_INCLUDE_PATH =
+        "$HOME/.nix-profile/include:/run/current-system/sw/include";
+      # pkg-config
+      PKG_CONFIG_PATH =
+        "$HOME/.nix-profile/lib/pkgconfig:$HOME/.nix-profile/share/pkgconfig:/run/current-system/sw/lib/pkgconfig:/run/current-system/sw/share/pkgconfig";
+      PATH = [ "$HOME/.bin" "$HOME/.local/bin" ]
+        ++ (map (x: x + "/bin") [ CABALPATH CARGOPATH GOPATH ])
+        ++ [ "${NODE_PATH}/node_modules/.bin" ] ++ [ "/usr/local/bin" ];
+      LESS = "-F -X -R";
+      EDITOR = "nvim";
+    } // lib.optionalAttrs (pkgs ? myPackages) {
+      # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
+      MYPYTHONPATH =
+        (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
+        [ (pkgs.myPackages.python or pkgs.python) ];
+      PAGER = "nvimpager";
+    });
     variables = {
       # systemctl --user does not work without this
       # https://serverfault.com/questions/887283/systemctl-user-process-org-freedesktop-systemd1-exited-with-status-1/887298#887298
@@ -602,9 +589,9 @@ in {
           let p = pkgs.${jdk}.home; in "ln -sfn ${p} /local/jdks/${jdk}"
         else
           "";
-    in pkgs.lib.optionalAttrs (prefs.enableJava && jdks != [ ]) {
+    in lib.optionalAttrs (prefs.enableJava && jdks != [ ]) {
       jdks = {
-        text = pkgs.lib.concatMapStringsSep "\n" addjdk jdks;
+        text = lib.concatMapStringsSep "\n" addjdk jdks;
         deps = [ "local" ];
       };
     } // {
@@ -662,7 +649,7 @@ in {
       # Fuck pre-built dynamic binaries
       # copied from https://github.com/NixOS/nixpkgs/pull/69057
       ldlinux = {
-        text = with pkgs.lib;
+        text = with lib;
           concatStrings (mapAttrsToList (target: source: ''
             mkdir -m 0755 -p $(dirname ${target})
             ln -sfn ${escapeShellArg source} ${target}.tmp
@@ -1421,7 +1408,7 @@ in {
     };
 
     autossh = {
-      sessions = pkgs.lib.optionals (prefs.enableAutossh) (let
+      sessions = lib.optionals (prefs.enableAutossh) (let
         go = server:
           let
             sshPort = if prefs.enableAioproxy then prefs.aioproxyPort else 22;
@@ -1833,9 +1820,7 @@ in {
               "unix:///var/run/podman/podman.sock";
             network = "${prefs.ociContainerNetwork}";
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableK3s) {
-          kubernetesIngress = { };
-        };
+        } // lib.optionalAttrs (prefs.enableK3s) { kubernetesIngress = { }; };
       };
     };
     postgresql = {
@@ -2069,7 +2054,7 @@ in {
       transparent = false;
       verbose = true;
     } // (let p = impure.sslhConfigFile;
-    in pkgs.lib.optionalAttrs (builtins.pathExists p) {
+    in lib.optionalAttrs (builtins.pathExists p) {
       appendConfig = (builtins.readFile p);
     });
 
@@ -2249,7 +2234,7 @@ in {
 
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
 
-  users = builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
+  users = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     {
       users = let
         extraGroups = [
@@ -2338,7 +2323,7 @@ in {
     anbox = { enable = prefs.enableAnbox; };
     oci-containers = let
       mkContainer = name: enable: config:
-        pkgs.lib.optionalAttrs enable (let
+        lib.optionalAttrs enable (let
           images = let
             postgresql = {
               "x86_64-linux" = "docker.io/postgres:13";
@@ -2537,7 +2522,7 @@ in {
               "networkName"
             ];
         in { "${name}" = getConfig config; });
-    in pkgs.lib.optionalAttrs prefs.enableOciContainers {
+    in lib.optionalAttrs prefs.enableOciContainers {
       backend = prefs.ociContainerBackend;
       containers =
         mkContainer "postgresql" prefs.ociContainers.enablePostgresql {
@@ -3301,7 +3286,7 @@ in {
         };
       };
     };
-  in (builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
+  in (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     {
       extraConfig = "DefaultTimeoutStopSec=10s";
       tmpfiles = {
@@ -3316,25 +3301,25 @@ in {
           "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
           "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
           "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
-        ] ++ pkgs.lib.optionals prefs.ociContainers.enableSftpgo [
+        ] ++ lib.optionals prefs.ociContainers.enableSftpgo [
           "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
           "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
           "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
           "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
-        ] ++ pkgs.lib.optionals prefs.ociContainers.enableEtesync [
+        ] ++ lib.optionals prefs.ociContainers.enableEtesync [
           "d /var/data/etesync - 373 373 -"
           "d /var/data/etesync/media - 373 373 -"
-        ] ++ pkgs.lib.optionals prefs.ociContainers.enableEtesyncDav
+        ] ++ lib.optionals prefs.ociContainers.enableEtesyncDav
           [ "d /var/data/etesync-dav - 1000 1000 -" ]
-          ++ pkgs.lib.optionals prefs.ociContainers.enableTrilium
+          ++ lib.optionals prefs.ociContainers.enableTrilium
           [ "d /var/data/trilium - 1000 1000 -" ]
-          ++ pkgs.lib.optionals prefs.ociContainers.enableTiddlyWiki
+          ++ lib.optionals prefs.ociContainers.enableTiddlyWiki
           [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ]
-          ++ pkgs.lib.optionals prefs.ociContainers.enablePleroma
+          ++ lib.optionals prefs.ociContainers.enablePleroma
           [ "d /var/data/pleroma - 100 0 -" ]
-          ++ pkgs.lib.optionals prefs.ociContainers.enableFilestash
+          ++ lib.optionals prefs.ociContainers.enableFilestash
           [ "d /var/data/filestash - 1000 1000 -" ]
-          ++ pkgs.lib.optionals prefs.ociContainers.enableGitea [
+          ++ lib.optionals prefs.ociContainers.enableGitea [
             "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
             "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
           ];
@@ -3533,11 +3518,11 @@ in {
             }
           '';
         };
-      } // pkgs.lib.optionalAttrs
+      } // lib.optionalAttrs
         (prefs.buildZerotierone && !prefs.enableZerotierone) {
           # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
           "zerotierone" = { wantedBy = lib.mkForce [ ]; };
-        } // pkgs.lib.optionalAttrs (config.virtualisation.docker.enable) {
+        } // lib.optionalAttrs (config.virtualisation.docker.enable) {
           "docker" = {
             serviceConfig = {
               ExecStartPost = [
@@ -3545,7 +3530,7 @@ in {
               ];
             };
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableK3s) {
+        } // lib.optionalAttrs (prefs.enableK3s) {
           "k3s" = let
             k3sPatchScript = pkgs.writeShellScript "add-k3s-config" ''
               ${pkgs.k3s}/bin/k3s kubectl patch -n kube-system services traefik -p '{"spec":{"ports":[{"name":"http","nodePort":30080,"port":30080,"protocol":"TCP","targetPort":"http"},{"name":"https","nodePort":30443,"port":30443,"protocol":"TCP","targetPort":"https"},{"$patch":"replace"}]}}' || ${pkgs.coreutils}/bin/true
@@ -3560,33 +3545,33 @@ in {
               ];
             };
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableCrio) {
+        } // lib.optionalAttrs (prefs.enableCrio) {
           "crio" = {
             path = with pkgs;
               [ conntrack-tools ] ++ (lib.optionals prefs.enableZfs [ zfs ]);
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableJupyter) {
+        } // lib.optionalAttrs (prefs.enableJupyter) {
           "jupyterhub" = { path = with pkgs; [ nodejs_latest ]; };
-        } // pkgs.lib.optionalAttrs (prefs.enableAria2) {
+        } // lib.optionalAttrs (prefs.enableAria2) {
           "aria2" = {
             serviceConfig = {
               Environment = "ARIA2_RPC_SECRET=token_nekot";
               EnvironmentFile = "/run/secrets/aria2-env";
             };
           };
-        } // pkgs.lib.optionalAttrs (prefs.enablePromtail) {
+        } // lib.optionalAttrs (prefs.enablePromtail) {
           "promtail" = {
             serviceConfig = { EnvironmentFile = "/run/secrets/promtail-env"; };
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableGrafana) {
+        } // lib.optionalAttrs (prefs.enableGrafana) {
           "grafana" = {
             serviceConfig = { EnvironmentFile = "/run/secrets/grafana-env"; };
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableResolved) {
+        } // lib.optionalAttrs (prefs.enableResolved) {
           "systemd-resolved" = {
             serviceConfig = { Environment = "SYSTEMD_LOG_LEVEL=debug"; };
           };
-        } // pkgs.lib.optionalAttrs (prefs.ociContainers.enableWallabag) {
+        } // lib.optionalAttrs (prefs.ociContainers.enableWallabag) {
           "${prefs.ociContainerBackend}-wallabag" = {
             postStart = ''
               set -xe
@@ -3604,9 +3589,9 @@ in {
               done
             '';
           };
-        } // pkgs.lib.optionalAttrs (prefs.enablePostgresql) {
+        } // lib.optionalAttrs (prefs.enablePostgresql) {
           "postgresql" = { serviceConfig = { SupplementaryGroups = "keys"; }; };
-        } // pkgs.lib.optionalAttrs (prefs.enableTraefik) {
+        } // lib.optionalAttrs (prefs.enableTraefik) {
           "traefik" = {
             serviceConfig = {
               LogsDirectory = "traefik";
@@ -3624,7 +3609,7 @@ in {
               BindPaths = "/etc/rancher/k3s/k3s.yaml:/kubeconfig.yaml";
             });
           };
-        } // pkgs.lib.optionalAttrs (prefs.enableCodeServer) {
+        } // lib.optionalAttrs (prefs.enableCodeServer) {
           "code-server" = {
             enable = true;
             description = "Remote VSCode Server";
@@ -3642,7 +3627,7 @@ in {
               Group = prefs.ownerGroup;
             };
           };
-        } // pkgs.lib.optionalAttrs
+        } // lib.optionalAttrs
         (prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null)) {
           "aioproxy" = {
             enable = true;
@@ -3780,11 +3765,11 @@ in {
     #     getAllUnits = from: to:
     #       let
     #         files = builtins.readDir from;
-    #         units = pkgs.lib.attrNames
+    #         units = lib.attrNames
     #           (pkgs.lib.filterAttrs (n: v: v == "regular" || v == "symlink")
     #             files);
     #         newUnits = map (unit: makeUnit from to unit) units;
-    #       in pkgs.lib.optionals (builtins.pathExists from) newUnits;
+    #       in lib.optionals (builtins.pathExists from) newUnits;
     #   in getAllUnits usrLocalPrefix etcPrefix;
     # }
 
@@ -3930,7 +3915,7 @@ in {
     })
 
     ({
-      services = pkgs.lib.optionalAttrs prefs.ociContainers.enableHledger {
+      services = lib.optionalAttrs prefs.ociContainers.enableHledger {
         "${prefs.ociContainerBackend}-hledger-init" = {
           serviceConfig = {
             Type = lib.mkForce "oneshot";
@@ -3944,7 +3929,7 @@ in {
       nextcloudUnitName = "${prefs.ociContainerBackend}-nextcloud";
       nextcloudMaintenanceUnitName = "${nextcloudUnitName}-maintenance";
     in {
-      services = pkgs.lib.optionalAttrs prefs.ociContainers.enableNextcloud {
+      services = lib.optionalAttrs prefs.ociContainers.enableNextcloud {
         "${nextcloudMaintenanceUnitName}" = let
           maintain-script = pkgs.writeShellScript "nextcloud-maintain-script" ''
             ${prefs.ociContainerBackend} exec --user 33 nextcloud ./occ files:scan e
@@ -3967,7 +3952,7 @@ in {
           };
         };
       };
-      timers = pkgs.lib.optionalAttrs prefs.ociContainers.enableNextcloud {
+      timers = lib.optionalAttrs prefs.ociContainers.enableNextcloud {
         "${nextcloudMaintenanceUnitName}" = {
           enable = true;
           wantedBy = [ "default.target" ];
@@ -3986,7 +3971,7 @@ in {
       postgresqlInitUnitName = "${postgresqlUnitName}-init";
       postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
     in {
-      services = pkgs.lib.optionalAttrs prefs.ociContainers.enablePostgresql {
+      services = lib.optionalAttrs prefs.ociContainers.enablePostgresql {
         "${postgresqlInitUnitName}" = {
           serviceConfig = { Restart = lib.mkForce "on-failure"; };
         };
@@ -4025,7 +4010,7 @@ in {
           };
         };
       };
-      timers = pkgs.lib.optionalAttrs prefs.ociContainers.enablePostgresql {
+      timers = lib.optionalAttrs prefs.ociContainers.enablePostgresql {
         "${postgresqlBackupUnitName}" = {
           enable = true;
           wantedBy = [ "default.target" ];
@@ -4039,7 +4024,7 @@ in {
       };
     })
   ]) // {
-    user = builtins.foldl' (a: e: pkgs.lib.recursiveUpdate a e) { } [
+    user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       { services = notify-systemd-unit-failures; }
       (let
         name = "ddns";
@@ -4230,8 +4215,7 @@ in {
   nix = {
     inherit (prefs) buildMachines buildCores maxJobs distributedBuilds;
     package = pkgs.nixFlakes;
-    extraOptions =
-      pkgs.lib.optionalString (config.nix.package == pkgs.nixFlakes)
+    extraOptions = lib.optionalString (config.nix.package == pkgs.nixFlakes)
       "experimental-features = nix-command flakes";
     binaryCaches =
       [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
@@ -4284,7 +4268,7 @@ in {
       enable = true;
       ssh = let
         f = impure.sshAuthorizedKeys;
-        authorizedKeys = pkgs.lib.optionals (builtins.pathExists f)
+        authorizedKeys = lib.optionals (builtins.pathExists f)
           (builtins.filter (x: x != "")
             (pkgs.lib.splitString "\n" (builtins.readFile f)));
         hostKeys =

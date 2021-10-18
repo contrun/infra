@@ -72,6 +72,8 @@
 
   outputs = { self, nixpkgs, flake-utils, gomod2nix, ... }@inputs:
     let
+      lib = nixpkgs.lib;
+
       getNixConfig = path: ./. + "/nix/${path}";
 
       getHostPreference = hostname:
@@ -112,13 +114,11 @@
       vmNodes = [ "bigvm" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
-    in {
-      # TODO: need lib.recursiveUpdate for apps to be not overridden.
+    in (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [{
       # TODO: nix run --impure .#deploy-rs
       # failed with error: attribute 'currentSystem' missing
       apps = inputs.deploy-rs.apps;
-    } // {
-
+    }]) // {
       nixosConfigurations = builtins.foldl'
         (acc: hostname: acc // generateHostConfigurations hostname inputs) { }
         allHosts;
@@ -130,7 +130,6 @@
       checks = builtins.mapAttrs
         (system: deployLib: deployLib.deployChecks self.deploy)
         inputs.deploy-rs.lib;
-
     } // (with flake-utils.lib;
       eachSystem defaultSystems (system:
         let
