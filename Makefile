@@ -44,6 +44,9 @@ clean:
 	[[ -d tmp ]] && sudo rm -rf tmp/
 	if [[ "$(realpath result)" == /nix/store/* ]]; then rm -f result; fi
 
+sops:
+	nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
+
 nixos-deploy:
 	$(DEPLOY) $(DEPLOYFLAGS) ".#$(HOST)" -- $(NIXFLAGS)
 

@@ -141,6 +141,22 @@
 
           devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
 
+          devShells = {
+            # Enroll gpg key with
+            # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
+            # Edit secrets.yaml file with
+            # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
+            sops = pkgs.mkShell {
+              sopsPGPKeyDirs = [ ./nix/sops/keys ];
+              nativeBuildInputs = [
+                (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
+              ];
+              shellHook = ''
+                alias s="sops"
+              '';
+            };
+          };
+
           packages = {
             coredns = pkgs.buildGoApplication {
               pname = "coredns";
@@ -148,17 +164,6 @@
               goPackagePath = "github.com/contrun/infra/coredns";
               src = ./coredns;
               modules = ./coredns/gomod2nix.toml;
-            };
-
-            # Enroll gpg key with
-            # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
-            # Edit secrets.yaml file with
-            # nix-shell -p sops --run "sops secrets.yaml"
-            sopsShell = pkgs.mkShell {
-              sopsPGPKeyDirs = [ ./nix/sops/keys ];
-              nativeBuildInputs = [
-                (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
-              ];
             };
 
             # TODO: gomod2nix failed
