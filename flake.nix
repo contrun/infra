@@ -108,11 +108,18 @@
       vmNodes = [ "bigvm" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
-    in (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [{
-      # TODO: nix run --impure .#deploy-rs
-      # failed with error: attribute 'currentSystem' missing
-      apps = inputs.deploy-rs.apps;
-    }]) // {
+    in (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+      {
+        # TODO: nix run --impure .#deploy-rs
+        # failed with error: attribute 'currentSystem' missing
+        apps = inputs.deploy-rs.apps;
+      }
+      {
+        # Make packages from nixpkgs available, we can, for example, run
+        # nix shell '.#python3Packages.invoke'
+        legacyPackages = inputs.nixpkgs.legacyPackages;
+      }
+    ]) // {
       nixosConfigurations = builtins.foldl'
         (acc: hostname: acc // generateHostConfigurations hostname inputs) { }
         allHosts;
