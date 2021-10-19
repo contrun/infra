@@ -16,12 +16,8 @@ let
       "${prefs.home}/.local/secrets/initrd/ssh_host_ed25519_key"
     ];
   };
-  toYAML = name: attrs:
-    pkgs.runCommandNoCC name {
-      preferLocalBuild = true;
-      json = builtins.toFile "${name}.json" (builtins.toJSON attrs);
-      nativeBuildInputs = [ pkgs.remarshal ];
-    } "json2yaml -i $json -o $out";
+  # YAML is a superset of JSON.
+  toYAML = name: attrs: builtins.toFile "${name}.json" (builtins.toJSON attrs);
 
   getTraefikBareDomainRule =
     lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains;
@@ -47,10 +43,6 @@ in {
       ];
 
       config = {
-        nix.binaryCaches = [ "https://smos.cachix.org" ];
-        nix.binaryCachePublicKeys =
-          [ "smos.cachix.org-1:YOs/tLEliRoyhx7PnNw36cw2Zvbw5R0ASZaUlpUv+yM=" ];
-
         services.smos = {
           production = {
             enable = true;

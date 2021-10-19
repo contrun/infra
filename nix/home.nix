@@ -1,4 +1,4 @@
-{ config, pkgs, lib, prefs, inputs, ... }@args:
+{ config, pkgs, lib, options, prefs, inputs, ... }@args:
 let
   brokenPackages = let p = ./broken-packages.nix;
   in if builtins.pathExists p then (import p) else [ ];
@@ -96,8 +96,7 @@ let
     if pkg ? overrideAttrs then
       pkg.overrideAttrs (oldAttrs: func oldAttrs)
     else
-      builtins.trace "${pkg.name or pkg} does not have attribute overrideAttrs"
-      pkg;
+      lib.info "${pkg.name or pkg} does not have attribute overrideAttrs" pkg;
   dontCheckPkg = pkg:
     overridePkg pkg (oldAttrs: {
       # Fuck, why every package has broken tests? I just want to trust the devil.
@@ -146,13 +145,13 @@ let
     else if builtins.elem path brokenPackages then
       lib.warn "${path} will not be installed as it is marked as broken" null
     else if !prefs.useLargePackages && (builtins.elem path largePackages) then
-      builtins.trace "${path} will not be installed as useLargePackages is ${
-        builtins.toString prefs.useLargePackages
+      lib.info "${path} will not be installed as useLargePackages is ${
+        lib.boolToString prefs.useLargePackages
       }" null
     else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" ])
     && (builtins.elem path x86OnlyPackages) then
-      builtins.trace
-      "${path} will not be installed in system ${prefs.nixosSystem}" null
+      lib.info "${path} will not be installed in system ${prefs.nixosSystem}"
+      null
     else
       (dontCheckPkg (getMyPkgOrPkg attrset path));
 

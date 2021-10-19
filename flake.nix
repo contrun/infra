@@ -124,9 +124,9 @@
         (acc: hostname: acc // generateHostConfigurations hostname inputs) { }
         allHosts;
 
-      deploy.nodes = builtins.foldl' (acc: hostname:
-        acc // builtins.trace (generateDeployNode hostname)
-        (generateDeployNode hostname)) { } deployNodes;
+      deploy.nodes =
+        builtins.foldl' (acc: hostname: acc // (generateDeployNode hostname))
+        { } deployNodes;
 
       checks = builtins.mapAttrs
         (system: deployLib: deployLib.deployChecks self.deploy)
