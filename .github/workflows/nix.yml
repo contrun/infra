@@ -74,7 +74,7 @@ jobs:
 
       - name: Check inputs up to date
         id: check-nix-inputs-update-available
-        if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update-nix-inputs == 'yes')) }}
+        if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
         run: |
           set -xeuo pipefail
           nix flake update
@@ -216,7 +216,7 @@ jobs:
           make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ steps.variables.outputs.deployHost }}"
 
       - name: Push commit with updated inputs
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update-nix-inputs == 'yes')) }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
         run: |
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
