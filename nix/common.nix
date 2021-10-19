@@ -4231,6 +4231,9 @@ in {
     };
     optimise = { automatic = true; };
     autoOptimiseStore = true;
+    # Appending defaults to let our definition override defaults.
+    nixPath = [ "infra=${prefs.home}/Workspace/infra" ]
+      ++ options.nix.nixPath.default;
   };
 
   boot = {
