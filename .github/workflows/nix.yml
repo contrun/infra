@@ -72,25 +72,6 @@ jobs:
             substituters = https://cache.nixos.org/ https://hydra.iohk.io
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 
-      - name: Check inputs up to date
-        id: check-nix-inputs-update-available
-        if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
-        run: |
-          set -xeuo pipefail
-          nix flake update
-          # Not work for now, as packages are not built in github actions yet.
-          # echo "[]" > nix/broken-packages.json
-          git status
-          if ! git diff; then
-              echo "Abort now. No updates available."
-              # No way for github actions workflow to early return
-              # Make sure later steps check noUpdateShouldAbort == 'yes'
-              echo '::set-output name=noUpdateShouldAbort::yes'
-          fi
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git commit --all --message "auto update nix inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-
       - name: Setup cachix
         if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }}
         uses: cachix/cachix-action@v10
@@ -168,6 +149,31 @@ jobs:
           echo "Showing disk usage"
           echo "=============================================================================="
           df -h
+
+      - name: Check inputs up to date
+        id: check-nix-inputs-update-available
+        if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
+        run: |
+          set -xeuo pipefail
+          nix flake update
+
+          # Remove broken packages in ./nix/broken-packages.nix when the package can now be built.
+          # TODO: x86 and arm may have different set of broken packages.
+          list="$(nix eval --impure --raw --expr 'builtins.toJSON (import ./nix/broken-packages.nix)' | jq --raw-output '.[]')"
+          xargs -I '{}' bash -c 'if ! nix build ".#{}"; then echo {} >> ./nix/broken-packages; fi' <<< "$list"
+          jq --raw-input . < ./nix/broken-packages | jq --slurp . | jq 'sort_by(.) | unique' > ./nix/broken-packages.json
+          nix eval --impure --expr 'builtins.fromJSON (builtins.readFile ./nix/broken-packages.json)' > ./nix/broken-packages.nix
+
+          git status
+          if ! git diff; then
+              echo "Abort now. No updates available."
+              # No way for github actions workflow to early return
+              # Make sure later steps check noUpdateShouldAbort == 'yes'
+              echo '::set-output name=noUpdateShouldAbort::yes'
+          fi
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git commit --all --message "automatically update nix at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
       - name: Build deploy node nixos
         if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
