@@ -3391,7 +3391,7 @@ in {
                 "key_type": "ca",
                 "default_user": "root",
                 "algorithm_signer": "rsa-sha2-512",
-                "ttl": "30m0s"
+                "ttl": "6h"
               }
               EOH
               vault policy write ssh-root-user -<<"EOH"
