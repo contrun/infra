@@ -19,6 +19,70 @@ let
   # YAML is a superset of JSON.
   toYAML = name: attrs: builtins.toFile "${name}.json" (builtins.toJSON attrs);
 
+  # Copied from https://github.com/tejing1/nixos-config/blob/5c08d09dd785c569941021aedaa6ff80bc86be63/lib/sys/mkFlake.nix
+  generateFlake = let
+    inherit (builtins) mapAttrs concatMap attrValues toJSON listToAttrs;
+    inherit (pkgs) runCommand;
+    inherit (lib) nameValuePair concatStrings mapAttrsToList;
+    inherit (lib.strings) escapeNixIdentifier escapeNixString;
+
+    cleanNode = flake:
+      let
+        spec = {
+          type = "path";
+          path = flake.outPath;
+          inherit (flake) narHash;
+        };
+      in {
+        inputs = mapAttrs (_: cleanNode) (flake.inputs or { });
+        locked = spec;
+        original = spec;
+      };
+    flattenNode = prefix: node:
+      let
+        ids =
+          mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).name) node.inputs;
+        nod = concatMap (x: x) (attrValues
+          (mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).value)
+            node.inputs));
+      in nameValuePair prefix
+      ([ (nameValuePair prefix (node // { inputs = ids; })) ] ++ nod);
+
+  in flakeInputs:
+  let
+    inputsCode = "{${
+        concatStrings (mapAttrsToList (n: v:
+          "${escapeNixIdentifier n}.url=${
+            escapeNixString
+            "path:${v.sourceInfo.outPath}?narHash=${v.sourceInfo.narHash}"
+          };") flakeInputs)
+      }}";
+    rootNode = { inputs = mapAttrs (_: cleanNode) flakeInputs; };
+    lockJSON = toJSON {
+      version = 7;
+      root = "self";
+      nodes = listToAttrs (flattenNode "self" rootNode).value;
+    };
+
+  in outputsCode:
+
+  runCommand "source" { } ''
+    mkdir -p $out
+    cat <<"EOF" >$out/flake.nix
+    {inputs=${inputsCode};outputs=${outputsCode};}
+    EOF
+    cat <<"EOF" >$out/flake.lock
+    ${lockJSON}
+    EOF
+  '';
+
+  mypkgs = (generateFlake { config = inputs.self; }
+    "{config,...}: {legacyPackages.${
+      lib.strings.escapeNixIdentifier config.nixpkgs.system
+    }=config.nixosConfigurations.${
+      lib.strings.escapeNixIdentifier config.networking.hostName
+    }.pkgs;}");
+
   getTraefikBareDomainRule =
     lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains;
   getTraefikRuleByDomainPrefix = let
@@ -204,6 +268,13 @@ in {
 
   environment = {
     etc = {
+      "nix/path/nixpkgs".source = inputs.nixpkgs;
+      "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
+      "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
+      "nix/path/home-manager".source = inputs.home-manager;
+      "nix/path/pkgs".source = mypkgs;
+      "nix/path/activeconfig".source = inputs.self;
+      "nix/path/config".source = "${prefs.home}/Workspace/infra";
       "davfs2/secrets" = {
         enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
         mode = "0600";
@@ -4223,9 +4294,19 @@ in {
     };
     optimise = { automatic = true; };
     autoOptimiseStore = true;
-    # Appending defaults to let our definition override defaults.
-    nixPath = [ "infra=${prefs.home}/Workspace/infra" ]
-      ++ options.nix.nixPath.default;
+
+    nixPath = [ "/etc/nix/path" ];
+
+    registry.nixpkgs.flake = inputs.nixpkgs;
+    registry.nixpkgs-stable.flake = inputs.nixpkgs-stable;
+    registry.nixpkgs-unstable.flake = inputs.nixpkgs-unstable;
+    registry.home-manager.flake = inputs.home-manager;
+    registry.pkgs.flake = mypkgs;
+    registry.activeconfig.flake = inputs.self;
+    registry.config.to = {
+      type = "path";
+      path = "${prefs.home}/Workspace/infra";
+    };
   };
 
   boot = {

@@ -390,8 +390,7 @@
         python = super.python3Full.withPackages getPython3Packages;
 
         python2 = with super;
-          python2Full.withPackages
-          (ps: with ps; [ pip setuptools ]);
+          python2Full.withPackages (ps: with ps; [ pip setuptools ]);
 
         texLive = self.texlive.combine { inherit (self.texlive) scheme-full; };
 
