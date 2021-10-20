@@ -591,6 +591,7 @@ let
       enableAllOciContainers = true;
       enableClashRedirWatchdog = true;
       enableNetworkWatchdog = true;
+      enableJupyter = true;
       enableTraefik = true;
       enableGrafana = true;
       enablePrometheus = true;

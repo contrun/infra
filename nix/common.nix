@@ -1634,6 +1634,12 @@ in {
               service = "grafana";
               tls = { };
             };
+          } // lib.optionalAttrs prefs.enableJupyter {
+            jupyter = {
+              rule = getTraefikRuleByDomainPrefix "jupyter";
+              service = "jupyter";
+              tls = { };
+            };
           } // lib.optionalAttrs prefs.enableSmosServer {
             smos = {
               rule = getTraefikRuleByDomainPrefix "smos";
@@ -1768,6 +1774,16 @@ in {
                 servers = [{
                   url =
                     "http://127.0.0.1:${toString config.services.grafana.port}";
+                }];
+              };
+            };
+          } // lib.optionalAttrs prefs.enableJupyter {
+            jupyter = {
+              loadBalancer = {
+                servers = [{
+                  url = "http://127.0.0.1:${
+                      toString config.services.jupyterhub.port
+                    }";
                 }];
               };
             };
@@ -3086,6 +3102,13 @@ in {
                       subtitle = "monitoring dashboard";
                       tag = "operation";
                       url = "https://${prefs.getFullDomainName "grafana"}";
+                    }
+                    {
+                      enable = prefs.enableJupyter;
+                      name = "jupyter";
+                      subtitle = "jupyter notebook";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "jupyter"}";
                     }
                     {
                       enable = prefs.ociContainers.enableRecipes;
