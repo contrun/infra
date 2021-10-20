@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }: {
+{ config, lib, pkgs, inputs, ... }: {
   nixpkgs.overlays = let
     haskellOverlay = self: super:
       let
@@ -12,6 +12,16 @@
       };
 
     mozillaOverlay = import inputs.nixpkgs-mozilla;
+
+    emacsOverlay = inputs.emacs-overlay.overlay;
+
+    # collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
+    # TODO: not actually work.
+    lldbOverlay = final: prev: {
+      # TODO: Ideally I need something like below, but it does not work.
+      lldb = prev.lldb // { out = prev.lib.hiPrio prev.lldb.out; };
+      # lldb = builtins.removeAttrs prev.lldb [ "lib" ];
+    };
 
     dontCheckOverlay = self: super:
       let
@@ -509,9 +519,10 @@
 
   in [
     mozillaOverlay
+    emacsOverlay
     haskellOverlay
+    lldbOverlay
     dontCheckOverlay
-    inputs.emacs-overlay.overlay
     myOverlay
     shellsOverlay
   ];

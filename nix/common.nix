@@ -341,6 +341,8 @@ in {
         libnotify
         (pkgs.myPackages.lua or lua)
         nodejs_latest
+        lldb
+        gdb
         gcc
         gnumake
         podman
