@@ -34,6 +34,8 @@ let
           inherit (flake) narHash;
         };
       in {
+        # TODO: Any reliable way to differentiate flake and non-flake inputs?
+        flake = flake ? inputs || flake ? outputs;
         inputs = mapAttrs (_: cleanNode) (flake.inputs or { });
         locked = spec;
         original = spec;
@@ -51,11 +53,12 @@ let
   in flakeInputs:
   let
     inputsCode = "{${
-        concatStrings (mapAttrsToList (n: v:
-          "${escapeNixIdentifier n}.url=${
+        concatStrings (mapAttrsToList (n: v: ''
+          ${escapeNixIdentifier n}.url=${
             escapeNixString
             "path:${v.sourceInfo.outPath}?narHash=${v.sourceInfo.narHash}"
-          };") flakeInputs)
+          };
+        '') flakeInputs)
       }}";
     rootNode = { inputs = mapAttrs (_: cleanNode) flakeInputs; };
     lockJSON = toJSON {
