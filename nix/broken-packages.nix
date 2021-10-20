@@ -1,1 +1,1 @@
-[ "impressive" "lldb" "clojure-lsp" ]
+[ "impressive" ]
