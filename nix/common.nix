@@ -2046,38 +2046,40 @@ in {
           language = "Rust";
         };
 
-        # rKernel = (let
-        #   env = pkgs.rWrapper.override {
-        #     packages = with pkgs.rPackages; [ IRkernel ggplot2 ];
-        #   };
-        # in {
-        #   displayName = "R";
-        #   argv = [
-        #     "${env}/bin/R"
-        #     "--slave"
-        #     "-e"
-        #     "IRkernel::main()"
-        #     "--args"
-        #     "{connection_file}"
-        #   ];
-        #   language = "R";
-        # });
+        rKernel = (let
+          env = pkgs.rWrapper.override {
+            packages = with pkgs.rPackages; [ IRkernel ggplot2 ];
+          };
+        in {
+          displayName = "R";
+          argv = [
+            "${env}/bin/R"
+            "--slave"
+            "-e"
+            "IRkernel::main()"
+            "--args"
+            "{connection_file}"
+          ];
+          language = "R";
+        });
 
-        # ansibleKernel = (let
-        #   env = (pkgs.python3.withPackages
-        #     (p: with p; [ ansible-kernel ansible ])).override
-        #     (args: { ignoreCollisions = true; });
-        # in {
-        #   displayName = "Ansible";
-        #   argv = [
-        #     "${env.interpreter}"
-        #     "-m"
-        #     "ansible_kernel"
-        #     "-f"
-        #     "{connection_file}"
-        #   ];
-        #   language = "ansible";
-        # });
+        ansibleKernel = (let
+          # build failure on latest, see https://github.com/NixOS/nixpkgs/issues/138381
+          python3 = stable.python3;
+          env = (python3.withPackages
+            (p: with p; [ ansible-kernel ansible ])).override
+            (args: { ignoreCollisions = true; });
+        in {
+          displayName = "Ansible";
+          argv = [
+            "${env.interpreter}"
+            "-m"
+            "ansible_kernel"
+            "-f"
+            "{connection_file}"
+          ];
+          language = "ansible";
+        });
 
         bashKernel =
           (let env = pkgs.python3.withPackages (p: with p; [ bash_kernel ]);
@@ -2115,27 +2117,27 @@ in {
 
         # TODO: Below build failed with
         # RPATH of binary /nix/store/ilhgzcydg3vn4mp7k5yawlsjwfpm8xi8-ihaskell-0.10.1.2/bin/ihaskell contains a forbidden reference to /build/
-        #   haskellKernel = (let
-        #     env = pkgs.haskellPackages.ghcWithPackages (pkgs: [ pkgs.ihaskell ]);
-        #     ihaskellSh = pkgs.writeScriptBin "ihaskell" ''
-        #       #! ${pkgs.stdenv.shell}
-        #       export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
-        #       export PATH="${pkgs.lib.makeBinPath ([ env ])}:$PATH"
-        #       ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
-        #     '';
-        #   in {
-        #     displayName = "Haskell";
-        #     argv = [
-        #       "${ihaskellSh}/bin/ihaskell"
-        #       "kernel"
-        #       "{connection_file}"
-        #       "+RTS"
-        #       "-M3g"
-        #       "-N2"
-        #       "-RTS"
-        #     ];
-        #     language = "Haskell";
-        #   });
+        haskellKernel = (let
+          env = pkgs.haskellPackages.ghcWithPackages (pkgs: [ pkgs.ihaskell ]);
+          ihaskellSh = pkgs.writeScriptBin "ihaskell" ''
+            #! ${pkgs.stdenv.shell}
+            export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
+            export PATH="${pkgs.lib.makeBinPath ([ env ])}:$PATH"
+            ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
+          '';
+        in {
+          displayName = "Haskell";
+          argv = [
+            "${ihaskellSh}/bin/ihaskell"
+            "kernel"
+            "{connection_file}"
+            "+RTS"
+            "-M3g"
+            "-N2"
+            "-RTS"
+          ];
+          language = "Haskell";
+        });
       };
     };
 

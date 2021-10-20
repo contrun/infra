@@ -23,6 +23,17 @@
       # lldb = builtins.removeAttrs prev.lldb [ "lib" ];
     };
 
+    # TODO: don't know why, not working.
+    pythonOverlay = final: prev:
+      let
+        python3 = let
+          packageOverrides = self: super:
+            {
+              # ansible-runner = super.ansible-runner.overrideAttrs (old: { });
+            };
+        in prev.python3.override { inherit packageOverrides; };
+      in { inherit python3; };
+
     dontCheckOverlay = self: super:
       let
         overridePythonPackages = let
@@ -522,6 +533,7 @@
     emacsOverlay
     haskellOverlay
     lldbOverlay
+    pythonOverlay
     dontCheckOverlay
     myOverlay
     shellsOverlay
