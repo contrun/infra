@@ -2535,6 +2535,11 @@ in {
                 "x86_64-linux" = image;
                 "aarch64-linux" = image;
               };
+            "livebook" = let image = "docker.io/livebook/livebook:latest";
+            in {
+              "x86_64-linux" = image;
+              "aarch64-linux" = image;
+            };
             "joplin" = let image = "docker.io/florider89/joplin-server:master";
             in {
               "x86_64-linux" = image;
@@ -2881,6 +2886,15 @@ in {
           environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
           environmentFiles = [ "/run/secrets/pleroma-env" ];
           traefikForwardingPort = 4000;
+        } // mkContainer "livebook" prefs.ociContainers.enableLivebook {
+          volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
+          extraOptions = [
+            "--user=${builtins.toString prefs.ownerUid}:${
+              builtins.toString prefs.ownerGroupGid
+            }"
+          ];
+          environmentFiles = [ "/run/secrets/livebook-env" ];
+          traefikForwardingPort = 8080;
         } // mkContainer "joplin" prefs.ociContainers.enableJoplin {
           dependsOn = [ "postgresql" ];
           environment = {
@@ -3246,6 +3260,13 @@ in {
                       subtitle = "microblogging";
                       tag = "social";
                       url = "https://${prefs.getFullDomainName "pleroma"}";
+                    }
+                    {
+                      enable = prefs.ociContainers.enableLivebook;
+                      name = "livebook";
+                      subtitle = "elixir notebook";
+                      tag = "productivity";
+                      url = "https://${prefs.getFullDomainName "livebook"}";
                     }
                     {
                       enable = prefs.ociContainers.enableJoplin;

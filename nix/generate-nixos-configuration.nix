@@ -107,6 +107,11 @@ let
           etesync-env = { };
           vaultwarden-env = { };
           pleroma-env = { };
+          livebook-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
           joplin-env = { };
           miniflux-env = { };
           nextcloud-env = { };

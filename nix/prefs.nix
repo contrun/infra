@@ -383,6 +383,7 @@ let
       enableHomer = self.enableAllOciContainers || self.enableTraefik;
       enableVaultwarden = self.enableAllOciContainers;
       enablePleroma = self.enableAllOciContainers;
+      enableLivebook = self.enableAllOciContainers;
       enableJoplin = self.enableAllOciContainers;
       enableMiniflux = self.enableAllOciContainers;
       enableNextcloud = self.enableAllOciContainers;
