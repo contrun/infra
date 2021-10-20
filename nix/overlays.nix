@@ -456,7 +456,7 @@
             buildInputs = [ gpgme libassuan python ];
             nativeBuildInputs = [ autoreconfHook pkgconfig ];
 
-            meta = with stdenv.lib; {
+            meta = with lib; {
               description = "KISS password manager";
               homepage = "https://github.com/aartamonau/authinfo";
               platforms = platforms.all;
@@ -490,9 +490,9 @@
                   --suffix PATH ":" "${elixir}/bin"
             '';
 
-            meta = with stdenv.lib; {
+            meta = with lib; {
               description = "A language server for Elixir";
-              # license = stdenv.lib.licenses.unspecified;
+              # license = lib.licenses.unspecified;
               homepage = "https://github.com/JakeBecker/elixir-ls";
               platforms = platforms.unix;
             };

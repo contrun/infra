@@ -2099,7 +2099,7 @@ in {
         #     ihaskellSh = pkgs.writeScriptBin "ihaskell" ''
         #       #! ${pkgs.stdenv.shell}
         #       export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
-        #       export PATH="${pkgs.stdenv.lib.makeBinPath ([ env ])}:$PATH"
+        #       export PATH="${pkgs.lib.makeBinPath ([ env ])}:$PATH"
         #       ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
         #     '';
         #   in {

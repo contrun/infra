@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, kernel, bc, dnsmasq, hostapd}:
+{ stdenv, lib, fetchFromGitHub, kernel, bc, dnsmasq, hostapd }:
 stdenv.mkDerivation rec {
   name = "rtl88x2bu-${kernel.version}-${version}";
   version = "5.6.1_30362.20181109_COEX20180928-6a6a";
@@ -27,7 +27,7 @@ stdenv.mkDerivation rec {
     mkdir -p "$out/lib/modules/${kernel.modDirVersion}/kernel/net/wireless/"
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Realtek rtl88x2bu driver";
     homepage = "https://github.com/cilynx/rtl88x2bu/";
     license = licenses.gpl2;

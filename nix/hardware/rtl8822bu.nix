@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, kernel, bc, nukeReferences }:
+{ stdenv, lib, fetchFromGitHub, kernel, bc, nukeReferences }:
 stdenv.mkDerivation rec {
   name = "rtl8822bu-${kernel.version}-${version}";
   version = "f220c47cb7e7370ad95f84eff75395dced664be2";
@@ -26,11 +26,18 @@ stdenv.mkDerivation rec {
   makeFlags = [
     "ARCH=${stdenv.hostPlatform.platform.kernelArch}"
     "KSRC=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
-    ("CONFIG_PLATFORM_I386_PC=" + (if (stdenv.hostPlatform.isi686 || stdenv.hostPlatform.isx86_64) then "y" else "n"))
-    ("CONFIG_PLATFORM_ARM_RPI=" + (if (stdenv.hostPlatform.isAarch32 || stdenv.hostPlatform.isAarch64) then "y" else "n"))
-  ] ++ stdenv.lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) [
-    "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
-  ];
+    ("CONFIG_PLATFORM_I386_PC="
+      + (if (stdenv.hostPlatform.isi686 || stdenv.hostPlatform.isx86_64) then
+        "y"
+      else
+        "n"))
+    ("CONFIG_PLATFORM_ARM_RPI=" + (if (stdenv.hostPlatform.isAarch32
+      || stdenv.hostPlatform.isAarch64) then
+      "y"
+    else
+      "n"))
+  ] ++ lib.optional (stdenv.hostPlatform != stdenv.buildPlatform)
+    [ "CROSS_COMPILE=${stdenv.cc.targetPrefix}" ];
 
   preInstall = ''
     mkdir -p "$out/lib/modules/${kernel.modDirVersion}/kernel/net/wireless/"
@@ -40,7 +47,7 @@ stdenv.mkDerivation rec {
     nuke-refs $out/lib/modules/*/kernel/net/wireless/*.ko
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Realtek rtl8822bu driver";
     homepage = "https://github.com/jeremyb31/rtl8822bu/";
     license = licenses.gpl2;
