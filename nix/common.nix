@@ -93,15 +93,18 @@ let
       lib.strings.escapeNixIdentifier config.networking.hostName
     }.pkgs;}");
 
-  getTraefikBareDomainRule =
-    lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains;
+  getTraefikBareDomainRule = "(${
+      lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains
+    })";
   getTraefikRuleByDomainPrefix = let
     getRuleByPrefix = domainPrefix:
       lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
       (prefs.getFullDomainNames domainPrefix);
   in domainPrefixes:
-  lib.concatMapStringsSep " || " getRuleByPrefix
-  (lib.splitString "," domainPrefixes);
+  "(${
+    lib.concatMapStringsSep " || " getRuleByPrefix
+    (lib.splitString "," domainPrefixes)
+  })";
 in {
   passthru = {
     inherit prefs;
@@ -3194,7 +3197,9 @@ in {
                       name = "traefik";
                       subtitle = "traefik dashboard";
                       tag = "operations";
-                      url = "https://${prefs.getFullDomainName "traefik"}";
+                      url = "https://${
+                          prefs.getFullDomainName "traefik"
+                        }/dashboard/";
                     }
                     {
                       enable = prefs.ociContainers.enableVaultwarden;
