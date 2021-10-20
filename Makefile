@@ -7,14 +7,13 @@ HOST ?= $(shell hostname)
 # error: attribute 'currentSystem' missing https://github.com/obsidiansystems/obelisk/issues/854
 NIXFLAGS = $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going --keep-failed)
 
-NIX_RUN_DEPLOY = nix run ".\#deploy-rs" --
-# Some makefile quirks for the `#`, don't use `nix run ".\#deploy-rs" --` below.
-DEPLOY ?= $(if $(shell command -v deploy),deploy,$(NIX_RUN_DEPLOY))
+# Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
+DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".\#deploy-rs" --)
 EXTRADEPLOYFLAGS ?=
 DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs --keep-result $(EXTRADEPLOYFLAGS))
 
 NIXOSREBUILD.build = nix build ".\#nixosConfigurations.$(HOST).config.system.build.toplevel"
-NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".#$(HOST)"
+NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".\#$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
