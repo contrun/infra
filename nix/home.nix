@@ -363,6 +363,7 @@ let
         "gitAndTools.gh"
         "gitAndTools.lab"
         "gitAndTools.tig"
+        "gitAndTools.pre-commit"
         "gitAndTools.git-extras"
         "gitAndTools.git-hub"
         "gitAndTools.git-annex"
