@@ -506,7 +506,7 @@ let
         "shfmt"
         "erlang"
         "elixir"
-        "myPackages.elixir-ls"
+        "elixir_ls"
         "pkgconfig"
         # "gcc.cc.lib"
         "zlib"
