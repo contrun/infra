@@ -348,9 +348,11 @@ in {
         gdb
         gcc
         gnumake
-        podman
         trash-cli
+        podman
         podman-compose
+        arion
+        skopeo
         usbutils
         powertop
         fail2ban
@@ -1282,7 +1284,7 @@ in {
         static_configs = [{
           targets =
             [ "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}" ];
-          labels = { instance_node = prefs.hostname; };
+          labels = { node = prefs.hostname; };
         }];
       }] ++ lib.optionals config.services.prometheus.exporters.node.enable [{
         job_name = "node";
@@ -1292,7 +1294,7 @@ in {
               toString config.services.prometheus.exporters.node.port
             }"
           ];
-          labels = { instance_node = prefs.hostname; };
+          labels = { node = prefs.hostname; };
         }];
       }]
         ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
@@ -1317,7 +1319,7 @@ in {
             }
           ];
           static_configs = [{
-            labels = { instance_node = prefs.hostname; };
+            labels = { node = prefs.hostname; };
             targets = [
               "https://www.google.com"
               "https://www.baidu.com"
@@ -1354,7 +1356,7 @@ in {
                 config.services.prometheus.exporters.postgres.port
               }"
             ];
-            labels = { instance_node = prefs.hostname; };
+            labels = { node = prefs.hostname; };
           }];
         }];
     };
@@ -1379,6 +1381,7 @@ in {
           journal = {
             labels = {
               host = prefs.hostname;
+              node = prefs.hostname;
               job = "systemd-journal";
             };
             max_age = "12h";
@@ -1394,7 +1397,7 @@ in {
               targets = [ "localhost" ];
               labels = {
                 __path__ = "/var/log/traefik/log.json";
-                instance_node = prefs.hostname;
+                node = prefs.hostname;
                 job = "traefik";
               };
             }];
@@ -1405,7 +1408,7 @@ in {
               targets = [ "localhost" ];
               labels = {
                 __path__ = "/var/log/traefik/access.log.json";
-                instance_node = prefs.hostname;
+                node = prefs.hostname;
                 job = "traefik-access";
               };
             }];
@@ -3695,10 +3698,6 @@ in {
         } // lib.optionalAttrs (prefs.enableGrafana) {
           "grafana" = {
             serviceConfig = { EnvironmentFile = "/run/secrets/grafana-env"; };
-          };
-        } // lib.optionalAttrs (prefs.enableResolved) {
-          "systemd-resolved" = {
-            serviceConfig = { Environment = "SYSTEMD_LOG_LEVEL=debug"; };
           };
         } // lib.optionalAttrs (prefs.ociContainers.enableWallabag) {
           "${prefs.ociContainerBackend}-wallabag" = {
