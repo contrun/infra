@@ -2867,6 +2867,7 @@ in
               [ ]);
             traefikForwardingPort = 443;
           } // mkContainer "cloudbeaver" prefs.ociContainers.enableCloudBeaver {
+            autoStart = false;
             volumes =
               [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
             traefikForwardingPort = 8978;
@@ -2941,6 +2942,7 @@ in
             environmentFiles = [ "/run/secrets/n8n-env" ];
             traefikForwardingPort = 5678;
           } // mkContainer "wikijs" prefs.ociContainers.enableWikijs {
+            autoStart = false;
             environmentFiles = [ "/run/secrets/wikijs-env" ];
             traefikForwardingPort = 3000;
           } // mkContainer "grocy" prefs.ociContainers.enableGrocy {
@@ -2982,11 +2984,13 @@ in
             volumes = [ "/var/data/trilium:/home/node/trilium-data" ];
             traefikForwardingPort = 8080;
           } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
+            autoStart = false;
             dependsOn = [ "postgresql" ];
             environmentFiles = [ "/run/secrets/xwiki-env" ];
             volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
             traefikForwardingPort = 8080;
           } // mkContainer "huginn" prefs.ociContainers.enableHuginn {
+            autoStart = false;
             dependsOn = [ "postgresql" ];
             environmentFiles = [ "/run/secrets/huginn-env" ];
             traefikForwardingPort = 3000;
@@ -3032,12 +3036,14 @@ in
             environmentFiles = [ "/run/secrets/vaultwarden-env" ];
             traefikForwardingPort = 80;
           } // mkContainer "pleroma" prefs.ociContainers.enablePleroma {
+            autoStart = false;
             dependsOn = [ "postgresql" ];
             volumes = [ "/var/data/pleroma:/var/lib/pleroma" ];
             environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
             environmentFiles = [ "/run/secrets/pleroma-env" ];
             traefikForwardingPort = 4000;
           } // mkContainer "livebook" prefs.ociContainers.enableLivebook {
+            autoStart = false;
             volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
             extraOptions = [
               "--user=${builtins.toString prefs.ownerUid}:${
