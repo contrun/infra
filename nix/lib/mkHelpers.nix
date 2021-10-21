@@ -14,7 +14,8 @@
       str = if try_dec then s else substring 2 ((stringLength s) - 2) s;
       list = map (x: set."${x}") (lib.stringToCharacters str);
       go = base: list: foldl' (a: v: (a * base + v)) 0 list;
-    in go base list;
+    in
+    go base list;
 
   autossh = { hostname, serverName, ... }:
     let
@@ -25,13 +26,15 @@
           hash = builtins.hashString "sha512"
             "${server}->${host}->${builtins.toString n}";
           port = atoi ("0x" + (builtins.substring 0 3 hash));
-        in basePort + n * bias + port;
+        in
+        basePort + n * bias + port;
       go = n: getPort hostname serverName n;
-    in map go [ 1 2 ];
+    in
+    map go [ 1 2 ];
 
   getAttrOrNull = attrset: path:
     builtins.foldl' (acc: x: if acc ? ${x} then acc.${x} else null) attrset
-    (lib.splitString "." path);
+      (lib.splitString "." path);
 
   mkIfAttrExists = attrset: path:
     let r = getAttrOrNull attrset path;

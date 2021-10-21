@@ -1,6 +1,7 @@
 let
   pathOr = path: default: if (builtins.pathExists path) then path else default;
-in { prefs, inputs }:
+in
+{ prefs, inputs }:
 let
   inherit (prefs)
     hostname isMinimalSystem isVirtualMachine system getDotfile getNixConfig;
@@ -11,8 +12,9 @@ let
 
   systemInfo = { lib, pkgs, config, ... }: {
     system.configurationRevision = lib.mkIf (inputs.self ? rev) inputs.self.rev;
-    system.nixos.label = lib.mkIf (inputs.self.sourceInfo ? lastModifiedDate
-      && inputs.self.sourceInfo ? shortRev) "flake.${
+    system.nixos.label = lib.mkIf
+      (inputs.self.sourceInfo ? lastModifiedDate
+        && inputs.self.sourceInfo ? shortRev) "flake.${
         builtins.substring 0 8 inputs.self.sourceInfo.lastModifiedDate
       }.${inputs.self.sourceInfo.shortRev}";
   };
@@ -48,16 +50,17 @@ let
     else
       { });
 
-  hardwareConfiguration = if isVirtualMachine then
-    { config, lib, pkgs, modulesPath, ... }: { }
-  else if isMinimalSystem then
-    import
-    (pathOr (getNixConfig "hardware/hardware-configuration.${hostname}.nix")
-      (getNixConfig "hardware/hardware-configuration.example.nix"))
-  else
-    import
-    (pathOr (getNixConfig "hardware/hardware-configuration.${hostname}.nix")
-      /etc/nixos/hardware-configuration.nix);
+  hardwareConfiguration =
+    if isVirtualMachine then
+      { config, lib, pkgs, modulesPath, ... }: { }
+    else if isMinimalSystem then
+      import
+        (pathOr (getNixConfig "hardware/hardware-configuration.${hostname}.nix")
+          (getNixConfig "hardware/hardware-configuration.example.nix"))
+    else
+      import
+        (pathOr (getNixConfig "hardware/hardware-configuration.${hostname}.nix")
+          /etc/nixos/hardware-configuration.nix);
 
   commonConfiguration = import (getNixConfig "common.nix");
 
@@ -67,7 +70,8 @@ let
     let
       sopsSecretsFile = getNixConfig "/sops/secrets.yaml";
       enableSops = builtins.pathExists sopsSecretsFile;
-    in lib.optionalAttrs enableSops {
+    in
+    lib.optionalAttrs enableSops {
       sops = {
         validateSopsFiles = false;
         defaultSopsFile = "${builtins.path {
@@ -135,112 +139,114 @@ let
             group = prefs.ownerGroup;
           };
           cfssl-ca-pem = { mode = "0444"; };
-        } // builtins.foldl' (acc: e:
-          let go = e: if e.enable or true then e.config else { };
-          in acc // go e) { } [
-            {
-              enable = prefs.enableAcme;
-              config = {
-                acme-env = {
-                  mode = "0400";
-                  owner = "acme";
-                  group = "acme";
-                };
+        } // builtins.foldl'
+          (acc: e:
+            let go = e: if e.enable or true then e.config else { };
+            in acc // go e)
+          { } [
+          {
+            enable = prefs.enableAcme;
+            config = {
+              acme-env = {
+                mode = "0400";
+                owner = "acme";
+                group = "acme";
               };
-            }
-            {
-              enable = prefs.ociContainers.enableVault;
-              config = { vault-env = { }; };
-            }
-            {
-              enable = prefs.enablePostgresql;
-              config = {
-                postgresql-init-script = {
-                  mode = "0440";
-                  owner = "postgres";
-                  group = "postgres";
-                };
+            };
+          }
+          {
+            enable = prefs.ociContainers.enableVault;
+            config = { vault-env = { }; };
+          }
+          {
+            enable = prefs.enablePostgresql;
+            config = {
+              postgresql-init-script = {
+                mode = "0440";
+                owner = "postgres";
+                group = "postgres";
               };
-            }
-            {
-              enable = prefs.enableAria2;
-              config = {
-                aria2-env = {
-                  mode = "0440";
-                  owner = "aria2";
-                  group = "aria2";
-                };
+            };
+          }
+          {
+            enable = prefs.enableAria2;
+            config = {
+              aria2-env = {
+                mode = "0440";
+                owner = "aria2";
+                group = "aria2";
               };
-            }
-            {
-              enable = prefs.enableTraefik;
-              config = {
-                traefik-env = {
-                  mode = "0400";
-                  owner = "traefik";
-                };
+            };
+          }
+          {
+            enable = prefs.enableTraefik;
+            config = {
+              traefik-env = {
+                mode = "0400";
+                owner = "traefik";
               };
-            }
-            {
-              enable = prefs.enablePrometheus;
-              config = {
-                prometheus-env = {
-                  mode = "0400";
-                  owner = "prometheus";
-                };
+            };
+          }
+          {
+            enable = prefs.enablePrometheus;
+            config = {
+              prometheus-env = {
+                mode = "0400";
+                owner = "prometheus";
               };
-            }
-            {
-              enable = prefs.enablePrometheus
-                && prefs.ociContainers.enablePostgresql;
-              config = {
-                prometheus-postgres-env = {
-                  mode = "0400";
-                  owner = "postgres-exporter";
-                };
+            };
+          }
+          {
+            enable = prefs.enablePrometheus
+              && prefs.ociContainers.enablePostgresql;
+            config = {
+              prometheus-postgres-env = {
+                mode = "0400";
+                owner = "postgres-exporter";
               };
-            }
-            {
-              enable = prefs.enableGrafana;
-              config = {
-                grafana-env = {
-                  mode = "0400";
-                  owner = "grafana";
-                };
+            };
+          }
+          {
+            enable = prefs.enableGrafana;
+            config = {
+              grafana-env = {
+                mode = "0400";
+                owner = "grafana";
               };
-            }
-            {
-              enable = prefs.enablePromtail;
-              config = {
-                promtail-env = {
-                  mode = "0400";
-                  owner = "promtail";
-                  group = "promtail";
-                };
+            };
+          }
+          {
+            enable = prefs.enablePromtail;
+            config = {
+              promtail-env = {
+                mode = "0400";
+                owner = "promtail";
+                group = "promtail";
               };
-            }
-            {
-              enable = prefs.enableSmos;
-              config = {
-                smos-sync-env = {
-                  mode = "0400";
-                  owner = prefs.owner;
-                  group = prefs.ownerGroup;
-                };
+            };
+          }
+          {
+            enable = prefs.enableSmos;
+            config = {
+              smos-sync-env = {
+                mode = "0400";
+                owner = prefs.owner;
+                group = prefs.ownerGroup;
               };
-            }
-            {
-              enable = prefs.enableCfssl;
-              config = { cfssl-ca-key-pem = { owner = "cfssl"; }; };
-            }
-            {
-              enable = prefs.enableGlusterfs;
-              config = {
-                glusterfs-cert = { };
-                glusterfs-cert-key = { };
-              };
-            }
-          ];
+            };
+          }
+          {
+            enable = prefs.enableCfssl;
+            config = { cfssl-ca-key-pem = { owner = "cfssl"; }; };
+          }
+          {
+            enable = prefs.enableGlusterfs;
+            config = {
+              glusterfs-cert = { };
+              glusterfs-cert-key = { };
+            };
+          }
+        ];
       };
     };
 
@@ -295,46 +301,48 @@ let
         };
       };
       vmConfig = vmConfigs."${hostname}" or null;
-    in { config, pkgs, lib, ... }:
-    with pkgs;
-    if vmConfig != null then
-      let
-        toplevel = config.system.build.toplevel;
-        db = closureInfo { rootPaths = [ toplevel ]; };
-        rootfs = config.fileSystems."/";
+    in
+    { config, pkgs, lib, ... }:
+      with pkgs;
+      if vmConfig != null then
+        let
+          toplevel = config.system.build.toplevel;
+          db = closureInfo { rootPaths = [ toplevel ]; };
+          rootfs = config.fileSystems."/";
 
-        # TMPDIR="$PWD/tmp" $(nix build '.#nixosConfigurations.bigvm.config.system.build.mkImageScript' --json | jq -r '.[].outputs.out')
-        mkImageScript = pkgs.writeShellScript "nixos-image-builder" ''
-          set -xeu
-          export TERM=dumb
-          export HOME="$TMPDIR/home"
-          export ROOT="$TMPDIR/root"
-          export NIX_STATE_DIR="$TMPDIR/state"
-          export OUT_IMAGE="''${OUT_IMAGE:-$TMPDIR/nixos.img}"
-          ${nix}/bin/nix-store --load-db < ${db}/registration
-          ${nix}/bin/nix copy --no-check-sigs --to "$ROOT" ${toplevel}
-          ${nix}/bin/nix-env --store "$ROOT" -p "$ROOT/nix/var/nix/profiles/system" --set ${toplevel}
-          ${fakeroot}/bin/fakeroot ${libguestfs-with-appliance}/bin/guestfish -vx -N "$OUT_IMAGE=fs:${rootfs.fsType}:${vmConfig.imageSize}" -m /dev/sda1 << EOT
-          set-label /dev/sda1 ${rootfs.label}
-          copy-in "$ROOT/nix" /
-          mkdir-mode /etc 0755
-          command "/nix/var/nix/profiles/system/activate"
-          command "/nix/var/nix/profiles/system/bin/switch-to-configuration boot"
-          EOT
-        '';
-      in {
-        imports = [ vmConfig.module ];
-        boot.loader.grub.device = lib.mkForce "/dev/sda";
+          # TMPDIR="$PWD/tmp" $(nix build '.#nixosConfigurations.bigvm.config.system.build.mkImageScript' --json | jq -r '.[].outputs.out')
+          mkImageScript = pkgs.writeShellScript "nixos-image-builder" ''
+            set -xeu
+            export TERM=dumb
+            export HOME="$TMPDIR/home"
+            export ROOT="$TMPDIR/root"
+            export NIX_STATE_DIR="$TMPDIR/state"
+            export OUT_IMAGE="''${OUT_IMAGE:-$TMPDIR/nixos.img}"
+            ${nix}/bin/nix-store --load-db < ${db}/registration
+            ${nix}/bin/nix copy --no-check-sigs --to "$ROOT" ${toplevel}
+            ${nix}/bin/nix-env --store "$ROOT" -p "$ROOT/nix/var/nix/profiles/system" --set ${toplevel}
+            ${fakeroot}/bin/fakeroot ${libguestfs-with-appliance}/bin/guestfish -vx -N "$OUT_IMAGE=fs:${rootfs.fsType}:${vmConfig.imageSize}" -m /dev/sda1 << EOT
+            set-label /dev/sda1 ${rootfs.label}
+            copy-in "$ROOT/nix" /
+            mkdir-mode /etc 0755
+            command "/nix/var/nix/profiles/system/activate"
+            command "/nix/var/nix/profiles/system/bin/switch-to-configuration boot"
+            EOT
+          '';
+        in
+        {
+          imports = [ vmConfig.module ];
+          boot.loader.grub.device = lib.mkForce "/dev/sda";
 
-        # nix build '.#nixosConfigurations.bigvm.config.system.build.mkImage'
-        system.build.image = runCommandNoCC "nixos.img" { } ''
-          OUT_IMAGE="$out" ${mkImageScript}
-        '';
+          # nix build '.#nixosConfigurations.bigvm.config.system.build.mkImage'
+          system.build.image = runCommandNoCC "nixos.img" { } ''
+            OUT_IMAGE="$out" ${mkImageScript}
+          '';
 
-        system.build.mkImageScript = mkImageScript;
-      }
-    else
-      { };
+          system.build.mkImageScript = mkImageScript;
+        }
+      else
+        { };
 
   miscConfiguration = { config, pkgs, system, inputs, ... }:
     let
@@ -342,11 +350,13 @@ let
         imports = [ (import inputs.nixos-vscode-server) ];
         services.vscode-server.enable = true;
       };
-    in nixos-vscode-server;
+    in
+    nixos-vscode-server;
 
   tmpConfiguration = { config, pkgs, system, inputs, ... }: { };
 
-in {
+in
+{
   "${hostname}" = inputs.nixpkgs.lib.nixosSystem {
     inherit system;
 
@@ -368,7 +378,7 @@ in {
     ] ++ (
       # building failure on "aarch64-linux", even though it seems to be supported
       inputs.nixpkgs.lib.optionals (builtins.elem system [ "x86_64-linux" ])
-      [ inputs.nix-ld.nixosModules.nix-ld ]);
+        [ inputs.nix-ld.nixosModules.nix-ld ]);
 
     specialArgs = moduleArgs;
   };

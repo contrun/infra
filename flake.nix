@@ -81,17 +81,20 @@
           old = ((import (getNixConfig "prefs.nix")) {
             inherit hostname inputs;
           }).pure;
-        in old // { system = old.nixosSystem; };
+        in
+        old // { system = old.nixosSystem; };
 
       generateHostConfigurations = hostname: inputs:
         let prefs = getHostPreference hostname;
-        in import (getNixConfig "generate-nixos-configuration.nix") {
+        in
+        import (getNixConfig "generate-nixos-configuration.nix") {
           inherit prefs inputs;
         };
 
       generateDeployNode = hostname:
         let p = getHostPreference hostname;
-        in {
+        in
+        {
           "${hostname}" = {
             hostname = p.hostname;
             profiles = {
@@ -103,12 +106,14 @@
             };
           };
         };
-    in let
+    in
+    let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
       vmNodes = [ "bigvm" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
-    in (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+    in
+    (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       {
         # TODO: nix run --impure .#deploy-rs
         # failed with error: attribute 'currentSystem' missing
@@ -121,60 +126,63 @@
       }
     ]) // {
       nixosConfigurations = builtins.foldl'
-        (acc: hostname: acc // generateHostConfigurations hostname inputs) { }
+        (acc: hostname: acc // generateHostConfigurations hostname inputs)
+        { }
         allHosts;
 
       deploy.nodes =
         builtins.foldl' (acc: hostname: acc // (generateDeployNode hostname))
-        { } deployNodes;
+          { }
+          deployNodes;
 
       checks = builtins.mapAttrs
         (system: deployLib: deployLib.deployChecks self.deploy)
         inputs.deploy-rs.lib;
     } // (with flake-utils.lib;
-      eachSystem defaultSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ gomod2nix.overlay ];
+    eachSystem defaultSystems (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ gomod2nix.overlay ];
+        };
+      in
+      {
+
+        devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
+
+        devShells = {
+          # Enroll gpg key with
+          # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
+          # Edit secrets.yaml file with
+          # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
+          sops = pkgs.mkShell {
+            sopsPGPKeyDirs = [ ./nix/sops/keys ];
+            nativeBuildInputs = [
+              (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
+            ];
+            shellHook = ''
+              alias s="sops"
+            '';
           };
-        in {
+        };
 
-          devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
-
-          devShells = {
-            # Enroll gpg key with
-            # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
-            # Edit secrets.yaml file with
-            # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
-            sops = pkgs.mkShell {
-              sopsPGPKeyDirs = [ ./nix/sops/keys ];
-              nativeBuildInputs = [
-                (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
-              ];
-              shellHook = ''
-                alias s="sops"
-              '';
-            };
+        packages = {
+          coredns = pkgs.buildGoApplication {
+            pname = "coredns";
+            version = "latest";
+            goPackagePath = "github.com/contrun/infra/coredns";
+            src = ./coredns;
+            modules = ./coredns/gomod2nix.toml;
           };
 
-          packages = {
-            coredns = pkgs.buildGoApplication {
-              pname = "coredns";
-              version = "latest";
-              goPackagePath = "github.com/contrun/infra/coredns";
-              src = ./coredns;
-              modules = ./coredns/gomod2nix.toml;
-            };
-
-            # TODO: gomod2nix failed
-            # caddy = pkgs.buildGoApplication {
-            #   pname = "caddy";
-            #   version = "latest";
-            #   goPackagePath = "github.com/contrun/infra/caddy";
-            #   src = ./caddy;
-            #   modules = ./caddy/gomod2nix.toml;
-            # };
-          };
-        }));
+          # TODO: gomod2nix failed
+          # caddy = pkgs.buildGoApplication {
+          #   pname = "caddy";
+          #   version = "latest";
+          #   goPackagePath = "github.com/contrun/infra/caddy";
+          #   src = ./caddy;
+          #   modules = ./caddy/gomod2nix.toml;
+          # };
+        };
+      }));
 }

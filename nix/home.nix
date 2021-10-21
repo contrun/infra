@@ -1,30 +1,33 @@
 { config, pkgs, lib, options, prefs, inputs, ... }@args:
 let
-  brokenPackages = let p = ./broken-packages.nix;
-  in if builtins.pathExists p then (import p) else [ ];
-  x86OnlyPackages = let
-    brokenOnArmPackages =
-      [ "eclipses.eclipse-java" "hardinfo" "ltrace" "brave" "mplayer" ];
-  in brokenOnArmPackages ++ [
-    "wine"
-    "workrave"
-    "lens"
-    "android-file-transfer"
-    "androidenv.androidPkgs_9_0.platform-tools"
-    "appimage-run"
-    "adbfs-rootless"
-    "mitscheme"
-    "simplescreenrecorder"
-    "palemoon"
-    "syslinux"
-    "gitAndTools.git-annex"
-    "myPackages.python"
-    "myPackages.haskell"
-    "libpng"
-    "cachix"
-    "git-annex"
-    "texlab"
-  ];
+  brokenPackages =
+    let p = ./broken-packages.nix;
+    in if builtins.pathExists p then (import p) else [ ];
+  x86OnlyPackages =
+    let
+      brokenOnArmPackages =
+        [ "eclipses.eclipse-java" "hardinfo" "ltrace" "brave" "mplayer" ];
+    in
+    brokenOnArmPackages ++ [
+      "wine"
+      "workrave"
+      "lens"
+      "android-file-transfer"
+      "androidenv.androidPkgs_9_0.platform-tools"
+      "appimage-run"
+      "adbfs-rootless"
+      "mitscheme"
+      "simplescreenrecorder"
+      "palemoon"
+      "syslinux"
+      "gitAndTools.git-annex"
+      "myPackages.python"
+      "myPackages.haskell"
+      "libpng"
+      "cachix"
+      "git-annex"
+      "texlab"
+    ];
   largePackages = [
     "jetbrains.idea-ultimate"
     "jetbrains.clion"
@@ -106,32 +109,37 @@ let
   changePkgPriority = pkg: priority:
     overridePkg pkg (oldAttrs: { meta = { priority = priority; }; });
   getAttr = attrset: path:
-    builtins.foldl' (acc: x:
-      if acc ? ${x} then
-        acc.${x}
-      else
-        lib.warn "Package ${path} does not exists" null) attrset
-    (pkgs.lib.splitString "." path);
-  getMyPkgOrPkg = attrset: path:
-    (let
-      vanillaPackage = getAttr attrset path;
-      tryNewPath = newPath:
-        if (newPath == path) then
-          null
+    builtins.foldl'
+      (acc: x:
+        if acc ? ${x} then
+          acc.${x}
         else
-          lib.warn "Package ${path} does not exists, trying ${newPath}"
-          (getAttr attrset newPath);
-      nixpkgsPackage =
-        tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
-      unstablePackage = tryNewPath "unstable.${path}";
-    in if vanillaPackage != null then
-      vanillaPackage
-    else if nixpkgsPackage != null then
-      nixpkgsPackage
-    else if unstablePackage != null then
-      unstablePackage
-    else
-      builtins.throw "${path} not found");
+          lib.warn "Package ${path} does not exists" null)
+      attrset
+      (pkgs.lib.splitString "." path);
+  getMyPkgOrPkg = attrset: path:
+    (
+      let
+        vanillaPackage = getAttr attrset path;
+        tryNewPath = newPath:
+          if (newPath == path) then
+            null
+          else
+            lib.warn "Package ${path} does not exists, trying ${newPath}"
+              (getAttr attrset newPath);
+        nixpkgsPackage =
+          tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
+        unstablePackage = tryNewPath "unstable.${path}";
+      in
+      if vanillaPackage != null then
+        vanillaPackage
+      else if nixpkgsPackage != null then
+        nixpkgsPackage
+      else if unstablePackage != null then
+        unstablePackage
+      else
+        builtins.throw "${path} not found"
+    );
 
   # Emits a warning when package does not exist, instead of quitting immediately
   getPkg = attrset: path:
@@ -140,26 +148,28 @@ let
         dontCheckPkg (getMyPkgOrPkg attrset path)
       else
         lib.warn
-        "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
-        null)
+          "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
+          null)
     else if builtins.elem path brokenPackages then
       lib.warn "${path} will not be installed as it is marked as broken" null
     else if !prefs.useLargePackages && (builtins.elem path largePackages) then
       lib.info "${path} will not be installed as useLargePackages is ${
         lib.boolToString prefs.useLargePackages
-      }" null
+      }"
+        null
     else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" ])
-    && (builtins.elem path x86OnlyPackages) then
+      && (builtins.elem path x86OnlyPackages) then
       lib.info "${path} will not be installed in system ${prefs.nixosSystem}"
-      null
+        null
     else
       (dontCheckPkg (getMyPkgOrPkg attrset path));
 
   getPackages = list:
     (builtins.filter (x: x != null) (builtins.map (x: getPkg pkgs x) list));
-  allPackages = builtins.foldl' (acc: collection:
-    acc ++ (builtins.map (pkg: changePkgPriority pkg collection.priority)
-      collection.packages)) [ ]
+  allPackages = builtins.foldl'
+    (acc: collection:
+      acc ++ (builtins.map (pkg: changePkgPriority pkg collection.priority)
+        collection.packages)) [ ]
     (if prefs.installHomePackages then packageCollection else [ ]);
   packageCollection = [
     {
@@ -1024,7 +1034,8 @@ let
       ];
     }
   ];
-in {
+in
+{
   # Let Home Manager install and manage itself.
   # programs.home-manager.enable = true;
   # programs = {
@@ -1054,27 +1065,30 @@ in {
   services = { kdeconnect = { enable = true; }; };
 
   systemd.user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-    (let name = "smos-sync";
-    in lib.optionalAttrs prefs.enableSmos {
-      services.${name} = {
-        Unit = { Description = "sync smos"; };
-        Service = {
-          Type = "oneshot";
-          ExecStart =
-            "${config.programs.smos.smosPackages.smos-sync-client}/bin/smos-sync-client sync";
-          EnvironmentFile = "/run/secrets/smos-sync-env";
+    (
+      let name = "smos-sync";
+      in
+      lib.optionalAttrs prefs.enableSmos {
+        services.${name} = {
+          Unit = { Description = "sync smos"; };
+          Service = {
+            Type = "oneshot";
+            ExecStart =
+              "${config.programs.smos.smosPackages.smos-sync-client}/bin/smos-sync-client sync";
+            EnvironmentFile = "/run/secrets/smos-sync-env";
+          };
         };
-      };
-      timers.${name} = {
-        Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
-        Install = { WantedBy = [ "default.target" ]; };
-        Timer = {
-          OnCalendar = "*-*-* *:1/3:00";
-          Unit = "${name}.service";
-          Persistent = true;
+        timers.${name} = {
+          Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
+          Install = { WantedBy = [ "default.target" ]; };
+          Timer = {
+            OnCalendar = "*-*-* *:1/3:00";
+            Unit = "${name}.service";
+            Persistent = true;
+          };
         };
-      };
-    })
+      }
+    )
   ];
 
   home = {

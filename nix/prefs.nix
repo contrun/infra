@@ -1,7 +1,8 @@
 let
   internalGetSubDomain = prefix: domain:
     if prefix == "" then domain else "${prefix}.${domain}";
-in { ... }@args:
+in
+{ ... }@args:
 let
   fix = f: let x = f x; in x;
   extends = f: rattrs: self: let super = rattrs self; in super // f self super;
@@ -17,28 +18,35 @@ let
   hasPkgs = args ? pkgs;
   hasInputs = args ? inputs;
   hasHostname = args ? hostname;
-  pkgs = (args.pkgs or (builtins.throw
-    "Forcing pkgs in prefs.nix without given in the input parameter"));
+  pkgs = (
+    args.pkgs or (builtins.throw
+      "Forcing pkgs in prefs.nix without given in the input parameter")
+  );
 
-  hostname = args.hostname or (let
-    # LC_CTYPE=C tr -dc 'a-z' < /dev/urandom | head -c3 | tee /tmp/hostname
-    hostNameFiles = if builtins.pathExists "/tmp/nixos_bootstrap" then [
-      /tmp/etc/hostname
-      /mnt/etc/hostname
-      /tmp/hostname
-      /etc/hostname
-    ] else
-      [ /etc/hostname ];
-    fs = builtins.filter (x:
-      let e = builtins.pathExists x;
-      in builtins.trace "hostname file ${x} exists? ${builtins.toString e}" e)
-      hostNameFiles;
-    f = builtins.elemAt fs 0;
-    c = builtins.readFile f;
-    l = builtins.match "([[:alnum:]]+)[[:space:]]*" c;
-    newHostname = builtins.elemAt l 0;
-  in builtins.trace "obtained new hostname ${newHostname} from disk"
-  newHostname);
+  hostname = args.hostname or (
+    let
+      # LC_CTYPE=C tr -dc 'a-z' < /dev/urandom | head -c3 | tee /tmp/hostname
+      hostNameFiles =
+        if builtins.pathExists "/tmp/nixos_bootstrap" then [
+          /tmp/etc/hostname
+          /mnt/etc/hostname
+          /tmp/hostname
+          /etc/hostname
+        ] else
+          [ /etc/hostname ];
+      fs = builtins.filter
+        (x:
+          let e = builtins.pathExists x;
+          in builtins.trace "hostname file ${x} exists? ${builtins.toString e}" e)
+        hostNameFiles;
+      f = builtins.elemAt fs 0;
+      c = builtins.readFile f;
+      l = builtins.match "([[:alnum:]]+)[[:space:]]*" c;
+      newHostname = builtins.elemAt l 0;
+    in
+    builtins.trace "obtained new hostname ${newHostname} from disk"
+      newHostname
+  );
   # printf "%s" "hostname: $HOST" | sha512sum | head -c 10
   hostId = builtins.substring 0 8
     (builtins.hashString "sha512" "hostname: ${hostname}");
@@ -47,13 +55,14 @@ let
     normalNodes = [ "ssg" "jxt" "shl" "mdq" ];
     hostAliases =
       builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
-      self.normalNodes // {
+        self.normalNodes // {
         hub = "mdq";
       };
     pkgsRelatedPrefs = {
       kernelPackages = pkgs.linuxPackages_latest;
       rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage
-        ./hardware/rtl8188gu.nix { });
+        ./hardware/rtl8188gu.nix
+        { });
     };
     isMinimalSystem = true;
     useLargePackages = !self.isMinimalSystem;
@@ -82,7 +91,8 @@ let
           goodConfigFiles;
         autosshLines = filter (x: hasPrefix "Host autossh" x) lines;
         servers = map (x: removePrefix "Host " x) autosshLines;
-      in filter (x: x != "autossh") servers;
+      in
+      filter (x: x != "autossh") servers;
     enableSessionVariables = true;
     enableAllFirmware = self.isMinimalSystem;
     dpi = 144;
@@ -159,30 +169,34 @@ let
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
     enableXmonad = self.xWindowManager == "xmonad";
-    xSessionCommands = builtins.concatStringsSep "\n" ([''
-      # echo "$(date -R): $@" >> ~/log
-      # . ~/.xinitrc &
-      keymap.sh &
-      dunst &
-      # alacritty &
-      terminalLayout.sh 3 &
-      kdeconnect-indicator &
-      feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
-      # shadowsocksControl.sh restart 4 1 &
-      # systemctl --user start syncthing &
-      # systemctl --user start ddns &
-      # sudo iw dev wlp2s0 set power_save off &
-      # ibus-daemon -drx &
-      copyq &
-      # # libinput-gestures-setup start &
-      # autoMount.sh &
-      # startupHosts.sh &
-      sxhkd -c ~/.config/sxhkd/sxhkdrc &
-    ''] ++ (if self.enableActivityWatch then [''
-      aw-server &
-      aw-watcher-afk &
-      aw-watcher-window &
-    ''] else
+    xSessionCommands = builtins.concatStringsSep "\n" ([
+      ''
+        # echo "$(date -R): $@" >> ~/log
+        # . ~/.xinitrc &
+        keymap.sh &
+        dunst &
+        # alacritty &
+        terminalLayout.sh 3 &
+        kdeconnect-indicator &
+        feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
+        # shadowsocksControl.sh restart 4 1 &
+        # systemctl --user start syncthing &
+        # systemctl --user start ddns &
+        # sudo iw dev wlp2s0 set power_save off &
+        # ibus-daemon -drx &
+        copyq &
+        # # libinput-gestures-setup start &
+        # autoMount.sh &
+        # startupHosts.sh &
+        sxhkd -c ~/.config/sxhkd/sxhkdrc &
+      ''
+    ] ++ (if self.enableActivityWatch then [
+      ''
+        aw-server &
+        aw-watcher-afk &
+        aw-watcher-window &
+      ''
+    ] else
       [ ]));
     # xSessionCommands = "";
     xDisplayManager = if self.enableXserver then "lightdm" else null;
@@ -206,14 +220,17 @@ let
       excludes = "";
       user = self.owner;
     };
-    acmeEmail = if self.mainDomain == "" then
-      "tobeoverridden@example.com"
-    else
-      "webmaster@${self.mainDomain}";
-    domainPrefixes = let
-      originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
-    in (if originalPrefix == self.hostAliases.hub then [ "hub" ] else [ ])
-    ++ [ originalPrefix "local" ];
+    acmeEmail =
+      if self.mainDomain == "" then
+        "tobeoverridden@example.com"
+      else
+        "webmaster@${self.mainDomain}";
+    domainPrefixes =
+      let
+        originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
+      in
+      (if originalPrefix == self.hostAliases.hub then [ "hub" ] else [ ])
+      ++ [ originalPrefix "local" ];
     domainPrefix = builtins.elemAt self.domainPrefixes 0;
     domains = builtins.map (prefix: internalGetSubDomain prefix self.mainDomain)
       self.domainPrefixes;
@@ -223,20 +240,21 @@ let
       builtins.map (domain: internalGetSubDomain prefix domain) self.domains;
     mainDomain = "cont.run";
     enableAcme = self.enableTraefik;
-    acmeCerts = if self.enableAcme then {
-      "${self.mainDomain}" = {
-        domain = self.mainDomain;
-        extraDomainNames =
-          [ "*.${self.mainDomain}" "*.local.${self.mainDomain}" ]
-          ++ (self.getFullDomainNames "*");
-        # May spurious dns propagation failures.
-        # dnsPropagationCheck = false;
-        dnsProvider = "cloudflare";
-        dnsResolver = "223.6.6.6:53";
-        credentialsFile = "/run/secrets/acme-env";
-      };
-    } else
-      { };
+    acmeCerts =
+      if self.enableAcme then {
+        "${self.mainDomain}" = {
+          domain = self.mainDomain;
+          extraDomainNames =
+            [ "*.${self.mainDomain}" "*.local.${self.mainDomain}" ]
+            ++ (self.getFullDomainNames "*");
+          # May spurious dns propagation failures.
+          # dnsPropagationCheck = false;
+          dnsProvider = "cloudflare";
+          dnsResolver = "223.6.6.6:53";
+          credentialsFile = "/run/secrets/acme-env";
+        };
+      } else
+        { };
     enableYandexDisk = false;
     yandexExcludedDirs =
       [ "docs/org-mode/roam/.emacs.d" "ltximg" ".stversions" ".stfolder" ];
@@ -303,14 +321,15 @@ let
     enableRedshift = false;
     enablePostfix = !self.isMinimalSystem;
     enableNfs = true;
-    linkedJdks = if self.isMinimalSystem then
-      [ "openjdk8" ]
-    else [
-      "openjdk15"
-      "openjdk14"
-      "openjdk11"
-      "openjdk8"
-    ];
+    linkedJdks =
+      if self.isMinimalSystem then
+        [ "openjdk8" ]
+      else [
+        "openjdk15"
+        "openjdk14"
+        "openjdk11"
+        "openjdk8"
+      ];
     enableNextcloudClient = false;
     enableTaskWarriorSync = true;
     enableVdirsyncer = true;
@@ -461,7 +480,8 @@ let
       let
         nixosSystem = systems."${hostname}";
         isForCiCd = builtins.match "cicd-(.*)" hostname != null;
-      in ({
+      in
+      ({
         inherit nixosSystem;
         isMinimalSystem = true;
       } // (if isForCiCd then
@@ -564,7 +584,7 @@ let
       enableAllOciContainers = false;
       installHomePackages = false; # Too slow.
       kernelParams = super.kernelParams
-        ++ [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" ];
+      ++ [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" ];
       nixosSystem = "aarch64-linux";
       isMinimalSystem = true;
       hostId = "6fce2459";
@@ -615,7 +635,8 @@ let
     let p = builtins.removeAttrs unevaluated [ "pkgsRelatedPrefs" ];
     in builtins.deepSeq p p;
   final = notPkgsRelatedPrefs // pkgsRelatedPrefs;
-in {
+in
+{
   pure = notPkgsRelatedPrefs;
   pkgsRelated = pkgsRelatedPrefs;
   all = final;

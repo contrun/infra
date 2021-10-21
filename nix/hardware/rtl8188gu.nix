@@ -3,7 +3,8 @@
 
 let modDestDir = "$out/lib/modules/${kernel.modDirVersion}/kernel/drivers/net/wireless/realtek/rtl8188gu";
 
-in stdenv.mkDerivation rec {
+in
+stdenv.mkDerivation rec {
   name = "r8188gu-${kernel.version}-${version}";
   # on update please verify that the source matches the realtek version
   version = "2021-01-01";

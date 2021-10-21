@@ -14,27 +14,32 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "rpool/ROOT/nixos";
+    {
+      device = "rpool/ROOT/nixos";
       fsType = "zfs";
     };
 
   fileSystems."/nix" =
-    { device = "rpool/NIX/nix";
+    {
+      device = "rpool/NIX/nix";
       fsType = "zfs";
     };
 
   fileSystems."/home" =
-    { device = "rpool/HOME/home";
+    {
+      device = "rpool/HOME/home";
       fsType = "zfs";
     };
 
   fileSystems."/tmp" =
-    { device = "rpool/TMP/tmp";
+    {
+      device = "rpool/TMP/tmp";
       fsType = "zfs";
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/834B-A656";
+    {
+      device = "/dev/disk/by-uuid/834B-A656";
       fsType = "vfat";
     };
 

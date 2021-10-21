@@ -20,39 +20,43 @@ let
   toYAML = name: attrs: builtins.toFile "${name}.json" (builtins.toJSON attrs);
 
   # Copied from https://github.com/tejing1/nixos-config/blob/5c08d09dd785c569941021aedaa6ff80bc86be63/lib/sys/mkFlake.nix
-  generateFlake = let
-    inherit (builtins) mapAttrs concatMap attrValues toJSON listToAttrs;
-    inherit (pkgs) runCommand;
-    inherit (lib) nameValuePair concatStrings mapAttrsToList;
-    inherit (lib.strings) escapeNixIdentifier escapeNixString;
+  generateFlake =
+    let
+      inherit (builtins) mapAttrs concatMap attrValues toJSON listToAttrs;
+      inherit (pkgs) runCommand;
+      inherit (lib) nameValuePair concatStrings mapAttrsToList;
+      inherit (lib.strings) escapeNixIdentifier escapeNixString;
 
-    cleanNode = flake:
-      let
-        spec = {
-          type = "path";
-          path = flake.outPath;
-          inherit (flake) narHash;
+      cleanNode = flake:
+        let
+          spec = {
+            type = "path";
+            path = flake.outPath;
+            inherit (flake) narHash;
+          };
+        in
+        {
+          # TODO: Any reliable way to differentiate flake and non-flake inputs?
+          flake = flake ? inputs || flake ? outputs;
+          inputs = mapAttrs (_: cleanNode) (flake.inputs or { });
+          locked = spec;
+          original = spec;
         };
-      in {
-        # TODO: Any reliable way to differentiate flake and non-flake inputs?
-        flake = flake ? inputs || flake ? outputs;
-        inputs = mapAttrs (_: cleanNode) (flake.inputs or { });
-        locked = spec;
-        original = spec;
-      };
-    flattenNode = prefix: node:
-      let
-        ids =
-          mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).name) node.inputs;
-        nod = concatMap (x: x) (attrValues
-          (mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).value)
-            node.inputs));
-      in nameValuePair prefix
-      ([ (nameValuePair prefix (node // { inputs = ids; })) ] ++ nod);
+      flattenNode = prefix: node:
+        let
+          ids =
+            mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).name) node.inputs;
+          nod = concatMap (x: x) (attrValues
+            (mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).value)
+              node.inputs));
+        in
+        nameValuePair prefix
+          ([ (nameValuePair prefix (node // { inputs = ids; })) ] ++ nod);
 
-  in flakeInputs:
-  let
-    inputsCode = "{${
+    in
+    flakeInputs:
+    let
+      inputsCode = "{${
         concatStrings (mapAttrsToList (n: v: ''
           ${escapeNixIdentifier n}.url=${
             escapeNixString
@@ -60,31 +64,32 @@ let
           };
         '') flakeInputs)
       }}";
-    rootNode = { inputs = mapAttrs (_: cleanNode) flakeInputs; };
-    lockJSON = toJSON {
-      version = 7;
-      root = "self";
-      nodes = listToAttrs (flattenNode "self" rootNode).value;
-    };
+      rootNode = { inputs = mapAttrs (_: cleanNode) flakeInputs; };
+      lockJSON = toJSON {
+        version = 7;
+        root = "self";
+        nodes = listToAttrs (flattenNode "self" rootNode).value;
+      };
 
-  in outputsCode:
+    in
+    outputsCode:
 
-  runCommand "source" { } ''
-    mkdir -p $out
-    cat <<"EOF" >$out/flake.nix
-    {inputs=${inputsCode};outputs=${outputsCode};}
-    EOF
-    cat <<"EOF" >$out/default.nix
-    (import (fetchTarball {
-      url =
-        "https://github.com/edolstra/flake-compat/archive/99f1c2157fba4bfe6211a321fd0ee43199025dbf.tar.gz";
-      sha256 = "0x2jn3vrawwv9xp15674wjz9pixwjyj3j771izayl962zziivbx2";
-    }) { src = ./.; }).defaultNix.legacyPackages.${config.nixpkgs.system}
-    EOF
-    cat <<"EOF" >$out/flake.lock
-    ${lockJSON}
-    EOF
-  '';
+    runCommand "source" { } ''
+      mkdir -p $out
+      cat <<"EOF" >$out/flake.nix
+      {inputs=${inputsCode};outputs=${outputsCode};}
+      EOF
+      cat <<"EOF" >$out/default.nix
+      (import (fetchTarball {
+        url =
+          "https://github.com/edolstra/flake-compat/archive/99f1c2157fba4bfe6211a321fd0ee43199025dbf.tar.gz";
+        sha256 = "0x2jn3vrawwv9xp15674wjz9pixwjyj3j771izayl962zziivbx2";
+      }) { src = ./.; }).defaultNix.legacyPackages.${config.nixpkgs.system}
+      EOF
+      cat <<"EOF" >$out/flake.lock
+      ${lockJSON}
+      EOF
+    '';
 
   mypkgs = (generateFlake { config = inputs.self; }
     "{config,...}: {legacyPackages.${
@@ -96,58 +101,64 @@ let
   getTraefikBareDomainRule = "(${
       lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains
     })";
-  getTraefikRuleByDomainPrefix = let
-    getRuleByPrefix = domainPrefix:
-      lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
-      (prefs.getFullDomainNames domainPrefix);
-  in domainPrefixes:
-  "(${
+  getTraefikRuleByDomainPrefix =
+    let
+      getRuleByPrefix = domainPrefix:
+        lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)")
+          (prefs.getFullDomainNames domainPrefix);
+    in
+    domainPrefixes:
+    "(${
     lib.concatMapStringsSep " || " getRuleByPrefix
     (lib.splitString "," domainPrefixes)
   })";
-in {
+in
+{
   passthru = {
     inherit prefs;
     prefsJson = builtins.toJSON (lib.filterAttrsRecursive
-      (n: v: !builtins.elem (builtins.typeOf v) [ "lambda" ]) prefsAttr.pure);
+      (n: v: !builtins.elem (builtins.typeOf v) [ "lambda" ])
+      prefsAttr.pure);
   };
-  imports = let
-    smosConfiguration = { config, pkgs, lib, inputs, ... }: {
-      imports = [
-        (import (inputs.smos + "/nix/nixos-module.nix") {
-          envname = "production";
-        })
-      ];
+  imports =
+    let
+      smosConfiguration = { config, pkgs, lib, inputs, ... }: {
+        imports = [
+          (import (inputs.smos + "/nix/nixos-module.nix") {
+            envname = "production";
+          })
+        ];
 
-      config = {
-        services.smos = {
-          production = {
-            enable = true;
-            web-server = {
+        config = {
+          services.smos = {
+            production = {
               enable = true;
-              log-level = "Info";
-              hosts = prefs.getFullDomainNames "smos";
-              port = 8403;
-              api-url = "https://${
+              web-server = {
+                enable = true;
+                log-level = "Info";
+                hosts = prefs.getFullDomainNames "smos";
+                port = 8403;
+                api-url = "https://${
                   builtins.head config.services.smos.production.api-server.hosts
                 }";
-              web-url = "https://${prefs.getFullDomainName "smos"}";
-              # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
-              # data-dir = "${prefs.syncFolder}/workflow";
-            };
-            api-server = {
-              enable = true;
-              log-level = "Info";
-              hosts = prefs.getFullDomainNames "smos-api";
-              port = 8402;
-              local-backup = { enable = true; };
+                web-url = "https://${prefs.getFullDomainName "smos"}";
+                # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
+                # data-dir = "${prefs.syncFolder}/workflow";
+              };
+              api-server = {
+                enable = true;
+                log-level = "Info";
+                hosts = prefs.getFullDomainNames "smos-api";
+                port = 8402;
+                local-backup = { enable = true; };
+              };
             };
           };
         };
       };
-    };
-  in (builtins.filter (x: builtins.pathExists x) [ ./machine.nix ./cachix.nix ])
-  ++ (lib.optionals prefs.enableSmosServer [ smosConfiguration ]);
+    in
+    (builtins.filter (x: builtins.pathExists x) [ ./machine.nix ./cachix.nix ])
+    ++ (lib.optionals prefs.enableSmosServer [ smosConfiguration ]);
   security = {
     sudo = { wheelNeedsPassword = false; };
     acme = {
@@ -162,13 +173,15 @@ in {
         "CA WoSign ECC Root"
         "Certification Authority of WoSign G2"
       ];
-      certificateFiles = let
-        mitmCA = lib.optionals (builtins.pathExists impure.mitmproxyCAFile) [
-          (builtins.toFile "mitmproxy-ca.pem"
-            (builtins.readFile impure.mitmproxyCAFile))
-        ];
-        CAs = [ ];
-      in mitmCA ++ CAs;
+      certificateFiles =
+        let
+          mitmCA = lib.optionals (builtins.pathExists impure.mitmproxyCAFile) [
+            (builtins.toFile "mitmproxy-ca.pem"
+              (builtins.readFile impure.mitmproxyCAFile))
+          ];
+          CAs = [ ];
+        in
+        mitmCA ++ CAs;
     };
     pam = {
       enableSSHAgentAuth = true;
@@ -216,18 +229,21 @@ in {
     };
     supplicant = lib.optionalAttrs prefs.enableSupplicant {
       "WLAN" = {
-        configFile = let
-          defaultPath = "/etc/wpa_supplicant.conf";
-          path = if builtins.pathExists impure.wpaSupplicantConfigFile then
-            impure.wpaSupplicantConfigFile
-          else
-            defaultPath;
-        in {
-          # TODO: figure out why this does not work.
-          inherit (path)
-          ;
-          writable = true;
-        };
+        configFile =
+          let
+            defaultPath = "/etc/wpa_supplicant.conf";
+            path =
+              if builtins.pathExists impure.wpaSupplicantConfigFile then
+                impure.wpaSupplicantConfigFile
+              else
+                defaultPath;
+          in
+          {
+            # TODO: figure out why this does not work.
+            inherit (path)
+              ;
+            writable = true;
+          };
       };
     };
     proxy.default = prefs.proxy;
@@ -235,17 +251,20 @@ in {
   };
 
   console = {
-    keyMap = let p = impure.consoleKeyMapFile;
-    in if builtins.pathExists p then
-      (builtins.toFile "personal-keymap" (builtins.readFile p))
-    else
-      "us";
-    font = if prefs.consoleFont != null then
-      prefs.consoleFont
-    else if prefs.enableHidpi then
-      "${pkgs.terminus_font}/share/consolefonts/ter-g28n.psf.gz"
-    else
-      "${pkgs.terminus_font}/share/consolefonts/ter-g16n.psf.gz";
+    keyMap =
+      let p = impure.consoleKeyMapFile;
+      in
+      if builtins.pathExists p then
+        (builtins.toFile "personal-keymap" (builtins.readFile p))
+      else
+        "us";
+    font =
+      if prefs.consoleFont != null then
+        prefs.consoleFont
+      else if prefs.enableHidpi then
+        "${pkgs.terminus_font}/share/consolefonts/ter-g28n.psf.gz"
+      else
+        "${pkgs.terminus_font}/share/consolefonts/ter-g16n.psf.gz";
   };
 
   i18n = {
@@ -479,13 +498,13 @@ in {
         prefs.kernelPackages.bcc
       ] else
         [ ]) ++ (if prefs.enableActivityWatch then
-          with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [
-            aw-server-rust
-            aw-watcher-afk
-            aw-watcher-window
-          ]
-        else
-          [ ]);
+        with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [
+          aw-server-rust
+          aw-watcher-afk
+          aw-watcher-window
+        ]
+      else
+        [ ]);
     enableDebugInfo = prefs.enableDebugInfo;
     shellAliases = {
       ssh = "ssh -C";
@@ -535,7 +554,7 @@ in {
       # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
       MYPYTHONPATH =
         (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
-        [ (pkgs.myPackages.python or pkgs.python) ];
+          [ (pkgs.myPackages.python or pkgs.python) ];
       PAGER = "nvimpager";
     });
     variables = {
@@ -616,22 +635,25 @@ in {
     mediaKeys = { enable = prefs.enableMediaKeys; };
   };
 
-  nixpkgs = let
-    cross = if prefs.enableAarch64Cross then rec {
-      crossSystem = (import <nixpkgs>
-        { }).pkgsCross.aarch64-multiplatform.stdenv.targetPlatform;
-      localSystem = crossSystem;
-    } else
-      { };
-    configAttr = {
-      config = {
-        allowUnfree = true;
-        allowBroken = true;
-        pulseaudio = true;
-        experimental-features = "nix-command flakes";
+  nixpkgs =
+    let
+      cross =
+        if prefs.enableAarch64Cross then rec {
+          crossSystem = (import <nixpkgs>
+            { }).pkgsCross.aarch64-multiplatform.stdenv.targetPlatform;
+          localSystem = crossSystem;
+        } else
+          { };
+      configAttr = {
+        config = {
+          allowUnfree = true;
+          allowBroken = true;
+          pulseaudio = true;
+          experimental-features = "nix-command flakes";
+        };
       };
-    };
-  in configAttr // cross;
+    in
+    configAttr // cross;
 
   hardware = {
     enableAllFirmware = true;
@@ -665,101 +687,105 @@ in {
   };
 
   system = {
-    activationScripts = let
-      jdks = builtins.filter (x: pkgs ? x) prefs.linkedJdks;
-      addjdk = jdk:
-        if pkgs ? jdk then
-          let p = pkgs.${jdk}.home; in "ln -sfn ${p} /local/jdks/${jdk}"
-        else
-          "";
-    in lib.optionalAttrs (prefs.enableJava && jdks != [ ]) {
-      jdks = {
-        text = lib.concatMapStringsSep "\n" addjdk jdks;
-        deps = [ "local" ];
-      };
-    } // {
-      mkCcacheDirs = {
-        text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
-        deps = [ ];
-      };
-      usrlocalbin = {
-        text = "mkdir -m 0755 -p /usr/local/bin";
-        deps = [ ];
-      };
-      local = {
-        text =
-          "mkdir -m 0755 -p /local/bin && mkdir -m 0755 -p /local/lib && mkdir -m 0755 -p /local/jdks";
-        deps = [ ];
-      };
-      cclibs = {
-        text =
-          "cd /local/lib; for i in ${pkgs.gcc.cc.lib}/lib/*; do ln -sfn $i; done";
-        deps = [ "local" ];
-      };
+    activationScripts =
+      let
+        jdks = builtins.filter (x: pkgs ? x) prefs.linkedJdks;
+        addjdk = jdk:
+          if pkgs ? jdk then
+            let p = pkgs.${jdk}.home; in "ln -sfn ${p} /local/jdks/${jdk}"
+          else
+            "";
+      in
+      lib.optionalAttrs (prefs.enableJava && jdks != [ ])
+        {
+          jdks = {
+            text = lib.concatMapStringsSep "\n" addjdk jdks;
+            deps = [ "local" ];
+          };
+        } // {
+        mkCcacheDirs = {
+          text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
+          deps = [ ];
+        };
+        usrlocalbin = {
+          text = "mkdir -m 0755 -p /usr/local/bin";
+          deps = [ ];
+        };
+        local = {
+          text =
+            "mkdir -m 0755 -p /local/bin && mkdir -m 0755 -p /local/lib && mkdir -m 0755 -p /local/jdks";
+          deps = [ ];
+        };
+        cclibs = {
+          text =
+            "cd /local/lib; for i in ${pkgs.gcc.cc.lib}/lib/*; do ln -sfn $i; done";
+          deps = [ "local" ];
+        };
 
-      # Fuck /bin/bash
-      binbash = {
-        text = "ln -sfn ${pkgs.bash}/bin/bash /bin/bash";
-        deps = [ "binsh" ];
-      };
+        # Fuck /bin/bash
+        binbash = {
+          text = "ln -sfn ${pkgs.bash}/bin/bash /bin/bash";
+          deps = [ "binsh" ];
+        };
 
-      # sftpman
-      mntsshfs = {
-        text =
-          "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/sshfs";
-        deps = [ ];
-      };
+        # sftpman
+        mntsshfs = {
+          text =
+            "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/sshfs";
+          deps = [ ];
+        };
 
-      # rclone
-      mntrclone = {
-        text =
-          "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/rclone";
-        deps = [ ];
-      };
+        # rclone
+        mntrclone = {
+          text =
+            "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/rclone";
+          deps = [ ];
+        };
 
-      # https://github.com/NixOS/nixpkgs/issues/3702
-      linger = {
-        text = ''
-          # remove all existing lingering users
-          rm -r /var/lib/systemd/linger
-          mkdir /var/lib/systemd/linger
-          # enable for the subset of declared users
-          touch /var/lib/systemd/linger/${prefs.owner}
-        '';
-        deps = [ ];
-      };
+        # https://github.com/NixOS/nixpkgs/issues/3702
+        linger = {
+          text = ''
+            # remove all existing lingering users
+            rm -r /var/lib/systemd/linger
+            mkdir /var/lib/systemd/linger
+            # enable for the subset of declared users
+            touch /var/lib/systemd/linger/${prefs.owner}
+          '';
+          deps = [ ];
+        };
 
-      # Fuck pre-built dynamic binaries
-      # copied from https://github.com/NixOS/nixpkgs/pull/69057
-      ldlinux = {
-        text = with lib;
-          concatStrings (mapAttrsToList (target: source: ''
-            mkdir -m 0755 -p $(dirname ${target})
-            ln -sfn ${escapeShellArg source} ${target}.tmp
-            mv -f ${target}.tmp ${target} # atomically replace
-          '') {
-            "i686-linux"."/lib/ld-linux.so.2" =
-              "${pkgs.glibc.out}/lib/ld-linux.so.2";
-            "x86_64-linux"."/lib/ld-linux.so.2" =
-              "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
-            "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" =
-              "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
-            "aarch64-linux"."/lib/ld-linux-aarch64.so.1" =
-              "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
-            "armv7l-linux"."/lib/ld-linux-armhf.so.3" =
-              "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
-          }.${pkgs.stdenv.system} or { });
-        deps = [ ];
-      };
+        # Fuck pre-built dynamic binaries
+        # copied from https://github.com/NixOS/nixpkgs/pull/69057
+        ldlinux = {
+          text = with lib;
+            concatStrings (mapAttrsToList
+              (target: source: ''
+                mkdir -m 0755 -p $(dirname ${target})
+                ln -sfn ${escapeShellArg source} ${target}.tmp
+                mv -f ${target}.tmp ${target} # atomically replace
+              '') {
+              "i686-linux"."/lib/ld-linux.so.2" =
+                "${pkgs.glibc.out}/lib/ld-linux.so.2";
+              "x86_64-linux"."/lib/ld-linux.so.2" =
+                "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
+              "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" =
+                "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
+              "aarch64-linux"."/lib/ld-linux-aarch64.so.1" =
+                "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
+              "armv7l-linux"."/lib/ld-linux-armhf.so.3" =
+                "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
+            }.${pkgs.stdenv.system} or { });
+          deps = [ ];
+        };
 
-      # make some symlinks to /bin, just for convenience
-      binShortcuts = {
-        text = ''
-          ln -sfn ${pkgs.neovim}/bin/nvim /usr/local/bin/nv
-        '';
-        deps = [ "binsh" "usrlocalbin" ];
+        # make some symlinks to /bin, just for convenience
+        binShortcuts = {
+          text = ''
+            ln -sfn ${pkgs.neovim}/bin/nvim /usr/local/bin/nv
+          '';
+          deps = [ "binsh" "usrlocalbin" ];
+        };
       };
-    };
   };
 
   services = {
@@ -775,95 +801,97 @@ in {
       enable = prefs.enableAria2;
       extraArguments = "--rpc-listen-all --rpc-secret $ARIA2_RPC_SECRET";
     };
-    openldap = let
-      mkCommon = baseDN: ''
-        dn: ou=People,${baseDN}
-        ou: People
-        objectClass: top
-        objectClass: organizationalUnit
+    openldap =
+      let
+        mkCommon = baseDN: ''
+          dn: ou=People,${baseDN}
+          ou: People
+          objectClass: top
+          objectClass: organizationalUnit
 
-        dn: ou=Group,${baseDN}
-        ou: Group
-        objectClass: top
-        objectClass: organizationalUnit
+          dn: ou=Group,${baseDN}
+          ou: Group
+          objectClass: top
+          objectClass: organizationalUnit
 
-        dn: cn=Manager,${baseDN}
-        cn: Manager
-        objectClass: top
-        objectclass: organizationalRole
-        roleOccupant: ${baseDN}
+          dn: cn=Manager,${baseDN}
+          cn: Manager
+          objectClass: top
+          objectclass: organizationalRole
+          roleOccupant: ${baseDN}
 
-        dn: uid=testuser,${baseDN}
-        objectClass: account
-        uid: testuser
+          dn: uid=testuser,${baseDN}
+          objectClass: account
+          uid: testuser
 
-        dn: uid=johndoe,ou=People,${baseDN}
-        objectClass: top
-        objectClass: person
-        objectClass: organizationalPerson
-        objectClass: inetOrgPerson
-        cn: John Doe
-        sn: Doe
-        userPassword: xxxxxxxxxx
-      '';
-      mkDomain = domain: tld: ''
-        dn: dc=${domain},dc=${tld}
-        objectClass: domain
-        dc: ${domain}
-      '';
-      mkOrg = org: ''
-        dn: o=${org}
-        objectClass: organization
-      '';
-    in {
-      enable = prefs.enableOpenldap;
-      settings = {
-        children = {
-          "cn=schema".includes = [
-            "${pkgs.openldap}/etc/schema/core.ldif"
-            "${pkgs.openldap}/etc/schema/cosine.ldif"
-            "${pkgs.openldap}/etc/schema/inetorgperson.ldif"
-            "${pkgs.openldap}/etc/schema/nis.ldif"
-          ];
-          "olcDatabase={1}mdb" = {
-            attrs = {
-              objectClass = [ "olcDatabaseConfig" "olcMdbConfig" ];
-              olcDatabase = "{1}mdb";
-              olcDbDirectory = "/var/db/openldap/localhost";
-              olcSuffix = "o=localhost";
-              olcRootDN = "cn=root,o=localhost";
-              olcRootPW = { path = "/run/secrets/openldap-root-password"; };
-              olcAccess = [
-                ''
-                  to attrs=userPassword,givenName,sn,photo by self write by anonymous auth by dn.base="cn=Manager,o=localhost" write by * none''
-              ] ++ [
-                ''
-                  to * by self read by dn.base="cn=Manager,o=localhost" write by * none''
-              ];
+          dn: uid=johndoe,ou=People,${baseDN}
+          objectClass: top
+          objectClass: person
+          objectClass: organizationalPerson
+          objectClass: inetOrgPerson
+          cn: John Doe
+          sn: Doe
+          userPassword: xxxxxxxxxx
+        '';
+        mkDomain = domain: tld: ''
+          dn: dc=${domain},dc=${tld}
+          objectClass: domain
+          dc: ${domain}
+        '';
+        mkOrg = org: ''
+          dn: o=${org}
+          objectClass: organization
+        '';
+      in
+      {
+        enable = prefs.enableOpenldap;
+        settings = {
+          children = {
+            "cn=schema".includes = [
+              "${pkgs.openldap}/etc/schema/core.ldif"
+              "${pkgs.openldap}/etc/schema/cosine.ldif"
+              "${pkgs.openldap}/etc/schema/inetorgperson.ldif"
+              "${pkgs.openldap}/etc/schema/nis.ldif"
+            ];
+            "olcDatabase={1}mdb" = {
+              attrs = {
+                objectClass = [ "olcDatabaseConfig" "olcMdbConfig" ];
+                olcDatabase = "{1}mdb";
+                olcDbDirectory = "/var/db/openldap/localhost";
+                olcSuffix = "o=localhost";
+                olcRootDN = "cn=root,o=localhost";
+                olcRootPW = { path = "/run/secrets/openldap-root-password"; };
+                olcAccess = [
+                  ''
+                    to attrs=userPassword,givenName,sn,photo by self write by anonymous auth by dn.base="cn=Manager,o=localhost" write by * none''
+                ] ++ [
+                  ''
+                    to * by self read by dn.base="cn=Manager,o=localhost" write by * none''
+                ];
+              };
             };
-          };
-          "olcDatabase={2}mdb" = {
-            attrs = {
-              objectClass = [ "olcDatabaseConfig" "olcMdbConfig" ];
-              olcDatabase = "{2}mdb";
-              olcDbDirectory = "/var/db/openldap/cont.run";
-              olcSuffix = "dc=cont,dc=run";
-              olcRootDN = "cn=root,dc=cont,dc=run";
-              olcRootPW = { path = "/run/secrets/openldap-root-password"; };
+            "olcDatabase={2}mdb" = {
+              attrs = {
+                objectClass = [ "olcDatabaseConfig" "olcMdbConfig" ];
+                olcDatabase = "{2}mdb";
+                olcDbDirectory = "/var/db/openldap/cont.run";
+                olcSuffix = "dc=cont,dc=run";
+                olcRootDN = "cn=root,dc=cont,dc=run";
+                olcRootPW = { path = "/run/secrets/openldap-root-password"; };
+              };
             };
           };
         };
-      };
-      declarativeContents."dc=cont,dc=run" = builtins.concatStringsSep "\n" [
-        (mkDomain "cont" "run")
-        (mkCommon "dc=cont,dc=run")
-      ];
+        declarativeContents."dc=cont,dc=run" = builtins.concatStringsSep "\n" [
+          (mkDomain "cont" "run")
+          (mkCommon "dc=cont,dc=run")
+        ];
 
-      declarativeContents."o=localhost" = builtins.concatStringsSep "\n" [
-        (mkOrg "localhost")
-        (mkCommon "o=localhost")
-      ];
-    };
+        declarativeContents."o=localhost" = builtins.concatStringsSep "\n" [
+          (mkOrg "localhost")
+          (mkCommon "o=localhost")
+        ];
+      };
     # calibre-server = {
     #   enable = prefs.enableCalibreServer;
     #   libraries = calibreServerLibraries;
@@ -888,55 +916,58 @@ in {
       pulse = { enable = true; };
     };
     restic = {
-      backups = let
-        restic-exclude-files = pkgs.writeTextFile {
-          name = "restic-excluded-files";
-          text = ''
-            ltximg
-            .stversions
-            .stfolder
-            .sync
-            .syncthing.*.tmp
-            ~syncthing~*.tmp
-          '';
-        };
-        go = name: conf: backend: {
-          "${name}-${backend}" = {
-            initialize = true;
-            passwordFile = "/run/secrets/restic-password";
-            repository = "rclone:${backend}:restic";
-            rcloneConfigFile = "/run/secrets/rclone-config";
-            timerConfig = {
-              OnCalendar = "00:05";
-              RandomizedDelaySec = 3600 * 6;
-            };
-            pruneOpts = [
-              "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
+      backups =
+        let
+          restic-exclude-files = pkgs.writeTextFile {
+            name = "restic-excluded-files";
+            text = ''
+              ltximg
+              .stversions
+              .stfolder
+              .sync
+              .syncthing.*.tmp
+              ~syncthing~*.tmp
+            '';
+          };
+          go = name: conf: backend: {
+            "${name}-${backend}" = {
+              initialize = true;
+              passwordFile = "/run/secrets/restic-password";
+              repository = "rclone:${backend}:restic";
+              rcloneConfigFile = "/run/secrets/rclone-config";
+              timerConfig = {
+                OnCalendar = "00:05";
+                RandomizedDelaySec = 3600 * 6;
+              };
+              pruneOpts = [
+                "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
+              ];
+            } // conf;
+          };
+          mkBackup = name: conf:
+            go name conf "backup-primary" // go name conf "backup-secondary";
+        in
+        mkBackup "vardata"
+          {
+            extraBackupArgs = [
+              "-v=3"
+              "--exclude=/postgresql"
+              "--exclude=/vault/logs"
+              "--exclude=/nextcloud-data"
+              "--exclude=/sftpgo/data"
+              "--exclude=/sftpgo/backups"
+              "--exclude-file=${restic-exclude-files}"
             ];
-          } // conf;
+            paths = [ "/var/data" ];
+          } // mkBackup "sync" {
+          extraBackupArgs = [
+            "-v=3"
+            "--exclude-larger-than=500M"
+            "--exclude=.git"
+            "--exclude-file=${restic-exclude-files}"
+          ];
+          paths = [ "${prefs.syncFolder}" ];
         };
-        mkBackup = name: conf:
-          go name conf "backup-primary" // go name conf "backup-secondary";
-      in mkBackup "vardata" {
-        extraBackupArgs = [
-          "-v=3"
-          "--exclude=/postgresql"
-          "--exclude=/vault/logs"
-          "--exclude=/nextcloud-data"
-          "--exclude=/sftpgo/data"
-          "--exclude=/sftpgo/backups"
-          "--exclude-file=${restic-exclude-files}"
-        ];
-        paths = [ "/var/data" ];
-      } // mkBackup "sync" {
-        extraBackupArgs = [
-          "-v=3"
-          "--exclude-larger-than=500M"
-          "--exclude=.git"
-          "--exclude-file=${restic-exclude-files}"
-        ];
-        paths = [ "${prefs.syncFolder}" ];
-      };
     };
     glusterfs = {
       enable = prefs.enableGlusterfs;
@@ -950,41 +981,43 @@ in {
     coredns = {
       enable = prefs.enableCoredns;
       package = args.inputs.self.packages.${config.nixpkgs.system}.coredns;
-      config = let
-        dnsServers = builtins.concatStringsSep " " prefs.dnsServers;
-        rewriteAliases = builtins.concatStringsSep "\n" (lib.mapAttrsToList
-          (alias: host:
-            "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto")
-          prefs.hostAliases);
-      in ''
-        ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
-            log
-            debug
-            # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
-            # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
-            ${rewriteAliases}
-            # Catch-all rule, lest I must rebuild all hosts on new machines.
-            rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
-            # fail fast on cache miss
-            cancel 0.01s
-            epicmdns ${prefs.mainDomain} {
-              force_unicast true
-              min_ttl 180
-              browse_period 40
-              cache_purge_period 300
-              browse _workstation._tcp.local
-              browse _ssh._tcp.local
-            }
-            # mdns ${prefs.mainDomain}
-            alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
-        }
+      config =
+        let
+          dnsServers = builtins.concatStringsSep " " prefs.dnsServers;
+          rewriteAliases = builtins.concatStringsSep "\n" (lib.mapAttrsToList
+            (alias: host:
+              "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto")
+            prefs.hostAliases);
+        in
+        ''
+          ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
+              log
+              debug
+              # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
+              # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
+              ${rewriteAliases}
+              # Catch-all rule, lest I must rebuild all hosts on new machines.
+              rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
+              # fail fast on cache miss
+              cancel 0.01s
+              epicmdns ${prefs.mainDomain} {
+                force_unicast true
+                min_ttl 180
+                browse_period 40
+                cache_purge_period 300
+                browse _workstation._tcp.local
+                browse _ssh._tcp.local
+              }
+              # mdns ${prefs.mainDomain}
+              alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
+          }
 
-        .:${builtins.toString prefs.corednsPort} {
-            log
-            debug
-            forward . ${dnsServers}
-        }
-              '';
+          .:${builtins.toString prefs.corednsPort} {
+              log
+              debug
+              forward . ${dnsServers}
+          }
+        '';
     };
     dnsmasq = {
       enable = prefs.enableDnsmasq;
@@ -1069,32 +1102,34 @@ in {
         hinfo = true;
         workstation = true;
       };
-      extraServiceFiles = (builtins.foldl' (a: t:
-        a // {
-          "${t}" = ''
-            <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
-            <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-            <service-group>
-              <name replace-wildcards="yes">${t} server at %h</name>
-              <service>
-                <type>_${t}._tcp</type>
-                <port>22</port>
-              </service>
-            </service-group>
-          '';
-        }) { } [ "ssh" "sftp-ssh" ]) // {
-          smb = ''
-            <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
-            <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-            <service-group>
-              <name replace-wildcards="yes">samba server at %h</name>
-              <service>
-                <type>_smb._tcp</type>
-                <port>445</port>
-              </service>
-            </service-group>
-          '';
-        };
+      extraServiceFiles = (builtins.foldl'
+        (a: t:
+          a // {
+            "${t}" = ''
+              <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+              <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+              <service-group>
+                <name replace-wildcards="yes">${t} server at %h</name>
+                <service>
+                  <type>_${t}._tcp</type>
+                  <port>22</port>
+                </service>
+              </service-group>
+            '';
+          })
+        { } [ "ssh" "sftp-ssh" ]) // {
+        smb = ''
+          <?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">samba server at %h</name>
+            <service>
+              <type>_smb._tcp</type>
+              <port>445</port>
+            </service>
+          </service-group>
+        '';
+      };
 
     };
     nfs.server = {
@@ -1297,68 +1332,68 @@ in {
           labels = { node = prefs.hostname; };
         }];
       }]
-        ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
-          job_name = "blackbox";
-          metrics_path = "/probe";
-          params = { module = [ "http_2xx" ]; };
-          relabel_configs = [
-            {
-              source_labels = [ "__address__" ];
-              target_label = "__param_target";
-            }
-            {
-              source_labels = [ "__param_target" ];
-              target_label = "instance";
-            }
-            {
-              replacement = "127.0.0.1:${
+      ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
+        job_name = "blackbox";
+        metrics_path = "/probe";
+        params = { module = [ "http_2xx" ]; };
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = [ "__param_target" ];
+            target_label = "instance";
+          }
+          {
+            replacement = "127.0.0.1:${
                   builtins.toString
                   config.services.prometheus.exporters.domain.port
                 }";
-              target_label = "__address__";
-            }
-          ];
-          static_configs = [{
-            labels = { node = prefs.hostname; };
-            targets = [
-              "https://www.google.com"
-              "https://www.baidu.com"
-              "http://neverssl.com"
-            ] ++ lib.optionals prefs.enableTraefik
-              (builtins.map (x: "https://${x}")
-                (prefs.getFullDomainNames "traefik"));
-          }];
-        }]
-        ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
-          job_name = "domain";
-          metrics_path = "/probe";
-          relabel_configs = [
-            {
-              source_labels = [ "__address__" ];
-              target_label = "__param_target";
-            }
-            {
-              replacement = "127.0.0.1:${
+            target_label = "__address__";
+          }
+        ];
+        static_configs = [{
+          labels = { node = prefs.hostname; };
+          targets = [
+            "https://www.google.com"
+            "https://www.baidu.com"
+            "http://neverssl.com"
+          ] ++ lib.optionals prefs.enableTraefik
+            (builtins.map (x: "https://${x}")
+              (prefs.getFullDomainNames "traefik"));
+        }];
+      }]
+      ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
+        job_name = "domain";
+        metrics_path = "/probe";
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            replacement = "127.0.0.1:${
                   builtins.toString
                   config.services.prometheus.exporters.domain.port
                 }";
-              target_label = "__address__";
-            }
-          ];
-          static_configs = [{ targets = [ prefs.mainDomain ]; }];
-        }]
-        ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
-          job_name = "postgres";
-          static_configs = [{
-            targets = [
-              "127.0.0.1:${
+            target_label = "__address__";
+          }
+        ];
+        static_configs = [{ targets = [ prefs.mainDomain ]; }];
+      }]
+      ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
+        job_name = "postgres";
+        static_configs = [{
+          targets = [
+            "127.0.0.1:${
                 builtins.toString
                 config.services.prometheus.exporters.postgres.port
               }"
-            ];
-            labels = { node = prefs.hostname; };
-          }];
+          ];
+          labels = { node = prefs.hostname; };
         }];
+      }];
     };
 
     promtail = {
@@ -1371,10 +1406,10 @@ in {
         };
         clients = [{ url = "\${LOKI_URL}"; }]
           ++ (lib.optionals prefs.enableLoki [{
-            url = "http://127.0.0.1:${
+          url = "http://127.0.0.1:${
                 builtins.toString prefs.lokiHttpPort
               }/loki/api/v1/push";
-          }]);
+        }]);
         positions = { "filename" = "/var/cache/promtail/positions.yaml"; };
         scrape_configs = [{
           job_name = "journal";
@@ -1492,28 +1527,34 @@ in {
     };
 
     autossh = {
-      sessions = lib.optionals (prefs.enableAutossh) (let
-        go = server:
-          let
-            sshPort = if prefs.enableAioproxy then prefs.aioproxyPort else 22;
-            autosshPorts = prefs.helpers.autossh {
-              hostname = prefs.hostname;
-              serverName = server;
-            };
-            extraArguments = let
-              getReverseArgument = port:
-                "-R :${builtins.toString port}:localhost:${
+      sessions = lib.optionals (prefs.enableAutossh) (
+        let
+          go = server:
+            let
+              sshPort = if prefs.enableAioproxy then prefs.aioproxyPort else 22;
+              autosshPorts = prefs.helpers.autossh {
+                hostname = prefs.hostname;
+                serverName = server;
+              };
+              extraArguments =
+                let
+                  getReverseArgument = port:
+                    "-R :${builtins.toString port}:localhost:${
                   builtins.toString sshPort
                 }";
-              reversePorts = builtins.concatStringsSep " "
-                (builtins.map (x: getReverseArgument x) autosshPorts);
-            in "-o ServerAliveInterval=15 -o ServerAliveCountMax=4 -N ${reversePorts} ${server}";
-          in {
-            extraArguments = extraArguments;
-            name = server;
-            user = prefs.owner;
-          };
-      in map go prefs.autosshServers);
+                  reversePorts = builtins.concatStringsSep " "
+                    (builtins.map (x: getReverseArgument x) autosshPorts);
+                in
+                "-o ServerAliveInterval=15 -o ServerAliveCountMax=4 -N ${reversePorts} ${server}";
+            in
+            {
+              extraArguments = extraArguments;
+              name = server;
+              user = prefs.owner;
+            };
+        in
+        map go prefs.autosshServers
+      );
     };
     eternal-terminal = { enable = prefs.enableEternalTerminal; };
     printing = {
@@ -1695,7 +1736,8 @@ in {
                 accessControlAllowHeaders = [ "*" ];
                 accessControlAllowOriginListRegex =
                   let postfix = ".${prefs.mainDomain}";
-                  in lib.optionals (prefs.mainDomain != "") [
+                  in
+                  lib.optionals (prefs.mainDomain != "") [
                     "^.*${builtins.replaceStrings [ "." ] [ "\\." ] postfix}$"
                   ];
                 accessControlMaxAge = 3600;
@@ -1865,36 +1907,38 @@ in {
       };
       staticConfigOptions = {
         api = { dashboard = true; };
-        entryPoints = let
-          getEntrypoint = address: {
-            address = address;
-            proxyProtocol = {
-              trustedIPs = [
-                "127.0.0.0/8"
-                "10.0.0.0/8"
-                "100.64.0.0/10"
-                "169.254.0.0/16"
-                "172.16.0.0/12"
-                "192.168.0.0/16"
-              ];
+        entryPoints =
+          let
+            getEntrypoint = address: {
+              address = address;
+              proxyProtocol = {
+                trustedIPs = [
+                  "127.0.0.0/8"
+                  "10.0.0.0/8"
+                  "100.64.0.0/10"
+                  "169.254.0.0/16"
+                  "172.16.0.0/12"
+                  "192.168.0.0/16"
+                ];
+              };
             };
-          };
-        in {
-          web = getEntrypoint ":80" // {
-            http = {
-              redirections = {
-                entryPoint = {
-                  to = "websecure";
-                  scheme = "https";
+          in
+          {
+            web = getEntrypoint ":80" // {
+              http = {
+                redirections = {
+                  entryPoint = {
+                    to = "websecure";
+                    scheme = "https";
+                  };
                 };
               };
             };
+            websecure = getEntrypoint ":443" // { http = { tls = { }; }; };
+            metrics = {
+              address = "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}";
+            };
           };
-          websecure = getEntrypoint ":443" // { http = { tls = { }; }; };
-          metrics = {
-            address = "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}";
-          };
-        };
         log = {
           level = "INFO";
           filePath = "/var/log/traefik/log.json";
@@ -1914,10 +1958,11 @@ in {
           docker = {
             defaultRule = getTraefikRuleByDomainPrefix
               "{{ (or (index .Labels `domainprefix`) .Name) | normalize }}";
-            endpoint = if (prefs.ociContainerBackend == "docker") then
-              "unix:///var/run/docker.sock"
-            else
-              "unix:///var/run/podman/podman.sock";
+            endpoint =
+              if (prefs.ociContainerBackend == "docker") then
+                "unix:///var/run/docker.sock"
+              else
+                "unix:///var/run/podman/podman.sock";
             network = "${prefs.ociContainerNetwork}";
           };
         } // lib.optionalAttrs (prefs.enableK3s) { kubernetesIngress = { }; };
@@ -1978,23 +2023,25 @@ in {
     # change port
     # sudo chown -R e /etc/rancher/k3s/
     # k3s kubectl patch service traefik -n kube-system -p '{"spec": {"ports": [{"port": 443,"targetPort": 443, "nodePort": 30443, "protocol": "TCP", "name": "https"},{"port": 80,"targetPort": 80, "nodePort": 30080, "protocol": "TCP", "name": "http"}], "type": "LoadBalancer"}}'
-    k3s = let
-      # https://github.com/NixOS/nixpkgs/issues/111835#issuecomment-784905827
-      # Wait for k3s to support cgroup v2
-      # https://github.com/NixOS/nixpkgs/blob/8823855ce36de32b8b9118ce87bfa5ff9a641657/nixos/modules/services/cluster/k3s/default.nix#L80-L81
-      myArgs = "--no-deploy traefik";
-    in {
-      enable = prefs.enableK3s;
-      extraFlags = myArgs;
-    } // (if prefs.enableContainerd then {
-      extraFlags = builtins.concatStringsSep " " [
-        myArgs
-        "--container-runtime-endpoint=/run/containerd/containerd.sock"
-      ];
-    } else if prefs.enableDocker then {
-      docker = true;
-    } else
-      { });
+    k3s =
+      let
+        # https://github.com/NixOS/nixpkgs/issues/111835#issuecomment-784905827
+        # Wait for k3s to support cgroup v2
+        # https://github.com/NixOS/nixpkgs/blob/8823855ce36de32b8b9118ce87bfa5ff9a641657/nixos/modules/services/cluster/k3s/default.nix#L80-L81
+        myArgs = "--no-deploy traefik";
+      in
+      {
+        enable = prefs.enableK3s;
+        extraFlags = myArgs;
+      } // (if prefs.enableContainerd then {
+        extraFlags = builtins.concatStringsSep " " [
+          myArgs
+          "--container-runtime-endpoint=/run/containerd/containerd.sock"
+        ];
+      } else if prefs.enableDocker then {
+        docker = true;
+      } else
+        { });
 
     jupyterhub = {
       enable = prefs.enableJupyter;
@@ -2003,41 +2050,47 @@ in {
       # jupyterlabEnv = prefs.helpers.mkIfAttrExists pkgs "myPackages.jupyterlab";
       jupyterlabEnv = with pkgs;
         python3.withPackages
-        (p: with p; [ jupyterhub jupyterlab jupyterlab_server ]);
+          (p: with p; [ jupyterhub jupyterlab jupyterlab_server ]);
       port = 8899;
       kernels = {
-        python3Kernel = (let
-          env = pkgs.python3.withPackages
-            (p: with p; [ ipykernel dask-gateway numpy scipy ]);
-        in {
-          displayName = "Python 3";
-          argv = [
-            "${env.interpreter}"
-            "-m"
-            "ipykernel_launcher"
-            "-f"
-            "{connection_file}"
-          ];
-          language = "python";
-          logo32 =
-            "${env}/${env.sitePackages}/ipykernel/resources/logo-32x32.png";
-          logo64 =
-            "${env}/${env.sitePackages}/ipykernel/resources/logo-64x64.png";
-        });
+        python3Kernel = (
+          let
+            env = pkgs.python3.withPackages
+              (p: with p; [ ipykernel dask-gateway numpy scipy ]);
+          in
+          {
+            displayName = "Python 3";
+            argv = [
+              "${env.interpreter}"
+              "-m"
+              "ipykernel_launcher"
+              "-f"
+              "{connection_file}"
+            ];
+            language = "python";
+            logo32 =
+              "${env}/${env.sitePackages}/ipykernel/resources/logo-32x32.png";
+            logo64 =
+              "${env}/${env.sitePackages}/ipykernel/resources/logo-64x64.png";
+          }
+        );
 
-        cKernel = (let
-          env = pkgs.python3.withPackages (p: with p; [ jupyter-c-kernel ]);
-        in {
-          displayName = "C";
-          argv = [
-            "${env.interpreter}"
-            "-m"
-            "jupyter_c_kernel"
-            "-f"
-            "{connection_file}"
-          ];
-          language = "c";
-        });
+        cKernel = (
+          let
+            env = pkgs.python3.withPackages (p: with p; [ jupyter-c-kernel ]);
+          in
+          {
+            displayName = "C";
+            argv = [
+              "${env.interpreter}"
+              "-m"
+              "jupyter_c_kernel"
+              "-f"
+              "{connection_file}"
+            ];
+            language = "c";
+          }
+        );
 
         rustKernel = {
           displayName = "Rust";
@@ -2049,68 +2102,80 @@ in {
           language = "Rust";
         };
 
-        rKernel = (let
-          env = pkgs.rWrapper.override {
-            packages = with pkgs.rPackages; [ IRkernel ggplot2 ];
-          };
-        in {
-          displayName = "R";
-          argv = [
-            "${env}/bin/R"
-            "--slave"
-            "-e"
-            "IRkernel::main()"
-            "--args"
-            "{connection_file}"
-          ];
-          language = "R";
-        });
+        rKernel = (
+          let
+            env = pkgs.rWrapper.override {
+              packages = with pkgs.rPackages; [ IRkernel ggplot2 ];
+            };
+          in
+          {
+            displayName = "R";
+            argv = [
+              "${env}/bin/R"
+              "--slave"
+              "-e"
+              "IRkernel::main()"
+              "--args"
+              "{connection_file}"
+            ];
+            language = "R";
+          }
+        );
 
-        ansibleKernel = (let
-          # build failure on latest, see https://github.com/NixOS/nixpkgs/issues/138381
-          python3 = stable.python3;
-          env = (python3.withPackages
-            (p: with p; [ ansible-kernel ansible ])).override
-            (args: { ignoreCollisions = true; });
-        in {
-          displayName = "Ansible";
-          argv = [
-            "${env.interpreter}"
-            "-m"
-            "ansible_kernel"
-            "-f"
-            "{connection_file}"
-          ];
-          language = "ansible";
-        });
+        ansibleKernel = (
+          let
+            # build failure on latest, see https://github.com/NixOS/nixpkgs/issues/138381
+            python3 = stable.python3;
+            env = (python3.withPackages
+              (p: with p; [ ansible-kernel ansible ])).override
+              (args: { ignoreCollisions = true; });
+          in
+          {
+            displayName = "Ansible";
+            argv = [
+              "${env.interpreter}"
+              "-m"
+              "ansible_kernel"
+              "-f"
+              "{connection_file}"
+            ];
+            language = "ansible";
+          }
+        );
 
         bashKernel =
-          (let env = pkgs.python3.withPackages (p: with p; [ bash_kernel ]);
-          in {
-            displayName = "Bash";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "bash_kernel"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "Bash";
-          });
+          (
+            let env = pkgs.python3.withPackages (p: with p; [ bash_kernel ]);
+            in
+            {
+              displayName = "Bash";
+              argv = [
+                "${env.interpreter}"
+                "-m"
+                "bash_kernel"
+                "-f"
+                "{connection_file}"
+              ];
+              language = "Bash";
+            }
+          );
 
         nixKernel =
-          (let env = pkgs.python3.withPackages (p: with p; [ nix-kernel ]);
-          in {
-            displayName = "Nix";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "nix-kernel"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "Nix";
-          });
+          (
+            let env = pkgs.python3.withPackages (p: with p; [ nix-kernel ]);
+            in
+            {
+              displayName = "Nix";
+              argv = [
+                "${env.interpreter}"
+                "-m"
+                "nix-kernel"
+                "-f"
+                "{connection_file}"
+              ];
+              language = "Nix";
+            }
+          );
 
         rubyKernel = {
           displayName = "Ruby";
@@ -2120,27 +2185,30 @@ in {
 
         # TODO: Below build failed with
         # RPATH of binary /nix/store/ilhgzcydg3vn4mp7k5yawlsjwfpm8xi8-ihaskell-0.10.1.2/bin/ihaskell contains a forbidden reference to /build/
-        haskellKernel = (let
-          env = pkgs.haskellPackages.ghcWithPackages (pkgs: [ pkgs.ihaskell ]);
-          ihaskellSh = pkgs.writeScriptBin "ihaskell" ''
-            #! ${pkgs.stdenv.shell}
-            export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
-            export PATH="${pkgs.lib.makeBinPath ([ env ])}:$PATH"
-            ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
-          '';
-        in {
-          displayName = "Haskell";
-          argv = [
-            "${ihaskellSh}/bin/ihaskell"
-            "kernel"
-            "{connection_file}"
-            "+RTS"
-            "-M3g"
-            "-N2"
-            "-RTS"
-          ];
-          language = "Haskell";
-        });
+        haskellKernel = (
+          let
+            env = pkgs.haskellPackages.ghcWithPackages (pkgs: [ pkgs.ihaskell ]);
+            ihaskellSh = pkgs.writeScriptBin "ihaskell" ''
+              #! ${pkgs.stdenv.shell}
+              export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
+              export PATH="${pkgs.lib.makeBinPath ([ env ])}:$PATH"
+              ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
+            '';
+          in
+          {
+            displayName = "Haskell";
+            argv = [
+              "${ihaskellSh}/bin/ihaskell"
+              "kernel"
+              "{connection_file}"
+              "+RTS"
+              "-M3g"
+              "-N2"
+              "-RTS"
+            ];
+            language = "Haskell";
+          }
+        );
       };
     };
 
@@ -2155,10 +2223,13 @@ in {
       port = prefs.sslhPort;
       transparent = false;
       verbose = true;
-    } // (let p = impure.sslhConfigFile;
-    in lib.optionalAttrs (builtins.pathExists p) {
-      appendConfig = (builtins.readFile p);
-    });
+    } // (
+      let p = impure.sslhConfigFile;
+      in
+      lib.optionalAttrs (builtins.pathExists p) {
+        appendConfig = (builtins.readFile p);
+      }
+    );
 
     unifi.enable = prefs.enableUnifi;
 
@@ -2170,87 +2241,97 @@ in {
       package = pkgs.myPackages.emacs or pkgs.emacs;
     };
 
-    syncthing = let
-      devices = {
-        ssg = {
-          id =
-            "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
-        };
-        shl = {
-          id =
-            "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
-        };
-        jxt = {
-          id =
-            "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
-        };
-        mdq = {
-          id =
-            "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
-        };
-        gcv = {
-          id =
-            "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
-        };
-      };
-    in {
-      enable = prefs.enableSyncthing;
-      user = prefs.owner;
-      dataDir = prefs.home;
-      extraOptions = {
-        gui = {
-          user = "e";
-          # TODO: didn't find way to hide it, but this password has enough entropy.
-          password =
-            "$2a$10$20ol/13Gghbqq/tsEkEyGO.kJLgKsz2cJmC4Cccx.0Z1ECSYHO80O";
-        };
-        # I need allowedNetwork so I will use extraOptions instead of devices.
-        devices = let
-          mkDevice = { name, id, introducer ? true
-            , allowedNetworks ? [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ], ...
-            }: {
-              deviceID = id;
-              inherit name introducer allowedNetworks;
-            };
-          list = lib.mapAttrsToList (name: value: value // { inherit name; })
-            devices;
-        in builtins.map mkDevice list;
-      };
-
-      inherit devices;
-
-      folders = let
-        allDevices = builtins.attrNames devices;
-        getVersioningPolicy = id: {
-          type = "staggered";
-          # TODO: This does not work. Syncthing seems to be using new schema now.
-          # See https://github.com/syncthing/syncthing/pull/7407
-          # cleanIntervalS = 3600;
-          # fsPath = "${prefs.home}/.cache/syncthing_versioning/${id}";
-          # fsType = "basic";
-          params = {
-            cleanInterval = "3600";
-            maxAge = "315360000";
+    syncthing =
+      let
+        devices = {
+          ssg = {
+            id =
+              "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+          };
+          shl = {
+            id =
+              "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+          };
+          jxt = {
+            id =
+              "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+          };
+          mdq = {
+            id =
+              "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+          };
+          gcv = {
+            id =
+              "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
           };
         };
-        getFolderConfig = { id, path, excludedDevices ? [ ] }: rec {
-          inherit id path;
-          devices = lib.subtractLists excludedDevices allDevices;
-          ignorePerms = false;
-          versioning = getVersioningPolicy id;
-        };
-      in {
-        "${prefs.calibreFolder}" = getFolderConfig {
-          id = "calibre";
-          path = prefs.calibreFolder;
+      in
+      {
+        enable = prefs.enableSyncthing;
+        user = prefs.owner;
+        dataDir = prefs.home;
+        extraOptions = {
+          gui = {
+            user = "e";
+            # TODO: didn't find way to hide it, but this password has enough entropy.
+            password =
+              "$2a$10$20ol/13Gghbqq/tsEkEyGO.kJLgKsz2cJmC4Cccx.0Z1ECSYHO80O";
+          };
+          # I need allowedNetwork so I will use extraOptions instead of devices.
+          devices =
+            let
+              mkDevice =
+                { name
+                , id
+                , introducer ? true
+                , allowedNetworks ? [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]
+                , ...
+                }: {
+                  deviceID = id;
+                  inherit name introducer allowedNetworks;
+                };
+              list = lib.mapAttrsToList (name: value: value // { inherit name; })
+                devices;
+            in
+            builtins.map mkDevice list;
         };
 
-        "${prefs.syncFolder}" = getFolderConfig {
-          id = "sync";
-          path = prefs.syncFolder;
-        };
+        inherit devices;
+
+        folders =
+          let
+            allDevices = builtins.attrNames devices;
+            getVersioningPolicy = id: {
+              type = "staggered";
+              # TODO: This does not work. Syncthing seems to be using new schema now.
+              # See https://github.com/syncthing/syncthing/pull/7407
+              # cleanIntervalS = 3600;
+              # fsPath = "${prefs.home}/.cache/syncthing_versioning/${id}";
+              # fsType = "basic";
+              params = {
+                cleanInterval = "3600";
+                maxAge = "315360000";
+              };
+            };
+            getFolderConfig = { id, path, excludedDevices ? [ ] }: rec {
+              inherit id path;
+              devices = lib.subtractLists excludedDevices allDevices;
+              ignorePerms = false;
+              versioning = getVersioningPolicy id;
+            };
+          in
+          {
+            "${prefs.calibreFolder}" = getFolderConfig {
+              id = "calibre";
+              path = prefs.calibreFolder;
+            };
+
+            "${prefs.syncFolder}" = getFolderConfig {
+              id = "sync";
+              path = prefs.syncFolder;
+            };
+          };
       };
-    };
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;
 
@@ -2273,17 +2354,19 @@ in {
         x = 1200;
         y = 1920;
       };
-      xautolock = let
-        locker = "${pkgs.i3lock}/bin/i3lock";
-        killer = "${pkgs.systemd}/bin/systemctl suspend";
-        notifier =
-          ''${pkgs.libnotify}/bin/notify-send "Locking in 10 seconds"'';
-      in {
-        inherit locker killer notifier;
-        enable = prefs.enableXautolock;
-        enableNotifier = true;
-        nowlocker = locker;
-      };
+      xautolock =
+        let
+          locker = "${pkgs.i3lock}/bin/i3lock";
+          killer = "${pkgs.systemd}/bin/systemctl suspend";
+          notifier =
+            ''${pkgs.libnotify}/bin/notify-send "Locking in 10 seconds"'';
+        in
+        {
+          inherit locker killer notifier;
+          enable = prefs.enableXautolock;
+          enableNotifier = true;
+          nowlocker = locker;
+        };
       # desktopManager.xfce.enable = true;
       desktopManager.gnome.enable = prefs.enableGnome;
       # desktopManager.plasma5.enable = true;
@@ -2314,23 +2397,25 @@ in {
         };
       } else
         { });
-      displayManager = let
-        defaultSession = prefs.xDefaultSession;
-        autoLogin = {
-          enable = prefs.enableAutoLogin;
-          user = prefs.owner;
+      displayManager =
+        let
+          defaultSession = prefs.xDefaultSession;
+          autoLogin = {
+            enable = prefs.enableAutoLogin;
+            user = prefs.owner;
+          };
+        in
+        {
+          sessionCommands = prefs.xSessionCommands;
+          startx = { enable = prefs.enableStartx; };
+          sddm = {
+            enable = prefs.enableSddm;
+            enableHidpi = prefs.enableHidpi;
+            autoNumlock = true;
+          };
+          gdm = { enable = prefs.enableGdm; };
+          lightdm = { enable = prefs.enableLightdm; };
         };
-      in {
-        sessionCommands = prefs.xSessionCommands;
-        startx = { enable = prefs.enableStartx; };
-        sddm = {
-          enable = prefs.enableSddm;
-          enableHidpi = prefs.enableHidpi;
-          autoNumlock = true;
-        };
-        gdm = { enable = prefs.enableGdm; };
-        lightdm = { enable = prefs.enableLightdm; };
-      };
     };
   };
 
@@ -2338,42 +2423,44 @@ in {
 
   users = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     {
-      users = let
-        extraGroups = [
-          "wheel"
-          "cups"
-          "video"
-          "kvm"
-          "libvirtd"
-          "qemu-libvirtd"
-          "audio"
-          "disk"
-          "keys"
-          "aria2"
-          "networkmanager"
-          "adbusers"
-          "docker"
-          "davfs2"
-          "wireshark"
-          "vboxusers"
-          "lp"
-          "input"
-          "mlocate"
-          "postfix"
-        ];
-      in {
-        "${prefs.owner}" = {
-          createHome = true;
-          inherit extraGroups;
-          group = prefs.ownerGroup;
-          home = prefs.home;
-          isNormalUser = true;
-          uid = prefs.ownerUid;
-          shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
-          initialHashedPassword =
-            "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+      users =
+        let
+          extraGroups = [
+            "wheel"
+            "cups"
+            "video"
+            "kvm"
+            "libvirtd"
+            "qemu-libvirtd"
+            "audio"
+            "disk"
+            "keys"
+            "aria2"
+            "networkmanager"
+            "adbusers"
+            "docker"
+            "davfs2"
+            "wireshark"
+            "vboxusers"
+            "lp"
+            "input"
+            "mlocate"
+            "postfix"
+          ];
+        in
+        {
+          "${prefs.owner}" = {
+            createHome = true;
+            inherit extraGroups;
+            group = prefs.ownerGroup;
+            home = prefs.home;
+            isNormalUser = true;
+            uid = prefs.ownerUid;
+            shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
+            initialHashedPassword =
+              "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+          };
         };
-      };
       groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
     }
     {
@@ -2423,981 +2510,1044 @@ in {
       autoPrune.enable = true;
     };
     anbox = { enable = prefs.enableAnbox; };
-    oci-containers = let
-      mkContainer = name: enable: config:
-        lib.optionalAttrs enable (let
-          images = let
-            postgresql = {
-              "x86_64-linux" = "docker.io/postgres:13";
-              "aarch64-linux" = "docker.io/arm64v8/postgres:13";
-            };
-            hledger = { "x86_64-linux" = "docker.io/dastapov/hledger:latest"; };
-          in {
-            "postgresql" = postgresql;
-            "postgresql-init" = postgresql;
-            "redis" = {
-              "x86_64-linux" = "docker.io/redis:6";
-              "aarch64-linux" = "docker.io/arm64v8/redis:6";
-            };
-            "authelia" = {
-              "x86_64-linux" = "docker.io/authelia/authelia:4";
-              "aarch64-linux" = "docker.io/authelia/authelia:4";
-            };
-            "hledger" = hledger;
-            "hledger-init" = hledger;
-            "searx" = {
-              "x86_64-linux" = "docker.io/searxng/searxng:latest";
-              "aarch64-linux" = "docker.io/searxng/searxng:latest";
-            };
-            "rss-bridge" = let image = "docker.io/rssbridge/rss-bridge:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "wallabag" = {
-              "x86_64-linux" = "docker.io/wallabag/wallabag:2.4.2";
-              "aarch64-linux" = "docker.io/ugeek/wallabag:arm-2.4";
-            };
-            "recipes" = let image = "docker.io/vabene1111/recipes:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "wger" = let image = "docker.io/wger/apache:2.0-dev";
-            in { "x86_64-linux" = image; };
-            "freeipa" = {
-              "x86_64-linux" =
-                "docker.io/freeipa/freeipa-server:fedora-rawhide";
-              "aarch64-linux" =
-                "docker.io/blackheat/freeipa-server:fedora-34-4.9.6";
-            };
-            "cloudbeaver" = {
-              "x86_64-linux" = "docker.io/dbeaver/cloudbeaver:latest";
-            };
-            "n8n" = {
-              "x86_64-linux" = "docker.io/n8nio/n8n:latest";
-              "aarch64-linux" = "docker.io/n8nio/n8n:latest-rpi";
-            };
-            "gitea" = let image = "docker.io/gitea/gitea:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "vault" = let image = "docker.io/vault:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "wikijs" = let image = "docker.io/requarks/wiki:2";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "grocy" = let image = "docker.io/linuxserver/grocy:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "calibre-web" =
-              let image = "docker.io/linuxserver/calibre-web:latest";
-              in {
-                "x86_64-linux" = image;
-                "aarch64-linux" = image;
-              };
-            "dokuwiki" = let image = "docker.io/linuxserver/dokuwiki:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "trilium" = {
-              "x86_64-linux" = "docker.io/zadam/trilium:latest";
-              "aarch64-linux" = "docker.io/hlince/trilium:latest";
-            };
-            "xwiki" = let image = "docker.io/xwiki:lts-postgres-tomcat";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "huginn" = {
-              "x86_64-linux" = "docker.io/huginn/huginn:latest";
-              "aarch64-linux" = "docker.io/zhorvath83/huginn:latest";
-            };
-            "tiddlywiki" = let image = "docker.io/contrun/tiddlywiki:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "vaultwarden" = let image = "docker.io/vaultwarden/server:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "pleroma" =
-              let image = "git.pleroma.social:5050/pleroma/pleroma:latest";
-              in {
-                "x86_64-linux" = image;
-                "aarch64-linux" = image;
-              };
-            "livebook" = let image = "docker.io/livebook/livebook:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "joplin" = let image = "docker.io/florider89/joplin-server:master";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "miniflux" = let image = "docker.io/miniflux/miniflux:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "nextcloud" = let image = "docker.io/nextcloud:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "sftpgo" = let image = "ghcr.io/drakkan/sftpgo:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "filestash" = let image = "docker.io/machines/filestash:latest";
-            in { "x86_64-linux" = image; };
-            "homer" = let image = "docker.io/b4bz/homer:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "etesync" = let image = "docker.io/victorrds/etesync:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-            "etesync-dav" = let image = "docker.io/etesync/etesync-dav:latest";
-            in { "x86_64-linux" = image; };
-            "keeweb" =
-              let image = "docker.io/contrun/keeweb-local-server:latest";
-              in {
-                "x86_64-linux" = image;
-                "aarch64-linux" = image;
-              };
-            "codeserver" = let image = "docker.io/codercom/code-server:latest";
-            in {
-              "x86_64-linux" = image;
-              "aarch64-linux" = image;
-            };
-          };
-          f = { enableTraefik ? true, enableTraefikTls ? true
-            , traefikForwardingPort ? 80, entrypoints ? [ "web" "websecure" ]
-            , middlewares ? [ ], networkName ? prefs.ociContainerNetwork, ...
-            }@args:
-            args // {
-              image =
-                args.image or (images."${name}"."${prefs.nixosSystem}" or (builtins.throw
-                  "Image for ${name} on ${prefs.nixosSystem} not found"));
-              extraOptions = (args.extraOptions or [ ])
-                ++ (if enableTraefik then
-                  [
-                    "--label=traefik.http.routers.${name}.service=${name}"
-                    "--label=traefik.http.services.${name}.loadbalancer.server.port=${
+    oci-containers =
+      let
+        mkContainer = name: enable: config:
+          lib.optionalAttrs enable (
+            let
+              images =
+                let
+                  postgresql = {
+                    "x86_64-linux" = "docker.io/postgres:13";
+                    "aarch64-linux" = "docker.io/arm64v8/postgres:13";
+                  };
+                  hledger = { "x86_64-linux" = "docker.io/dastapov/hledger:latest"; };
+                in
+                {
+                  "postgresql" = postgresql;
+                  "postgresql-init" = postgresql;
+                  "redis" = {
+                    "x86_64-linux" = "docker.io/redis:6";
+                    "aarch64-linux" = "docker.io/arm64v8/redis:6";
+                  };
+                  "authelia" = {
+                    "x86_64-linux" = "docker.io/authelia/authelia:4";
+                    "aarch64-linux" = "docker.io/authelia/authelia:4";
+                  };
+                  "hledger" = hledger;
+                  "hledger-init" = hledger;
+                  "searx" = {
+                    "x86_64-linux" = "docker.io/searxng/searxng:latest";
+                    "aarch64-linux" = "docker.io/searxng/searxng:latest";
+                  };
+                  "rss-bridge" =
+                    let image = "docker.io/rssbridge/rss-bridge:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "wallabag" = {
+                    "x86_64-linux" = "docker.io/wallabag/wallabag:2.4.2";
+                    "aarch64-linux" = "docker.io/ugeek/wallabag:arm-2.4";
+                  };
+                  "recipes" =
+                    let image = "docker.io/vabene1111/recipes:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "wger" =
+                    let image = "docker.io/wger/apache:2.0-dev";
+                    in { "x86_64-linux" = image; };
+                  "freeipa" = {
+                    "x86_64-linux" =
+                      "docker.io/freeipa/freeipa-server:fedora-rawhide";
+                    "aarch64-linux" =
+                      "docker.io/blackheat/freeipa-server:fedora-34-4.9.6";
+                  };
+                  "cloudbeaver" = {
+                    "x86_64-linux" = "docker.io/dbeaver/cloudbeaver:latest";
+                  };
+                  "n8n" = {
+                    "x86_64-linux" = "docker.io/n8nio/n8n:latest";
+                    "aarch64-linux" = "docker.io/n8nio/n8n:latest-rpi";
+                  };
+                  "gitea" =
+                    let image = "docker.io/gitea/gitea:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "vault" =
+                    let image = "docker.io/vault:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "wikijs" =
+                    let image = "docker.io/requarks/wiki:2";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "grocy" =
+                    let image = "docker.io/linuxserver/grocy:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "calibre-web" =
+                    let image = "docker.io/linuxserver/calibre-web:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "dokuwiki" =
+                    let image = "docker.io/linuxserver/dokuwiki:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "trilium" = {
+                    "x86_64-linux" = "docker.io/zadam/trilium:latest";
+                    "aarch64-linux" = "docker.io/hlince/trilium:latest";
+                  };
+                  "xwiki" =
+                    let image = "docker.io/xwiki:lts-postgres-tomcat";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "huginn" = {
+                    "x86_64-linux" = "docker.io/huginn/huginn:latest";
+                    "aarch64-linux" = "docker.io/zhorvath83/huginn:latest";
+                  };
+                  "tiddlywiki" =
+                    let image = "docker.io/contrun/tiddlywiki:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "vaultwarden" =
+                    let image = "docker.io/vaultwarden/server:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "pleroma" =
+                    let image = "git.pleroma.social:5050/pleroma/pleroma:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "livebook" =
+                    let image = "docker.io/livebook/livebook:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "joplin" =
+                    let image = "docker.io/florider89/joplin-server:master";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "miniflux" =
+                    let image = "docker.io/miniflux/miniflux:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "nextcloud" =
+                    let image = "docker.io/nextcloud:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "sftpgo" =
+                    let image = "ghcr.io/drakkan/sftpgo:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "filestash" =
+                    let image = "docker.io/machines/filestash:latest";
+                    in { "x86_64-linux" = image; };
+                  "homer" =
+                    let image = "docker.io/b4bz/homer:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "etesync" =
+                    let image = "docker.io/victorrds/etesync:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "etesync-dav" =
+                    let image = "docker.io/etesync/etesync-dav:latest";
+                    in { "x86_64-linux" = image; };
+                  "keeweb" =
+                    let image = "docker.io/contrun/keeweb-local-server:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                  "codeserver" =
+                    let image = "docker.io/codercom/code-server:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
+                };
+              f =
+                { enableTraefik ? true
+                , enableTraefikTls ? true
+                , traefikForwardingPort ? 80
+                , entrypoints ? [ "web" "websecure" ]
+                , middlewares ? [ ]
+                , networkName ? prefs.ociContainerNetwork
+                , ...
+                }@args:
+                args // {
+                  image =
+                    args.image or (
+                      images."${name}"."${prefs.nixosSystem}" or (builtins.throw
+                        "Image for ${name} on ${prefs.nixosSystem} not found")
+                    );
+                  extraOptions = (args.extraOptions or [ ])
+                  ++ (if enableTraefik then
+                    [
+                      "--label=traefik.http.routers.${name}.service=${name}"
+                      "--label=traefik.http.services.${name}.loadbalancer.server.port=${
                       builtins.toString traefikForwardingPort
                     }"
-                  ] ++ (lib.optionals (entrypoints != [ ]) [
-                    "--label=traefik.http.routers.${name}.entrypoints=${
+                    ] ++ (lib.optionals (entrypoints != [ ]) [
+                      "--label=traefik.http.routers.${name}.entrypoints=${
                       builtins.concatStringsSep "," entrypoints
                     }"
-                  ]) ++ (lib.optionals (middlewares != [ ]) [
-                    "--label=traefik.http.routers.${name}.middlewares=${
+                    ]) ++ (lib.optionals (middlewares != [ ]) [
+                      "--label=traefik.http.routers.${name}.middlewares=${
                       builtins.concatStringsSep "," middlewares
                     }"
-                  ]) ++ (lib.optionals (enableTraefikTls)
-                    [ "--label=traefik.http.routers.${name}.tls=true" ])
-                else
-                  [ "--label=traefik.enable=false" ])
-                ++ (lib.optionals (networkName != null)
-                  [ "--network=${networkName}" ]);
-            };
-          getConfig = config:
-            builtins.removeAttrs (f config) [
-              "enableTraefik"
-              "enableTraefikTls"
-              "traefikForwardingPort"
-              "entrypoints"
-              "middlewares"
-              "networkName"
+                    ]) ++ (lib.optionals (enableTraefikTls)
+                      [ "--label=traefik.http.routers.${name}.tls=true" ])
+                  else
+                    [ "--label=traefik.enable=false" ])
+                  ++ (lib.optionals (networkName != null)
+                    [ "--network=${networkName}" ]);
+                };
+              getConfig = config:
+                builtins.removeAttrs (f config) [
+                  "enableTraefik"
+                  "enableTraefikTls"
+                  "traefikForwardingPort"
+                  "entrypoints"
+                  "middlewares"
+                  "networkName"
+                ];
+            in
+            { "${name}" = getConfig config; }
+          );
+      in
+      lib.optionalAttrs prefs.enableOciContainers {
+        backend = prefs.ociContainerBackend;
+        containers =
+          mkContainer "postgresql" prefs.ociContainers.enablePostgresql
+            {
+              volumes = [ "/var/data/postgresql:/var/lib/postgresql/data" ];
+              ports = [ "5432:5432" ];
+              environmentFiles = [ "/run/secrets/postgresql-env" ];
+              enableTraefik = false;
+            }
+          // mkContainer "postgresql-init" prefs.ociContainers.enablePostgresql {
+            volumes =
+              [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
+            dependsOn = [ "postgresql" ];
+            environmentFiles = [
+              "/run/secrets/postgresql-env"
+              "/run/secrets/postgresql-backup-env"
             ];
-        in { "${name}" = getConfig config; });
-    in lib.optionalAttrs prefs.enableOciContainers {
-      backend = prefs.ociContainerBackend;
-      containers =
-        mkContainer "postgresql" prefs.ociContainers.enablePostgresql {
-          volumes = [ "/var/data/postgresql:/var/lib/postgresql/data" ];
-          ports = [ "5432:5432" ];
-          environmentFiles = [ "/run/secrets/postgresql-env" ];
-          enableTraefik = false;
-        }
-        // mkContainer "postgresql-init" prefs.ociContainers.enablePostgresql {
-          volumes =
-            [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
-          dependsOn = [ "postgresql" ];
-          environmentFiles = [
-            "/run/secrets/postgresql-env"
-            "/run/secrets/postgresql-backup-env"
-          ];
-          entrypoint = "/my/init-user-db.sh";
-          enableTraefik = false;
-        } // mkContainer "redis" prefs.ociContainers.enableRedis {
-          # https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume
-          extraOptions = [
-            "--mount"
-            "type=bind,source=/run/secrets/redis-conf,target=/etc/redis.conf,readonly"
-          ];
-          ports = [ "6379:6379" ];
-          cmd = [ "redis-server" "/etc/redis.conf" ];
-          enableTraefik = false;
-        } // mkContainer "authelia" prefs.ociContainers.enableAuthelia (let
-          configs = ([ "authelia-conf" ]
-            ++ (lib.optionals prefs.ociContainers.enableAutheliaLocalUsers
-              [ "authelia-local-users-conf" ])
-            ++ (lib.optionals (!prefs.ociContainers.enableAutheliaLocalUsers)
-              [ "authelia-ldap-users-conf" ])
-            ++ (lib.optionals prefs.ociContainers.enablePostgresql
-              [ "authelia-postgres-conf" ])
-            ++ (lib.optionals (!prefs.ociContainers.enablePostgresql)
-              [ "authelia-sqlite-conf" ])
-            ++ (lib.optionals prefs.ociContainers.enableRedis
-              [ "authelia-redis-conf" ]));
-        in {
-          volumes = [ "/var/data/authelia:/config" ];
-          cmd =
-            lib.concatMap (x: [ "--config" ] ++ [ "/myconfig/${x}" ]) configs;
-          environment = {
-            AUTHELIA_DEFAULT_REDIRECTION_URL = "https://${prefs.domain}";
-            AUTHELIA_TOTP_ISSUER = prefs.getFullDomainName "authelia";
-          };
-          extraOptions = (builtins.map (x:
-            "--mount=type=bind,source=/run/secrets/${x},target=/myconfig/${x}")
-            ([ "authelia-users" ] ++ configs)) ++ [
-              "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
+            entrypoint = "/my/init-user-db.sh";
+            enableTraefik = false;
+          } // mkContainer "redis" prefs.ociContainers.enableRedis {
+            # https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume
+            extraOptions = [
+              "--mount"
+              "type=bind,source=/run/secrets/redis-conf,target=/etc/redis.conf,readonly"
+            ];
+            ports = [ "6379:6379" ];
+            cmd = [ "redis-server" "/etc/redis.conf" ];
+            enableTraefik = false;
+          } // mkContainer "authelia" prefs.ociContainers.enableAuthelia (
+            let
+              configs = ([ "authelia-conf" ]
+              ++ (lib.optionals prefs.ociContainers.enableAutheliaLocalUsers
+                [ "authelia-local-users-conf" ])
+              ++ (lib.optionals (!prefs.ociContainers.enableAutheliaLocalUsers)
+                [ "authelia-ldap-users-conf" ])
+              ++ (lib.optionals prefs.ociContainers.enablePostgresql
+                [ "authelia-postgres-conf" ])
+              ++ (lib.optionals (!prefs.ociContainers.enablePostgresql)
+                [ "authelia-sqlite-conf" ])
+              ++ (lib.optionals prefs.ociContainers.enableRedis
+                [ "authelia-redis-conf" ]));
+            in
+            {
+              volumes = [ "/var/data/authelia:/config" ];
+              cmd =
+                lib.concatMap (x: [ "--config" ] ++ [ "/myconfig/${x}" ]) configs;
+              environment = {
+                AUTHELIA_DEFAULT_REDIRECTION_URL = "https://${prefs.domain}";
+                AUTHELIA_TOTP_ISSUER = prefs.getFullDomainName "authelia";
+              };
+              extraOptions = (builtins.map
+                (x:
+                  "--mount=type=bind,source=/run/secrets/${x},target=/myconfig/${x}")
+                ([ "authelia-users" ] ++ configs)) ++ [
+                "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
                 prefs.getFullDomainName "authelia"
               }"
-              "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
-              "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
-              "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
-              "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
-              "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+                "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+                "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+                "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
+                "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
+                "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+              ];
+              ports = [ "9091:9091" ];
+              traefikForwardingPort = 9091;
+            }
+          ) // mkContainer "freeipa" prefs.ociContainers.enableFreeipa {
+            extraOptions = [
+              "-h"
+              "freeipa.home.arpa"
+              "--sysctl"
+              "net.ipv6.conf.lo.disable_ipv6=0"
+              "--label=traefik.http.services.freeipa.loadbalancer.server.scheme=https"
+              "--label=traefik.http.services.freeipa.loadbalancer.serverstransport=insecureSkipVerify@file"
             ];
-          ports = [ "9091:9091" ];
-          traefikForwardingPort = 9091;
-        }) // mkContainer "freeipa" prefs.ociContainers.enableFreeipa {
-          extraOptions = [
-            "-h"
-            "freeipa.home.arpa"
-            "--sysctl"
-            "net.ipv6.conf.lo.disable_ipv6=0"
-            "--label=traefik.http.services.freeipa.loadbalancer.server.scheme=https"
-            "--label=traefik.http.services.freeipa.loadbalancer.serverstransport=insecureSkipVerify@file"
-          ];
-          environment = {
-            IPA_SERVER_INSTALL_OPTS =
-              "--ds-password=The-directory-server-password --admin-password=The-admin-password";
-          };
-          cmd = [
-            "ipa-server-install"
-            "-U"
-            "--no-ntp"
-            "--domain"
-            "freeipa.home.arpa"
-            "--realm=HOME.ARPA"
-          ];
-          volumes = [ "/var/data/freeipa:/data:Z" ]
+            environment = {
+              IPA_SERVER_INSTALL_OPTS =
+                "--ds-password=The-directory-server-password --admin-password=The-admin-password";
+            };
+            cmd = [
+              "ipa-server-install"
+              "-U"
+              "--no-ntp"
+              "--domain"
+              "freeipa.home.arpa"
+              "--realm=HOME.ARPA"
+            ];
+            volumes = [ "/var/data/freeipa:/data:Z" ]
             ++ (if prefs.ociContainerBackend == "docker" then
               [ "/sys/fs/cgroup:/sys/fs/cgroup:ro" ]
             else
               [ ]);
-          traefikForwardingPort = 443;
-        } // mkContainer "cloudbeaver" prefs.ociContainers.enableCloudBeaver {
-          volumes =
-            [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
-          traefikForwardingPort = 8978;
-          middlewares = [ "authelia" ];
-        } // mkContainer "hledger" prefs.ociContainers.enableHledger {
-          dependsOn = [ "hledger-init" ];
-          volumes = [ "/var/data/hledger:/data" ];
-          traefikForwardingPort = 5000;
-          middlewares = [ "authelia-basic" ];
-          environment = {
-            "HLEDGER_BASE_URL" = "https://${prefs.getFullDomainName "hledger"}";
-            "HLEDGER_CAPABILITIES" = "view,add,manage";
-          };
-        } // mkContainer "hledger-init" prefs.ociContainers.enableHledger {
-          volumes = [ "/var/data/hledger:/data" ];
-          cmd = [
-            "bash"
-            "-c"
-            "sudo chown -R $(id -u) /data; echo . | hledger add -f /data/hledger.journal --no-new-accounts"
-          ];
-          enableTraefik = false;
-        } // mkContainer "searx" prefs.ociContainers.enableSearx {
-          environment = {
-            # Generate a new searx configuration, otherwise searx will not auto use the generated config.
-            "SEARX_SETTINGS_PATH" = "/searx.settings.yml";
-            # Currently does not work, https://github.com/searxng/searxng/blob/332e3a2a09d6a708ea2c17d2e731335b051c45aa/dockerfiles/docker-entrypoint.sh#L71
-            # assumes the default instance name is searx, which is not true for searxng.
-            "INSTANCE_NAME" = "searx@${prefs.domainPrefix}";
-            "AUTOCOMPLETE" = "duckduckgo";
-            "BASE_URL" = "https://${prefs.getFullDomainName "searx"}";
-          };
-          volumes = [ "/var/data/searx:/etc/searx" ];
-          traefikForwardingPort = 8080;
-          # middlewares = [ "authelia" ];
-        } // mkContainer "rss-bridge" prefs.ociContainers.enableRssBridge {
-          extraOptions = [
-            "--mount"
-            "type=bind,source=/run/secrets/rss-bridge-whitelist,target=/app/whitelist.txt"
-          ];
-          traefikForwardingPort = 80;
-        } // mkContainer "wallabag" prefs.ociContainers.enableWallabag {
-          dependsOn = [ "postgresql" ];
-          environment = {
-            "SYMFONY__ENV__DOMAIN_NAME" =
-              "https://${prefs.getFullDomainName "wallabag"}";
-          };
-          volumes = [
-            "/var/data/wallabag/data:/var/www/wallabag/data"
-            "/var/data/wallabag/images:/var/www/wallabag/web/assets/images"
-          ];
-          environmentFiles = [ "/run/secrets/wallabag-env" ];
-        } // mkContainer "recipes" prefs.ociContainers.enableRecipes {
-          volumes = [
-            "/var/data/recipes/staticfiles:/opt/recipes/staticfiles"
-            "/var/data/recipes/mediafiles:/opt/recipes/mediafiles"
-          ];
-          dependsOn = [ "postgresql" ];
-          environmentFiles = [ "/run/secrets/recipes-env" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "wger" prefs.ociContainers.enableWger {
-          volumes = [ "/var/data/wger/media:/home/wger/media" ];
-          dependsOn = [ "postgresql" ];
-          environment = {
-            "SITE_URL" = "https://${prefs.getFullDomainName "wger"}";
-          };
-          environmentFiles = [ "/run/secrets/wger-env" ];
-          traefikForwardingPort = 80;
-        } // mkContainer "n8n" prefs.ociContainers.enableN8n {
-          volumes = [ "/var/data/n8n:/home/node/.n8n" ];
-          dependsOn = [ "postgresql" ];
-          middlewares = [ "authelia" ];
-          environmentFiles = [ "/run/secrets/n8n-env" ];
-          traefikForwardingPort = 5678;
-        } // mkContainer "wikijs" prefs.ociContainers.enableWikijs {
-          environmentFiles = [ "/run/secrets/wikijs-env" ];
-          traefikForwardingPort = 3000;
-        } // mkContainer "grocy" prefs.ociContainers.enableGrocy {
-          volumes = [ "/var/data/grocy:/config" ];
-          environment = {
-            "PUID" = "${builtins.toString prefs.ownerUid}";
-            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-            "TZ" = "Asia/Shanghai";
-            "GROCY_CURRENCY" = "CNY";
-            "GROCY_MODE" = "production";
-          };
-          traefikForwardingPort = 80;
-        } // mkContainer "calibre-web" prefs.ociContainers.enableCalibreWeb {
-          volumes = [
-            "/var/data/calibre-web:/config"
-            "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
-          ];
-          extraOptions = [ "--label=domainprefix=calibre" ];
-          environment = {
-            "PUID" = "${builtins.toString prefs.ownerUid}";
-            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-            "TZ" = "Asia/Shanghai";
-            "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
-          };
-          traefikForwardingPort = 8083;
-        } // mkContainer "dokuwiki" prefs.ociContainers.enableDokuwiki {
-          volumes = [
-            "/var/data/dokuwiki:/config"
-            "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
-          ];
-          environment = {
-            "PUID" = "${builtins.toString prefs.ownerUid}";
-            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-            "TZ" = "Asia/Shanghai";
-            "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
-          };
-          traefikForwardingPort = 80;
-        } // mkContainer "trilium" prefs.ociContainers.enableTrilium {
-          volumes = [ "/var/data/trilium:/home/node/trilium-data" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
-          dependsOn = [ "postgresql" ];
-          environmentFiles = [ "/run/secrets/xwiki-env" ];
-          volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "huginn" prefs.ociContainers.enableHuginn {
-          dependsOn = [ "postgresql" ];
-          environmentFiles = [ "/run/secrets/huginn-env" ];
-          traefikForwardingPort = 3000;
-          environment = {
-            "TIMEZONE" = "Beijing";
-            "DOMAIN" = "https://${prefs.getFullDomainName "huginn"}";
-          };
-        } // mkContainer "tiddlywiki" prefs.ociContainers.enableTiddlyWiki {
-          volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
-          extraOptions = [
-            "--user=${builtins.toString prefs.ownerUid}:${
+            traefikForwardingPort = 443;
+          } // mkContainer "cloudbeaver" prefs.ociContainers.enableCloudBeaver {
+            volumes =
+              [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
+            traefikForwardingPort = 8978;
+            middlewares = [ "authelia" ];
+          } // mkContainer "hledger" prefs.ociContainers.enableHledger {
+            dependsOn = [ "hledger-init" ];
+            volumes = [ "/var/data/hledger:/data" ];
+            traefikForwardingPort = 5000;
+            middlewares = [ "authelia-basic" ];
+            environment = {
+              "HLEDGER_BASE_URL" = "https://${prefs.getFullDomainName "hledger"}";
+              "HLEDGER_CAPABILITIES" = "view,add,manage";
+            };
+          } // mkContainer "hledger-init" prefs.ociContainers.enableHledger {
+            volumes = [ "/var/data/hledger:/data" ];
+            cmd = [
+              "bash"
+              "-c"
+              "sudo chown -R $(id -u) /data; echo . | hledger add -f /data/hledger.journal --no-new-accounts"
+            ];
+            enableTraefik = false;
+          } // mkContainer "searx" prefs.ociContainers.enableSearx {
+            environment = {
+              # Generate a new searx configuration, otherwise searx will not auto use the generated config.
+              "SEARX_SETTINGS_PATH" = "/searx.settings.yml";
+              # Currently does not work, https://github.com/searxng/searxng/blob/332e3a2a09d6a708ea2c17d2e731335b051c45aa/dockerfiles/docker-entrypoint.sh#L71
+              # assumes the default instance name is searx, which is not true for searxng.
+              "INSTANCE_NAME" = "searx@${prefs.domainPrefix}";
+              "AUTOCOMPLETE" = "duckduckgo";
+              "BASE_URL" = "https://${prefs.getFullDomainName "searx"}";
+            };
+            volumes = [ "/var/data/searx:/etc/searx" ];
+            traefikForwardingPort = 8080;
+            # middlewares = [ "authelia" ];
+          } // mkContainer "rss-bridge" prefs.ociContainers.enableRssBridge {
+            extraOptions = [
+              "--mount"
+              "type=bind,source=/run/secrets/rss-bridge-whitelist,target=/app/whitelist.txt"
+            ];
+            traefikForwardingPort = 80;
+          } // mkContainer "wallabag" prefs.ociContainers.enableWallabag {
+            dependsOn = [ "postgresql" ];
+            environment = {
+              "SYMFONY__ENV__DOMAIN_NAME" =
+                "https://${prefs.getFullDomainName "wallabag"}";
+            };
+            volumes = [
+              "/var/data/wallabag/data:/var/www/wallabag/data"
+              "/var/data/wallabag/images:/var/www/wallabag/web/assets/images"
+            ];
+            environmentFiles = [ "/run/secrets/wallabag-env" ];
+          } // mkContainer "recipes" prefs.ociContainers.enableRecipes {
+            volumes = [
+              "/var/data/recipes/staticfiles:/opt/recipes/staticfiles"
+              "/var/data/recipes/mediafiles:/opt/recipes/mediafiles"
+            ];
+            dependsOn = [ "postgresql" ];
+            environmentFiles = [ "/run/secrets/recipes-env" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "wger" prefs.ociContainers.enableWger {
+            volumes = [ "/var/data/wger/media:/home/wger/media" ];
+            dependsOn = [ "postgresql" ];
+            environment = {
+              "SITE_URL" = "https://${prefs.getFullDomainName "wger"}";
+            };
+            environmentFiles = [ "/run/secrets/wger-env" ];
+            traefikForwardingPort = 80;
+          } // mkContainer "n8n" prefs.ociContainers.enableN8n {
+            volumes = [ "/var/data/n8n:/home/node/.n8n" ];
+            dependsOn = [ "postgresql" ];
+            middlewares = [ "authelia" ];
+            environmentFiles = [ "/run/secrets/n8n-env" ];
+            traefikForwardingPort = 5678;
+          } // mkContainer "wikijs" prefs.ociContainers.enableWikijs {
+            environmentFiles = [ "/run/secrets/wikijs-env" ];
+            traefikForwardingPort = 3000;
+          } // mkContainer "grocy" prefs.ociContainers.enableGrocy {
+            volumes = [ "/var/data/grocy:/config" ];
+            environment = {
+              "PUID" = "${builtins.toString prefs.ownerUid}";
+              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+              "TZ" = "Asia/Shanghai";
+              "GROCY_CURRENCY" = "CNY";
+              "GROCY_MODE" = "production";
+            };
+            traefikForwardingPort = 80;
+          } // mkContainer "calibre-web" prefs.ociContainers.enableCalibreWeb {
+            volumes = [
+              "/var/data/calibre-web:/config"
+              "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
+            ];
+            extraOptions = [ "--label=domainprefix=calibre" ];
+            environment = {
+              "PUID" = "${builtins.toString prefs.ownerUid}";
+              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+              "TZ" = "Asia/Shanghai";
+              "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
+            };
+            traefikForwardingPort = 8083;
+          } // mkContainer "dokuwiki" prefs.ociContainers.enableDokuwiki {
+            volumes = [
+              "/var/data/dokuwiki:/config"
+              "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
+            ];
+            environment = {
+              "PUID" = "${builtins.toString prefs.ownerUid}";
+              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+              "TZ" = "Asia/Shanghai";
+              "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
+            };
+            traefikForwardingPort = 80;
+          } // mkContainer "trilium" prefs.ociContainers.enableTrilium {
+            volumes = [ "/var/data/trilium:/home/node/trilium-data" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
+            dependsOn = [ "postgresql" ];
+            environmentFiles = [ "/run/secrets/xwiki-env" ];
+            volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "huginn" prefs.ociContainers.enableHuginn {
+            dependsOn = [ "postgresql" ];
+            environmentFiles = [ "/run/secrets/huginn-env" ];
+            traefikForwardingPort = 3000;
+            environment = {
+              "TIMEZONE" = "Beijing";
+              "DOMAIN" = "https://${prefs.getFullDomainName "huginn"}";
+            };
+          } // mkContainer "tiddlywiki" prefs.ociContainers.enableTiddlyWiki {
+            volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
+            extraOptions = [
+              "--user=${builtins.toString prefs.ownerUid}:${
               builtins.toString prefs.ownerGroupGid
             }"
-          ];
-          cmd = [ "--listen" "host=0.0.0.0" ];
-          middlewares = [ "authelia" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "gitea" prefs.ociContainers.enableGitea {
-          volumes = [
-            "/var/data/gitea:/data"
-            "/etc/timezone:/etc/timezone:ro"
-            "/etc/localtime:/etc/localtime:ro"
-          ];
-          dependsOn = [ "postgresql" ];
-          environment = {
-            "PUID" = "${builtins.toString prefs.ownerUid}";
-            "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-            "USER_UID" = "${builtins.toString prefs.ownerUid}";
-            "USER_GID" = "${builtins.toString prefs.ownerGroupGid}";
-            "TZ" = "Asia/Shanghai";
-            "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
-            "GITEA__server__ROOT_URL" =
-              "https://${prefs.getFullDomainName "gitea"}";
-          };
-          environmentFiles = [ "/run/secrets/gitea-env" ];
-          traefikForwardingPort = 3000;
-        } // mkContainer "vaultwarden" prefs.ociContainers.enableVaultwarden {
-          dependsOn = [ "postgresql" ];
-          volumes = [ "/var/data/vaultwarden:/data" ];
-          environment = {
-            "DOMAIN" = "https://${prefs.getFullDomainName "vaultwarden"}";
-          };
-          environmentFiles = [ "/run/secrets/vaultwarden-env" ];
-          traefikForwardingPort = 80;
-        } // mkContainer "pleroma" prefs.ociContainers.enablePleroma {
-          dependsOn = [ "postgresql" ];
-          volumes = [ "/var/data/pleroma:/var/lib/pleroma" ];
-          environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
-          environmentFiles = [ "/run/secrets/pleroma-env" ];
-          traefikForwardingPort = 4000;
-        } // mkContainer "livebook" prefs.ociContainers.enableLivebook {
-          volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
-          extraOptions = [
-            "--user=${builtins.toString prefs.ownerUid}:${
+            ];
+            cmd = [ "--listen" "host=0.0.0.0" ];
+            middlewares = [ "authelia" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "gitea" prefs.ociContainers.enableGitea {
+            volumes = [
+              "/var/data/gitea:/data"
+              "/etc/timezone:/etc/timezone:ro"
+              "/etc/localtime:/etc/localtime:ro"
+            ];
+            dependsOn = [ "postgresql" ];
+            environment = {
+              "PUID" = "${builtins.toString prefs.ownerUid}";
+              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+              "USER_UID" = "${builtins.toString prefs.ownerUid}";
+              "USER_GID" = "${builtins.toString prefs.ownerGroupGid}";
+              "TZ" = "Asia/Shanghai";
+              "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
+              "GITEA__server__ROOT_URL" =
+                "https://${prefs.getFullDomainName "gitea"}";
+            };
+            environmentFiles = [ "/run/secrets/gitea-env" ];
+            traefikForwardingPort = 3000;
+          } // mkContainer "vaultwarden" prefs.ociContainers.enableVaultwarden {
+            dependsOn = [ "postgresql" ];
+            volumes = [ "/var/data/vaultwarden:/data" ];
+            environment = {
+              "DOMAIN" = "https://${prefs.getFullDomainName "vaultwarden"}";
+            };
+            environmentFiles = [ "/run/secrets/vaultwarden-env" ];
+            traefikForwardingPort = 80;
+          } // mkContainer "pleroma" prefs.ociContainers.enablePleroma {
+            dependsOn = [ "postgresql" ];
+            volumes = [ "/var/data/pleroma:/var/lib/pleroma" ];
+            environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
+            environmentFiles = [ "/run/secrets/pleroma-env" ];
+            traefikForwardingPort = 4000;
+          } // mkContainer "livebook" prefs.ociContainers.enableLivebook {
+            volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
+            extraOptions = [
+              "--user=${builtins.toString prefs.ownerUid}:${
               builtins.toString prefs.ownerGroupGid
             }"
-          ];
-          environmentFiles = [ "/run/secrets/livebook-env" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "joplin" prefs.ociContainers.enableJoplin {
-          dependsOn = [ "postgresql" ];
-          environment = {
-            "APP_BASE_URL" = "https://${prefs.getFullDomainName "joplin"}";
-          };
-          environmentFiles = [ "/run/secrets/joplin-env" ];
-          traefikForwardingPort = 22300;
-        } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
-          dependsOn = [ "postgresql" ];
-          environment = {
-            "BASE_URL" = "https://${prefs.getFullDomainName "miniflux"}";
-          };
-          environmentFiles = [ "/run/secrets/miniflux-env" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
-          # Need to initialize the database manually,
-          # cat $(systemctl cat docker-nextcloud.service | awk -F= '/ExecStart=/ {print $2}') | grep -v nextcloud-data
-          # see also https://help.nextcloud.com/t/the-username-is-already-being-used-after-reinstalling-nextcloud-version-20-0-7-1/108219/3
-          dependsOn =
-            lib.optionals prefs.ociContainers.enablePostgresql [ "postgresql" ]
-            ++ lib.optionals prefs.ociContainers.enableRedis [ "redis" ];
-          # TODO: We need to periodically run `./occ files:scan --all` to keep
-          # nextcloud database and the underlying directory tree structure in synchronization.
-          # see https://github.com/nextcloud/server/issues/17550
-          volumes = [
-            "/var/data/nextcloud:/var/www/html"
-            "${prefs.nextcloudContainerDataDirectory}:/var/www/html/data"
-          ];
-          environment = {
-            "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
+            ];
+            environmentFiles = [ "/run/secrets/livebook-env" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "joplin" prefs.ociContainers.enableJoplin {
+            dependsOn = [ "postgresql" ];
+            environment = {
+              "APP_BASE_URL" = "https://${prefs.getFullDomainName "joplin"}";
+            };
+            environmentFiles = [ "/run/secrets/joplin-env" ];
+            traefikForwardingPort = 22300;
+          } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
+            dependsOn = [ "postgresql" ];
+            environment = {
+              "BASE_URL" = "https://${prefs.getFullDomainName "miniflux"}";
+            };
+            environmentFiles = [ "/run/secrets/miniflux-env" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
+            # Need to initialize the database manually,
+            # cat $(systemctl cat docker-nextcloud.service | awk -F= '/ExecStart=/ {print $2}') | grep -v nextcloud-data
+            # see also https://help.nextcloud.com/t/the-username-is-already-being-used-after-reinstalling-nextcloud-version-20-0-7-1/108219/3
+            dependsOn =
+              lib.optionals prefs.ociContainers.enablePostgresql [ "postgresql" ]
+              ++ lib.optionals prefs.ociContainers.enableRedis [ "redis" ];
+            # TODO: We need to periodically run `./occ files:scan --all` to keep
+            # nextcloud database and the underlying directory tree structure in synchronization.
+            # see https://github.com/nextcloud/server/issues/17550
+            volumes = [
+              "/var/data/nextcloud:/var/www/html"
+              "${prefs.nextcloudContainerDataDirectory}:/var/www/html/data"
+            ];
+            environment = {
+              "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
               (prefs.getFullDomainNames "nextcloud")}";
-          };
-          environmentFiles = [ "/run/secrets/nextcloud-env" ]
+            };
+            environmentFiles = [ "/run/secrets/nextcloud-env" ]
             ++ (if prefs.ociContainers.enablePostgresql then
               [ "/run/secrets/nextcloud-postgres-env" ]
             else
               [ "/run/secrets/nextcloud-sqlite-env" ])
             ++ (lib.optionals prefs.ociContainers.enableRedis
               [ "/run/secrets/nextcloud-redis-env" ]);
-          traefikForwardingPort = 80;
-        } // mkContainer "sftpgo" prefs.ociContainers.enableSftpgo {
-          extraOptions = [
-            "--user=${builtins.toString prefs.ownerUid}:${
+            traefikForwardingPort = 80;
+          } // mkContainer "sftpgo" prefs.ociContainers.enableSftpgo {
+            extraOptions = [
+              "--user=${builtins.toString prefs.ownerUid}:${
               builtins.toString prefs.ownerGroupGid
             }"
-            "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
-            "--label=traefik.http.routers.sftpgo-webdav.middlewares=cors@file"
-            "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
-            "--label=traefik.http.routers.sftpgo-webdav.rule=${
+              "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
+              "--label=traefik.http.routers.sftpgo-webdav.middlewares=cors@file"
+              "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
+              "--label=traefik.http.routers.sftpgo-webdav.rule=${
               getTraefikRuleByDomainPrefix "webdav"
             }"
-            "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
-          ];
-          ports = [ "2122:2022" ];
-          volumes = [
-            "/var/data/sftpgo/config:/var/lib/sftpgo"
-            "/var/data/sftpgo/data:/srv/sftpgo/data"
-            "${prefs.home}:/srv/sftpgo/data/${prefs.owner}"
-            "${prefs.syncFolder}:/srv/sftpgo/data/sync"
-            "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
-            "${prefs.syncFolder}/docs/org-mode:/srv/sftpgo/data/orgmode"
-            "/var/data/sftpgo/backups:/srv/sftpgo/backups"
-          ];
-          environment = {
-            "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
-            "SFTPGO_WEBDAVD__CORS__ENABLED" = "true";
-            "SFTPGO_WEBDAVD__CORS__ALLOWED_ORIGINS" = "*.${prefs.mainDomain}";
-            # Not working for now. See https://github.com/rs/cors/pull/120
-            "SFTPGO_WEBDAVD__CORS__ALLOWED_METHODS" = "*";
-            "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
-            # This is in the container world. It is presumably safe to do this.
-            "SFTPGO_COMMON__PROXY_ALLOWED" = "0.0.0.0/0";
-          };
-          traefikForwardingPort = 8080;
-        } // mkContainer "filestash" prefs.ociContainers.enableFilestash {
-          environment = {
-            APPLICATION_URL = prefs.getFullDomainName "filestash";
-          };
-          volumes = [ "/var/data/filestash:/app/data/state" ];
-          traefikForwardingPort = 8334;
-        } // mkContainer "vault" prefs.ociContainers.enableVault {
-          extraOptions = [ "--cap-add=IPC_LOCK" ];
-          cmd = [ "server" ];
-          environment = {
-            VAULT_API_ADDR = "https://${prefs.getFullDomainName "vault"}";
-          };
-          volumes = [
-            "/var/data/vault/config:/vault/config"
-            "/var/data/vault/logs:/vault/logs"
-            "/var/data/vault/file:/vault/file"
-          ];
-          environmentFiles = [ "/run/secrets/vault-env" ];
-          traefikForwardingPort = 8200;
-        } // mkContainer "homer" prefs.ociContainers.enableHomer {
-          volumes = [ "/var/data/homer:/www/assets" ];
-          traefikForwardingPort = 8080;
-          extraOptions = let
-            config = toYAML "homer-config" {
-              subtitle = "Home";
-              title = "Dashboard";
-              theme = "default";
-              colors = {
-                dark = {
-                  background = "#131313";
-                  card-background = "#2b2b2b";
-                  card-shadow = "rgba(0, 0, 0, 0.4)";
-                  highlight-hover = "#5a95f5";
-                  highlight-primary = "#3367d6";
-                  highlight-secondary = "#4285f4";
-                  link-hover = "#ffdd57";
-                  text = "#eaeaea";
-                  text-header = "#ffffff";
-                  text-subtitle = "#f5f5f5";
-                  text-title = "#fafafa";
-                };
-                light = {
-                  background = "#f5f5f5";
-                  card-background = "#ffffff";
-                  card-shadow = "rgba(0, 0, 0, 0.1)";
-                  highlight-hover = "#5a95f5";
-                  highlight-primary = "#3367d6";
-                  highlight-secondary = "#4285f4";
-                  link-hover = "#363636";
-                  text = "#363636";
-                  text-header = "#ffffff";
-                  text-subtitle = "#424242";
-                  text-title = "#303030";
-                };
-              };
-              footer = false;
-              header = false;
-              icon = "fas fa-skull-crossbones";
-              links = [ ];
-              services = [{
-                name = "Applications";
-                icon = "fas fa-cloud";
-                items =
-                  builtins.map (attrs: builtins.removeAttrs attrs [ "enable" ])
-                  (builtins.filter (x: x.enable or true) [
-                    {
-                      enable = prefs.ociContainers.enableFreeipa;
-                      name = "freeipa";
-                      subtitle = "account management";
-                      tag = "auth";
-                      url = "https://${prefs.getFullDomainName "freeipa"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableCloudBeaver;
-                      name = "cloud beaver";
-                      subtitle = "database management";
-                      tag = "database";
-                      url = "https://${prefs.getFullDomainName "cloudbeaver"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableAuthelia;
-                      name = "authelia";
-                      subtitle = "authentication and authorization";
-                      tag = "auth";
-                      url = "https://${prefs.getFullDomainName "authelia"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableHledger;
-                      name = "hledger";
-                      subtitle = "online ledger";
-                      tag = "house-keeping";
-                      url = "https://${prefs.getFullDomainName "hledger"}";
-                    }
-                    {
-                      enable = prefs.enableSmosServer;
-                      name = "smos";
-                      subtitle = "self-management";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "smos"}";
-                    }
-                    {
-                      enable = prefs.enableWstunnel;
-                      name = "wstunnel";
-                      subtitle = "websocket tunnel";
-                      tag = "network";
-                      url = "https://${prefs.getFullDomainName "wstunnel"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableSearx;
-                      name = "searx";
-                      subtitle = "search engine";
-                      tag = "search";
-                      url = "https://${prefs.getFullDomainName "searx"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableRssBridge;
-                      name = "rss-bridge";
-                      subtitle = "rss feeds generator";
-                      tag = "reading";
-                      url = "https://${prefs.getFullDomainName "rss-bridge"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableWallabag;
-                      name = "wallabag";
-                      subtitle = "read it later";
-                      tag = "reading";
-                      url = "https://${prefs.getFullDomainName "wallabag"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableCodeServer
-                        || prefs.enableCodeServer;
-                      name = "code server";
-                      subtitle = "text editing";
-                      tag = "coding";
-                      url = "https://${prefs.getFullDomainName "codeserver"}";
-                    }
-                    {
-                      enable = prefs.enableSyncthing;
-                      name = "syncthing";
-                      subtitle = "file synchronization";
-                      tag = "synchronization";
-                      url = "https://${prefs.getFullDomainName "syncthing"}";
-                    }
-                    {
-                      enable = prefs.enableGrafana;
-                      name = "grafana";
-                      subtitle = "monitoring dashboard";
-                      tag = "operation";
-                      url = "https://${prefs.getFullDomainName "grafana"}";
-                    }
-                    {
-                      enable = prefs.enableJupyter;
-                      name = "jupyter";
-                      subtitle = "jupyter notebook";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "jupyter"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableRecipes;
-                      name = "recipes";
-                      subtitle = "cooking recipes";
-                      tag = "house-keeping";
-                      url = "https://${prefs.getFullDomainName "recipes"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableWger;
-                      name = "wger";
-                      subtitle = "fitness tracking";
-                      tag = "fitness";
-                      url = "https://${prefs.getFullDomainName "wger"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableEtesync;
-                      name = "etesync";
-                      subtitle = "contacts, calandar and tasks";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "etesync-pim"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableEtesyncDav;
-                      name = "etesync dav";
-                      subtitle = "etesync dav bridge";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "etesync-dav"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableEtesync;
-                      name = "etesync notes";
-                      subtitle = "note-taking";
-                      tag = "productivity";
-                      url =
-                        "https://${prefs.getFullDomainName "etesync-notes"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableN8n;
-                      name = "n8n";
-                      subtitle = "workflow automation";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "n8n"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableGitea;
-                      name = "gitea";
-                      subtitle = "version control";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "gitea"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableWikijs;
-                      name = "wikijs";
-                      subtitle = "personal wiki";
-                      tag = "documentation";
-                      url = "https://${prefs.getFullDomainName "wikijs"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableXwiki;
-                      name = "xwiki";
-                      subtitle = "personal wiki";
-                      tag = "documentation";
-                      url = "https://${prefs.getFullDomainName "xwiki"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableHuginn;
-                      name = "huginn";
-                      subtitle = "automation agents";
-                      tag = "automation";
-                      url = "https://${prefs.getFullDomainName "huginn"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableTiddlyWiki;
-                      name = "tiddlywiki";
-                      subtitle = "personal wiki";
-                      tag = "documentation";
-                      url = "https://${prefs.getFullDomainName "tiddlywiki"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableGrocy;
-                      name = "grocy";
-                      subtitle = "ERP for household";
-                      tag = "house-keeping";
-                      url = "https://${prefs.getFullDomainName "grocy"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableCalibreWeb;
-                      name = "calibre";
-                      subtitle = "digital books";
-                      tag = "reading";
-                      url = "https://${prefs.getFullDomainName "calibre"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableDokuwiki;
-                      name = "dokuwiki";
-                      subtitle = "personal wiki";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "dokuwiki"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableTrilium;
-                      name = "trilium";
-                      subtitle = "note-taking";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "trilium"}";
-                    }
-                    {
-                      name = "traefik";
-                      subtitle = "traefik dashboard";
-                      tag = "operations";
-                      url = "https://${
+              "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
+            ];
+            ports = [ "2122:2022" ];
+            volumes = [
+              "/var/data/sftpgo/config:/var/lib/sftpgo"
+              "/var/data/sftpgo/data:/srv/sftpgo/data"
+              "${prefs.home}:/srv/sftpgo/data/${prefs.owner}"
+              "${prefs.syncFolder}:/srv/sftpgo/data/sync"
+              "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
+              "${prefs.syncFolder}/docs/org-mode:/srv/sftpgo/data/orgmode"
+              "/var/data/sftpgo/backups:/srv/sftpgo/backups"
+            ];
+            environment = {
+              "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
+              "SFTPGO_WEBDAVD__CORS__ENABLED" = "true";
+              "SFTPGO_WEBDAVD__CORS__ALLOWED_ORIGINS" = "*.${prefs.mainDomain}";
+              # Not working for now. See https://github.com/rs/cors/pull/120
+              "SFTPGO_WEBDAVD__CORS__ALLOWED_METHODS" = "*";
+              "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
+              # This is in the container world. It is presumably safe to do this.
+              "SFTPGO_COMMON__PROXY_ALLOWED" = "0.0.0.0/0";
+            };
+            traefikForwardingPort = 8080;
+          } // mkContainer "filestash" prefs.ociContainers.enableFilestash {
+            environment = {
+              APPLICATION_URL = prefs.getFullDomainName "filestash";
+            };
+            volumes = [ "/var/data/filestash:/app/data/state" ];
+            traefikForwardingPort = 8334;
+          } // mkContainer "vault" prefs.ociContainers.enableVault {
+            extraOptions = [ "--cap-add=IPC_LOCK" ];
+            cmd = [ "server" ];
+            environment = {
+              VAULT_API_ADDR = "https://${prefs.getFullDomainName "vault"}";
+            };
+            volumes = [
+              "/var/data/vault/config:/vault/config"
+              "/var/data/vault/logs:/vault/logs"
+              "/var/data/vault/file:/vault/file"
+            ];
+            environmentFiles = [ "/run/secrets/vault-env" ];
+            traefikForwardingPort = 8200;
+          } // mkContainer "homer" prefs.ociContainers.enableHomer {
+            volumes = [ "/var/data/homer:/www/assets" ];
+            traefikForwardingPort = 8080;
+            extraOptions =
+              let
+                config = toYAML "homer-config" {
+                  subtitle = "Home";
+                  title = "Dashboard";
+                  theme = "default";
+                  colors = {
+                    dark = {
+                      background = "#131313";
+                      card-background = "#2b2b2b";
+                      card-shadow = "rgba(0, 0, 0, 0.4)";
+                      highlight-hover = "#5a95f5";
+                      highlight-primary = "#3367d6";
+                      highlight-secondary = "#4285f4";
+                      link-hover = "#ffdd57";
+                      text = "#eaeaea";
+                      text-header = "#ffffff";
+                      text-subtitle = "#f5f5f5";
+                      text-title = "#fafafa";
+                    };
+                    light = {
+                      background = "#f5f5f5";
+                      card-background = "#ffffff";
+                      card-shadow = "rgba(0, 0, 0, 0.1)";
+                      highlight-hover = "#5a95f5";
+                      highlight-primary = "#3367d6";
+                      highlight-secondary = "#4285f4";
+                      link-hover = "#363636";
+                      text = "#363636";
+                      text-header = "#ffffff";
+                      text-subtitle = "#424242";
+                      text-title = "#303030";
+                    };
+                  };
+                  footer = false;
+                  header = false;
+                  icon = "fas fa-skull-crossbones";
+                  links = [ ];
+                  services = [{
+                    name = "Applications";
+                    icon = "fas fa-cloud";
+                    items =
+                      builtins.map (attrs: builtins.removeAttrs attrs [ "enable" ])
+                        (builtins.filter (x: x.enable or true) [
+                          {
+                            enable = prefs.ociContainers.enableFreeipa;
+                            name = "freeipa";
+                            subtitle = "account management";
+                            tag = "auth";
+                            url = "https://${prefs.getFullDomainName "freeipa"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableCloudBeaver;
+                            name = "cloud beaver";
+                            subtitle = "database management";
+                            tag = "database";
+                            url = "https://${prefs.getFullDomainName "cloudbeaver"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableAuthelia;
+                            name = "authelia";
+                            subtitle = "authentication and authorization";
+                            tag = "auth";
+                            url = "https://${prefs.getFullDomainName "authelia"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableHledger;
+                            name = "hledger";
+                            subtitle = "online ledger";
+                            tag = "house-keeping";
+                            url = "https://${prefs.getFullDomainName "hledger"}";
+                          }
+                          {
+                            enable = prefs.enableSmosServer;
+                            name = "smos";
+                            subtitle = "self-management";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "smos"}";
+                          }
+                          {
+                            enable = prefs.enableWstunnel;
+                            name = "wstunnel";
+                            subtitle = "websocket tunnel";
+                            tag = "network";
+                            url = "https://${prefs.getFullDomainName "wstunnel"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableSearx;
+                            name = "searx";
+                            subtitle = "search engine";
+                            tag = "search";
+                            url = "https://${prefs.getFullDomainName "searx"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableRssBridge;
+                            name = "rss-bridge";
+                            subtitle = "rss feeds generator";
+                            tag = "reading";
+                            url = "https://${prefs.getFullDomainName "rss-bridge"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableWallabag;
+                            name = "wallabag";
+                            subtitle = "read it later";
+                            tag = "reading";
+                            url = "https://${prefs.getFullDomainName "wallabag"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableCodeServer
+                            || prefs.enableCodeServer;
+                            name = "code server";
+                            subtitle = "text editing";
+                            tag = "coding";
+                            url = "https://${prefs.getFullDomainName "codeserver"}";
+                          }
+                          {
+                            enable = prefs.enableSyncthing;
+                            name = "syncthing";
+                            subtitle = "file synchronization";
+                            tag = "synchronization";
+                            url = "https://${prefs.getFullDomainName "syncthing"}";
+                          }
+                          {
+                            enable = prefs.enableGrafana;
+                            name = "grafana";
+                            subtitle = "monitoring dashboard";
+                            tag = "operation";
+                            url = "https://${prefs.getFullDomainName "grafana"}";
+                          }
+                          {
+                            enable = prefs.enableJupyter;
+                            name = "jupyter";
+                            subtitle = "jupyter notebook";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "jupyter"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableRecipes;
+                            name = "recipes";
+                            subtitle = "cooking recipes";
+                            tag = "house-keeping";
+                            url = "https://${prefs.getFullDomainName "recipes"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableWger;
+                            name = "wger";
+                            subtitle = "fitness tracking";
+                            tag = "fitness";
+                            url = "https://${prefs.getFullDomainName "wger"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableEtesync;
+                            name = "etesync";
+                            subtitle = "contacts, calandar and tasks";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "etesync-pim"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableEtesyncDav;
+                            name = "etesync dav";
+                            subtitle = "etesync dav bridge";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "etesync-dav"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableEtesync;
+                            name = "etesync notes";
+                            subtitle = "note-taking";
+                            tag = "productivity";
+                            url =
+                              "https://${prefs.getFullDomainName "etesync-notes"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableN8n;
+                            name = "n8n";
+                            subtitle = "workflow automation";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "n8n"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableGitea;
+                            name = "gitea";
+                            subtitle = "version control";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "gitea"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableWikijs;
+                            name = "wikijs";
+                            subtitle = "personal wiki";
+                            tag = "documentation";
+                            url = "https://${prefs.getFullDomainName "wikijs"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableXwiki;
+                            name = "xwiki";
+                            subtitle = "personal wiki";
+                            tag = "documentation";
+                            url = "https://${prefs.getFullDomainName "xwiki"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableHuginn;
+                            name = "huginn";
+                            subtitle = "automation agents";
+                            tag = "automation";
+                            url = "https://${prefs.getFullDomainName "huginn"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableTiddlyWiki;
+                            name = "tiddlywiki";
+                            subtitle = "personal wiki";
+                            tag = "documentation";
+                            url = "https://${prefs.getFullDomainName "tiddlywiki"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableGrocy;
+                            name = "grocy";
+                            subtitle = "ERP for household";
+                            tag = "house-keeping";
+                            url = "https://${prefs.getFullDomainName "grocy"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableCalibreWeb;
+                            name = "calibre";
+                            subtitle = "digital books";
+                            tag = "reading";
+                            url = "https://${prefs.getFullDomainName "calibre"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableDokuwiki;
+                            name = "dokuwiki";
+                            subtitle = "personal wiki";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "dokuwiki"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableTrilium;
+                            name = "trilium";
+                            subtitle = "note-taking";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "trilium"}";
+                          }
+                          {
+                            name = "traefik";
+                            subtitle = "traefik dashboard";
+                            tag = "operations";
+                            url = "https://${
                           prefs.getFullDomainName "traefik"
                         }/dashboard/";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableVaultwarden;
-                      name = "vaultwarden";
-                      subtitle = "password management";
-                      tag = "security";
-                      url = "https://${prefs.getFullDomainName "vaultwarden"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableVault;
-                      name = "vault";
-                      subtitle = "secrets management";
-                      tag = "security";
-                      url = "https://${prefs.getFullDomainName "vault"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enablePleroma;
-                      name = "pleroma";
-                      subtitle = "microblogging";
-                      tag = "social";
-                      url = "https://${prefs.getFullDomainName "pleroma"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableLivebook;
-                      name = "livebook";
-                      subtitle = "elixir notebook";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "livebook"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableJoplin;
-                      name = "joplin";
-                      subtitle = "note-taking";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "joplin"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableMiniflux;
-                      name = "miniflux";
-                      subtitle = "rss reader";
-                      tag = "reading";
-                      url = "https://${prefs.getFullDomainName "miniflux"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableNextcloud;
-                      name = "nextcloud";
-                      subtitle = "file synchronization";
-                      tag = "synchronization";
-                      url = "https://${prefs.getFullDomainName "nextcloud"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableSftpgo;
-                      name = "sftpgo";
-                      subtitle = "file synchronization";
-                      tag = "synchronization";
-                      url = "https://${prefs.getFullDomainName "sftpgo"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableSftpgo;
-                      name = "webdav";
-                      subtitle = "file synchronization";
-                      tag = "synchronization";
-                      url = "https://${prefs.getFullDomainName "webdav"}";
-                    }
-                    {
-                      enable = prefs.ociContainers.enableFilestash;
-                      name = "filestash";
-                      subtitle = "file manager";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "filestash"}";
-                    }
-                    {
-                      name = "keeweb";
-                      enable = prefs.ociContainers.enableKeeweb;
-                      subtitle = "password management";
-                      tag = "security";
-                      url = "https://${prefs.getFullDomainName "keeweb"}";
-                    }
-                    {
-                      name = "clash";
-                      subtitle = "clash instance management";
-                      tag = "network";
-                      url = "https://${prefs.getFullDomainName "clash"}";
-                    }
-                    {
-                      name = "aria2";
-                      subtitle = "download management";
-                      tag = "network";
-                      url = "https://${prefs.getFullDomainName "aria2"}";
-                    }
-                    {
-                      name = "activitywatch";
-                      enable = prefs.enableActivityWatch;
-                      subtitle = "device usage monitor";
-                      tag = "productivity";
-                      url =
-                        "https://${prefs.getFullDomainName "activitywatch"}";
-                    }
-                    {
-                      enable = prefs.enableTtyd;
-                      name = "ttyd";
-                      subtitle = "web terminal emulator";
-                      tag = "coding";
-                      url = "https://${prefs.getFullDomainName "ttyd"}";
-                    }
-                    {
-                      name = "organice";
-                      subtitle = "org-mode files editing";
-                      tag = "productivity";
-                      url = "https://${prefs.getFullDomainName "organice"}";
-                    }
-                  ]);
-              }];
+                          }
+                          {
+                            enable = prefs.ociContainers.enableVaultwarden;
+                            name = "vaultwarden";
+                            subtitle = "password management";
+                            tag = "security";
+                            url = "https://${prefs.getFullDomainName "vaultwarden"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableVault;
+                            name = "vault";
+                            subtitle = "secrets management";
+                            tag = "security";
+                            url = "https://${prefs.getFullDomainName "vault"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enablePleroma;
+                            name = "pleroma";
+                            subtitle = "microblogging";
+                            tag = "social";
+                            url = "https://${prefs.getFullDomainName "pleroma"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableLivebook;
+                            name = "livebook";
+                            subtitle = "elixir notebook";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "livebook"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableJoplin;
+                            name = "joplin";
+                            subtitle = "note-taking";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "joplin"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableMiniflux;
+                            name = "miniflux";
+                            subtitle = "rss reader";
+                            tag = "reading";
+                            url = "https://${prefs.getFullDomainName "miniflux"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableNextcloud;
+                            name = "nextcloud";
+                            subtitle = "file synchronization";
+                            tag = "synchronization";
+                            url = "https://${prefs.getFullDomainName "nextcloud"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableSftpgo;
+                            name = "sftpgo";
+                            subtitle = "file synchronization";
+                            tag = "synchronization";
+                            url = "https://${prefs.getFullDomainName "sftpgo"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableSftpgo;
+                            name = "webdav";
+                            subtitle = "file synchronization";
+                            tag = "synchronization";
+                            url = "https://${prefs.getFullDomainName "webdav"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableFilestash;
+                            name = "filestash";
+                            subtitle = "file manager";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "filestash"}";
+                          }
+                          {
+                            name = "keeweb";
+                            enable = prefs.ociContainers.enableKeeweb;
+                            subtitle = "password management";
+                            tag = "security";
+                            url = "https://${prefs.getFullDomainName "keeweb"}";
+                          }
+                          {
+                            name = "clash";
+                            subtitle = "clash instance management";
+                            tag = "network";
+                            url = "https://${prefs.getFullDomainName "clash"}";
+                          }
+                          {
+                            name = "aria2";
+                            subtitle = "download management";
+                            tag = "network";
+                            url = "https://${prefs.getFullDomainName "aria2"}";
+                          }
+                          {
+                            name = "activitywatch";
+                            enable = prefs.enableActivityWatch;
+                            subtitle = "device usage monitor";
+                            tag = "productivity";
+                            url =
+                              "https://${prefs.getFullDomainName "activitywatch"}";
+                          }
+                          {
+                            enable = prefs.enableTtyd;
+                            name = "ttyd";
+                            subtitle = "web terminal emulator";
+                            tag = "coding";
+                            url = "https://${prefs.getFullDomainName "ttyd"}";
+                          }
+                          {
+                            name = "organice";
+                            subtitle = "org-mode files editing";
+                            tag = "productivity";
+                            url = "https://${prefs.getFullDomainName "organice"}";
+                          }
+                        ]);
+                  }];
+                };
+              in
+              [
+                "--mount=type=bind,source=${config},target=/www/assets/config.yml"
+                "--label=domainprefix=home"
+              ];
+          } // mkContainer "etesync" prefs.ociContainers.enableEtesync {
+            volumes = [ "/var/data/etesync:/data" ];
+            dependsOn = [ "postgresql" ];
+            environmentFiles = [ "/run/secrets/etesync-env" ];
+            traefikForwardingPort = 3735;
+          } // mkContainer "etesync-dav" prefs.ociContainers.enableEtesyncDav {
+            volumes = [ "/var/data/etesync-dav:/data" ];
+            traefikForwardingPort = 37358;
+            environment = {
+              "ETESYNC_URL" = "https://${prefs.getFullDomainName "etesync"}";
             };
-          in [
-            "--mount=type=bind,source=${config},target=/www/assets/config.yml"
-            "--label=domainprefix=home"
-          ];
-        } // mkContainer "etesync" prefs.ociContainers.enableEtesync {
-          volumes = [ "/var/data/etesync:/data" ];
-          dependsOn = [ "postgresql" ];
-          environmentFiles = [ "/run/secrets/etesync-env" ];
-          traefikForwardingPort = 3735;
-        } // mkContainer "etesync-dav" prefs.ociContainers.enableEtesyncDav {
-          volumes = [ "/var/data/etesync-dav:/data" ];
-          traefikForwardingPort = 37358;
-          environment = {
-            "ETESYNC_URL" = "https://${prefs.getFullDomainName "etesync"}";
-          };
-        } // mkContainer "keeweb" prefs.ociContainers.enableKeeweb {
-          volumes = [
-            "${prefs.syncFolder}/private/keepass:/var/www/keeweb-local-server/databases"
-          ];
-          environmentFiles = [ "/run/secrets/keeweb-env" ];
-          traefikForwardingPort = 8080;
-        } // mkContainer "codeserver" prefs.ociContainers.enableCodeServer {
-          volumes = [
-            "${prefs.home}:/home/coder"
-            # "${prefs.home}/Workspace:/home/coder/Workspace"
-            # "${prefs.home}/.vscode:/home/coder/.vscode"
-          ];
-          middlewares = [ "authelia" ];
-          extraOptions = [
-            "--user=${builtins.toString prefs.ownerUid}:${
+          } // mkContainer "keeweb" prefs.ociContainers.enableKeeweb {
+            volumes = [
+              "${prefs.syncFolder}/private/keepass:/var/www/keeweb-local-server/databases"
+            ];
+            environmentFiles = [ "/run/secrets/keeweb-env" ];
+            traefikForwardingPort = 8080;
+          } // mkContainer "codeserver" prefs.ociContainers.enableCodeServer {
+            volumes = [
+              "${prefs.home}:/home/coder"
+              # "${prefs.home}/Workspace:/home/coder/Workspace"
+              # "${prefs.home}/.vscode:/home/coder/.vscode"
+            ];
+            middlewares = [ "authelia" ];
+            extraOptions = [
+              "--user=${builtins.toString prefs.ownerUid}:${
               builtins.toString prefs.ownerGroupGid
             }"
-          ];
-          environment = { "DOCKER_USER" = "${prefs.owner}"; };
-          cmd = [
-            "--disable-telemetry"
-            "--user-data-dir=/home/coder/.vscode"
-            "--auth=none"
-          ];
-          traefikForwardingPort = 8080;
-        };
-    };
+            ];
+            environment = { "DOCKER_USER" = "${prefs.owner}"; };
+            cmd = [
+              "--disable-telemetry"
+              "--user-data-dir=/home/coder/.vscode"
+              "--auth=none"
+            ];
+            traefikForwardingPort = 8080;
+          };
+      };
   };
 
   # powerManagement = {
@@ -3405,256 +3555,268 @@ in {
   #   cpuFreqGovernor = "ondemand";
   # };
 
-  systemd = let
-    notify-systemd-unit-failures = let name = "notify-systemd-unit-failures";
-    in {
-      "${name}@" = {
-        description = "notify systemd unit failures with mailutils";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = ''
-            ${pkgs.bash}/bin/bash -c "${pkgs.mailutils}/bin/mail --set=noASKCC --subject 'Systemd unit %i failed' ${prefs.owner} < /dev/null"
-          '';
+  systemd =
+    let
+      notify-systemd-unit-failures =
+        let name = "notify-systemd-unit-failures";
+        in
+        {
+          "${name}@" = {
+            description = "notify systemd unit failures with mailutils";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = ''
+                ${pkgs.bash}/bin/bash -c "${pkgs.mailutils}/bin/mail --set=noASKCC --subject 'Systemd unit %i failed' ${prefs.owner} < /dev/null"
+              '';
+            };
+          };
         };
-      };
-    };
-  in (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-    {
-      extraConfig = "DefaultTimeoutStopSec=10s";
-      tmpfiles = {
-        rules = [
-          "d /root/.cache/trash - root root 30d"
-          "d /root/.local/share/Trash - root root 30d"
-          "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-          "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-        ] ++ [
-          # Otherwise the parent directory's owner is root.
-          # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
-          "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
-          "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
-          "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
-        ] ++ lib.optionals prefs.ociContainers.enableSftpgo [
-          "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
-          "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
-          "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
-          "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
-        ] ++ lib.optionals prefs.ociContainers.enableEtesync [
-          "d /var/data/etesync - 373 373 -"
-          "d /var/data/etesync/media - 373 373 -"
-        ] ++ lib.optionals prefs.ociContainers.enableEtesyncDav
-          [ "d /var/data/etesync-dav - 1000 1000 -" ]
+    in
+    (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+      {
+        extraConfig = "DefaultTimeoutStopSec=10s";
+        tmpfiles = {
+          rules = [
+            "d /root/.cache/trash - root root 30d"
+            "d /root/.local/share/Trash - root root 30d"
+            "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+            "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+          ] ++ [
+            # Otherwise the parent directory's owner is root.
+            # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
+            "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
+            "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
+            "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
+          ] ++ lib.optionals prefs.ociContainers.enableSftpgo [
+            "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
+            "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
+            "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
+            "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
+          ] ++ lib.optionals prefs.ociContainers.enableEtesync [
+            "d /var/data/etesync - 373 373 -"
+            "d /var/data/etesync/media - 373 373 -"
+          ] ++ lib.optionals prefs.ociContainers.enableEtesyncDav
+            [ "d /var/data/etesync-dav - 1000 1000 -" ]
           ++ lib.optionals prefs.ociContainers.enableTrilium
-          [ "d /var/data/trilium - 1000 1000 -" ]
+            [ "d /var/data/trilium - 1000 1000 -" ]
           ++ lib.optionals prefs.ociContainers.enableTiddlyWiki
-          [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ]
+            [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ]
           ++ lib.optionals prefs.ociContainers.enablePleroma
-          [ "d /var/data/pleroma - 100 0 -" ]
+            [ "d /var/data/pleroma - 100 0 -" ]
           ++ lib.optionals prefs.ociContainers.enableFilestash
-          [ "d /var/data/filestash - 1000 1000 -" ]
+            [ "d /var/data/filestash - 1000 1000 -" ]
           ++ lib.optionals prefs.ociContainers.enableGitea [
             "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
             "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
           ];
-      };
-    }
-
-    {
-      services = notify-systemd-unit-failures // {
-        init-oci-container-network = {
-          description = "Create oci container networks";
-          after = [ "network.target" ];
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig.Type = "oneshot";
-          script = let
-            dockercli = "${config.virtualisation.docker.package}/bin/docker";
-            podmancli = "${config.virtualisation.podman.package}/bin/docker";
-            cli = if prefs.ociContainerBackend == "docker" then
-              dockercli
-            else
-              podmancli;
-          in ''
-            set -e
-            if ! ${cli} network inspect ${prefs.ociContainerNetwork}; then
-                if ! ${cli} network create ${prefs.ociContainerNetwork}; then
-                    echo "creating network failed"
-                fi
-            fi
-          '';
         };
+      }
 
-        vault-ssh-ca-setup = let
-          vault-server-init-script =
-            pkgs.writeShellScript "vault-ssh-ca-setup-server" ''
-              vault secrets enable -path=ssh-host-signer ssh
-              vault write ssh-host-signer/config/ca generate_signing_key=true
-              vault secrets enable -path=ssh-client-signer ssh
-              vault write ssh-client-signer/config/ca generate_signing_key=true
-                          '';
-          vault-host-init-script =
-            pkgs.writeShellScript "vault-ssh-ca-setup-host" ''
-              vault write ssh-host-signer/roles/ssh-host key_type=ca ttl=87600h allow_host_certificates=true allowed_domains="localdomain,example.com" allow_subdomains=true algorithm_signer=rsa-sha2-512
-              vault secrets tune -max-lease-ttl=87600h ssh-host-signer
-              vault policy write ssh-host -<<"EOH"
-              path "ssh-host-signer/sign/ssh-host" {  capabilities = [ "create", "update" ]}
-              path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
-              EOH
-              vault write auth/approle/role/ssh-host policies="ssh-host" token_ttl=1h token_max_ttl=4h
-              VAULT_HOST_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-host/role-id | jq -r ".data.role_id") VAULT_HOST_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-host/secret-id | jq -r ".data.secret_id")
-              VAULT_HOST_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_HOST_ROLE_ID secret_id=$VAULT_HOST_SECRET_ID | jq -r ".auth.client_token")"
-              VAULT_TOKEN=$VAULT_HOST_TOKEN vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub | tee /etc/ssh/ssh_host_ed25519_key-cert.pub
-                          '';
-          vault-client-init-script =
-            pkgs.writeShellScript "vault-ssh-ca-setup-client" ''
-              # Only root user is allowed to connect.
-              # https://github.com/hashicorp/vault/blob/6da5bce9a0078a2e0856e365cb4dd350b77af6cb/website/content/docs/secrets/ssh/signed-ssh-certificates.mdx#name-is-not-a-listed-principal
-              vault write ssh-client-signer/roles/ssh-root-user -<<"EOH"
-              {
-                "allow_user_certificates": true,
-                "allowed_users": "*",
-                "allowed_extensions": "permit-pty,permit-port-forwarding",
-                "default_extensions": [
+      {
+        services = notify-systemd-unit-failures // {
+          init-oci-container-network = {
+            description = "Create oci container networks";
+            after = [ "network.target" ];
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig.Type = "oneshot";
+            script =
+              let
+                dockercli = "${config.virtualisation.docker.package}/bin/docker";
+                podmancli = "${config.virtualisation.podman.package}/bin/docker";
+                cli =
+                  if prefs.ociContainerBackend == "docker" then
+                    dockercli
+                  else
+                    podmancli;
+              in
+              ''
+                set -e
+                if ! ${cli} network inspect ${prefs.ociContainerNetwork}; then
+                    if ! ${cli} network create ${prefs.ociContainerNetwork}; then
+                        echo "creating network failed"
+                    fi
+                fi
+              '';
+          };
+
+          vault-ssh-ca-setup =
+            let
+              vault-server-init-script =
+                pkgs.writeShellScript "vault-ssh-ca-setup-server" ''
+                  vault secrets enable -path=ssh-host-signer ssh
+                  vault write ssh-host-signer/config/ca generate_signing_key=true
+                  vault secrets enable -path=ssh-client-signer ssh
+                  vault write ssh-client-signer/config/ca generate_signing_key=true
+                '';
+              vault-host-init-script =
+                pkgs.writeShellScript "vault-ssh-ca-setup-host" ''
+                  vault write ssh-host-signer/roles/ssh-host key_type=ca ttl=87600h allow_host_certificates=true allowed_domains="localdomain,example.com" allow_subdomains=true algorithm_signer=rsa-sha2-512
+                  vault secrets tune -max-lease-ttl=87600h ssh-host-signer
+                  vault policy write ssh-host -<<"EOH"
+                  path "ssh-host-signer/sign/ssh-host" {  capabilities = [ "create", "update" ]}
+                  path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
+                  EOH
+                  vault write auth/approle/role/ssh-host policies="ssh-host" token_ttl=1h token_max_ttl=4h
+                  VAULT_HOST_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-host/role-id | jq -r ".data.role_id") VAULT_HOST_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-host/secret-id | jq -r ".data.secret_id")
+                  VAULT_HOST_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_HOST_ROLE_ID secret_id=$VAULT_HOST_SECRET_ID | jq -r ".auth.client_token")"
+                  VAULT_TOKEN=$VAULT_HOST_TOKEN vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub | tee /etc/ssh/ssh_host_ed25519_key-cert.pub
+                '';
+              vault-client-init-script =
+                pkgs.writeShellScript "vault-ssh-ca-setup-client" ''
+                  # Only root user is allowed to connect.
+                  # https://github.com/hashicorp/vault/blob/6da5bce9a0078a2e0856e365cb4dd350b77af6cb/website/content/docs/secrets/ssh/signed-ssh-certificates.mdx#name-is-not-a-listed-principal
+                  vault write ssh-client-signer/roles/ssh-root-user -<<"EOH"
                   {
-                    "permit-pty": ""
+                    "allow_user_certificates": true,
+                    "allowed_users": "*",
+                    "allowed_extensions": "permit-pty,permit-port-forwarding",
+                    "default_extensions": [
+                      {
+                        "permit-pty": ""
+                      }
+                    ],
+                    "key_type": "ca",
+                    "default_user": "root",
+                    "algorithm_signer": "rsa-sha2-512",
+                    "ttl": "6h"
                   }
-                ],
-                "key_type": "ca",
-                "default_user": "root",
-                "algorithm_signer": "rsa-sha2-512",
-                "ttl": "6h"
-              }
-              EOH
-              vault policy write ssh-root-user -<<"EOH"
-              path "ssh-client-signer/sign/ssh-root-user" {  capabilities = ["create", "update"]}
-              path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
-              path "ssh-host-signer/config/ca" {  capabilities = [ "read" ]}
-              EOH
-              vault write auth/approle/role/ssh-root-user policies="ssh-root-user" token_ttl=6h token_max_ttl=12h
-              VAULT_ROOT_USER_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-root-user/role-id | jq -r ".data.role_id") VAULT_ROOT_USER_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-root-user/secret-id | jq -r ".data.secret_id")
-              VAULT_ROOT_USER_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_ROOT_USER_ROLE_ID secret_id=$VAULT_ROOT_USER_SECRET_ID | jq -r ".auth.client_token")"
-              ssh-keygen -f id_ed25519 -t ed25519 -P ""
-              VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault write -field=signed_key ssh-client-signer/sign/ssh-root-user public_key=@id_ed25519.pub | tee id_ed25519-cert.pub
-              echo "@cert-authority * $(VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault read -field=public_key ssh-host-signer/config/ca)" | tee -a ~/.ssh/known_hosts
-                          '';
-        in {
-          enable = true;
-          description = "Setup Vault CA Certificate";
-          after = [ "network.target" ];
-          path = [ pkgs.vault pkgs.jq pkgs.file pkgs.glibc ];
-          script = ''
-            set -euo pipefail
-            # see ${vault-server-init-script} for some vault server setup instructions
-            # see ${vault-host-init-script} for some vault host setup instructions
-            # see ${vault-client-init-script} for some vault client setup instructions
-            export VAULT_TOKEN="$(vault write -format json auth/approle/login role_id="$VAULT_ROLE_ID" secret_id="$VAULT_SECRET_ID" | jq -r ".auth.client_token")"
-            if ca="$(vault read -field=public_key ssh-client-signer/config/ca)" && [[ -n "$ca" ]] ; then
-                echo "$ca" > /etc/ssh/trusted-user-ca-keys.pem
-            else
-                exit 1
-            fi
-            if signed_key="$(vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub)" && [[ -n "$signed_key" ]]; then
-                echo "$signed_key" > /etc/ssh/ssh_host_ed25519_key-cert.pub
-            else
-                exit 1
-            fi
-            cat > /etc/ssh/sshd_config_vault <<EOF
-            TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem
-            HostKey /etc/ssh/ssh_host_ed25519_key
-            HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
-            EOF
-          '';
-          serviceConfig = {
-            Type = "simple";
-            EnvironmentFile = "/run/secrets/vault-ssh-ca-setup-env";
-          };
-        };
-
-        local-transparent-proxy-setup = {
-          enable = true;
-          description =
-            "Setup route table and route rule for local transparent proxy";
-          after = [ "network.target" ];
-          path = [ pkgs.iproute pkgs.procps pkgs.iptables ];
-
-          # TODO: Dont't know why `ip route show table 100` results will disappear.
-          # The error of `ip route show table 100` is
-          # Error: ipv4: FIB table does not exist.
-          # Dump terminatedp
-          # Sleeping is dirty, but it seems to be working.
-          script = ''
-            set -xu
-            set +e
-            sysctl -w net.ipv4.conf.default.route_localnet=1
-            sysctl -w net.ipv4.conf.all.route_localnet=1
-            for i in $(seq 1 30); do
-                ip route show table 100
-                if [[ -z "$(ip rule list from 127.0.0.1/8 iif lo table 100)" ]]; then
-                    ip rule add from 127.0.0.1/8 iif lo table 100;
+                  EOH
+                  vault policy write ssh-root-user -<<"EOH"
+                  path "ssh-client-signer/sign/ssh-root-user" {  capabilities = ["create", "update"]}
+                  path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
+                  path "ssh-host-signer/config/ca" {  capabilities = [ "read" ]}
+                  EOH
+                  vault write auth/approle/role/ssh-root-user policies="ssh-root-user" token_ttl=6h token_max_ttl=12h
+                  VAULT_ROOT_USER_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-root-user/role-id | jq -r ".data.role_id") VAULT_ROOT_USER_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-root-user/secret-id | jq -r ".data.secret_id")
+                  VAULT_ROOT_USER_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_ROOT_USER_ROLE_ID secret_id=$VAULT_ROOT_USER_SECRET_ID | jq -r ".auth.client_token")"
+                  ssh-keygen -f id_ed25519 -t ed25519 -P ""
+                  VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault write -field=signed_key ssh-client-signer/sign/ssh-root-user public_key=@id_ed25519.pub | tee id_ed25519-cert.pub
+                  echo "@cert-authority * $(VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault read -field=public_key ssh-host-signer/config/ca)" | tee -a ~/.ssh/known_hosts
+                '';
+            in
+            {
+              enable = true;
+              description = "Setup Vault CA Certificate";
+              after = [ "network.target" ];
+              path = [ pkgs.vault pkgs.jq pkgs.file pkgs.glibc ];
+              script = ''
+                set -euo pipefail
+                # see ${vault-server-init-script} for some vault server setup instructions
+                # see ${vault-host-init-script} for some vault host setup instructions
+                # see ${vault-client-init-script} for some vault client setup instructions
+                export VAULT_TOKEN="$(vault write -format json auth/approle/login role_id="$VAULT_ROLE_ID" secret_id="$VAULT_SECRET_ID" | jq -r ".auth.client_token")"
+                if ca="$(vault read -field=public_key ssh-client-signer/config/ca)" && [[ -n "$ca" ]] ; then
+                    echo "$ca" > /etc/ssh/trusted-user-ca-keys.pem
+                else
+                    exit 1
                 fi
-                ip route replace local 0.0.0.0/0 dev lo table 100
-                ip route show table 100
-                sleep 10
-            done
-          '';
-          serviceConfig = {
-            Type = "oneshot";
-            Environment = "TMP_FILE=%T/%n";
+                if signed_key="$(vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub)" && [[ -n "$signed_key" ]]; then
+                    echo "$signed_key" > /etc/ssh/ssh_host_ed25519_key-cert.pub
+                else
+                    exit 1
+                fi
+                cat > /etc/ssh/sshd_config_vault <<EOF
+                TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem
+                HostKey /etc/ssh/ssh_host_ed25519_key
+                HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
+                EOF
+              '';
+              serviceConfig = {
+                Type = "simple";
+                EnvironmentFile = "/run/secrets/vault-ssh-ca-setup-env";
+              };
+            };
+
+          local-transparent-proxy-setup = {
+            enable = true;
+            description =
+              "Setup route table and route rule for local transparent proxy";
+            after = [ "network.target" ];
+            path = [ pkgs.iproute pkgs.procps pkgs.iptables ];
+
+            # TODO: Dont't know why `ip route show table 100` results will disappear.
+            # The error of `ip route show table 100` is
+            # Error: ipv4: FIB table does not exist.
+            # Dump terminatedp
+            # Sleeping is dirty, but it seems to be working.
+            script = ''
+              set -xu
+              set +e
+              sysctl -w net.ipv4.conf.default.route_localnet=1
+              sysctl -w net.ipv4.conf.all.route_localnet=1
+              for i in $(seq 1 30); do
+                  ip route show table 100
+                  if [[ -z "$(ip rule list from 127.0.0.1/8 iif lo table 100)" ]]; then
+                      ip rule add from 127.0.0.1/8 iif lo table 100;
+                  fi
+                  ip route replace local 0.0.0.0/0 dev lo table 100
+                  ip route show table 100
+                  sleep 10
+              done
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+              Environment = "TMP_FILE=%T/%n";
+            };
           };
-        };
-      } // lib.optionalAttrs prefs.enableWstunnel {
-        # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
-        "wstunnel" = {
-          description = "wstunnel server";
-          before = let
-            wg-quick = map (iface: "wg-quick-${iface}.service")
-              (lib.attrNames config.networking.wg-quick.interfaces);
-            wireguard = lib.optionals config.networking.wireguard.enable
-              (map (iface: "wireguard-${iface}.service")
-                (lib.attrNames config.networking.wireguard.interfaces));
-          in wg-quick ++ wireguard;
-          after = [ "network.target" ];
-          wantedBy = [ "multi-user.target" ];
-          path = [ pkgs.wstunnel ];
-          serviceConfig = {
-            Restart = "always";
-            RestartSec = "1s";
-            # User
-            DynamicUser = true;
-            # Capabilities
-            AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
-            CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
-            # Security
-            NoNewPrivileges = true;
-            # Sandboxing
-            ProtectSystem = "strict";
-            ProtectHome = lib.mkDefault true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            ProtectHostname = true;
-            ProtectKernelTunables = true;
-            ProtectKernelModules = true;
-            ProtectControlGroups = true;
-            RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
-            RestrictNamespaces = true;
-            LockPersonality = true;
-            MemoryDenyWriteExecute = true;
-            RestrictRealtime = true;
-            RestrictSUIDSGID = true;
-            RemoveIPC = true;
-            PrivateMounts = true;
-            # System Call Filtering
-            SystemCallArchitectures = "native";
+        } // lib.optionalAttrs prefs.enableWstunnel {
+          # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
+          "wstunnel" = {
+            description = "wstunnel server";
+            before =
+              let
+                wg-quick = map (iface: "wg-quick-${iface}.service")
+                  (lib.attrNames config.networking.wg-quick.interfaces);
+                wireguard = lib.optionals config.networking.wireguard.enable
+                  (map (iface: "wireguard-${iface}.service")
+                    (lib.attrNames config.networking.wireguard.interfaces));
+              in
+              wg-quick ++ wireguard;
+            after = [ "network.target" ];
+            wantedBy = [ "multi-user.target" ];
+            path = [ pkgs.wstunnel ];
+            serviceConfig = {
+              Restart = "always";
+              RestartSec = "1s";
+              # User
+              DynamicUser = true;
+              # Capabilities
+              AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+              CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+              # Security
+              NoNewPrivileges = true;
+              # Sandboxing
+              ProtectSystem = "strict";
+              ProtectHome = lib.mkDefault true;
+              PrivateTmp = true;
+              PrivateDevices = true;
+              ProtectHostname = true;
+              ProtectKernelTunables = true;
+              ProtectKernelModules = true;
+              ProtectControlGroups = true;
+              RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+              RestrictNamespaces = true;
+              LockPersonality = true;
+              MemoryDenyWriteExecute = true;
+              RestrictRealtime = true;
+              RestrictSUIDSGID = true;
+              RemoveIPC = true;
+              PrivateMounts = true;
+              # System Call Filtering
+              SystemCallArchitectures = "native";
+            };
+            script = ''
+              exec wstunnel --verbose --server 127.0.0.1:${
+                builtins.toString prefs.wstunnelPort
+              }
+            '';
           };
-          script = ''
-            exec wstunnel --verbose --server 127.0.0.1:${
-              builtins.toString prefs.wstunnelPort
-            }
-          '';
-        };
-      } // lib.optionalAttrs
-        (prefs.buildZerotierone && !prefs.enableZerotierone) {
-          # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
-          "zerotierone" = { wantedBy = lib.mkForce [ ]; };
-        } // lib.optionalAttrs (config.virtualisation.docker.enable) {
+        } // lib.optionalAttrs
+          (prefs.buildZerotierone && !prefs.enableZerotierone)
+          {
+            # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
+            "zerotierone" = { wantedBy = lib.mkForce [ ]; };
+          } // lib.optionalAttrs (config.virtualisation.docker.enable) {
           "docker" = {
             serviceConfig = {
               ExecStartPost = [
@@ -3663,20 +3825,22 @@ in {
             };
           };
         } // lib.optionalAttrs (prefs.enableK3s) {
-          "k3s" = let
-            k3sPatchScript = pkgs.writeShellScript "add-k3s-config" ''
-              ${pkgs.k3s}/bin/k3s kubectl patch -n kube-system services traefik -p '{"spec":{"ports":[{"name":"http","nodePort":30080,"port":30080,"protocol":"TCP","targetPort":"http"},{"name":"https","nodePort":30443,"port":30443,"protocol":"TCP","targetPort":"https"},{"$patch":"replace"}]}}' || ${pkgs.coreutils}/bin/true
-              ${pkgs.coreutils}/bin/chown ${prefs.owner} /etc/rancher/k3s/k3s.yaml || ${pkgs.coreutils}/bin/true
-            '';
-          in {
-            path = if prefs.enableZfs then [ pkgs.zfs ] else [ ];
-            serviceConfig = {
-              ExecStartPost = [
-                "${k3sPatchScript}"
-                "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
-              ];
+          "k3s" =
+            let
+              k3sPatchScript = pkgs.writeShellScript "add-k3s-config" ''
+                ${pkgs.k3s}/bin/k3s kubectl patch -n kube-system services traefik -p '{"spec":{"ports":[{"name":"http","nodePort":30080,"port":30080,"protocol":"TCP","targetPort":"http"},{"name":"https","nodePort":30443,"port":30443,"protocol":"TCP","targetPort":"https"},{"$patch":"replace"}]}}' || ${pkgs.coreutils}/bin/true
+                ${pkgs.coreutils}/bin/chown ${prefs.owner} /etc/rancher/k3s/k3s.yaml || ${pkgs.coreutils}/bin/true
+              '';
+            in
+            {
+              path = if prefs.enableZfs then [ pkgs.zfs ] else [ ];
+              serviceConfig = {
+                ExecStartPost = [
+                  "${k3sPatchScript}"
+                  "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
+                ];
+              };
             };
-          };
         } // lib.optionalAttrs (prefs.enableCrio) {
           "crio" = {
             path = with pkgs;
@@ -3756,180 +3920,186 @@ in {
             };
           };
         } // lib.optionalAttrs
-        (prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null)) {
-          "aioproxy" = {
-            enable = true;
-            description = "All-in-one Reverse Proxy";
-            after = [ "network.target" ];
-            wantedBy = [ "multi-user.target" ];
-            serviceConfig = {
-              Type = "simple";
-              ExecStart =
-                "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${
+          (prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null))
+          {
+            "aioproxy" = {
+              enable = true;
+              description = "All-in-one Reverse Proxy";
+              after = [ "network.target" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                Type = "simple";
+                ExecStart =
+                  "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${
                   builtins.toString prefs.aioproxyPort
                 } -u 127.0.0.1:8000 -p both -ssh 127.0.0.1:22 -eternal-terminal 127.0.0.1:2022 -http 127.0.0.1:8080 -tls 127.0.0.1:30443";
-              ExecStartPost = [
-                "-${pkgs.systemd}/bin/systemctl start --no-block local-transparent-proxy-setup"
-              ];
+                ExecStartPost = [
+                  "-${pkgs.systemd}/bin/systemctl start --no-block local-transparent-proxy-setup"
+                ];
+              };
             };
           };
-        };
-    }
+      }
 
-    (lib.foldAttrs (n: a: n ++ a) [ ] [
-      # nextcloud container files owner
-      # See also https://github.com/nextcloud/docker/pull/1278
-      {
-        automounts = [{
-          enable = prefs.ociContainers.enableNextcloud;
-          description = "Automount nextcloud container files directory.";
-          where = prefs.ownerNextcloudContainerDataDirectory;
-          wantedBy = [ "multi-user.target" ];
-        }];
-        mounts = [{
-          enable = prefs.ociContainers.enableNextcloud;
-          where = prefs.ownerNextcloudContainerDataDirectory;
-          what = prefs.syncFolder;
-          type = "fuse.bindfs";
-          options = "map=${builtins.toString prefs.ownerUid}/33:@${
+      (lib.foldAttrs (n: a: n ++ a) [ ] [
+        # nextcloud container files owner
+        # See also https://github.com/nextcloud/docker/pull/1278
+        {
+          automounts = [{
+            enable = prefs.ociContainers.enableNextcloud;
+            description = "Automount nextcloud container files directory.";
+            where = prefs.ownerNextcloudContainerDataDirectory;
+            wantedBy = [ "multi-user.target" ];
+          }];
+          mounts = [{
+            enable = prefs.ociContainers.enableNextcloud;
+            where = prefs.ownerNextcloudContainerDataDirectory;
+            what = prefs.syncFolder;
+            type = "fuse.bindfs";
+            options = "map=${builtins.toString prefs.ownerUid}/33:@${
               builtins.toString prefs.ownerGroupGid
             }/@33";
-          unitConfig = { RequiresMountsFor = prefs.syncFolder; };
-        }];
-      }
-      # nextcloud
-      {
-        automounts = [{
-          enable = prefs.enableNextcloud;
-          description = "Automount nextcloud sync directory.";
-          where = prefs.nextcloudWhere;
-          wantedBy = [ "multi-user.target" ];
-        }];
-        mounts = [{
-          enable = prefs.enableNextcloud;
-          where = prefs.nextcloudWhere;
-          what = prefs.nextcloudWhat;
-          type = "davfs";
-          options = "rw,uid=${builtins.toString prefs.ownerUid},gid=${
+            unitConfig = { RequiresMountsFor = prefs.syncFolder; };
+          }];
+        }
+        # nextcloud
+        {
+          automounts = [{
+            enable = prefs.enableNextcloud;
+            description = "Automount nextcloud sync directory.";
+            where = prefs.nextcloudWhere;
+            wantedBy = [ "multi-user.target" ];
+          }];
+          mounts = [{
+            enable = prefs.enableNextcloud;
+            where = prefs.nextcloudWhere;
+            what = prefs.nextcloudWhat;
+            type = "davfs";
+            options = "rw,uid=${builtins.toString prefs.ownerUid},gid=${
               builtins.toString prefs.ownerGroupGid
             }";
-          wantedBy = [ "remote-fs.target" ];
-          after = [ "network-online.target" ];
-        }];
-      }
-      # yandex
-      {
-        automounts = [{
-          enable = prefs.enableYandex;
-          description = "Automount yandex sync directory.";
-          where = prefs.yandexWhere;
-          wantedBy = [ "multi-user.target" ];
-        }];
-        mounts = [{
-          enable = prefs.enableYandex;
-          where = prefs.yandexWhere;
-          what = prefs.yandexWhat;
-          type = "davfs";
-          options = "rw,user=uid=${builtins.toString prefs.ownerUid},gid=${
+            wantedBy = [ "remote-fs.target" ];
+            after = [ "network-online.target" ];
+          }];
+        }
+        # yandex
+        {
+          automounts = [{
+            enable = prefs.enableYandex;
+            description = "Automount yandex sync directory.";
+            where = prefs.yandexWhere;
+            wantedBy = [ "multi-user.target" ];
+          }];
+          mounts = [{
+            enable = prefs.enableYandex;
+            where = prefs.yandexWhere;
+            what = prefs.yandexWhat;
+            type = "davfs";
+            options = "rw,user=uid=${builtins.toString prefs.ownerUid},gid=${
               builtins.toString prefs.ownerGroupGid
             }";
-          wantedBy = [ "remote-fs.target" ];
-          after = [ "network-online.target" ];
-        }];
-      }
-    ])
+            wantedBy = [ "remote-fs.target" ];
+            after = [ "network-online.target" ];
+          }];
+        }
+      ])
 
-    # For some currently unfathomable reason, wireless network periodically fails.
-    (let name = "network-watchdog";
-    in {
-      services."${name}" = {
-        description = "network watchdog";
-        enable = prefs.enableNetworkWatchdog;
-        wantedBy = [ "default.target" ];
-        after = [ "network-online.target" ];
-        onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-        path = [ pkgs.coreutils pkgs.systemd pkgs.iputils pkgs.utillinux ]
-          ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
-        script = ''
-          set -xeuo pipefail
+      # For some currently unfathomable reason, wireless network periodically fails.
+      (
+        let name = "network-watchdog";
+        in
+        {
+          services."${name}" = {
+            description = "network watchdog";
+            enable = prefs.enableNetworkWatchdog;
+            wantedBy = [ "default.target" ];
+            after = [ "network-online.target" ];
+            onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
+            path = [ pkgs.coreutils pkgs.systemd pkgs.iputils pkgs.utillinux ]
+            ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
+            script = ''
+              set -xeuo pipefail
 
-          if ping -c3 _gateway; then
-              exit 0
-          fi
+              if ping -c3 _gateway; then
+                  exit 0
+              fi
 
-          if systemctl is-active iwd && [[ -n "$(iwctl station list | awk '{if ($2 ~ /connected/) {print $1}}')" ]]; then
-              systemctl restart iwd
-          fi
-        '';
-        serviceConfig = {
-          Type = "oneshot";
-          Restart = "on-failure";
-        };
-      };
+              if systemctl is-active iwd && [[ -n "$(iwctl station list | awk '{if ($2 ~ /connected/) {print $1}}')" ]]; then
+                  systemctl restart iwd
+              fi
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+              Restart = "on-failure";
+            };
+          };
 
-      timers."${name}" = {
-        enable = prefs.enableNetworkWatchdog;
-        wantedBy = [ "default.target" ];
-        after = [ "network-online.target" ];
-        timerConfig = {
-          RandomizedDelaySec = 60;
-          OnCalendar = "*-*-* *:2/3:00";
-          Unit = "${name}.service";
-        };
-      };
-    })
+          timers."${name}" = {
+            enable = prefs.enableNetworkWatchdog;
+            wantedBy = [ "default.target" ];
+            after = [ "network-online.target" ];
+            timerConfig = {
+              RandomizedDelaySec = 60;
+              OnCalendar = "*-*-* *:2/3:00";
+              Unit = "${name}.service";
+            };
+          };
+        }
+      )
 
-    # The following is not pure, disable it for now.
-    # {
-    #   packages = let
-    #     usrLocalPrefix = "/usr/local/lib/systemd/system";
-    #     etcPrefix = "/etc/systemd/system";
-    #     makeUnit = from: to: unit:
-    #       pkgs.writeTextFile {
-    #         name = builtins.replaceStrings [ "@" ] [ "__" ] unit;
-    #         text = builtins.readFile "${from}/${unit}";
-    #         destination = "${to}/${unit}";
-    #       };
-    #     getAllUnits = from: to:
-    #       let
-    #         files = builtins.readDir from;
-    #         units = lib.attrNames
-    #           (pkgs.lib.filterAttrs (n: v: v == "regular" || v == "symlink")
-    #             files);
-    #         newUnits = map (unit: makeUnit from to unit) units;
-    #       in lib.optionals (builtins.pathExists from) newUnits;
-    #   in getAllUnits usrLocalPrefix etcPrefix;
-    # }
+      # The following is not pure, disable it for now.
+      # {
+      #   packages = let
+      #     usrLocalPrefix = "/usr/local/lib/systemd/system";
+      #     etcPrefix = "/etc/systemd/system";
+      #     makeUnit = from: to: unit:
+      #       pkgs.writeTextFile {
+      #         name = builtins.replaceStrings [ "@" ] [ "__" ] unit;
+      #         text = builtins.readFile "${from}/${unit}";
+      #         destination = "${to}/${unit}";
+      #       };
+      #     getAllUnits = from: to:
+      #       let
+      #         files = builtins.readDir from;
+      #         units = lib.attrNames
+      #           (pkgs.lib.filterAttrs (n: v: v == "regular" || v == "symlink")
+      #             files);
+      #         newUnits = map (unit: makeUnit from to unit) units;
+      #       in lib.optionals (builtins.pathExists from) newUnits;
+      #   in getAllUnits usrLocalPrefix etcPrefix;
+      # }
 
-    (let
-      name = "clash-redir";
-      updaterName = "${name}-config-updater";
-      watchdogName = "${name}-watchdog";
-      script = builtins.path {
-        inherit name;
-        path = prefs.getDotfile "dot_bin/executable_clash-redir";
-      };
-    in {
-      services."${name}" = {
-        description = "transparent proxy with clash";
-        enable = prefs.enableClashRedir;
-        wantedBy =
-          if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
-        after = [ "network-online.target" ];
-        path = [
-          pkgs.coreutils
-          pkgs.clash
-          pkgs.curl
-          pkgs.procps
-          pkgs.libcap
-          pkgs.iptables
-          pkgs.iproute
-          pkgs.bash
-          pkgs.gawk
-        ];
-        serviceConfig = {
-          Type = "forking";
-          ExecStartPre = "${pkgs.writeShellScript "clash-redir-prestart" ''
+      (
+        let
+          name = "clash-redir";
+          updaterName = "${name}-config-updater";
+          watchdogName = "${name}-watchdog";
+          script = builtins.path {
+            inherit name;
+            path = prefs.getDotfile "dot_bin/executable_clash-redir";
+          };
+        in
+        {
+          services."${name}" = {
+            description = "transparent proxy with clash";
+            enable = prefs.enableClashRedir;
+            wantedBy =
+              if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
+            after = [ "network-online.target" ];
+            path = [
+              pkgs.coreutils
+              pkgs.clash
+              pkgs.curl
+              pkgs.procps
+              pkgs.libcap
+              pkgs.iptables
+              pkgs.iproute
+              pkgs.bash
+              pkgs.gawk
+            ];
+            serviceConfig = {
+              Type = "forking";
+              ExecStartPre = "${pkgs.writeShellScript "clash-redir-prestart" ''
             set -euxo pipefail
             mkdir -p /etc/clash-redir
             if ! [[ -e /etc/clash-redir/config.yaml ]]; then
@@ -3939,406 +4109,432 @@ in {
                 ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
             fi
           ''}";
-          ExecStart = "${script} start";
-          ExecStop = "${script} stop";
-          ExecReload = "${script} reload";
-        };
-      };
+              ExecStart = "${script} start";
+              ExecStop = "${script} stop";
+              ExecReload = "${script} reload";
+            };
+          };
 
-      services."${updaterName}" = {
-        description = "update clash config";
-        enable = prefs.enableClashRedir;
-        wantedBy = [ "default.target" ];
-        after = [ "network-online.target" ];
-        onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
-        path = [
-          pkgs.coreutils
-          pkgs.systemd
-          pkgs.sudo
-          pkgs.curl
-          pkgs.diffutils
-          pkgs.libcap
-          pkgs.utillinux
-        ];
-        script = ''
-          set -xeu
-          CLASH_USER=clash
-          CLASH_UID="$(id -u "$CLASH_USER")"
-          CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
-          CLASH_CONFIG=/etc/clash-redir/default.yaml
-          # We first try to download the config file on behave of "$CLASH_USER",
-          # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-          if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-              if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                  >&2 echo "Failed to download clash config"
-                  exit 1
+          services."${updaterName}" = {
+            description = "update clash config";
+            enable = prefs.enableClashRedir;
+            wantedBy = [ "default.target" ];
+            after = [ "network-online.target" ];
+            onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
+            path = [
+              pkgs.coreutils
+              pkgs.systemd
+              pkgs.sudo
+              pkgs.curl
+              pkgs.diffutils
+              pkgs.libcap
+              pkgs.utillinux
+            ];
+            script = ''
+              set -xeu
+              CLASH_USER=clash
+              CLASH_UID="$(id -u "$CLASH_USER")"
+              CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
+              CLASH_CONFIG=/etc/clash-redir/default.yaml
+              # We first try to download the config file on behave of "$CLASH_USER",
+              # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
+              if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                  if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                      >&2 echo "Failed to download clash config"
+                      exit 1
+                  fi
               fi
-          fi
-          if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
-              rm "$CLASH_TEMP_CONFIG"
-              exit 0
-          fi
-          mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
-          if systemctl is-active --quiet ${name}; then
-              systemctl reload ${name} || systemctl restart ${name}
-          fi
-        '';
-        serviceConfig = {
-          Type = "oneshot";
-          EnvironmentFile = "/run/secrets/clash-env";
-          Restart = "on-failure";
-        };
-      };
-      timers."${updaterName}" = {
-        enable = prefs.enableClashRedir;
-        wantedBy = [ "default.target" ];
-        after = [ "network-online.target" ];
-        timerConfig = {
-          OnCalendar = "hourly";
-          Unit = "${updaterName}.service";
-          Persistent = true;
-        };
-      };
+              if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
+                  rm "$CLASH_TEMP_CONFIG"
+                  exit 0
+              fi
+              mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+              if systemctl is-active --quiet ${name}; then
+                  systemctl reload ${name} || systemctl restart ${name}
+              fi
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+              EnvironmentFile = "/run/secrets/clash-env";
+              Restart = "on-failure";
+            };
+          };
+          timers."${updaterName}" = {
+            enable = prefs.enableClashRedir;
+            wantedBy = [ "default.target" ];
+            after = [ "network-online.target" ];
+            timerConfig = {
+              OnCalendar = "hourly";
+              Unit = "${updaterName}.service";
+              Persistent = true;
+            };
+          };
 
-      services."${watchdogName}" = {
-        description = "watch for clash redir running status";
-        enable = prefs.enableClashRedir;
-        after = [ "network-online.target" ];
-        onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
-        path = [ pkgs.coreutils pkgs.systemd pkgs.curl ];
-        script = ''
-          set -xeuo pipefail
-          if [[ -f "/tmp/stop-bother-${name}" ]]; then exit 0; fi
+          services."${watchdogName}" = {
+            description = "watch for clash redir running status";
+            enable = prefs.enableClashRedir;
+            after = [ "network-online.target" ];
+            onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
+            path = [ pkgs.coreutils pkgs.systemd pkgs.curl ];
+            script = ''
+              set -xeuo pipefail
+              if [[ -f "/tmp/stop-bother-${name}" ]]; then exit 0; fi
 
-          # Don't use http websites, as we may be behind a captive portal.
-          has_intranet_connectivity() {
-              curl -o /dev/null -sS https://www.baidu.com || curl -o /dev/null -sS https://223.6.6.6
+              # Don't use http websites, as we may be behind a captive portal.
+              has_intranet_connectivity() {
+                  curl -o /dev/null -sS https://www.baidu.com || curl -o /dev/null -sS https://223.6.6.6
+              }
+
+              # Don't use frequently-visited websites, as this kind of robot activities may affect normal access.
+              has_internet_connectivity() {
+                  curl -o /dev/null -sS --retry 3 --retry-all-errors https://startpage.com || curl -o /dev/null -sS --retry 3 --retry-all-errors https://streamable.com
+              }
+
+              if has_internet_connectivity; then exit 0; fi
+
+              if ! has_intranet_connectivity; then exit 0; fi
+
+              systemctl start ${updaterName} ${name}
+              if ! has_internet_connectivity; then systemctl stop ${name}; fi
+            '';
+            serviceConfig = { Type = "oneshot"; };
+          };
+          timers."${watchdogName}" = {
+            enable = prefs.enableClashRedir;
+            wantedBy =
+              if prefs.enableClashRedirWatchdog then [ "default.target" ] else [ ];
+            after = [ "network-online.target" ];
+            timerConfig = {
+              RandomizedDelaySec = 2 * 60;
+              OnCalendar = "*-*-* *:3/5:00";
+              Unit = "${watchdogName}.service";
+            };
+          };
+        }
+      )
+
+      ({
+        services = lib.optionalAttrs prefs.ociContainers.enableHledger {
+          "${prefs.ociContainerBackend}-hledger-init" = {
+            serviceConfig = {
+              Type = lib.mkForce "oneshot";
+              Restart = lib.mkForce "on-failure";
+            };
+          };
+        };
+      })
+
+      (
+        let
+          nextcloudUnitName = "${prefs.ociContainerBackend}-nextcloud";
+          nextcloudMaintenanceUnitName = "${nextcloudUnitName}-maintenance";
+        in
+        {
+          services = lib.optionalAttrs prefs.ociContainers.enableNextcloud {
+            "${nextcloudMaintenanceUnitName}" =
+              let
+                maintain-script = pkgs.writeShellScript "nextcloud-maintain-script" ''
+                  ${prefs.ociContainerBackend} exec --user 33 nextcloud ./occ files:scan e
+                '';
+              in
+              {
+                description = "Maintain ${prefs.ociContainerBackend} nextcloud";
+                enable = true;
+                wants = [ "${nextcloudUnitName}.service" ];
+                after = [ "network-online.target" "${nextcloudUnitName}.service" ];
+                path =
+                  [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
+                  ++ (lib.optionals (prefs.ociContainerBackend == "docker")
+                    [ config.virtualisation.docker.package ])
+                  ++ (lib.optionals (prefs.ociContainerBackend == "podman")
+                    [ config.virtualisation.podman.package ]);
+                serviceConfig = {
+                  Type = "oneshot";
+                  ExecStart = "${maintain-script}";
+                  Restart = "on-failure";
+                };
+              };
+          };
+          timers = lib.optionalAttrs prefs.ociContainers.enableNextcloud {
+            "${nextcloudMaintenanceUnitName}" = {
+              enable = true;
+              wantedBy = [ "default.target" ];
+              timerConfig = {
+                OnCalendar = "hourly";
+                RandomizedDelaySec = 10 * 60;
+                Unit = "${nextcloudMaintenanceUnitName}.service";
+                Persistent = true;
+              };
+            };
+          };
+        }
+      )
+
+      (
+        let
+          postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
+          postgresqlInitUnitName = "${postgresqlUnitName}-init";
+          postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
+        in
+        {
+          services = lib.optionalAttrs prefs.ociContainers.enablePostgresql {
+            "${postgresqlInitUnitName}" = {
+              serviceConfig = { Restart = lib.mkForce "on-failure"; };
+            };
+            "${postgresqlBackupUnitName}" =
+              let
+                backup-script = pkgs.writeShellScript "postgresql-backup-script" ''
+                  set -xeu -o pipefail
+                  umask 0077
+                  mkdir -p "$BACKUP_DIR"
+                  export HOME=/root
+                  ${prefs.ociContainerBackend} exec -e PGHOST -e PGUSER -e PGPASSWORD postgresql pg_dumpall | gzip -c > "$BACKUP_DIR/all.tmp.sql.gz"
+                  if [ -e "$BACKUP_DIR/all.sql.gz" ]; then
+                      mv "$BACKUP_DIR/all.sql.gz" "$BACKUP_DIR/all.prev.sql.gz"
+                  fi
+                  mv $BACKUP_DIR/all.tmp.sql.gz $BACKUP_DIR/all.sql.gz
+                '';
+              in
+              {
+                description =
+                  "Backup ${prefs.ociContainerBackend} postgresql database";
+                enable = true;
+                wants = [ "${postgresqlUnitName}.service" ];
+                after = [ "network-online.target" "${postgresqlUnitName}.service" ];
+                onFailure = [
+                  "notify-systemd-unit-failures@${postgresqlBackupUnitName}.service"
+                ];
+                path =
+                  [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
+                  ++ (lib.optionals (prefs.ociContainerBackend == "docker")
+                    [ config.virtualisation.docker.package ])
+                  ++ (lib.optionals (prefs.ociContainerBackend == "podman")
+                    [ config.virtualisation.podman.package ]);
+                serviceConfig = {
+                  Type = "oneshot";
+                  ExecStart = "${backup-script}";
+                  EnvironmentFile = "/run/secrets/postgresql-backup-env";
+                  Restart = "on-failure";
+                };
+              };
+          };
+          timers = lib.optionalAttrs prefs.ociContainers.enablePostgresql {
+            "${postgresqlBackupUnitName}" = {
+              enable = true;
+              wantedBy = [ "default.target" ];
+              timerConfig = {
+                OnCalendar = "daily";
+                RandomizedDelaySec = 2 * 60 * 60;
+                Unit = "${postgresqlBackupUnitName}.service";
+                Persistent = true;
+              };
+            };
+          };
+        }
+      )
+    ]) // {
+      user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+        { services = notify-systemd-unit-failures; }
+        (
+          let
+            name = "ddns";
+            unitName = "${name}@";
+            script = pkgs.writeShellScript "ddns" ''
+              set -eu
+              host="''${DDNS_HOST:-$(hostname)}"
+              if [[ -n "$1" ]] && [[ "$1" != "default" ]]; then host="$1"; fi
+              base="$DDNS_BASE_DOMAIN"
+              domain="$host.$base"
+              password="$DDNS_PASSWORD"
+              interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}')"
+              ipAddr="$(parallel -k -r -v upnpc -m {1} -s ::: $interfaces 2>/dev/null | awk '/ExternalIPAddress/ {print $3}' | head -n1 || true)"
+              if [[ -z "$ipAddr" ]]; then ipAddr="$(curl -s myip.ipip.net | perl -pe 's/.*?([0-9]{1,3}.*[0-9]{1,3}?).*/\1/g')"; fi
+              curl "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipAddr"
+              ipv6Addr="$(ip -6 addr show scope global primary | grep -v mngtmpaddr | awk '/inet6/ {print $2}' | head -n1 | awk -F/ '{print $1}')"
+              if [[ -n "$ipv6Addr" ]]; then curl "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipv6Addr"; fi
+            '';
+          in
+          {
+            services.${unitName} = {
+              description = "ddns worker";
+              enable = prefs.enableDdns;
+              wantedBy = [ "default.target" ];
+              onFailure = [ "notify-systemd-unit-failures@%i.service" ];
+              path = [
+                pkgs.coreutils
+                pkgs.inetutils
+                pkgs.parallel
+                pkgs.miniupnpc
+                pkgs.iproute
+                pkgs.gawk
+                pkgs.perl
+                pkgs.curl
+              ];
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${script} %i";
+                EnvironmentFile = "/run/secrets/ddns-env";
+              };
+            };
+            timers.${unitName} = {
+              enable = prefs.enableDdns;
+              wantedBy = [ "default.target" ];
+              timerConfig = {
+                OnCalendar = "*-*-* *:2/10:43";
+                Unit = "${unitName}%i.service";
+                Persistent = true;
+              };
+            };
           }
+        )
 
-          # Don't use frequently-visited websites, as this kind of robot activities may affect normal access.
-          has_internet_connectivity() {
-              curl -o /dev/null -sS --retry 3 --retry-all-errors https://startpage.com || curl -o /dev/null -sS --retry 3 --retry-all-errors https://streamable.com
+        {
+          services.nextcloud-client = {
+            enable = prefs.enableNextcloudClient;
+            description = "nextcloud client";
+            wantedBy = [ "default.target" ];
+            serviceConfig = {
+              Restart = "always";
+              EnvironmentFile = "%h/.config/Nextcloud/env";
+            };
+            path = [ pkgs.nextcloud-client pkgs.inotify-tools ];
+            script = ''
+              mkdir -p "$HOME/$localFolder"
+              while true; do
+                    nextcloudcmd --non-interactive --silent --user "$user" --password "$password" "$localFolder" "$remoteUrl" || true
+                    inotifywait -t 120 "$localFolder" > /dev/null 2>&1 || true
+              done
+            '';
+          };
+        }
+
+        (
+          let
+            name = "hole-puncher";
+            unitName = "${name}@";
+            script = pkgs.writeShellScript "hole-puncher" ''
+              set -eu
+              instance="44443-${
+                builtins.toString
+                (if prefs.enableAioproxy then prefs.aioproxyPort else 44443)
+              }"
+              if [[ -n "$1" ]] && grep -Eq '[0-9]+-[0-9]+' <<< "$1"; then instance="$1"; fi
+              externalPort="$(awk -F- '{print $2}' <<< "$instance")"
+              internalPort="$(awk -F- '{print $1}' <<< "$instance")"
+              interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}' | grep -v veth)"
+              ipAddresses="$(parallel -k ip addr show dev {1} ::: $interfaces | grep -Po 'inet \K[\d.]+')"
+              protocols="tcp udp"
+              result="$(parallel -r -v upnpc -m {1} -a {2} $internalPort $externalPort {3} ::: $interfaces :::+ $ipAddresses ::: $protocols || true)"
+              awk -v OFS=, '/is redirected to/ {print $2, $8, $3}' <<< "$result"
+            '';
+          in
+          {
+            services.${unitName} = {
+              description = "NAT traversal worker";
+              enable = prefs.enableHolePuncher && prefs.enableSslh;
+              wantedBy = [ "default.target" ];
+              onFailure = [ "notify-systemd-unit-failures@${unitName}_%i.service" ];
+              path = [
+                pkgs.coreutils
+                pkgs.parallel
+                pkgs.miniupnpc
+                pkgs.iproute
+                pkgs.gawk
+              ];
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${script} %i";
+              };
+            };
+            timers.${unitName} = {
+              enable = prefs.enableHolePuncher;
+              wantedBy = [ "default.target" ];
+              timerConfig = {
+                OnCalendar = "*-*-* *:3/20:00";
+                Unit = "${unitName}%i.service";
+                Persistent = true;
+              };
+            };
           }
+        )
+        (
+          let name = "task-warrior-sync";
+          in
+          {
+            services.${name} = {
+              description = "sync task warrior tasks";
+              enable = prefs.enableTaskWarriorSync;
+              onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${pkgs.taskwarrior}/bin/task synchronize";
+              };
+            };
+            timers.${name} = {
+              enable = prefs.enableTaskWarriorSync;
+              wantedBy = [ "default.target" ];
+              timerConfig = {
+                OnCalendar = "*-*-* *:1/3:00";
+                Unit = "${name}.service";
+                Persistent = true;
+              };
+            };
+          }
+        )
 
-          if has_internet_connectivity; then exit 0; fi
+        (
+          let name = "vdirsyncer";
+          in
+          {
+            services.${name} = {
+              description = "vdirsyncer sync";
+              enable = prefs.enableTaskWarriorSync;
+              onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
+              serviceConfig = {
+                Type = "oneshot";
+                # ExecStartPre = ''
+                #   ${pkgs.bash}/bin/bash -c "${pkgs.coreutils}/bin/yes | ${pkgs.vdirsyncer}/bin/vdirsyncer discover"'';
+                ExecStartPre = "${pkgs.vdirsyncer}/bin/vdirsyncer discover";
+                ExecStart = "${pkgs.vdirsyncer}/bin/vdirsyncer sync";
+              };
+            };
+            timers.${name} = {
+              enable = prefs.enableVdirsyncer;
+              wantedBy = [ "default.target" ];
+              timerConfig = {
+                OnCalendar = "*-*-* *:1/3:00";
+                Unit = "${name}.service";
+                Persistent = true;
+              };
+            };
+          }
+        )
 
-          if ! has_intranet_connectivity; then exit 0; fi
-
-          systemctl start ${updaterName} ${name}
-          if ! has_internet_connectivity; then systemctl stop ${name}; fi
-        '';
-        serviceConfig = { Type = "oneshot"; };
-      };
-      timers."${watchdogName}" = {
-        enable = prefs.enableClashRedir;
-        wantedBy =
-          if prefs.enableClashRedirWatchdog then [ "default.target" ] else [ ];
-        after = [ "network-online.target" ];
-        timerConfig = {
-          RandomizedDelaySec = 2 * 60;
-          OnCalendar = "*-*-* *:3/5:00";
-          Unit = "${watchdogName}.service";
-        };
-      };
-    })
-
-    ({
-      services = lib.optionalAttrs prefs.ociContainers.enableHledger {
-        "${prefs.ociContainerBackend}-hledger-init" = {
-          serviceConfig = {
-            Type = lib.mkForce "oneshot";
-            Restart = lib.mkForce "on-failure";
-          };
-        };
-      };
-    })
-
-    (let
-      nextcloudUnitName = "${prefs.ociContainerBackend}-nextcloud";
-      nextcloudMaintenanceUnitName = "${nextcloudUnitName}-maintenance";
-    in {
-      services = lib.optionalAttrs prefs.ociContainers.enableNextcloud {
-        "${nextcloudMaintenanceUnitName}" = let
-          maintain-script = pkgs.writeShellScript "nextcloud-maintain-script" ''
-            ${prefs.ociContainerBackend} exec --user 33 nextcloud ./occ files:scan e
-          '';
-        in {
-          description = "Maintain ${prefs.ociContainerBackend} nextcloud";
-          enable = true;
-          wants = [ "${nextcloudUnitName}.service" ];
-          after = [ "network-online.target" "${nextcloudUnitName}.service" ];
-          path =
-            [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
-            ++ (lib.optionals (prefs.ociContainerBackend == "docker")
-              [ config.virtualisation.docker.package ])
-            ++ (lib.optionals (prefs.ociContainerBackend == "podman")
-              [ config.virtualisation.podman.package ]);
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${maintain-script}";
-            Restart = "on-failure";
-          };
-        };
-      };
-      timers = lib.optionalAttrs prefs.ociContainers.enableNextcloud {
-        "${nextcloudMaintenanceUnitName}" = {
-          enable = true;
-          wantedBy = [ "default.target" ];
-          timerConfig = {
-            OnCalendar = "hourly";
-            RandomizedDelaySec = 10 * 60;
-            Unit = "${nextcloudMaintenanceUnitName}.service";
-            Persistent = true;
-          };
-        };
-      };
-    })
-
-    (let
-      postgresqlUnitName = "${prefs.ociContainerBackend}-postgresql";
-      postgresqlInitUnitName = "${postgresqlUnitName}-init";
-      postgresqlBackupUnitName = "${postgresqlUnitName}-backup";
-    in {
-      services = lib.optionalAttrs prefs.ociContainers.enablePostgresql {
-        "${postgresqlInitUnitName}" = {
-          serviceConfig = { Restart = lib.mkForce "on-failure"; };
-        };
-        "${postgresqlBackupUnitName}" = let
-          backup-script = pkgs.writeShellScript "postgresql-backup-script" ''
-            set -xeu -o pipefail
-            umask 0077
-            mkdir -p "$BACKUP_DIR"
-            export HOME=/root
-            ${prefs.ociContainerBackend} exec -e PGHOST -e PGUSER -e PGPASSWORD postgresql pg_dumpall | gzip -c > "$BACKUP_DIR/all.tmp.sql.gz"
-            if [ -e "$BACKUP_DIR/all.sql.gz" ]; then
-                mv "$BACKUP_DIR/all.sql.gz" "$BACKUP_DIR/all.prev.sql.gz"
-            fi
-            mv $BACKUP_DIR/all.tmp.sql.gz $BACKUP_DIR/all.sql.gz
-          '';
-        in {
-          description =
-            "Backup ${prefs.ociContainerBackend} postgresql database";
-          enable = true;
-          wants = [ "${postgresqlUnitName}.service" ];
-          after = [ "network-online.target" "${postgresqlUnitName}.service" ];
-          onFailure = [
-            "notify-systemd-unit-failures@${postgresqlBackupUnitName}.service"
-          ];
-          path =
-            [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
-            ++ (lib.optionals (prefs.ociContainerBackend == "docker")
-              [ config.virtualisation.docker.package ])
-            ++ (lib.optionals (prefs.ociContainerBackend == "podman")
-              [ config.virtualisation.podman.package ]);
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${backup-script}";
-            EnvironmentFile = "/run/secrets/postgresql-backup-env";
-            Restart = "on-failure";
-          };
-        };
-      };
-      timers = lib.optionalAttrs prefs.ociContainers.enablePostgresql {
-        "${postgresqlBackupUnitName}" = {
-          enable = true;
-          wantedBy = [ "default.target" ];
-          timerConfig = {
-            OnCalendar = "daily";
-            RandomizedDelaySec = 2 * 60 * 60;
-            Unit = "${postgresqlBackupUnitName}.service";
-            Persistent = true;
-          };
-        };
-      };
-    })
-  ]) // {
-    user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-      { services = notify-systemd-unit-failures; }
-      (let
-        name = "ddns";
-        unitName = "${name}@";
-        script = pkgs.writeShellScript "ddns" ''
-          set -eu
-          host="''${DDNS_HOST:-$(hostname)}"
-          if [[ -n "$1" ]] && [[ "$1" != "default" ]]; then host="$1"; fi
-          base="$DDNS_BASE_DOMAIN"
-          domain="$host.$base"
-          password="$DDNS_PASSWORD"
-          interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}')"
-          ipAddr="$(parallel -k -r -v upnpc -m {1} -s ::: $interfaces 2>/dev/null | awk '/ExternalIPAddress/ {print $3}' | head -n1 || true)"
-          if [[ -z "$ipAddr" ]]; then ipAddr="$(curl -s myip.ipip.net | perl -pe 's/.*?([0-9]{1,3}.*[0-9]{1,3}?).*/\1/g')"; fi
-          curl "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipAddr"
-          ipv6Addr="$(ip -6 addr show scope global primary | grep -v mngtmpaddr | awk '/inet6/ {print $2}' | head -n1 | awk -F/ '{print $1}')"
-          if [[ -n "$ipv6Addr" ]]; then curl "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipv6Addr"; fi
-        '';
-      in {
-        services.${unitName} = {
-          description = "ddns worker";
-          enable = prefs.enableDdns;
-          wantedBy = [ "default.target" ];
-          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
-          path = [
-            pkgs.coreutils
-            pkgs.inetutils
-            pkgs.parallel
-            pkgs.miniupnpc
-            pkgs.iproute
-            pkgs.gawk
-            pkgs.perl
-            pkgs.curl
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${script} %i";
-            EnvironmentFile = "/run/secrets/ddns-env";
-          };
-        };
-        timers.${unitName} = {
-          enable = prefs.enableDdns;
-          wantedBy = [ "default.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* *:2/10:43";
-            Unit = "${unitName}%i.service";
-            Persistent = true;
-          };
-        };
-      })
-
-      {
-        services.nextcloud-client = {
-          enable = prefs.enableNextcloudClient;
-          description = "nextcloud client";
-          wantedBy = [ "default.target" ];
-          serviceConfig = {
-            Restart = "always";
-            EnvironmentFile = "%h/.config/Nextcloud/env";
-          };
-          path = [ pkgs.nextcloud-client pkgs.inotify-tools ];
-          script = ''
-            mkdir -p "$HOME/$localFolder"
-            while true; do
-                  nextcloudcmd --non-interactive --silent --user "$user" --password "$password" "$localFolder" "$remoteUrl" || true
-                  inotifywait -t 120 "$localFolder" > /dev/null 2>&1 || true
-            done
-          '';
-        };
-      }
-
-      (let
-        name = "hole-puncher";
-        unitName = "${name}@";
-        script = pkgs.writeShellScript "hole-puncher" ''
-          set -eu
-          instance="44443-${
-            builtins.toString
-            (if prefs.enableAioproxy then prefs.aioproxyPort else 44443)
-          }"
-          if [[ -n "$1" ]] && grep -Eq '[0-9]+-[0-9]+' <<< "$1"; then instance="$1"; fi
-          externalPort="$(awk -F- '{print $2}' <<< "$instance")"
-          internalPort="$(awk -F- '{print $1}' <<< "$instance")"
-          interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}' | grep -v veth)"
-          ipAddresses="$(parallel -k ip addr show dev {1} ::: $interfaces | grep -Po 'inet \K[\d.]+')"
-          protocols="tcp udp"
-          result="$(parallel -r -v upnpc -m {1} -a {2} $internalPort $externalPort {3} ::: $interfaces :::+ $ipAddresses ::: $protocols || true)"
-          awk -v OFS=, '/is redirected to/ {print $2, $8, $3}' <<< "$result"
-        '';
-      in {
-        services.${unitName} = {
-          description = "NAT traversal worker";
-          enable = prefs.enableHolePuncher && prefs.enableSslh;
-          wantedBy = [ "default.target" ];
-          onFailure = [ "notify-systemd-unit-failures@${unitName}_%i.service" ];
-          path = [
-            pkgs.coreutils
-            pkgs.parallel
-            pkgs.miniupnpc
-            pkgs.iproute
-            pkgs.gawk
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${script} %i";
-          };
-        };
-        timers.${unitName} = {
-          enable = prefs.enableHolePuncher;
-          wantedBy = [ "default.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* *:3/20:00";
-            Unit = "${unitName}%i.service";
-            Persistent = true;
-          };
-        };
-      })
-      (let name = "task-warrior-sync";
-      in {
-        services.${name} = {
-          description = "sync task warrior tasks";
-          enable = prefs.enableTaskWarriorSync;
-          onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.taskwarrior}/bin/task synchronize";
-          };
-        };
-        timers.${name} = {
-          enable = prefs.enableTaskWarriorSync;
-          wantedBy = [ "default.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* *:1/3:00";
-            Unit = "${name}.service";
-            Persistent = true;
-          };
-        };
-      })
-
-      (let name = "vdirsyncer";
-      in {
-        services.${name} = {
-          description = "vdirsyncer sync";
-          enable = prefs.enableTaskWarriorSync;
-          onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-          serviceConfig = {
-            Type = "oneshot";
-            # ExecStartPre = ''
-            #   ${pkgs.bash}/bin/bash -c "${pkgs.coreutils}/bin/yes | ${pkgs.vdirsyncer}/bin/vdirsyncer discover"'';
-            ExecStartPre = "${pkgs.vdirsyncer}/bin/vdirsyncer discover";
-            ExecStart = "${pkgs.vdirsyncer}/bin/vdirsyncer sync";
-          };
-        };
-        timers.${name} = {
-          enable = prefs.enableVdirsyncer;
-          wantedBy = [ "default.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* *:1/3:00";
-            Unit = "${name}.service";
-            Persistent = true;
-          };
-        };
-      })
-
-      (let name = "yandex-disk";
-      in if prefs.enableYandexDisk then {
-        services.${name} = {
-          enable = true;
-          description = "Yandex-disk server";
-          onFailure = [ "notify-systemd-unit-failures@%i.service" ];
-          after = [ "network-online.target" ];
-          wantedBy = [ "default.target" ];
-          unitConfig.RequiresMountsFor = prefs.syncFolder;
-          serviceConfig = {
-            Restart = "always";
-            ExecStart =
-              "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${prefs.syncFolder}' ${
+        (
+          let name = "yandex-disk";
+          in
+          if prefs.enableYandexDisk then {
+            services.${name} = {
+              enable = true;
+              description = "Yandex-disk server";
+              onFailure = [ "notify-systemd-unit-failures@%i.service" ];
+              after = [ "network-online.target" ];
+              wantedBy = [ "default.target" ];
+              unitConfig.RequiresMountsFor = prefs.syncFolder;
+              serviceConfig = {
+                Restart = "always";
+                ExecStart =
+                  "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${prefs.syncFolder}' ${
                 lib.concatMapStringsSep " " (dir: "--exclude-dirs='${dir}'")
                 prefs.yandexExcludedDirs
               }";
-          };
-        };
-      } else
-        { })
-    ];
-  };
+              };
+            };
+          } else
+            { }
+        )
+      ];
+    };
 
   nix = {
     inherit (prefs) buildMachines buildCores maxJobs distributedBuilds;
@@ -4407,18 +4603,20 @@ in {
     crashDump = { enable = prefs.enableCrashDump; };
     initrd.network = {
       enable = true;
-      ssh = let
-        f = impure.sshAuthorizedKeys;
-        authorizedKeys = lib.optionals (builtins.pathExists f)
-          (builtins.filter (x: x != "")
-            (pkgs.lib.splitString "\n" (builtins.readFile f)));
-        hostKeys =
-          builtins.filter (x: builtins.pathExists x) impure.sshHostKeys;
-      in {
-        inherit (prefs) authorizedKeys hostKeys;
-        enable = false && prefs.enableBootSSH && prefs.authorizedKeys != [ ]
-          && prefs.hostKeys != [ ];
-      };
+      ssh =
+        let
+          f = impure.sshAuthorizedKeys;
+          authorizedKeys = lib.optionals (builtins.pathExists f)
+            (builtins.filter (x: x != "")
+              (pkgs.lib.splitString "\n" (builtins.readFile f)));
+          hostKeys =
+            builtins.filter (x: builtins.pathExists x) impure.sshHostKeys;
+        in
+        {
+          inherit (prefs) authorizedKeys hostKeys;
+          enable = false && prefs.enableBootSSH && prefs.authorizedKeys != [ ]
+            && prefs.hostKeys != [ ];
+        };
     };
   };
 }

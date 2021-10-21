@@ -11,7 +11,8 @@ rec {
   ];
   systems =
     builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
-    systemsList
+      systemsList
     // builtins.foldl' (acc: current: acc // { "cicd-${current}" = current; })
-    { } systemsList;
+      { }
+      systemsList;
 }

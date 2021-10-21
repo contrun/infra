@@ -1,4 +1,4 @@
-with import <nixpkgs> {};
+with import <nixpkgs> { };
 with python3Packages;
 
 stdenv.mkDerivation {
