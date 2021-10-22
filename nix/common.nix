@@ -3636,7 +3636,7 @@ in
                     podmancli;
               in
               ''
-                set -e
+                set -euo pipefail
                 if ! ${cli} network inspect ${prefs.ociContainerNetwork}; then
                     if ! ${cli} network create ${prefs.ociContainerNetwork}; then
                         echo "creating network failed"
@@ -3872,7 +3872,7 @@ in
         } // lib.optionalAttrs (prefs.ociContainers.enableWallabag) {
           "${prefs.ociContainerBackend}-wallabag" = {
             postStart = ''
-              set -xe
+              set -euo pipefail
               # https://github.com/moby/moby/issues/41890
               export HOME=/root
               retries=0
@@ -4024,7 +4024,7 @@ in
             path = [ pkgs.coreutils pkgs.systemd pkgs.iputils pkgs.utillinux ]
             ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
             script = ''
-              set -xeuo pipefail
+              set -euo pipefail
 
               if ping -c3 _gateway; then
                   exit 0
@@ -4106,7 +4106,7 @@ in
             serviceConfig = {
               Type = "forking";
               ExecStartPre = "${pkgs.writeShellScript "clash-redir-prestart" ''
-            set -euxo pipefail
+            set -euo pipefail
             mkdir -p /etc/clash-redir
             if ! [[ -e /etc/clash-redir/config.yaml ]]; then
                 if ! [[ -e /etc/clash-redir/default.yaml ]]; then
@@ -4137,15 +4137,15 @@ in
               pkgs.utillinux
             ];
             script = ''
-              set -xeu
+              set -euo pipefail
               CLASH_USER=clash
               CLASH_UID="$(id -u "$CLASH_USER")"
               CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
               CLASH_CONFIG=/etc/clash-redir/default.yaml
               # We first try to download the config file on behave of "$CLASH_USER",
               # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-              if ! sudo -u "$CLASH_USER" curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                  if ! curl "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+              if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                  if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
                       >&2 echo "Failed to download clash config"
                       exit 1
                   fi
@@ -4183,7 +4183,7 @@ in
             onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
             path = [ pkgs.coreutils pkgs.systemd pkgs.curl ];
             script = ''
-              set -xeuo pipefail
+              set -euo pipefail
               if [[ -f "/tmp/stop-bother-${name}" ]]; then exit 0; fi
 
               # Don't use http websites, as we may be behind a captive portal.
@@ -4290,7 +4290,7 @@ in
             "${postgresqlBackupUnitName}" =
               let
                 backup-script = pkgs.writeShellScript "postgresql-backup-script" ''
-                  set -xeu -o pipefail
+                  set -euo pipefail
                   umask 0077
                   mkdir -p "$BACKUP_DIR"
                   export HOME=/root
@@ -4346,7 +4346,7 @@ in
             name = "ddns";
             unitName = "${name}@";
             script = pkgs.writeShellScript "ddns" ''
-              set -eu
+              set -euo pipefail
               host="''${DDNS_HOST:-$(hostname)}"
               if [[ -n "$1" ]] && [[ "$1" != "default" ]]; then host="$1"; fi
               base="$DDNS_BASE_DOMAIN"
@@ -4354,10 +4354,10 @@ in
               password="$DDNS_PASSWORD"
               interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}')"
               ipAddr="$(parallel -k -r -v upnpc -m {1} -s ::: $interfaces 2>/dev/null | awk '/ExternalIPAddress/ {print $3}' | head -n1 || true)"
-              if [[ -z "$ipAddr" ]]; then ipAddr="$(curl -s myip.ipip.net | perl -pe 's/.*?([0-9]{1,3}.*[0-9]{1,3}?).*/\1/g')"; fi
-              curl "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipAddr"
+              if [[ -z "$ipAddr" ]]; then ipAddr="$(curl -sS myip.ipip.net | perl -pe 's/.*?([0-9]{1,3}.*[0-9]{1,3}?).*/\1/g')"; fi
+              curl -sS "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipAddr"
               ipv6Addr="$(ip -6 addr show scope global primary | grep -v mngtmpaddr | awk '/inet6/ {print $2}' | head -n1 | awk -F/ '{print $1}')"
-              if [[ -n "$ipv6Addr" ]]; then curl "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipv6Addr"; fi
+              if [[ -n "$ipv6Addr" ]]; then curl -sS "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipv6Addr"; fi
             '';
           in
           {
@@ -4419,7 +4419,7 @@ in
             name = "hole-puncher";
             unitName = "${name}@";
             script = pkgs.writeShellScript "hole-puncher" ''
-              set -eu
+              set -euo pipefail
               instance="44443-${
                 builtins.toString
                 (if prefs.enableAioproxy then prefs.aioproxyPort else 44443)
