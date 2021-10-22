@@ -1319,7 +1319,7 @@ in
         static_configs = [{
           targets =
             [ "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}" ];
-          labels = { node = prefs.hostname; };
+          labels = { nodename = prefs.hostname; };
         }];
       }] ++ lib.optionals config.services.prometheus.exporters.node.enable [{
         job_name = "node";
@@ -1329,7 +1329,7 @@ in
               toString config.services.prometheus.exporters.node.port
             }"
           ];
-          labels = { node = prefs.hostname; };
+          labels = { nodename = prefs.hostname; };
         }];
       }]
       ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
@@ -1354,14 +1354,13 @@ in
           }
         ];
         static_configs = [{
-          labels = { node = prefs.hostname; };
+          labels = { nodename = prefs.hostname; };
           targets = [
             "https://www.google.com"
             "https://www.baidu.com"
             "http://neverssl.com"
           ] ++ lib.optionals prefs.enableTraefik
-            (builtins.map (x: "https://${x}")
-              (prefs.getFullDomainNames "traefik"));
+            (builtins.map (x: "https://${x}") prefs.domains);
         }];
       }]
       ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
@@ -1391,7 +1390,7 @@ in
                 config.services.prometheus.exporters.postgres.port
               }"
           ];
-          labels = { node = prefs.hostname; };
+          labels = { nodename = prefs.hostname; };
         }];
       }];
     };
@@ -1415,16 +1414,69 @@ in
           job_name = "journal";
           journal = {
             labels = {
-              host = prefs.hostname;
-              node = prefs.hostname;
-              job = "systemd-journal";
+              job = "journald";
+              nodename = prefs.hostname;
             };
             max_age = "12h";
           };
-          relabel_configs = [{
-            source_labels = [ "__journal__systemd_unit" ];
-            target_label = "unit";
-          }];
+          relabel_configs = [
+            {
+              source_labels = [ "__journal__boot_id" ];
+              target_label = "boot_id";
+            }
+            {
+              source_labels = [ "__journal__comm" ];
+              target_label = "command";
+            }
+            {
+              source_labels = [ "__journal__cmdline" ];
+              target_label = "command_line";
+            }
+            {
+              source_labels = [ "__journal__exe" ];
+              target_label = "executable";
+            }
+            {
+              source_labels = [ "__journal__hostname" ];
+              target_label = "nodename";
+            }
+            {
+              source_labels = [ "__journal__systemd_unit" ];
+              target_label = "systemd_unit";
+            }
+            {
+              source_labels = [ "__journal__systemd_user_unit" ];
+              target_label = "systemd_user_unit";
+            }
+            {
+              source_labels = [ "__journal__syslog_identifier" ];
+              target_label = "syslog_identifier";
+            }
+            {
+              source_labels = [ "__journal_priority" ];
+              target_label = "journal_priority";
+            }
+            {
+              source_labels = [ "__journal__transport" ];
+              target_label = "journal_transport";
+            }
+            {
+              source_labels = [ "__journal_image_name" ];
+              target_label = "container_image_name";
+            }
+            {
+              source_labels = [ "__journal_container_name" ];
+              target_label = "container_name";
+            }
+            {
+              source_labels = [ "__journal_container_id" ];
+              target_label = "container_id";
+            }
+            {
+              source_labels = [ "__journal_container_tag" ];
+              target_label = "container_tag";
+            }
+          ];
         }] ++ lib.optionals prefs.enableTraefik [
           {
             job_name = "traefik";
@@ -1432,7 +1484,7 @@ in
               targets = [ "localhost" ];
               labels = {
                 __path__ = "/var/log/traefik/log.json";
-                node = prefs.hostname;
+                nodename = prefs.hostname;
                 job = "traefik";
               };
             }];
@@ -1443,7 +1495,7 @@ in
               targets = [ "localhost" ];
               labels = {
                 __path__ = "/var/log/traefik/access.log.json";
-                node = prefs.hostname;
+                nodename = prefs.hostname;
                 job = "traefik-access";
               };
             }];
