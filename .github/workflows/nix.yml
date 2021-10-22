@@ -196,7 +196,7 @@ jobs:
 
       - name: Import vault token
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
-        uses: hashicorp/vault-action@v2.3.1
+        uses: hashicorp/vault-action@v2.4.0
         with:
           method: approle
           url: ${{ secrets.VAULT_ADDR }}
