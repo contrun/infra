@@ -357,7 +357,9 @@ let
 
 in
 {
-  "${hostname}" = inputs.nixpkgs.lib.nixosSystem {
+  # TODO: Remove makeOverridable.
+  # Workaround for `nixos-generate --flake`, see https://github.com/nix-community/nixos-generators/issues/110
+  "${hostname}" = (with inputs.nixpkgs.lib; makeOverridable nixosSystem) {
     inherit system;
 
     modules = [
