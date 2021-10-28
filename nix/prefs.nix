@@ -552,6 +552,7 @@ let
           # super.pkgsRelatedPrefs.rtl8188gu
         ];
       };
+      enableNetworkWatchdog = true;
       enablePrometheus = true;
       enablePromtail = true;
       enableHolePuncher = false;
