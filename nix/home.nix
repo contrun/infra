@@ -1069,7 +1069,7 @@ in
     (
       let name = "smos-sync";
       in
-      lib.optionalAttrs prefs.enableSmos {
+      lib.optionalAttrs prefs.enableSmosSync {
         services.${name} = {
           Unit = { Description = "sync smos"; };
           Service = {

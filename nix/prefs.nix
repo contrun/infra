@@ -94,7 +94,9 @@ let
       in
       filter (x: x != "autossh") servers;
     enableSessionVariables = true;
-    enableAllFirmware = self.isMinimalSystem;
+    enableAllFirmware = !self.isMinimalSystem;
+    enableRedistributableFirmware = !self.isMinimalSystem;
+    enableOpengl = !self.isMinimalSystem;
     dpi = 144;
     enableHidpi = true;
     enableIPv6 = true;
@@ -113,10 +115,10 @@ let
     enableIwd = self.wirelessBackend == "iwd";
     enableBumblebee = false;
     enableMediaKeys = true;
-    enableEternalTerminal = true;
+    enableEternalTerminal = !self.isMinimalSystem;
     dnsServers = [ "1.0.0.1" "8.8.4.4" "9.9.9.9" "180.76.76.76" "223.5.5.5" ];
     enableResolved = true;
-    enableCoredns = true;
+    enableCoredns = !self.isMinimalSystem;
     enableCorednsForResolved = self.enableCoredns;
     corednsPort = 5322;
     enableSmartdns = false;
@@ -139,19 +141,19 @@ let
       log-level = "info";
     };
     enableCfssl = false;
-    enableTtyd = true;
+    enableTtyd = !self.isMinimalSystem;
     enableSslh = false;
     enableWstunnel = !self.isMinimalSystem;
     wstunnelPort = 3275;
     sslhPort = 44443;
-    enableAioproxy = true;
+    enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
     enableTailScale = false;
     enableX2goServer = false;
     enableDebugInfo = false;
     enableBtrfs = false;
-    enableZfs = true;
-    enableZfsUnstable = true;
+    enableZfs = !self.isMinimalSystem;
+    enableZfsUnstable = self.enableZfs;
     enableCrashDump = false;
     enableDnsmasq = false;
     dnsmasqListenAddress = "127.0.0.233";
@@ -168,7 +170,12 @@ let
     xWindowManager =
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
-    enableXmonad = self.xWindowManager == "xmonad";
+    enableXmonad = self.xWindowManager == "xmonad" && !self.isMinimalSystem;
+    enableI3 = !self.isMinimalSystem;
+    enableAwesome = !self.isMinimalSystem;
+    enableSway = !self.isMinimalSystem;
+    enablePamMount = !self.isMinimalSystem;
+    enableFontConfig = !self.isMinimalSystem;
     xSessionCommands = builtins.concatStringsSep "\n" ([
       ''
         # echo "$(date -R): $@" >> ~/log
@@ -204,17 +211,17 @@ let
     enableGdm = self.xDisplayManager == "Gdm";
     enableSddm = self.xDisplayManager == "sddm";
     enableStartx = self.xDisplayManager == "startx";
-    installHomePackages = true;
+    installHomePackages = !self.isMinimalSystem;
     buildCores = 0;
     maxJobs = "auto";
     proxy = null;
-    enableClashRedir = true;
+    enableClashRedir = !self.isMinimalSystem;
     enableClashRedirWatchdog = false;
     enableNetworkWatchdog = false;
     autoStartClashRedir = self.enableClashRedir;
     myPath = [ "${self.home}/.bin" ];
-    enableOfflineimap = true;
-    enableSyncthing = true;
+    enableOfflineimap = !self.isMinimalSystem;
+    enableSyncthing = !self.isMinimalSystem;
     yandexConfig = {
       directory = "${self.home}/Sync";
       excludes = "";
@@ -263,6 +270,7 @@ let
     enableGrafana = false;
     grafanaPort = 2342;
     enablePrometheus = false;
+    enablePrometheusExporters = !self.isMinimalSystem;
     prometheusPort = 9001;
     enableLoki = false;
     lokiHttpPort = 3100;
@@ -275,7 +283,7 @@ let
     enableVsftpd = !self.isMinimalSystem;
     enableRsyncd = false;
     enableMpd = false;
-    enableAccountsDaemon = true;
+    enableAccountsDaemon = !self.isMinimalSystem;
     enableFlatpak = false;
     enableXdgPortal = false;
     enableJupyter = false;
@@ -283,9 +291,9 @@ let
     enableLocate = true;
     enableFail2ban = true;
     davfs2Secrets = "${self.home}/.davfs2/secrets";
-    enableDavfs2 = true;
-    enableGlusterfs = true;
-    enableSamba = true;
+    enableDavfs2 = !self.isMinimalSystem;
+    enableGlusterfs = !self.isMinimalSystem;
+    enableSamba = !self.isMinimalSystem;
     enableContainerd = false;
     enableCrio = false;
     enableK3s = false;
@@ -300,27 +308,28 @@ let
     nextcloudWhat = "https://uuuuuu.ocloud.de/remote.php/webdav/sync/";
     yandexWhere = "${self.home}/yandex";
     yandexWhat = "https://webdav.yandex.com/sync/";
-    enableXserver = true;
+    enableXserver = !self.isMinimalSystem;
     enableXautolock = self.enableXserver;
-    enableGPGAgent = true;
-    enableSmos = (self.nixosSystem == "x86_64-linux");
+    enableGPGAgent = !self.isMinimalSystem;
+    enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
+    enableSmosSync = self.enableSmos;
     enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
-    enableCalibreServer = true;
+    enableCalibreServer = !self.isMinimalSystem;
     calibreServerLibraries = [ self.calibreFolder ];
     calibreServerPort = 8213;
     calibreFolder = "${self.home}/Storage/Calibre";
-    enablePipewire = true;
+    enablePipewire = !self.isMinimalSystem;
     enableSlock = true;
     enableZSH = true;
-    enableJava = true;
+    enableJava = !self.isMinimalSystem;
     enableCcache = true;
     enableFirewall = false;
     enableCompton = false;
     enableFcron = false;
     enableRedshift = false;
     enablePostfix = !self.isMinimalSystem;
-    enableNfs = true;
+    enableNfs = !self.isMinimalSystem;
     linkedJdks =
       if self.isMinimalSystem then
         [ "openjdk8" ]
@@ -331,30 +340,31 @@ let
         "openjdk8"
       ];
     enableNextcloudClient = false;
-    enableTaskWarriorSync = true;
-    enableVdirsyncer = true;
-    enableHolePuncher = true;
-    enableDdns = true;
-    enableWireshark = true;
+    enableTaskWarriorSync = !self.isMinimalSystem;
+    enableVdirsyncer = !self.isMinimalSystem;
+    enableHolePuncher = !self.isMinimalSystem;
+    enableDdns = !self.isMinimalSystem;
+    enableWireshark = !self.isMinimalSystem;
+    enableInputMethods = !self.isMinimalSystem;
     enabledInputMethod = "fcitx";
     enableVirtualboxHost = !self.isMinimalSystem;
-    enableDocker = true;
-    enablePodman = true;
+    enableDocker = !self.isMinimalSystem;
+    enablePodman = !self.isMinimalSystem;
     replaceDockerWithPodman = !self.enableDocker;
     enableLibvirtd = !self.isMinimalSystem;
     enableAnbox = false;
     enableUnifi = false;
-    enableUdisks2 = true;
-    enableAvahi = true;
-    enableGvfs = true;
+    enableUdisks2 = !self.isMinimalSystem;
+    enableAvahi = !self.isMinimalSystem;
+    enableGvfs = !self.isMinimalSystem;
     enableCodeServer = !self.isMinimalSystem;
-    enablePrinting = true;
+    enablePrinting = !self.isMinimalSystem;
     enableBluetooth = true;
     enableAcpilight = true;
     enableThermald = false;
     enableAutoUpgrade = true;
     autoUpgradeChannel = "https://nixos.org/channels/nixos-unstable";
-    enableAutossh = true;
+    enableAutossh = !self.isMinimalSystem;
     enableAutoLogin = true;
     enableLibInput = true;
     enableFprintAuth = false;
@@ -362,7 +372,7 @@ let
     enableOpenldap = false;
     enableGnome = false;
     enableGnomeKeyring = false;
-    enableOciContainers = true;
+    enableOciContainers = !self.isMinimalSystem;
     # https://discourse.nixos.org/t/podman-containers-always-fail-to-start/11908
     ociContainerBackend = "docker";
     ociContainerNetwork = "bus";

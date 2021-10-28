@@ -186,7 +186,7 @@ in
     pam = {
       enableSSHAgentAuth = true;
       mount = {
-        enable = true;
+        enable = prefs.enablePamMount;
         extraVolumes = [
           ''<luserconf name=".pam_mount.conf.xml" />''
           ''
@@ -212,7 +212,7 @@ in
           }
         ];
         enableGnomeKeyring = prefs.enableGnomeKeyring;
-        pamMount = true;
+        pamMount = prefs.enablePamMount;
         sshAgentAuth = true;
         setEnvironment = true;
       };
@@ -275,6 +275,7 @@ in
       "fr_FR.UTF-8/UTF-8"
       "zh_CN.UTF-8/UTF-8"
     ];
+  } // lib.optionalAttrs prefs.enableInputMethods {
     inputMethod = {
       enabled = prefs.enabledInputMethod;
       ibus.engines = with pkgs.ibus-engines; [
@@ -334,8 +335,6 @@ in
         nftables
         ipset
         dnsmasq
-        (args.inputs.deploy-rs.defaultPackage.${config.nixpkgs.system} or null)
-        (args.inputs.nix-autobahn.defaultPackage.${config.nixpkgs.system} or null)
         nixFlakes
         nix-info
         nixos-generators
@@ -343,27 +342,16 @@ in
         nix-serve
         home-manager
         nixpkgs-fmt
-        nixfmt
         nix-du
         nix-index
         nix-top
-        # gnome.adwaita-icon-theme
-        # gnome.dconf
-        # gnome.gsettings-desktop-schemas
-        # gnome.zenity
-        # font-manager
         udiskie
         fzf
         jq
-        virt-manager
-        fdm
         mailutils
-        notify-osd-customizable
-        noti
         libnotify
         (pkgs.myPackages.lua or lua)
         nodejs_latest
-        lldb
         gdb
         gcc
         gnumake
@@ -379,8 +367,71 @@ in
         bind
         tree
         nix-prefetch-scripts
-        pulsemixer
+        python3
+        # (pkgs.myPackages.pythonStable or python3)
+        # (pkgs.myPackages.python2 or python2)
+        nvimpager
+        (pkgs.myPackages.nvimdiff or null)
+        ruby
+        perl
+        emacs
+        neovim
+        vim
+        libffi
+        pciutils
+        utillinux
+        ntfs3g
+        gnupg
+        atool
+        atop
+        bash
+        zsh
+        ranger
+        gptfdisk
+        curl
+        at
+        git
+        chezmoi
+        coreutils
+        file
+        sudo
+        gettext
+        mimeo
+        libsecret
+        mlocate
+        htop
+        iotop
+        iftop
+        iw
+        lsof
+        age
+        sops
+        dmidecode
+        cachix
+        e2fsprogs
+        efibootmgr
+        dbus
+        cryptsetup
+        exfat
+        rsync
+        rclone
+        restic
+        sshfs
+        fcron
+        gmp
+        libcap
+      ] ++ (if prefs.isMinimalSystem then [ ] else [
         acpilight
+        pulsemixer
+        xbindkeys
+        xcape
+        xautolock
+        xdotool
+        xlibs.xmodmap
+        xmacro
+        autokey
+        xsel
+        xvkbd
         xorg.xev
         xorg.libX11
         xorg.libXft
@@ -396,88 +447,43 @@ in
         libevdev
         wayland
         wayland-protocols
-        python3
-        # (pkgs.myPackages.pythonStable or python3)
-        # (pkgs.myPackages.python2 or python2)
-        nvimpager
-        (pkgs.myPackages.nvimdiff or null)
-        (pkgs.myPackages.aioproxy or null)
-        rofi
-        ruby
-        perl
-        emacs
-        neovim
-        vim
-        libffi
-        pciutils
-        utillinux
-        ntfs3g
-        gparted
-        gnupg
-        pinentry
-        atool
-        atop
-        bash
-        zsh
-        ranger
-        gptfdisk
-        curl
-        at
-        git
-        chezmoi
-        coreutils
-        file
-        sudo
-        gettext
+
+        lldb
         sxhkd
-        mimeo
-        libsecret
-        gnome.seahorse
-        mlocate
-        htop
-        iotop
-        iftop
-        iw
-        alacritty
-        rxvt-unicode
-        lsof
-        age
-        sops
-        dmenu
-        dmidecode
+
+        (args.inputs.deploy-rs.defaultPackage.${config.nixpkgs.system} or null)
+        (args.inputs.nix-autobahn.defaultPackage.${config.nixpkgs.system} or null)
+        (pkgs.myPackages.aioproxy or null)
+
+        # gnome.adwaita-icon-theme
+        # gnome.dconf
+        # gnome.gsettings-desktop-schemas
+        # gnome.zenity
+        # font-manager
+
         dunst
-        cachix
-        e2fsprogs
-        efibootmgr
-        dbus
-        cryptsetup
+        rofi
         compton
         blueman
+        virt-manager
+        fdm
+        notify-osd-customizable
+        noti
+        gparted
+
         bluez
+        dmenu
+        alacritty
+        gnome.seahorse
+        pinentry
+        rxvt-unicode
         bluez-tools
-        exfat
         i3blocks
         i3lock
         i3status
         firefox
-        rsync
-        rclone
-        restic
-        sshfs
         termite
-        xbindkeys
-        xcape
-        xautolock
-        xdotool
-        xlibs.xmodmap
-        xmacro
-        autokey
-        xsel
-        xvkbd
-        fcron
-        gmp
-        libcap
-      ] ++ (if (prefs.enableTailScale) then [ tailscale ] else [ ])
+      ]) ++ (if (prefs.enableTailScale) then [ tailscale ] else [ ])
       ++ (if (prefs.enableCodeServer) then [ code-server ] else [ ])
       ++ (if (prefs.enableZfs) then [ zfsbackup ] else [ ])
       ++ (if (prefs.enableBtrfs) then [ btrbk btrfs-progs ] else [ ])
@@ -486,6 +492,10 @@ in
       ++ (if prefs.enableDocker then [ docker-buildx ] else [ ])
       ++ (if prefs.enableWstunnel then [ wstunnel ] else [ ])
       ++ (if prefs.enableXmonad then [ xmobar ] else [ ])
+      ++ (if (!prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux")) then [
+        wine
+      ] else
+        [ ])
       ++ (if (prefs.nixosSystem == "x86_64-linux") then [
         hardinfo
         # steam-run-native
@@ -581,7 +591,7 @@ in
     };
     # light.enable = true;
     sway = {
-      enable = true;
+      enable = prefs.enableSway;
       extraPackages = with pkgs; [ swaylock swayidle alacritty dmenu ];
     };
     tmux = { enable = true; };
@@ -591,8 +601,9 @@ in
   fonts = {
     enableDefaultFonts = true;
     # fontDir.enable = true;
-    fontconfig = { enable = true; };
-    fonts = with pkgs; [
+    fontconfig = { enable = prefs.enableFontConfig; };
+    fonts = if prefs.isMinimalSystem then [ ] else
+    (with pkgs; [
       wqy_microhei
       wqy_zenhei
       source-han-sans-simplified-chinese
@@ -621,7 +632,7 @@ in
       fantasque-sans-mono
       dejavu_fonts
       terminus_font
-    ];
+    ]);
   };
 
   # Open ports in the firewall.
@@ -631,7 +642,6 @@ in
   networking.firewall.enable = prefs.enableFirewall;
 
   sound = {
-    enable = true;
     mediaKeys = { enable = prefs.enableMediaKeys; };
   };
 
@@ -656,10 +666,10 @@ in
     configAttr // cross;
 
   hardware = {
-    enableAllFirmware = true;
-    enableRedistributableFirmware = true;
+    enableAllFirmware = prefs.enableAllFirmware;
+    enableRedistributableFirmware = prefs.enableRedistributableFirmware;
     opengl = {
-      enable = true;
+      enable = prefs.enableOpengl;
       driSupport = true;
     };
     bumblebee = {
@@ -1198,10 +1208,10 @@ in
       port = prefs.prometheusPort;
       environmentFile = "/run/secrets/prometheus-env";
       exporters = {
-        node = { enable = true; };
-        domain = { enable = true; };
+        node = { enable = prefs.enablePrometheusExporters; };
+        domain = { enable = prefs.enablePrometheusExporters; };
         blackbox = {
-          enable = true;
+          enable = prefs.enablePrometheusExporters;
           configFile = toYAML "blackbox-config" {
             modules = {
               dns_test = {
@@ -1303,7 +1313,7 @@ in
           };
         };
         postgres = {
-          enable = prefs.ociContainers.enablePostgresql;
+          enable = prefs.ociContainers.enablePostgresql && prefs.enablePrometheusExporters;
           environmentFile = "/run/secrets/prometheus-postgres-env";
         };
       };
@@ -2425,10 +2435,10 @@ in
       # desktopManager.xfce.enableXfwm = false;
       windowManager = {
         i3 = {
-          enable = true;
+          enable = prefs.enableI3;
           package = pkgs.i3-gaps;
         };
-        awesome.enable = true;
+        awesome.enable = prefs.enableAwesome;
       } // (if (prefs.enableXmonad) then {
         xmonad = {
           enable = true;
