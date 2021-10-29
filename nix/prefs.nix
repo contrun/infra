@@ -171,6 +171,7 @@ let
     xWindowManager =
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
+    enableKeyd = !self.isMinimalSystem;
     enableXmonad = self.xWindowManager == "xmonad" && !self.isMinimalSystem;
     enableI3 = !self.isMinimalSystem;
     enableAwesome = !self.isMinimalSystem;

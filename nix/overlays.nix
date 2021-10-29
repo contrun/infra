@@ -395,6 +395,33 @@
             jupyterlab =
               (super.python3.withPackages (p: with p; [ jupyterhub jupyterlab ]));
 
+            keyd = with super;
+              let
+                pname = "keyd";
+                version = "1.1.2";
+              in
+              stdenv.mkDerivation rec {
+                inherit version pname;
+                src = fetchFromGitHub {
+                  owner = "rvaiya";
+                  repo = pname;
+                  rev = "v${version}";
+                  sha256 = "sha256-E9WHCJxTGwvkrwm4zXFye53nJU9GFtovIxRrpoL/VtM=";
+                };
+
+                buildInputs = [ git udev ];
+
+                installPhase = ''
+                  make install DESTDIR=$out PREFIX=
+                '';
+
+                meta = {
+                  description = "A key remapping daemon for linux.";
+                  license = lib.licenses.mit;
+                  platforms = lib.platforms.linux;
+                };
+              };
+
             ruby = super.ruby_2_7.withPackages (ps:
               with ps; [
                 rake

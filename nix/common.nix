@@ -313,6 +313,23 @@ in
         mode = "0600";
         source = prefs.davfs2Secrets;
       };
+      "keyd/default.cfg" = {
+        text = ''
+          capslock = overload(C, esc)
+          esc = capslock
+
+          # space = overload(G, space)
+
+          leftshift = oneshot(S)
+          leftalt = oneshot(A)
+          rightalt = oneshot(G)
+          rightshift = oneshot(A)
+          leftmeta = layer(M-A)
+          rightmeta = oneshot(M)
+          rightcontrol = oneshot(M)
+        '';
+        mode = "0644";
+      };
       hosts.mode = "0644";
     } // lib.optionalAttrs (prefs.enableCrio && prefs.enableZfs) {
       "crio/crio.conf.d/01-zfs.conf".text = ''
@@ -432,6 +449,9 @@ in
         autokey
         xsel
         xvkbd
+
+        (pkgs.myPackages.keyd or null)
+
         xorg.xev
         xorg.libX11
         xorg.libXft
@@ -4283,6 +4303,24 @@ in
           };
         }
       )
+
+      {
+        services =
+          lib.optionalAttrs
+            (prefs.enableKeyd && pkgs ? myPackages && pkgs.myPackages ? keyd)
+            {
+              keyd = {
+                description = "key remapping daemon";
+                wantedBy = [ "default.target" ];
+                requires = [ "local-fs.target" ];
+                after = [ "local-fs.target" ];
+                serviceConfig = {
+                  Type = "simple";
+                  ExecStart = "${pkgs.myPackages.keyd}/bin/keyd";
+                };
+              };
+            };
+      }
 
       ({
         services = lib.optionalAttrs prefs.ociContainers.enableHledger {
