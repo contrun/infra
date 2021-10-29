@@ -642,6 +642,7 @@ in
   networking.firewall.enable = prefs.enableFirewall;
 
   sound = {
+    enable = lib.mkForce true;
     mediaKeys = { enable = prefs.enableMediaKeys; };
   };
 
@@ -677,7 +678,8 @@ in
       connectDisplay = true;
     };
     pulseaudio = {
-      enable = !prefs.enablePipewire;
+      # Allow VM to override this
+      enable = lib.mkDefault (!prefs.enablePipewire);
       package = pkgs.pulseaudioFull;
       support32Bit = true;
       systemWide = true;
@@ -2484,47 +2486,48 @@ in
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
 
   users = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-    {
-      users =
-        let
-          extraGroups = [
-            "wheel"
-            "cups"
-            "video"
-            "kvm"
-            "libvirtd"
-            "qemu-libvirtd"
-            "audio"
-            "disk"
-            "keys"
-            "aria2"
-            "networkmanager"
-            "adbusers"
-            "docker"
-            "davfs2"
-            "wireshark"
-            "vboxusers"
-            "lp"
-            "input"
-            "mlocate"
-            "postfix"
-          ];
-        in
-        {
-          "${prefs.owner}" = {
-            createHome = true;
-            inherit extraGroups;
-            group = prefs.ownerGroup;
-            home = prefs.home;
-            isNormalUser = true;
-            uid = prefs.ownerUid;
-            shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
-            initialHashedPassword =
-              "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+    (lib.optionalAttrs (!prefs.isVagrantBox)
+      {
+        users =
+          let
+            extraGroups = [
+              "wheel"
+              "cups"
+              "video"
+              "kvm"
+              "libvirtd"
+              "qemu-libvirtd"
+              "audio"
+              "disk"
+              "keys"
+              "aria2"
+              "networkmanager"
+              "adbusers"
+              "docker"
+              "davfs2"
+              "wireshark"
+              "vboxusers"
+              "lp"
+              "input"
+              "mlocate"
+              "postfix"
+            ];
+          in
+          {
+            "${prefs.owner}" = {
+              createHome = true;
+              inherit extraGroups;
+              group = prefs.ownerGroup;
+              home = prefs.home;
+              isNormalUser = true;
+              uid = prefs.ownerUid;
+              shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
+              initialHashedPassword =
+                "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+            };
           };
-        };
-      groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
-    }
+        groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
+      })
     {
       users = {
         clash = {

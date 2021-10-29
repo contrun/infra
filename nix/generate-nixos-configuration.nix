@@ -47,6 +47,10 @@ let
         [ "/dev/disk/by-id/nvme-eui.002538a401b81628" ];
     } else if hostname == "shl" then
       { }
+    else if hostname == "dbx" then
+      {
+        virtualbox.memorySize = 2 * 1024;
+      }
     else
       { });
 

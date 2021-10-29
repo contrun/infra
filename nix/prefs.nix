@@ -52,7 +52,7 @@ let
     (builtins.hashString "sha512" "hostname: ${hostname}");
 
   default = self: {
-    normalNodes = [ "ssg" "jxt" "shl" "mdq" ];
+    normalNodes = [ "ssg" "jxt" "shl" "mdq" "dbx" ];
     hostAliases =
       builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
         self.normalNodes // {
@@ -68,7 +68,8 @@ let
     useLargePackages = !self.isMinimalSystem;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;
-    owner = "e";
+    isVagrantBox = false;
+    owner = if self.isVagrantBox then "vagrant" else "e";
     ownerUid = 1000;
     ownerGroup = "users";
     ownerGroupGid = 100;
@@ -490,6 +491,7 @@ let
       let
         nixosSystem = systems."${hostname}";
         isForCiCd = builtins.match "cicd-(.*)" hostname != null;
+        isMinimal = builtins.match "minimal-(.*)" hostname != null;
       in
       ({
         inherit nixosSystem;
@@ -530,6 +532,9 @@ let
       #     CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
       #   '';
       # }];
+    } else if hostname == "dbx" then {
+      isMinimalSystem = true;
+      isVagrantBox = true;
     } else if hostname == "ssg" then {
       isMinimalSystem = false;
       hostId = "034d2ba3";

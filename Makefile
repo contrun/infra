@@ -73,3 +73,6 @@ cachix-push-all:
 
 nixos-update-channels:
 	sudo nix-channel --update
+
+nixos-vagrant-box:
+	nix run github:nix-community/nixos-generators -- --flake ".#dbx" -f vagrant-virtualbox

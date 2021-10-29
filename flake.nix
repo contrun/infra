@@ -109,7 +109,7 @@
     in
     let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
-      vmNodes = [ "bigvm" ];
+      vmNodes = [ "dbx" "bigvm" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
     in

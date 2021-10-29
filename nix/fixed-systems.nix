@@ -14,5 +14,8 @@ rec {
       systemsList
     // builtins.foldl' (acc: current: acc // { "cicd-${current}" = current; })
       { }
+      systemsList
+    // builtins.foldl' (acc: current: acc // { "minimal-${current}" = current; })
+      { }
       systemsList;
 }
