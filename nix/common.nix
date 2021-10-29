@@ -8,7 +8,6 @@ let
     mitmproxyCAFile = "${prefs.home}/.mitmproxy/mitmproxy-ca.pem";
     wpaSupplicantConfigFile =
       "${prefs.home}/.config/wpa_supplicant/wpa_supplicant.conf";
-    consoleKeyMapFile = "${prefs.home}/.local/share/kbd/keymaps/personal.map";
     sslhConfigFile = "${prefs.home}/.config/sslh/sslh.conf";
     sshAuthorizedKeys = "${prefs.home}/.ssh/authorized_keys";
     sshHostKeys = [
@@ -251,13 +250,6 @@ in
   };
 
   console = {
-    keyMap =
-      let p = impure.consoleKeyMapFile;
-      in
-      if builtins.pathExists p then
-        (builtins.toFile "personal-keymap" (builtins.readFile p))
-      else
-        "us";
     font =
       if prefs.consoleFont != null then
         prefs.consoleFont
@@ -318,15 +310,25 @@ in
           capslock = overload(C, esc)
           esc = capslock
 
-          # space = overload(G, space)
-
-          leftshift = oneshot(S)
-          leftalt = oneshot(A)
-          rightalt = oneshot(G)
-          rightshift = oneshot(A)
+          rightalt = layer(A)
           leftmeta = layer(M-A)
-          rightmeta = oneshot(M)
-          rightcontrol = oneshot(M)
+          rightmeta = oneshot(G)
+          rightcontrol = layer(M)
+
+          space = overload(myspace, space)
+          [myspace]
+          n = pagedown
+          p = pageup
+          h = left
+          j = down
+          k = up
+          l = right
+          d = delete
+          b = backspace
+          o = enter
+          e = escape
+          m = menu
+          t = tab
         '';
         mode = "0644";
       };

@@ -182,7 +182,6 @@ let
       ''
         # echo "$(date -R): $@" >> ~/log
         # . ~/.xinitrc &
-        keymap.sh &
         dunst &
         # alacritty &
         terminalLayout.sh 3 &
@@ -197,7 +196,6 @@ let
         # # libinput-gestures-setup start &
         # autoMount.sh &
         # startupHosts.sh &
-        sxhkd -c ~/.config/sxhkd/sxhkdrc &
       ''
     ] ++ (if self.enableActivityWatch then [
       ''
