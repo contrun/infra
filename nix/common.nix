@@ -307,9 +307,7 @@ in
       };
       "keyd/default.cfg" = {
         text = ''
-          capslock = overload(C, esc)
-          esc = capslock
-
+          capslock = layer(C)
           rightalt = layer(A)
           leftmeta = layer(M-A)
           rightmeta = oneshot(G)
@@ -329,6 +327,7 @@ in
           e = escape
           m = menu
           t = tab
+          c = capslock
         '';
         mode = "0644";
       };
