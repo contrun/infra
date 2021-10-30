@@ -11,6 +11,8 @@
       url = "github:teto/flake-compat/8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed";
       flake = false;
     };
+    nixpkgs-wayland = { url = "github:nix-community/nixpkgs-wayland"; };
+    nixpkgs-wayland.inputs.nixpkgs.follows = "nixpkgs";
     nix-ld.url = "github:Mic92/nix-ld";
     nix-ld.inputs.nixpkgs.follows = "nixpkgs";
     nix-ld.inputs.utils.follows = "flake-utils";

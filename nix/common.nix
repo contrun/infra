@@ -343,7 +343,7 @@ in
 
     extraOutputsToInstall = prefs.extraOutputsToInstall;
     systemPackages = with pkgs;
-      builtins.filter (x: x != null) [
+      builtins.filter (x: x != null) ([
         manpages
         fuse
         bindfs
@@ -439,6 +439,23 @@ in
         gmp
         libcap
       ] ++ (if prefs.isMinimalSystem then [ ] else [
+        ydotool
+        wev
+        slurp
+        kanshi
+        wayvnc
+        waypipe
+        (pkgs.waylandPkgs.wlvncc or null)
+        brightnessctl
+        wl-clipboard
+        wlsunset
+        wlroots
+        wayland
+        wayland-protocols
+        wlr-randr
+        wdisplays
+        autotiling
+
         acpilight
         pulsemixer
         xbindkeys
@@ -464,10 +481,7 @@ in
         xorg.xorgproto
         libxkbcommon
         pixman
-        wlroots
         libevdev
-        wayland
-        wayland-protocols
 
         lldb
         sxhkd
@@ -501,7 +515,7 @@ in
         bluez-tools
         i3blocks
         i3lock
-        i3status
+        i3status-rust
         firefox
         termite
       ]) ++ (if (prefs.enableTailScale) then [ tailscale ] else [ ])
@@ -535,7 +549,8 @@ in
           aw-watcher-window
         ]
       else
-        [ ]);
+        [ ])
+      );
     enableDebugInfo = prefs.enableDebugInfo;
     shellAliases = {
       ssh = "ssh -C";
@@ -613,7 +628,7 @@ in
     # light.enable = true;
     sway = {
       enable = prefs.enableSway;
-      extraPackages = with pkgs; [ swaylock swayidle alacritty dmenu ];
+      extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu sway-contrib.grimshot ];
     };
     tmux = { enable = true; };
     wireshark.enable = prefs.enableWireshark;

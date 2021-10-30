@@ -31,6 +31,8 @@ let
           config = super.config;
         };
       })
+    ] ++ [
+      inputs.nixpkgs-wayland.overlay
     ];
   };
 

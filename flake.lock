@@ -59,6 +59,22 @@
         "type": "github"
       }
     },
+    "cachix_2": {
+      "locked": {
+        "lastModified": 1635373256,
+        "narHash": "sha256-6QERROygyZN2itA2JUZzhf+o2jfqd6ykJZHQcCAE0r4=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "d14d83a3691121642be1b0579cf3408a83c558d7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-21.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "deploy-rs": {
       "inputs": {
         "flake-compat": [
@@ -533,6 +549,27 @@
         "type": "github"
       }
     },
+    "nixpkgs-wayland": {
+      "inputs": {
+        "cachix": "cachix_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1635416910,
+        "narHash": "sha256-B3HGerp1yiK7Jz9MB/DXGuvsVFuNHTRThdzpGDgwFRw=",
+        "owner": "nix-community",
+        "repo": "nixpkgs-wayland",
+        "rev": "6c42fa0314611ac972ff16759a9f9ecbb239fd29",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs-wayland",
+        "type": "github"
+      }
+    },
     "nur-no-pkgs": {
       "locked": {
         "lastModified": 1635345353,
@@ -587,6 +624,7 @@
         "nixpkgs-nixpkgs-unstable": "nixpkgs-nixpkgs-unstable",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "nixpkgs-wayland": "nixpkgs-wayland",
         "nur-no-pkgs": "nur-no-pkgs",
         "old-ghc-nix": "old-ghc-nix",
         "smos": "smos",
