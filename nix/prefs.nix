@@ -206,11 +206,11 @@ let
     ] else
       [ ]));
     # xSessionCommands = "";
-    xDisplayManager = if self.enableXserver then "lightdm" else null;
-    enableLightdm = self.xDisplayManager == "lightdm";
-    enableGdm = self.xDisplayManager == "Gdm";
-    enableSddm = self.xDisplayManager == "sddm";
-    enableStartx = self.xDisplayManager == "startx";
+    displayManager = if self.enableXserver then "gdm" else null;
+    enableLightdm = self.displayManager == "lightdm";
+    enableGdm = self.displayManager == "gdm";
+    enableSddm = self.displayManager == "sddm";
+    enableStartx = self.displayManager == "startx";
     installHomePackages = !self.isMinimalSystem;
     buildCores = 0;
     maxJobs = "auto";

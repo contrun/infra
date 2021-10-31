@@ -2422,7 +2422,7 @@ in
 
     xserver = {
       enable = prefs.enableXserver;
-      verbose = 7;
+      verbose = lib.mkForce 7;
       autorun = true;
       exportConfiguration = true;
       layout = "us";

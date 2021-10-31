@@ -463,8 +463,7 @@
 
             texLive = self.texlive.combine { inherit (self.texlive) scheme-full; };
 
-            # emacs = makeEmacsPkg super.emacsGit;
-            emacs = makeEmacsPkg super.emacs;
+            emacs = emacsGit;
 
             emacsStable = makeEmacsPkg super.emacs;
 
