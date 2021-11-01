@@ -839,7 +839,8 @@ in
   services = {
     udev = {
       extraRules = ''
-        SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-5]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+        SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+        KERNEL=="uinput", GROUP="${prefs.ownerGroup}", MODE="0660", OPTIONS+="static_node=uinput"
       '';
     };
     arbtt = { enable = prefs.enableArbtt; };
