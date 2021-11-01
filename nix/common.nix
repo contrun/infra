@@ -4122,7 +4122,7 @@ in
             wantedBy = [ "default.target" ];
             after = [ "network-online.target" ];
             onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-            path = [ pkgs.coreutils pkgs.systemd pkgs.iputils pkgs.utillinux ]
+            path = [ pkgs.coreutils pkgs.gawk pkgs.systemd pkgs.iputils pkgs.utillinux ]
             ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
             script = ''
               set -euo pipefail

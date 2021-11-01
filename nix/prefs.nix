@@ -180,11 +180,8 @@ let
     enableFontConfig = !self.isMinimalSystem;
     xSessionCommands = builtins.concatStringsSep "\n" ([
       ''
-        # echo "$(date -R): $@" >> ~/log
-        # . ~/.xinitrc &
         dunst &
         # alacritty &
-        terminalLayout.sh 3 &
         kdeconnect-indicator &
         feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
         # shadowsocksControl.sh restart 4 1 &
