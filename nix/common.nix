@@ -439,6 +439,8 @@ in
         gmp
         libcap
       ] ++ (if prefs.isMinimalSystem then [ ] else [
+        ly
+
         ydotool
         wev
         slurp

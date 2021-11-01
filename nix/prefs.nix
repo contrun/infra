@@ -203,7 +203,7 @@ let
     ] else
       [ ]));
     # xSessionCommands = "";
-    displayManager = if self.enableXserver then "gdm" else null;
+    displayManager = null;
     enableLightdm = self.displayManager == "lightdm";
     enableGdm = self.displayManager == "gdm";
     enableSddm = self.displayManager == "sddm";
@@ -305,7 +305,7 @@ let
     nextcloudWhat = "https://uuuuuu.ocloud.de/remote.php/webdav/sync/";
     yandexWhere = "${self.home}/yandex";
     yandexWhat = "https://webdav.yandex.com/sync/";
-    enableXserver = !self.isMinimalSystem;
+    enableXserver = !self.isMinimalSystem && self.displayManager != null;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
     enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
