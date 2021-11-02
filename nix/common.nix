@@ -2146,19 +2146,21 @@ in
       } else
         { });
 
-    jupyterhub = {
+    jupyterhub = with pkgs; {
       enable = prefs.enableJupyter;
-      jupyterhubEnv = prefs.helpers.mkIfAttrExists pkgs "myPackages.jupyterhub";
+      jupyterhubEnv = python3.withPackages (p: with p; [
+        jupyterhub
+        jupyterhub-systemdspawner
+      ]);
       # TODO: the following will not produce the required binary like jupyterhub-singleuser
       # jupyterlabEnv = prefs.helpers.mkIfAttrExists pkgs "myPackages.jupyterlab";
-      jupyterlabEnv = with pkgs;
-        python3.withPackages
-          (p: with p; [ jupyterhub jupyterlab jupyterlab_server ]);
+      jupyterlabEnv = python3.withPackages
+        (p: with p; [ jupyterhub jupyterlab jupyterlab_server ]);
       port = 8899;
       kernels = {
-        python3Kernel = (
+        python3Kernel =
           let
-            env = pkgs.python3.withPackages
+            env = python3.withPackages
               (p: with p; [ ipykernel dask-gateway numpy scipy ]);
           in
           {
@@ -2176,11 +2178,11 @@ in
             logo64 =
               "${env}/${env.sitePackages}/ipykernel/resources/logo-64x64.png";
           }
-        );
+        ;
 
         cKernel = (
           let
-            env = pkgs.python3.withPackages (p: with p; [ jupyter-c-kernel ]);
+            env = python3.withPackages (p: with p; [ jupyter-c-kernel ]);
           in
           {
             displayName = "C";
@@ -2198,17 +2200,17 @@ in
         rustKernel = {
           displayName = "Rust";
           argv = [
-            "${pkgs.evcxr}/bin/evcxr_jupyter"
+            "${evcxr}/bin/evcxr_jupyter"
             "--control_file"
             "{connection_file}"
           ];
           language = "Rust";
         };
 
-        rKernel = (
+        rKernel =
           let
-            env = pkgs.rWrapper.override {
-              packages = with pkgs.rPackages; [ IRkernel ggplot2 ];
+            env = rWrapper.override {
+              packages = with rPackages; [ IRkernel ggplot2 ];
             };
           in
           {
@@ -2223,95 +2225,90 @@ in
             ];
             language = "R";
           }
-        );
+        ;
 
-        ansibleKernel = (
-          let
-            # build failure on latest, see https://github.com/NixOS/nixpkgs/issues/138381
-            python3 = stable.python3;
-            env = (python3.withPackages
-              (p: with p; [ ansible-kernel ansible ])).override
-              (args: { ignoreCollisions = true; });
+        ansibleKernel = with stable.pkgs; let
+          # build failure on latest, see https://github.com/NixOS/nixpkgs/issues/138381
+          env = (python3.withPackages
+            (p: with p; [ ansible-kernel ansible ])).override
+            (args: { ignoreCollisions = true; });
+        in
+        {
+          displayName = "Ansible";
+          argv = [
+            "${env.interpreter}"
+            "-m"
+            "ansible_kernel"
+            "-f"
+            "{connection_file}"
+          ];
+          language = "ansible";
+        }
+        ;
+
+        bashKernel =
+          let env = python3.withPackages (p: with p; [ bash_kernel ]);
           in
           {
-            displayName = "Ansible";
+            displayName = "Bash";
             argv = [
               "${env.interpreter}"
               "-m"
-              "ansible_kernel"
+              "bash_kernel"
               "-f"
               "{connection_file}"
             ];
-            language = "ansible";
+            language = "Bash";
           }
-        );
-
-        bashKernel =
-          (
-            let env = pkgs.python3.withPackages (p: with p; [ bash_kernel ]);
-            in
-            {
-              displayName = "Bash";
-              argv = [
-                "${env.interpreter}"
-                "-m"
-                "bash_kernel"
-                "-f"
-                "{connection_file}"
-              ];
-              language = "Bash";
-            }
-          );
+        ;
 
         nixKernel =
-          (
-            let env = pkgs.python3.withPackages (p: with p; [ nix-kernel ]);
-            in
-            {
-              displayName = "Nix";
-              argv = [
-                "${env.interpreter}"
-                "-m"
-                "nix-kernel"
-                "-f"
-                "{connection_file}"
-              ];
-              language = "Nix";
-            }
-          );
+          let env = python3.withPackages (p: with p; [ nix-kernel ]);
+          in
+          {
+            displayName = "Nix";
+            argv = [
+              "${env.interpreter}"
+              "-m"
+              "nix-kernel"
+              "-f"
+              "{connection_file}"
+            ];
+            language = "Nix";
+          }
+        ;
 
         rubyKernel = {
           displayName = "Ruby";
-          argv = [ "${pkgs.iruby}/bin/iruby" "kernel" "{connection_file}" ];
+          argv = [ "${iruby}/bin/iruby" "kernel" "{connection_file}" ];
           language = "ruby";
         };
 
         # TODO: Below build failed with
         # RPATH of binary /nix/store/ilhgzcydg3vn4mp7k5yawlsjwfpm8xi8-ihaskell-0.10.1.2/bin/ihaskell contains a forbidden reference to /build/
-        haskellKernel = (
-          let
-            env = pkgs.haskellPackages.ghcWithPackages (pkgs: [ pkgs.ihaskell ]);
-            ihaskellSh = pkgs.writeScriptBin "ihaskell" ''
-              #! ${pkgs.stdenv.shell}
-              export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
-              export PATH="${pkgs.lib.makeBinPath ([ env ])}:$PATH"
-              ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
-            '';
-          in
-          {
-            displayName = "Haskell";
-            argv = [
-              "${ihaskellSh}/bin/ihaskell"
-              "kernel"
-              "{connection_file}"
-              "+RTS"
-              "-M3g"
-              "-N2"
-              "-RTS"
-            ];
-            language = "Haskell";
-          }
-        );
+        haskellKernel = with pkgs; let
+          env = haskellPackages.ghcWithPackages (p: with p; [ ihaskell ]);
+          ihaskellSh = writeScriptBin "ihaskell" ''
+            #! ${stdenv.shell}
+            export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
+            export PATH="${lib.makeBinPath ([ env ])}:$PATH"
+            ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
+          '';
+        in
+        {
+          displayName = "Haskell";
+          argv = [
+            "${ihaskellSh}/bin/ihaskell"
+            "kernel"
+            "{connection_file}"
+            "+RTS"
+            "-M3g"
+            "-N2"
+            "-RTS"
+          ];
+          language = "Haskell";
+        }
+        ;
       };
     };
 
