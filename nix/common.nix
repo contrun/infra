@@ -2532,6 +2532,7 @@ in
               "video"
               "kvm"
               "libvirtd"
+              "systemd-journal"
               "qemu-libvirtd"
               "audio"
               "disk"
