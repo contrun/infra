@@ -175,16 +175,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git commit --all --message "automatically update nix at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-      - name: Build deploy node nixos
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
-        run: |
-          make HOST=${{ steps.variables.outputs.deployHost }} nixos-build nixos-profile-path-info
-          df -h
-
       - name: Build ${{ matrix.nix-system }} nixos
         if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }} }}
         run: |
           make HOST=cicd-${{ matrix.nix-system }} nixos-build nixos-profile-path-info
+          df -h
+
+      - name: Build deploy node nixos
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
+        run: |
+          make HOST=${{ steps.variables.outputs.deployHost }} nixos-build nixos-profile-path-info
           df -h
 
       # Following steps need these caches.
