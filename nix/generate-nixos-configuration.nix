@@ -57,8 +57,6 @@ let
 
   commonConfiguration = import (getNixConfig "common.nix");
 
-  overlaysConfiguration = import (getNixConfig "overlays.nix");
-
   sopsConfiguration = { config, pkgs, lib, inputs, ... }:
     let
       sopsSecretsFile = getNixConfig "/sops/secrets.yaml";
@@ -366,7 +364,6 @@ in
       sopsConfiguration
       inputs.home-manager.nixosModules.home-manager
       homeManagerConfiguration
-      overlaysConfiguration
       miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)

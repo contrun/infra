@@ -112,10 +112,6 @@
             configuration = {
               _module.args = moduleArgs;
 
-              nixpkgs = {
-                # TODO: myPackages not working here.
-                overlays = inputs.self.overlayList;
-              };
               imports = [
                 (getNixConfig "/home.nix")
               ] ++ (if prefs.enableSmos then
@@ -181,7 +177,7 @@
         inputs.emacs-overlay.overlay
       ] ++ (lib.attrValues self.overlays);
 
-      overlays = {
+      overlays = (import (getNixConfig "overlays.nix")) // {
         nixpkgsChannelsOverlay = self: super: {
           unstable = import inputs.nixpkgs-unstable {
             inherit (super) system config;
@@ -232,9 +228,13 @@
             inherit system;
             overlays = [ gomod2nix.overlay ];
           };
+          nixpkgsWithOverlays = import nixpkgs {
+            inherit system;
+            overlays = self.overlayList;
+          };
         in
         {
-          nixpkgs = pkgs;
+          nixpkgs = nixpkgsWithOverlays;
 
           devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
 
