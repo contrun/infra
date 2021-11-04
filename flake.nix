@@ -33,7 +33,7 @@
     aioproxy.inputs.nixpkgs.follows = "nixpkgs";
     aioproxy.inputs.gomod2nix.follows = "gomod2nix";
     aioproxy.inputs.flake-utils.follows = "flake-utils";
-    home-manager.url = "github:nix-community/home-manager/master";
+    home-manager.url = "github:contrun/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nur-no-pkgs.url = "github:nix-community/NUR/master";
     authinfo = {
@@ -72,7 +72,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, gomod2nix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, ... }@inputs:
     let
       lib = nixpkgs.lib;
 
@@ -91,6 +91,38 @@
         in
         import (getNixConfig "generate-nixos-configuration.nix") {
           inherit prefs inputs;
+        };
+
+      generateHomeConfigurations = hostname: inputs:
+        let
+          prefs = getHostPreference hostname;
+          moduleArgs = {
+            inherit inputs hostname prefs;
+            inherit (prefs) isMinimalSystem isVirtualMachine system;
+          };
+        in
+        {
+          "${prefs.owner}@${hostname}" = inputs.home-manager.lib.homeManagerConfiguration {
+            inherit (prefs) system;
+            homeDirectory = prefs.home;
+            username = prefs.owner;
+            stateVersion = prefs.homeManagerStateVersion;
+            pkgs = self.nixpkgs."${prefs.system}";
+
+            configuration = {
+              _module.args = moduleArgs;
+
+              nixpkgs = {
+                # TODO: myPackages not working here.
+                overlays = inputs.self.overlayList;
+              };
+              imports = [
+                (getNixConfig "/home.nix")
+              ] ++ (if prefs.enableSmos then
+                [ (inputs.smos + "/nix/home-manager-module.nix") ] else [ ])
+              ;
+            };
+          };
         };
 
       generateDeployNode = hostname:
@@ -112,14 +144,16 @@
     let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
       vmNodes = [ "dbx" "bigvm" ];
+      darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
+      homeManagerHosts = darwinNodes ++ allHosts;
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       {
         # TODO: nix run --impure .#deploy-rs
         # failed with error: attribute 'currentSystem' missing
-        apps = inputs.deploy-rs.apps;
+        apps = inputs.deploy-rs.apps // inputs.home-manager.apps;
       }
       {
         # Make packages from nixpkgs available, we can, for example, run
@@ -132,59 +166,111 @@
         { }
         allHosts;
 
+      homeConfigurations = builtins.foldl'
+        (acc: hostname: acc // generateHomeConfigurations hostname inputs)
+        { }
+        homeManagerHosts;
+
       deploy.nodes =
         builtins.foldl' (acc: hostname: acc // (generateDeployNode hostname))
           { }
           deployNodes;
 
+      overlayList = [
+        inputs.nixpkgs-wayland.overlay
+        inputs.emacs-overlay.overlay
+      ] ++ (lib.attrValues self.overlays);
+
+      overlays = {
+        nixpkgsChannelsOverlay = self: super: {
+          unstable = import inputs.nixpkgs-unstable {
+            inherit (super) system config;
+          };
+          stable = import inputs.nixpkgs-stable {
+            inherit (super) system config;
+          };
+        };
+
+        haskellOverlay = self: super:
+          let
+            originalCompiler = super.haskell.compiler;
+            newCompiler = super.callPackages inputs.old-ghc-nix { pkgs = super; };
+          in
+          {
+            haskell = super.haskell // {
+              inherit originalCompiler newCompiler;
+              compiler = newCompiler // originalCompiler;
+            };
+          };
+
+        mozillaOverlay = import inputs.nixpkgs-mozilla;
+
+        myPackagesOverlay = self: super: {
+          myPackages = (super.myPackages or { }) // super.lib.optionalAttrs
+            (inputs.flake-firefox-nightly.packages ? "${super.system}")
+            {
+              firefox =
+                inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin;
+            } // super.lib.optionalAttrs
+            (inputs.aioproxy.defaultPackage ? "${super.system}")
+            {
+              aioproxy = inputs.aioproxy.defaultPackage.${super.system};
+            };
+        };
+      };
+
+
       checks = builtins.mapAttrs
         (system: deployLib: deployLib.deployChecks self.deploy)
         inputs.deploy-rs.lib;
-    } // (with flake-utils.lib;
-    eachSystem defaultSystems (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ gomod2nix.overlay ];
-        };
-      in
-      {
-
-        devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
-
-        devShells = {
-          # Enroll gpg key with
-          # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
-          # Edit secrets.yaml file with
-          # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
-          sops = pkgs.mkShell {
-            sopsPGPKeyDirs = [ ./nix/sops/keys ];
-            nativeBuildInputs = [
-              (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
-            ];
-            shellHook = ''
-              alias s="sops"
-            '';
+    } //
+    (with flake-utils.lib;
+    eachSystem defaultSystems
+      (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ gomod2nix.overlay ];
           };
-        };
+        in
+        {
+          nixpkgs = pkgs;
 
-        packages = {
-          coredns = pkgs.buildGoApplication {
-            pname = "coredns";
-            version = "latest";
-            goPackagePath = "github.com/contrun/infra/coredns";
-            src = ./coredns;
-            modules = ./coredns/gomod2nix.toml;
+          devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
+
+          devShells = {
+            # Enroll gpg key with
+            # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
+            # Edit secrets.yaml file with
+            # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
+            sops = pkgs.mkShell {
+              sopsPGPKeyDirs = [ ./nix/sops/keys ];
+              nativeBuildInputs = [
+                (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
+              ];
+              shellHook = ''
+                alias s="sops"
+              '';
+            };
           };
 
-          # TODO: gomod2nix failed
-          # caddy = pkgs.buildGoApplication {
-          #   pname = "caddy";
-          #   version = "latest";
-          #   goPackagePath = "github.com/contrun/infra/caddy";
-          #   src = ./caddy;
-          #   modules = ./caddy/gomod2nix.toml;
-          # };
-        };
-      }));
+          packages = {
+            coredns = pkgs.buildGoApplication {
+              pname = "coredns";
+              version = "latest";
+              goPackagePath = "github.com/contrun/infra/coredns";
+              src = ./coredns;
+              modules = ./coredns/gomod2nix.toml;
+            };
+
+            # TODO: gomod2nix failed
+            # caddy = pkgs.buildGoApplication {
+            #   pname = "caddy";
+            #   version = "latest";
+            #   goPackagePath = "github.com/contrun/infra/caddy";
+            #   src = ./caddy;
+            #   modules = ./caddy/gomod2nix.toml;
+            # };
+          };
+        }));
 }

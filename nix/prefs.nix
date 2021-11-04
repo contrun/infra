@@ -65,6 +65,7 @@ let
         { });
     };
     isMinimalSystem = true;
+    homeManagerStateVersion = "21.05";
     useLargePackages = !self.isMinimalSystem;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;

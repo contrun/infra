@@ -1,22 +1,6 @@
-{ config, lib, pkgs, inputs, ... }: {
+{ config, lib, pkgs, ... }: {
   nixpkgs.overlays =
     let
-      haskellOverlay = self: super:
-        let
-          originalCompiler = super.haskell.compiler;
-          newCompiler = super.callPackages inputs.old-ghc-nix { pkgs = super; };
-        in
-        {
-          haskell = super.haskell // {
-            inherit originalCompiler newCompiler;
-            compiler = newCompiler // originalCompiler;
-          };
-        };
-
-      mozillaOverlay = import inputs.nixpkgs-mozilla;
-
-      emacsOverlay = inputs.emacs-overlay.overlay;
-
       # collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
       # TODO: not actually work.
       lldbOverlay = final: prev: {
@@ -200,9 +184,7 @@
           };
 
         myRustDevEnv = { ... }@args:
-          self.myRustDevEnvFn args // {
-            mozillaOverlay = mozillaOverlay;
-          };
+          self.myRustDevEnvFn args // { };
       };
 
       isInList = a: list: builtins.foldl' (acc: x: x == a || acc) false list;
@@ -376,7 +358,7 @@
                 ];
             };
 
-            haskell = super.haskellPackages.ghcWithPackages getHaskellPackages;
+            ghc = super.haskellPackages.ghcWithPackages getHaskellPackages;
 
             idris = super.idrisPackages.with-packages (with super.idrisPackages; [
               base
@@ -467,9 +449,10 @@
 
             emacsStable = makeEmacsPkg super.emacs;
 
-            emacsGit = makeEmacsPkg super.emacsGit;
+            # TODO: emacs overlay does not seem to work
+            emacsGit = makeEmacsPkg (super.emacsGit or super.emacs);
 
-            emacsUnstable = makeEmacsPkg super.emacsUnstable;
+            emacsUnstable = makeEmacsPkg (super.emacsUnstable or super.emacs);
 
             nvimdiff = with super;
               writeScriptBin "nvimdiff" ''
@@ -534,23 +517,11 @@
                 };
               };
 
-          } // super.lib.optionalAttrs
-            (inputs.flake-firefox-nightly.packages ? "${super.system}")
-            {
-              firefox =
-                inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin;
-            } // super.lib.optionalAttrs
-            (inputs.aioproxy.defaultPackage ? "${super.system}")
-            {
-              aioproxy = inputs.aioproxy.defaultPackage.${super.system};
-            };
+          } // (super.myPackages or { });
       };
 
     in
     [
-      mozillaOverlay
-      emacsOverlay
-      haskellOverlay
       lldbOverlay
       pythonOverlay
       dontCheckOverlay

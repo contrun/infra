@@ -22,7 +22,7 @@ let
       "syslinux"
       "gitAndTools.git-annex"
       "myPackages.python"
-      "myPackages.haskell"
+      "myPackages.ghc"
       "vivaldi"
       "libpng"
       "cachix"
@@ -44,7 +44,7 @@ let
     "flink"
     "postman"
     "libreoffice"
-    "myPackages.haskell"
+    "myPackages.ghc"
     "libguestfs-with-appliance"
     "androidStudioPackages.dev"
     "confluent-platform"
@@ -99,8 +99,7 @@ let
   overridePkg = pkg: func:
     if pkg ? overrideAttrs then
       pkg.overrideAttrs (oldAttrs: func oldAttrs)
-    else
-      lib.info "${pkg.name or pkg} does not have attribute overrideAttrs" pkg;
+    else pkg;
   dontCheckPkg = pkg:
     overridePkg pkg (oldAttrs: {
       # Fuck, why every package has broken tests? I just want to trust the devil.
@@ -544,7 +543,7 @@ let
         "mkcert"
         "glib-networking"
         "myPackages.python2"
-        "myPackages.haskell"
+        "myPackages.ghc"
         "perlPackages.Appcpanminus"
         "perlPackages.locallib"
         "perlPackages.Appperlbrew"
@@ -1098,7 +1097,14 @@ in
   home = {
     extraOutputsToInstall = prefs.extraOutputsToInstall;
     packages = allPackages;
-    stateVersion = "21.05";
   };
-  manual.manpages.enable = true;
+
+  xdg.dataFile = {
+    "nix/path/nixpkgs".source = inputs.nixpkgs;
+    "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
+    "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
+    "nix/path/home-manager".source = inputs.home-manager;
+    "nix/path/activeconfig".source = inputs.self;
+    "nix/path/config".source = "${prefs.home}/Workspace/infra";
+  };
 }

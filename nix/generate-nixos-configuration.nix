@@ -20,20 +20,7 @@ let
   };
 
   nixpkgsOverlay = { config, pkgs, system, inputs, ... }: {
-    nixpkgs.overlays = [
-      (self: super: {
-        unstable = import inputs.nixpkgs-unstable {
-          inherit system;
-          config = super.config;
-        };
-        stable = import inputs.nixpkgs-stable {
-          inherit system;
-          config = super.config;
-        };
-      })
-    ] ++ [
-      inputs.nixpkgs-wayland.overlay
-    ];
+    nixpkgs.overlays = inputs.self.overlayList;
   };
 
   hostConfiguration = { config, pkgs, ... }:
