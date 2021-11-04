@@ -149,7 +149,10 @@
       {
         # TODO: nix run --impure .#deploy-rs
         # failed with error: attribute 'currentSystem' missing
-        apps = inputs.deploy-rs.apps // inputs.home-manager.apps;
+        apps = inputs.deploy-rs.apps;
+      }
+      {
+        apps = inputs.home-manager.apps;
       }
       {
         # Make packages from nixpkgs available, we can, for example, run

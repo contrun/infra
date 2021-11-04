@@ -67,7 +67,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
           install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.5pre20211026_5667822/install
           extra_nix_config: |
-            experimental-features = nix-command flakes ca-references
+            experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
             substituters = https://cache.nixos.org/ https://hydra.iohk.io
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=

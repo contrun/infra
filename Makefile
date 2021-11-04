@@ -9,8 +9,7 @@ NIXFLAGS = $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(S
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".\#deploy-rs" --)
-HOMEMANAGER ?= nix run ".\#home-manager" --
-# HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix run ".\#home-manager" --)
+HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix run ".\#home-manager" --)
 EXTRADEPLOYFLAGS ?=
 DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs --keep-result $(EXTRADEPLOYFLAGS))
 

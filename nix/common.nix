@@ -359,7 +359,7 @@ in
         nixos-generators
         niv
         nix-serve
-        home-manager
+        inputs.home-manager.packages.${config.nixpkgs.system}.home-manager
         nixpkgs-fmt
         nix-du
         nix-index
