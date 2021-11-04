@@ -1105,6 +1105,7 @@ in
     "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
     "nix/path/home-manager".source = inputs.home-manager;
     "nix/path/activeconfig".source = inputs.self;
+  } // lib.optionalAttrs (builtins.pathExists "${prefs.home}/Workspace/infra") {
     "nix/path/config".source = "${prefs.home}/Workspace/infra";
   };
 }

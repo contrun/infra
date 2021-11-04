@@ -299,7 +299,6 @@ in
       "nix/path/home-manager".source = inputs.home-manager;
       "nix/path/pkgs".source = mypkgs;
       "nix/path/activeconfig".source = inputs.self;
-      "nix/path/config".source = "${prefs.home}/Workspace/infra";
       "davfs2/secrets" = {
         enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
         mode = "0600";
@@ -332,6 +331,8 @@ in
         mode = "0644";
       };
       hosts.mode = "0644";
+    } // lib.optionalAttrs (builtins.pathExists "${prefs.home}/Workspace/infra") {
+      "nix/path/config".source = "${prefs.home}/Workspace/infra";
     } // lib.optionalAttrs (prefs.enableCrio && prefs.enableZfs) {
       "crio/crio.conf.d/01-zfs.conf".text = ''
         [crio]
