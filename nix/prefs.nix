@@ -286,7 +286,7 @@ let
     enableXdgPortal = false;
     enableJupyter = false;
     enableEmacs = !self.isMinimalSystem;
-    enableLocate = true;
+    enableLocate = false;
     enableFail2ban = true;
     davfs2Secrets = "${self.home}/.davfs2/secrets";
     enableDavfs2 = !self.isMinimalSystem;
