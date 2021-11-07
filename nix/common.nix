@@ -2365,6 +2365,10 @@ in
             id =
               "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
           };
+          ngk = {
+            id =
+              "VVCUJWN-7XTDGK4-7CI4VJD-CANANFV-I7Q4SLK-Z554ASF-CYDHMJF-HYJISAU";
+          };
         };
       in
       {
