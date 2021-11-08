@@ -69,9 +69,22 @@
         - '"edge_proxies" in deployments'
         - use_envoy
       block:
+        - name: Add envoy gpg key
+          when: ansible_facts['os_family'] == "Debian"
+          ansible.builtin.apt_key:
+            url: https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key
+            state: present
+
+        - name: Set envoy ubuntu repo
+          when: ansible_facts['distribution'] == "Ubuntu"
+          set_fact:
+            envoyproxy_repository:
+              - "deb [arch=amd64] https://deb.dl.getenvoy.io/public/deb/ubuntu {{ ansible_facts['distribution_release'] }} stable"
+
         - name: Install envoy
           include_role:
-            name: fabiocruzcoelho.envoyproxy
+            name: hugoprudente.envoyproxy
+
         - name: Copy templates to default directory
           template:
             src: "{{ item.src }}"
@@ -81,6 +94,7 @@
             - src: envoy.yaml.j2
               dest: /etc/envoy/envoy.yaml
           register: envoy_config
+
         - name: Start/reload Envoy Proxy
           service:
             name: envoyproxy

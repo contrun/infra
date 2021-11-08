@@ -1,7 +1,10 @@
 ---
 roles:
+  - name: ho-ansible.systemd-resolved
+    src: https://github.com/ho-ansible/systemd-resolved.git
+    version: 522d772f84dabbd203c5a1909757ee76cc22c173
   - name: artis3n.tailscale
-  - name: fabiocruzcoelho.envoyproxy
+  - name: hugoprudente.envoyproxy
   - name: ajaykumar4.zerotier
     src: https://github.com/ajaykumar4/ansible-role-zerotier.git
   - name: nginxinc.nginx_config
