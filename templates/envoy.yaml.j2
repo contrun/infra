@@ -1,6 +1,6 @@
 static_resources:
   listeners:
-{% for port in tcp_forwarding_ports %}
+{% for port in edge_proxy_tcp_forwarding_ports %}
     - name: "{{ "tcp_" ~ port }}"
       address:
         socket_address:
@@ -15,7 +15,7 @@ static_resources:
                 cluster: "{{ "tcp_" ~ port }}"
 {% endfor %}
   clusters:
-{% for port in tcp_forwarding_ports %}
+{% for port in edge_proxy_tcp_forwarding_ports %}
     - name: "{{ "tcp_" ~ port }}"
       connect_timeout: 5s
       type: STATIC
@@ -35,7 +35,7 @@ static_resources:
                   address:
                     socket_address:
                       address: {{ ip }}
-                      port_value: {{ port_mappings["tcp_" ~ port] | default(port) }}
+                      port_value: {{ edge_proxy_port_mappings["tcp_" ~ port] | default(port) }}
 {% endfor %}
       transport_socket_matches:
         - name: "defaultToPlaintext"
