@@ -28,7 +28,7 @@
             that:
               - zerotier_network_id is defined
         - include_role:
-            role: m4rcu5nl.zerotier-one
+            role: ajaykumar4.zerotier
 
     - name: Install tailscale
       when: '"overlay_nodes" in deployments and (use_tailscale | default(true))'

@@ -2,10 +2,8 @@
 roles:
   - name: artis3n.tailscale
   - name: fabiocruzcoelho.envoyproxy
-  # TODO: Use m4rcu5nl.zerotier-one when https://github.com/m4rcu5nl/ansible-role-zerotier/pull/39 is merged
-  - name: m4rcu5nl.zerotier-one
-    src: https://github.com/hannut/ansible-role-zerotier.git
-    version: a2063b191c531f91f0004c7713d5eb7dc1484635
+  - name: ajaykumar4.zerotier
+    src: https://github.com/ajaykumar4/ansible-role-zerotier.git
   - name: nginxinc.nginx_config
     src: https://github.com/nginxinc/ansible-role-nginx-config.git
     version: 1e3a22886dffa449c8a60b3b734bfaa975dab551
