@@ -1021,6 +1021,7 @@ let
         "tcl"
         "tcllib"
         "termite"
+        "foot"
         "termonad-with-packages"
         "tesseract"
         "texinfo"
@@ -1088,6 +1089,25 @@ in
             OnCalendar = "*-*-* *:1/3:00";
             Unit = "${name}.service";
             Persistent = true;
+          };
+        };
+      }
+    )
+
+    (
+      let name = "foot";
+      in
+      lib.optionalAttrs prefs.enableFoot {
+        services.${name} = {
+          Unit = { Description = "foot server"; };
+          # TODO: need to start after wayland compositor
+          # also need to run `systemctl --user import-environment WAYLAND_DISPLAY`
+          # Install = { WantedBy = [ "default.target" ]; };
+          Service = {
+            Type = "simple";
+            Restart = "always";
+            ExecStart =
+              "${pkgs.foot}/bin/foot --server";
           };
         };
       }

@@ -515,6 +515,7 @@ in
         i3status-rust
         firefox
         termite
+        foot
       ]) ++ (if (prefs.enableTailScale) then [ tailscale ] else [ ])
       ++ (if (prefs.enableCodeServer) then [ code-server ] else [ ])
       ++ (if (prefs.enableZfs) then [ zfsbackup ] else [ ])

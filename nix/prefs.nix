@@ -311,6 +311,7 @@ let
     enableGPGAgent = !self.isMinimalSystem;
     enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
     enableSmosSync = self.enableSmos;
+    enableFoot = !self.isMinimalSystem;
     enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
     enableCalibreServer = !self.isMinimalSystem;
