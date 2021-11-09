@@ -1012,7 +1012,7 @@ let
         "tabbed"
         "tasksh"
         "taskwarrior"
-        "todoman"
+        # "todoman"
         "vdirsyncer"
         "khard"
         "khal"
