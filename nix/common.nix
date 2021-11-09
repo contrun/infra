@@ -166,12 +166,6 @@ in
       certs = prefs.acmeCerts;
     };
     pki = {
-      caCertificateBlacklist = [
-        "WoSign"
-        "WoSign China"
-        "CA WoSign ECC Root"
-        "Certification Authority of WoSign G2"
-      ];
       certificateFiles =
         let
           mitmCA = lib.optionals (builtins.pathExists impure.mitmproxyCAFile) [
