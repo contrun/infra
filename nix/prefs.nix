@@ -314,7 +314,7 @@ let
     enableFoot = !self.isMinimalSystem;
     enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
-    enableCalibreServer = !self.isMinimalSystem;
+    enableCalibreServer = false;
     calibreServerLibraries = [ self.calibreFolder ];
     calibreServerPort = 8213;
     calibreFolder = "${self.home}/Storage/Calibre";
@@ -621,6 +621,7 @@ let
       dpi = 128;
       xWindowManager = "i3";
       enableAllFirmware = false;
+      enableCalibreServer = true;
       linkedJdks = [ "openjdk8" ];
       enableEmacs = false;
       enableAllOciContainers = true;
