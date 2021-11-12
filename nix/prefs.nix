@@ -366,7 +366,7 @@ let
     enableAutossh = !self.isMinimalSystem;
     enableAutoLogin = true;
     enableLibInput = true;
-    enableFprintAuth = false;
+    enableFprintd = !self.isMinimalSystem;
     enableBootSSH = true;
     enableOpenldap = false;
     enableGnome = false;

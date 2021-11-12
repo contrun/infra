@@ -165,6 +165,15 @@ in
       email = prefs.acmeEmail;
       certs = prefs.acmeCerts;
     };
+    polkit = {
+      extraConfig = ''
+        polkit.addRule(function (action, subject) {
+          if (action.id == "net.reactivated.fprint.device.enroll") {
+            return subject.user == "root" ? polkit.Result.YES : polkit.Result.NO
+          }
+        })
+      '';
+    };
     pki = {
       certificateFiles =
         let
@@ -189,7 +198,7 @@ in
         ];
       };
       services."${prefs.owner}" = {
-        fprintAuth = prefs.enableFprintAuth;
+        fprintAuth = prefs.enableFprintd;
         limits = [
           {
             domain = "*";
@@ -848,6 +857,7 @@ in
       enable = prefs.enableAria2;
       extraArguments = "--rpc-listen-all --rpc-secret $ARIA2_RPC_SECRET";
     };
+    fprintd = { enable = prefs.enableFprintd; };
     openldap =
       let
         mkCommon = baseDN: ''
