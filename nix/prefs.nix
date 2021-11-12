@@ -204,7 +204,7 @@ let
     ] else
       [ ]));
     # xSessionCommands = "";
-    displayManager = null;
+    displayManager = "gdm";
     enableLightdm = self.displayManager == "lightdm";
     enableGdm = self.displayManager == "gdm";
     enableSddm = self.displayManager == "sddm";

@@ -159,7 +159,6 @@ in
     (builtins.filter (x: builtins.pathExists x) [ ./machine.nix ./cachix.nix ])
     ++ (lib.optionals prefs.enableSmosServer [ smosConfiguration ]);
   security = {
-    sudo = { wheelNeedsPassword = false; };
     acme = {
       acceptTerms = true;
       email = prefs.acmeEmail;
@@ -197,26 +196,32 @@ in
           "<path>${pkgs.fuse}/bin:${pkgs.coreutils}/bin:${pkgs.utillinux}/bin:${pkgs.gocryptfs}/bin</path>"
         ];
       };
-      services."${prefs.owner}" = {
-        fprintAuth = prefs.enableFprintd;
-        limits = [
-          {
-            domain = "*";
-            type = "hard";
-            item = "nofile";
-            value = "51200";
-          }
-          {
-            domain = "*";
-            type = "soft";
-            item = "nofile";
-            value = "51200";
-          }
-        ];
-        enableGnomeKeyring = prefs.enableGnomeKeyring;
-        pamMount = prefs.enablePamMount;
-        sshAgentAuth = true;
-        setEnvironment = true;
+      services = {
+        "${prefs.owner}" = {
+          fprintAuth = prefs.enableFprintd;
+          limits = [
+            {
+              domain = "*";
+              type = "hard";
+              item = "nofile";
+              value = "51200";
+            }
+            {
+              domain = "*";
+              type = "soft";
+              item = "nofile";
+              value = "51200";
+            }
+          ];
+          enableGnomeKeyring = prefs.enableGnomeKeyring;
+          pamMount = prefs.enablePamMount;
+          sshAgentAuth = true;
+          setEnvironment = true;
+        };
+
+        root = {
+          sshAgentAuth = true;
+        };
       };
     };
   };
@@ -2531,76 +2536,88 @@ in
 
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
 
-  users = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-    (lib.optionalAttrs (!prefs.isVagrantBox)
-      {
-        users =
-          let
-            extraGroups = [
-              "wheel"
-              "cups"
-              "video"
-              "kvm"
-              "libvirtd"
-              "systemd-journal"
-              "qemu-libvirtd"
-              "audio"
-              "disk"
-              "keys"
-              "aria2"
-              "networkmanager"
-              "adbusers"
-              "docker"
-              "davfs2"
-              "wireshark"
-              "vboxusers"
-              "lp"
-              "input"
-              "mlocate"
-              "postfix"
-            ];
-          in
-          {
-            "${prefs.owner}" = {
-              createHome = true;
-              inherit extraGroups;
-              group = prefs.ownerGroup;
-              home = prefs.home;
-              isNormalUser = true;
-              uid = prefs.ownerUid;
-              shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
-              initialHashedPassword =
-                "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+  users =
+    let
+      privilegedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all" ]; in
+    builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+      (lib.optionalAttrs (!prefs.isVagrantBox)
+        {
+          users =
+            let
+              extraGroups = [
+                "wheel"
+                "cups"
+                "video"
+                "kvm"
+                "libvirtd"
+                "systemd-journal"
+                "qemu-libvirtd"
+                "audio"
+                "disk"
+                "keys"
+                "aria2"
+                "networkmanager"
+                "adbusers"
+                "docker"
+                "davfs2"
+                "wireshark"
+                "vboxusers"
+                "lp"
+                "input"
+                "mlocate"
+                "postfix"
+              ];
+            in
+            {
+              "${prefs.owner}" = {
+                createHome = true;
+                inherit extraGroups;
+                group = prefs.ownerGroup;
+                home = prefs.home;
+                isNormalUser = true;
+                uid = prefs.ownerUid;
+                shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
+                initialHashedPassword =
+                  "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+                openssh.authorizedKeys.keys = privilegedKeys;
+              };
             };
+          groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
+        })
+      {
+        users = {
+          clash = {
+            group = "clash";
+            createHome = false;
+            isNormalUser = false;
+            isSystemUser = true;
           };
-        groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
+        };
+        groups = { clash = { name = "clash"; }; };
+      }
+      {
+        users = {
+          root = {
+            openssh.authorizedKeys.keys = privilegedKeys;
+          };
+        };
+      }
+      (lib.optionalAttrs prefs.enableFallbackAccount {
+        users = {
+          # Fallback user when "${prefs.owner}" encounters problems
+          fallback = {
+            group = "fallback";
+            createHome = true;
+            isNormalUser = true;
+            useDefaultShell = true;
+            initialHashedPassword =
+              "$6$nstJFDdZZ$uENeWO2lup09Je7UzVlJpwPlU1SvLwzTrbm/Gr.4PUpkKUuGcNEFmUrfgotWF3HoofVrGg1ENW.uzTGT6kX3v1";
+            openssh.authorizedKeys.keys = privilegedKeys;
+          };
+        };
+        groups = { fallback = { name = "fallback"; }; };
       })
-    {
-      users = {
-        clash = {
-          group = "clash";
-          createHome = false;
-          isNormalUser = false;
-          isSystemUser = true;
-        };
-      };
-      groups = { clash = { name = "clash"; }; };
-    }
-    (lib.optionalAttrs prefs.enableFallbackAccount {
-      users = {
-        # Fallback user when "${prefs.owner}" encounters problems
-        fallback = {
-          group = "fallback";
-          createHome = true;
-          isNormalUser = true;
-          useDefaultShell = true;
-          initialHashedPassword =
-            "$6$nstJFDdZZ$uENeWO2lup09Je7UzVlJpwPlU1SvLwzTrbm/Gr.4PUpkKUuGcNEFmUrfgotWF3HoofVrGg1ENW.uzTGT6kX3v1";
-        };
-      };
-      groups = { fallback = { name = "fallback"; }; };
-    })
-  ];
+    ];
 
   virtualisation = {
     libvirtd = { enable = prefs.enableLibvirtd; };
