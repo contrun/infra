@@ -1258,7 +1258,6 @@ in
     prometheus = {
       enable = prefs.enablePrometheus;
       port = prefs.prometheusPort;
-      environmentFile = "/run/secrets/prometheus-env";
       exporters = {
         node = { enable = prefs.enablePrometheusExporters; };
         domain = { enable = prefs.enablePrometheusExporters; };
@@ -3988,6 +3987,12 @@ in
             serviceConfig = {
               Environment = "ARIA2_RPC_SECRET=token_nekot";
               EnvironmentFile = "/run/secrets/aria2-env";
+            };
+          };
+        } // lib.optionalAttrs (prefs.enablePrometheus) {
+          "prometheus" = {
+            serviceConfig = {
+              EnvironmentFile = "/run/secrets/prometheus-env";
             };
           };
         } // lib.optionalAttrs (prefs.enablePromtail) {
