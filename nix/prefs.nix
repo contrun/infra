@@ -150,7 +150,7 @@ let
     sslhPort = 44443;
     enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
-    enableTailScale = false;
+    enableTailScale = true;
     enableX2goServer = false;
     enableDebugInfo = false;
     enableBtrfs = false;
