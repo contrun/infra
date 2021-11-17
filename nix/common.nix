@@ -3957,6 +3957,9 @@ in
           } // lib.optionalAttrs prefs.buildZerotierone
           {
             "zerotierone" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
+          } // lib.optionalAttrs prefs.enableSyncthing
+          {
+            "syncthing" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
           } // lib.optionalAttrs prefs.enableTailScale
           {
             "tailscaled" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
