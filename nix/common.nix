@@ -4288,10 +4288,12 @@ in
               CLASH_CONFIG=/etc/clash-redir/default.yaml
               # We first try to download the config file on behave of "$CLASH_USER",
               # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-              if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                  if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                      >&2 echo "Failed to download clash config"
-                      exit 1
+              if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                  if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                      if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                          >&2 echo "Failed to download clash config"
+                          exit 1
+                      fi
                   fi
               fi
               if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
