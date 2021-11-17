@@ -4322,19 +4322,20 @@ in
 
               # Don't use http websites, as we may be behind a captive portal.
               has_intranet_connectivity() {
-                  curl -o /dev/null -sS https://www.baidu.com || curl -o /dev/null -sS https://223.6.6.6
+                  curl -o /dev/null -sS https://www.baidu.com || curl -o /dev/null -sS https://223.6.6.6 || curl -o /dev/null -sS --resolve www.baidu.com:443:180.101.49.11 https://www.baidu.com
               }
 
               # Don't use frequently-visited websites, as this kind of robot activities may affect normal access.
               has_internet_connectivity() {
-                  curl -o /dev/null -sS --retry 3 --retry-all-errors https://startpage.com || curl -o /dev/null -sS --retry 3 --retry-all-errors https://streamable.com
+                  curl -o /dev/null -sS --retry 1 --retry-all-errors https://startpage.com || curl -o /dev/null -sS --retry 1 --retry-all-errors https://streamable.com
               }
 
               if has_internet_connectivity; then exit 0; fi
 
               if ! has_intranet_connectivity; then exit 0; fi
 
-              systemctl start ${updaterName} ${name}
+              systemctl restart ${name} || true
+              systemctl start ${updaterName} || true
               if ! has_internet_connectivity; then systemctl stop ${name}; fi
             '';
             serviceConfig = { Type = "oneshot"; };
