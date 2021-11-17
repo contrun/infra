@@ -2581,7 +2581,11 @@ in
                 openssh.authorizedKeys.keys = privilegedKeys;
               };
             };
-          groups = { "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; }; };
+          groups = {
+            # Programs running as users in this group is not proxied by clash-redir.
+            "noproxy" = { };
+            "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; };
+          };
         })
       {
         users = {
@@ -3950,6 +3954,12 @@ in
           {
             # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
             "zerotierone" = { wantedBy = lib.mkForce [ ]; };
+          } // lib.optionalAttrs prefs.buildZerotierone
+          {
+            "zerotierone" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
+          } // lib.optionalAttrs prefs.enableTailScale
+          {
+            "tailscaled" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
           } // lib.optionalAttrs (config.virtualisation.docker.enable) {
           "docker" = {
             serviceConfig = {
