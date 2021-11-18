@@ -5,6 +5,10 @@
     set -xeu
     awk '{if ($2 == "{{ tmp_mount_path }}") print}' /proc/mounts | grep {{ tmp_mount_path }}
 
+- name: Save facts for later use
+  set_fact:
+    nixos_host: "{{ ansible_ssh_host }}"
+
 - name: Create target directories
   file:
     path: "{{ tmp_mount_path }}{{ directory }}"
@@ -125,16 +129,19 @@
   shell: |
     nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ user_password }}"; echo "{{ user_password }}") | passwd {{ user }}'
 
-# TODO: I want to copy below files.
-# It is not possible when the user run the ansible command can not read those files.
-# - name: Check that the configuration exists
-#   delegate_to: localhost
-#   become: yes
-#   copy:
-#     src: "{{ item }}"
-#     dest: "{{ playbook_dir }}/privileged/{{ item }}"
-#     force: yes
-#   with_fileglob:
-#     - "/etc/ssh/ssh_host_*"
-#     - "/etc/wpa_supplicant.conf"
-#     - "/var/lib/iwd/*"
+- name: Copy common files
+  delegate_to: localhost
+  become: yes
+  shell: |
+    set -xuo pipefail
+    # "$(dirname "{{ config }}xxx")/"
+    # xxx to ensure the obtained directory is correct 
+    # / to ensure correct behavior for rsync
+    sudo rsync -avz --progress -h {{ config }} root@{{ nixos_host }}:"{{ tmp_mount_path }}$(dirname "{{ config }}a")/"
+  loop:
+    - "/etc/ssh/ssh_host_*"
+    - "/etc/wpa_supplicant.conf"
+    - "/var/lib/iwd/"
+    - "/etc/NetworkManager/system-connections/"
+  loop_control:
+    loop_var: config
