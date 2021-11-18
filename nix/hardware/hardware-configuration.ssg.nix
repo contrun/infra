@@ -6,9 +6,10 @@
 {
   imports =
     [
+      (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "ehci_pci" "nvme" "xhci_pci" "usbhid" ];
+  boot.initrd.availableKernelModules = [ "ehci_pci" "nvme" "xhci_pci" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
@@ -22,6 +23,12 @@
   fileSystems."/nix" =
     {
       device = "rpool/NIX/nix";
+      fsType = "zfs";
+    };
+
+  fileSystems."/var" =
+    {
+      device = "rpool/VAR/var";
       fsType = "zfs";
     };
 
@@ -39,7 +46,7 @@
 
   fileSystems."/boot" =
     {
-      device = "/dev/disk/by-uuid/834B-A656";
+      device = "/dev/disk/by-uuid/CCA9-80D9";
       fsType = "vfat";
     };
 

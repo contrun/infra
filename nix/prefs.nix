@@ -535,7 +535,7 @@ let
       isVagrantBox = true;
     } else if hostname == "ssg" then {
       isMinimalSystem = false;
-      hostId = "034d2ba3";
+      hostId = "b6653e48";
       dpi = 128;
       enableJupyter = true;
       enableX2goServer = true;

@@ -1,3 +1,4 @@
 /tmp/
 generated.*
 /artifacts/
+/nixos-bootstrap/artifacts/
