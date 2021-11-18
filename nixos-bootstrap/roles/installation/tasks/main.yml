@@ -26,40 +26,6 @@
     - "/run/binfmt/*"
     - "/etc/binfmt.d/*"
 
-- name: Set repo dir
-  set_fact:
-    repo_dir: "{{ tmp_mount_path }}/bootstrap"
-
-- name: Make temp directory
-  tempfile:
-    state: directory
-  register: temp_git_archive
-  delegate_to: localhost
-  become: no
-  changed_when: False
-
-- name: Extract latest git commit on branch master
-  shell: git ls-files | tar Tczf - {{ temp_git_archive.path }}/archive.tar.gz
-  args:
-    chdir: "{{ playbook_dir }}/.."
-  delegate_to: localhost
-  become: no
-  changed_when: False
-
-- name: Copy to remote
-  unarchive:
-    src: "{{ temp_git_archive.path }}/archive.tar.gz"
-    dest: "{{ repo_dir }}"
-
-- name: Delete temp directory
-  file:
-    path: "{{ temp_git_archive.path }}"
-    state: absent
-  when: temp_git_archive.path is defined
-  delegate_to: localhost
-  become: no
-  changed_when: False
-
 - name: Generate hardware configuration
   shell: |
     nixos-generate-config --root {{ tmp_mount_path }}
@@ -85,15 +51,20 @@
     flat: yes
   when: not stat_result.stat.exists
 
-- name: "Add the following to {{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+- name: "Add generated staza to {{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
   when: not stat_result.stat.exists
-  debug:
-    msg: |
+  delegate_to: localhost
+  become: no
+  ansible.builtin.blockinfile:
+    path: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+    backup: yes
+    insertbefore: '^\s*\}\s*$'
+    block: |
       networking.hostName = "{{ nixos_hostname }}";
       # printf "%s" "hostname: {{ nixos_hostname }}" | sha512sum | head -c 8
-      # networking.hostId = "59b352bc";
+      networking.hostId = "{{ (("hostname: " + nixos_hostname) | hash('sha512'))[0:8] }}";
 
-      nix.trustedUsers = [ "root" "e" "@wheel" ];
+      nix.trustedUsers = [ "root" "{{ user }}" "@wheel" ];
       services.openssh = {
         enable = true;
         useDns = true;
@@ -104,7 +75,7 @@
         startWhenNeeded = true;
       };
       users.users = {
-        e = {
+        {{ user }} = {
           createHome = true;
           extraGroups = [
             "wheel"
@@ -128,17 +99,13 @@
             "postfix"
           ];
           group = "users";
-          home = "/home/e";
+          home = "/home/{{ user }}";
           isNormalUser = true;
           uid = 1000;
           initialHashedPassword =
             "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
         };
       };
-
-- name: Nixos configuration did not exist. Edit the generated file manully, then build again.
-  meta: end_play
-  when: not stat_result.stat.exists
 
 - name: Copy nixos configuration to remote host
   copy:
@@ -157,7 +124,6 @@
 - name: Change user password
   shell: |
     nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ user_password }}"; echo "{{ user_password }}") | passwd {{ user }}'
-  when: (user is defined) and (user_password is defined)
 
 # TODO: I want to copy below files.
 # It is not possible when the user run the ansible command can not read those files.

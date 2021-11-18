@@ -13,7 +13,7 @@
 - name: Check zpool name existence to avoid potential data loss
   shell: |
     if zpool list "{{ zfs_pool_name }}"; then
-        echo "Dpool {{ zfs_pool_name }} already exists. Double check if you want to overwrite this pool. Below are all the pools" 1>&2
+        echo "Zpool {{ zfs_pool_name }} already exists. Double check if you want to overwrite this pool. Below are all the pools" 1>&2
         echo 1>&2
         if ! zpool list 1>&2; then :; fi
         exit 1
@@ -127,7 +127,7 @@
         echo "zpool {{ zfs_pool_name }} already exists, skipping creating."
         exit 0;
     fi
-    {% if zfs_passphrase is defined %} (echo "{{ zfs_passphrase }}"; echo "{{ zfs_passphrase }}") | zpool create -O encryption=aes-256-gcm -O keyformat=passphrase {% else %} zpool create {% endif %} -O compression=zstd -O atime=on -O relatime=on -O normalization=formD -O aclinherit=passthrough -O acltype=posixacl -O xattr=sa -f -o ashift=12 -m none -R {{ tmp_mount_path }} {{ zfs_pool_name }} {% if zfs_pool_type is defined %} {{ zfs_pool_type }} {% endif %} {{ zpool_partitions | join(' ') }}
+    {% if zfs_passphrase is defined %} (echo '{{ zfs_passphrase }}'; echo '{{ zfs_passphrase }}') | zpool create -O encryption=aes-256-gcm -O keyformat=passphrase {% else %} zpool create {% endif %} -O compression=zstd -O atime=on -O relatime=on -O normalization=formD -O aclinherit=passthrough -O acltype=posixacl -O xattr=sa -f -o ashift=12 -m none -R {{ tmp_mount_path }} {{ zfs_pool_name }} {% if zfs_pool_type is defined %} {{ zfs_pool_type }} {% endif %} {{ zpool_partitions | join(' ') }}
   args:
     executable: "{{ remote_shell_executable }}"
 
