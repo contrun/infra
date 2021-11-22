@@ -56,7 +56,9 @@ let
     "feedreader"
     "inkscape"
     "ccls"
-    "clang"
+    "llvmPackages_latest.clang"
+    "llvmPackages_latest.lld"
+    "llvmPackages_latest.lldb"
     "clang-analyzer"
     "racket"
     "ocaml"
@@ -261,11 +263,6 @@ let
       priority = 39;
       packages = getPackages [
         "universal-ctags"
-        # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/lldb-argdumper' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/lldb-argdumper' -> `../../../../../../../build/lldb-12.0.1.src/build/bin/lldb-argdumper'
-        # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/_lldb.so' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so' -> `../../../liblldb.so'
-        # > error: collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
-        # "lldb"
-        "lld"
         "gdb"
         "gcc"
         # "glibc"
@@ -287,8 +284,6 @@ let
         "meson"
         "ninja"
         "bazel"
-        "clang"
-        # "llvmPackages_latest.llvm"
         "bashdb"
         "bear"
         "upx"
@@ -331,6 +326,12 @@ let
         "rdbtools"
         "meld"
         "ccache"
+        "llvmPackages_latest.clang"
+        "llvmPackages_latest.lld"
+        # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/lldb-argdumper' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/lldb-argdumper' -> `../../../../../../../build/lldb-12.0.1.src/build/bin/lldb-argdumper'
+        # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/_lldb.so' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so' -> `../../../liblldb.so'
+        # > error: collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
+        # "llvmPackages_latest.lldb"
         "clang-tools"
         "clang-analyzer"
         "html-tidy"
@@ -432,6 +433,7 @@ let
         "cntr"
         "docker"
         "docker_compose"
+        "buildkit"
         "lens"
         "kubernix"
         "terraform"
