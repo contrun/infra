@@ -159,121 +159,136 @@
         # nix shell '.#python3Packages.invoke'
         legacyPackages = inputs.nixpkgs.legacyPackages;
       }
-    ]) // {
-      nixosConfigurations = builtins.foldl'
-        (acc: hostname: acc // generateHostConfigurations hostname inputs)
-        { }
-        allHosts;
-
-      homeConfigurations = builtins.foldl'
-        (acc: hostname: acc // generateHomeConfigurations hostname inputs)
-        { }
-        homeManagerHosts;
-
-      deploy.nodes =
-        builtins.foldl' (acc: hostname: acc // (generateDeployNode hostname))
+      {
+        nixosConfigurations = builtins.foldl'
+          (acc: hostname: acc // generateHostConfigurations hostname inputs)
           { }
-          deployNodes;
+          allHosts;
 
-      overlayList = [
-        inputs.nixpkgs-wayland.overlay
-        inputs.emacs-overlay.overlay
-      ] ++ (lib.attrValues self.overlays);
+        homeConfigurations = builtins.foldl'
+          (acc: hostname: acc // generateHomeConfigurations hostname inputs)
+          { }
+          homeManagerHosts;
 
-      overlays = (import (getNixConfig "overlays.nix")) // {
-        nixpkgsChannelsOverlay = self: super: {
-          unstable = import inputs.nixpkgs-unstable {
-            inherit (super) system config;
+        deploy.nodes =
+          builtins.foldl' (acc: hostname: acc // (generateDeployNode hostname))
+            { }
+            deployNodes;
+
+        overlayList = [
+          inputs.nixpkgs-wayland.overlay
+          inputs.emacs-overlay.overlay
+        ] ++ (lib.attrValues self.overlays);
+
+        overlays = (import (getNixConfig "overlays.nix")) // {
+          nixpkgsChannelsOverlay = self: super: {
+            unstable = import inputs.nixpkgs-unstable {
+              inherit (super) system config;
+            };
+            stable = import inputs.nixpkgs-stable {
+              inherit (super) system config;
+            };
           };
-          stable = import inputs.nixpkgs-stable {
-            inherit (super) system config;
+
+          haskellOverlay = self: super:
+            let
+              originalCompiler = super.haskell.compiler;
+              newCompiler = super.callPackages inputs.old-ghc-nix { pkgs = super; };
+            in
+            {
+              haskell = super.haskell // {
+                inherit originalCompiler newCompiler;
+                compiler = newCompiler // originalCompiler;
+              };
+            };
+
+          mozillaOverlay = import inputs.nixpkgs-mozilla;
+
+          myPackagesOverlay = self: super: {
+            myPackages = (super.myPackages or { }) // super.lib.optionalAttrs
+              (inputs.flake-firefox-nightly.packages ? "${super.system}")
+              {
+                firefox =
+                  inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin;
+              } // super.lib.optionalAttrs
+              (inputs.aioproxy.defaultPackage ? "${super.system}")
+              {
+                aioproxy = inputs.aioproxy.defaultPackage.${super.system};
+              };
           };
         };
 
-        haskellOverlay = self: super:
+
+        checks = builtins.mapAttrs
+          (system: deployLib: deployLib.deployChecks self.deploy)
+          inputs.deploy-rs.lib;
+      }
+      (with flake-utils.lib;
+      eachSystem defaultSystems
+        (system:
           let
-            originalCompiler = super.haskell.compiler;
-            newCompiler = super.callPackages inputs.old-ghc-nix { pkgs = super; };
+            pkgs = import nixpkgs {
+              inherit system;
+              overlays = [ gomod2nix.overlay ];
+            };
+            nixpkgsWithOverlays = import nixpkgs {
+              inherit system;
+              overlays = self.overlayList;
+            };
           in
-          {
-            haskell = super.haskell // {
-              inherit originalCompiler newCompiler;
-              compiler = newCompiler // originalCompiler;
+          rec {
+            nixpkgs = nixpkgsWithOverlays;
+
+            devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
+
+            devShells = {
+              # Enroll gpg key with
+              # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
+              # Edit secrets.yaml file with
+              # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
+              sops = pkgs.mkShell {
+                sopsPGPKeyDirs = [ ./nix/sops/keys ];
+                nativeBuildInputs = [
+                  (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
+                ];
+                shellHook = ''
+                  alias s="sops"
+                '';
+              };
             };
-          };
 
-        mozillaOverlay = import inputs.nixpkgs-mozilla;
-
-        myPackagesOverlay = self: super: {
-          myPackages = (super.myPackages or { }) // super.lib.optionalAttrs
-            (inputs.flake-firefox-nightly.packages ? "${super.system}")
-            {
-              firefox =
-                inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin;
-            } // super.lib.optionalAttrs
-            (inputs.aioproxy.defaultPackage ? "${super.system}")
-            {
-              aioproxy = inputs.aioproxy.defaultPackage.${super.system};
+            apps = {
+              run = {
+                type = "app";
+                program = "${self.packages."${system}".run}/bin/run";
+              };
             };
-        };
-      };
 
+            defaultApp = apps.run;
 
-      checks = builtins.mapAttrs
-        (system: deployLib: deployLib.deployChecks self.deploy)
-        inputs.deploy-rs.lib;
-    } //
-    (with flake-utils.lib;
-    eachSystem defaultSystems
-      (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ gomod2nix.overlay ];
-          };
-          nixpkgsWithOverlays = import nixpkgs {
-            inherit system;
-            overlays = self.overlayList;
-          };
-        in
-        {
-          nixpkgs = nixpkgsWithOverlays;
-
-          devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
-
-          devShells = {
-            # Enroll gpg key with
-            # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
-            # Edit secrets.yaml file with
-            # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
-            sops = pkgs.mkShell {
-              sopsPGPKeyDirs = [ ./nix/sops/keys ];
-              nativeBuildInputs = [
-                (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
-              ];
-              shellHook = ''
-                alias s="sops"
+            packages = {
+              run = with nixpkgsWithOverlays; writeShellScriptBin "run" ''
+                export PATH="${lib.makeBinPath [ gnumake nixUnstable jq coreutils findutils home-manager ]}:$PATH"
+                make -C "${lib.cleanSource ./.}" "$@"
               '';
-            };
-          };
 
-          packages = {
-            coredns = pkgs.buildGoApplication {
-              pname = "coredns";
-              version = "latest";
-              goPackagePath = "github.com/contrun/infra/coredns";
-              src = ./coredns;
-              modules = ./coredns/gomod2nix.toml;
-            };
+              coredns = pkgs.buildGoApplication {
+                pname = "coredns";
+                version = "latest";
+                goPackagePath = "github.com/contrun/infra/coredns";
+                src = ./coredns;
+                modules = ./coredns/gomod2nix.toml;
+              };
 
-            # TODO: gomod2nix failed
-            # caddy = pkgs.buildGoApplication {
-            #   pname = "caddy";
-            #   version = "latest";
-            #   goPackagePath = "github.com/contrun/infra/caddy";
-            #   src = ./caddy;
-            #   modules = ./caddy/gomod2nix.toml;
-            # };
-          };
-        }));
+              # TODO: gomod2nix failed
+              # caddy = pkgs.buildGoApplication {
+              #   pname = "caddy";
+              #   version = "latest";
+              #   goPackagePath = "github.com/contrun/infra/caddy";
+              #   src = ./caddy;
+              #   modules = ./caddy/gomod2nix.toml;
+              # };
+            };
+          }))
+    ]);
 }
