@@ -614,6 +614,8 @@ let
       isRaspberryPi = true;
       raspberryPiVersion = 4;
       enableVsftpd = false;
+    } else if hostname == "gcv" then {
+      nixosSystem = "x86_64-darwin";
     } else if hostname == "mdq" then {
       isMinimalSystem = false;
       useLargePackages = false;

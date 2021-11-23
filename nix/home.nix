@@ -3,6 +3,7 @@ let
   brokenPackages =
     let p = ./broken-packages.nix;
     in if builtins.pathExists p then (import p) else [ ];
+  linuxOnlyPackages = [ "kdeconnect" ];
   x86OnlyPackages =
     let
       brokenOnArmPackages =
@@ -158,6 +159,10 @@ let
       lib.info "${path} will not be installed as useLargePackages is ${
         lib.boolToString prefs.useLargePackages
       }"
+        null
+    else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" "aarch64-linux" ])
+      && (builtins.elem path linuxOnlyPackages) then
+      lib.info "${path} will not be installed in system ${prefs.nixosSystem}"
         null
     else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" ])
       && (builtins.elem path x86OnlyPackages) then
@@ -1068,7 +1073,7 @@ in
     };
   };
 
-  services = { kdeconnect = { enable = true; }; };
+  services = { kdeconnect = { enable = (builtins.elem prefs.nixosSystem [ "x86_64-linux" "aarch64-linux" ]); }; };
 
   systemd.user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     (

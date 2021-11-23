@@ -1,7 +1,8 @@
 .DEFAULT_GOAL := nixos-deploy
 .PHONY: $(shell sed -n -e '/^$$/ { n ; /^[^ .\#][^ ]*:/ { s/:.*$$// ; p ; } ; }' $(MAKEFILE_LIST))
 
-HOST ?= $(shell hostname)
+HOST ?= $(shell hostname -s)
+USER ?= $(USER)
 
 # TODO: Remove impure
 # error: attribute 'currentSystem' missing https://github.com/obsidiansystems/obelisk/issues/854
@@ -50,7 +51,10 @@ create-dirs:
 	mkdir -p tmp
 
 home-manager:
-	$(HOMEMANAGER) switch --flake . $(NIXFLAGS)
+	$(HOMEMANAGER) switch --flake ".#$(USER)@$(HOST)" $(NIXFLAGS)
+
+home-manager-bootstrap:
+	$(HOMEMANAGER) switch --flake ".#$(USER)@cicd-$(shell nix eval --raw --impure --expr 'builtins.currentSystem')" $(NIXFLAGS)
 
 nixos-prefs: create-dirs
 	nix eval --raw --impure --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | tee tmp/prefs.$(HOST).json
