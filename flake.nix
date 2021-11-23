@@ -33,7 +33,7 @@
     aioproxy.inputs.nixpkgs.follows = "nixpkgs";
     aioproxy.inputs.gomod2nix.follows = "gomod2nix";
     aioproxy.inputs.flake-utils.follows = "flake-utils";
-    home-manager.url = "github:contrun/home-manager/master";
+    home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nur-no-pkgs.url = "github:nix-community/NUR/master";
     authinfo = {
