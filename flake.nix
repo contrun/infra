@@ -29,13 +29,13 @@
     nixpkgs-nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-20.09";
-    aioproxy.url = "github:contrun/aioproxy/master";
+    aioproxy.url = "github:contrun/aioproxy";
     aioproxy.inputs.nixpkgs.follows = "nixpkgs";
     aioproxy.inputs.gomod2nix.follows = "gomod2nix";
     aioproxy.inputs.flake-utils.follows = "flake-utils";
-    home-manager.url = "github:nix-community/home-manager/master";
+    home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nur-no-pkgs.url = "github:nix-community/NUR/master";
+    nur-no-pkgs.url = "github:nix-community/NUR";
     authinfo = {
       url = "github:aartamonau/authinfo";
       flake = false;

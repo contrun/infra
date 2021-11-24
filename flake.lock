@@ -43,7 +43,6 @@
       },
       "original": {
         "owner": "contrun",
-        "ref": "master",
         "repo": "aioproxy",
         "type": "github"
       }
@@ -301,7 +300,6 @@
       },
       "original": {
         "owner": "nix-community",
-        "ref": "master",
         "repo": "home-manager",
         "type": "github"
       }
@@ -594,16 +592,15 @@
     },
     "nur-no-pkgs": {
       "locked": {
-        "lastModified": 1636550326,
-        "narHash": "sha256-HvNVrUwYYmGbrLQuhl8BbNfwRXQ/XVMtydZnOgkCugM=",
+        "lastModified": 1637715888,
+        "narHash": "sha256-C8TZk0RLuNEATWjQFtDK4RoZH7AKlDqLZl826DkvelY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "73ad7e597da26b0c80fc1a091ee103de9138be48",
+        "rev": "8d2c9af9f85a4ac4ec3280d3fdf1f217cfe87cd0",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
-        "ref": "master",
         "repo": "NUR",
         "type": "github"
       }
