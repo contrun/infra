@@ -640,7 +640,24 @@ in
     # light.enable = true;
     sway = {
       enable = prefs.enableSway;
+      extraOptions = [ "--verbose" "--debug" ];
       extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu sway-contrib.grimshot ];
+      extraSessionCommands = ''
+        export TERMINAL="alacritty"
+        export BROWSER="firefox"
+
+        export _JAVA_AWT_WM_NONREPARENTING=1
+        export QT_AUTO_SCREEN_SCALE_FACTOR=1
+        export QT_QPA_PLATFORM=wayland
+        export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+        export GDK_BACKEND=wayland
+        export XDG_CURRENT_DESKTOP=sway
+        export MOZ_ENABLE_WAYLAND=1
+
+        export GTK_IM_MODULE=fcitx
+        export QT_IM_MODULE=fcitx
+        export XMODIFIERS=@im=fcitx
+      '';
     };
     tmux = { enable = true; };
     wireshark.enable = prefs.enableWireshark;
@@ -2455,6 +2472,15 @@ in
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;
 
+    greetd = {
+      enable = prefs.enableGreetd;
+    } // lib.optionalAttrs prefs.enableSwayForGreeted {
+      settings = {
+        default_session = {
+          command = "${pkgs.greetd.greetd}/bin/agreety --cmd sway";
+        };
+      };
+    };
     xserver = {
       enable = prefs.enableXserver;
       verbose = lib.mkForce 7;

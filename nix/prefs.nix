@@ -177,6 +177,7 @@ let
     enableI3 = !self.isMinimalSystem;
     enableAwesome = !self.isMinimalSystem;
     enableSway = !self.isMinimalSystem;
+    enableSwayForGreeted = self.enableSway;
     enablePamMount = !self.isMinimalSystem;
     enableFontConfig = !self.isMinimalSystem;
     xSessionCommands = builtins.concatStringsSep "\n" ([
@@ -204,7 +205,8 @@ let
     ] else
       [ ]));
     # xSessionCommands = "";
-    displayManager = "gdm";
+    displayManager =
+      if self.enableGreetd then null else "gdm";
     enableLightdm = self.displayManager == "lightdm";
     enableGdm = self.displayManager == "gdm";
     enableSddm = self.displayManager == "sddm";
@@ -307,6 +309,7 @@ let
     yandexWhere = "${self.home}/yandex";
     yandexWhat = "https://webdav.yandex.com/sync/";
     enableXserver = !self.isMinimalSystem && self.displayManager != null;
+    enableGreetd = true;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
     enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
