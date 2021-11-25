@@ -788,6 +788,12 @@ in
           deps = [ "binsh" ];
         };
 
+        # I may want to temporarily change /usr/bin/env
+        binenv = {
+          text = "ln -sfn ${pkgs.coreutils}/bin/env /bin/env";
+          deps = [ "binsh" ];
+        };
+
         # sftpman
         mntsshfs = {
           text =
