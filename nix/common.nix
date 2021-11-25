@@ -4253,15 +4253,15 @@ in
             serviceConfig = {
               Type = "forking";
               ExecStartPre = "${pkgs.writeShellScript "clash-redir-prestart" ''
-            set -euo pipefail
-            mkdir -p /etc/clash-redir
-            if ! [[ -e /etc/clash-redir/config.yaml ]]; then
-                if ! [[ -e /etc/clash-redir/default.yaml ]]; then
-                    systemctl restart ${updaterName}
+                set -euo pipefail
+                mkdir -p /etc/clash-redir
+                if ! [[ -e /etc/clash-redir/config.yaml ]]; then
+                    if ! [[ -e /etc/clash-redir/default.yaml ]]; then
+                        systemctl restart ${updaterName}
+                    fi
+                    ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
                 fi
-                ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
-            fi
-          ''}";
+              ''}";
               ExecStart = "${script} start";
               ExecStop = "${script} stop";
               ExecReload = "${script} reload";

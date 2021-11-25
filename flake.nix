@@ -267,10 +267,13 @@
             defaultApp = apps.run;
 
             packages = {
-              run = with nixpkgsWithOverlays; writeShellScriptBin "run" ''
-                export PATH="${lib.makeBinPath [ gnumake nixUnstable jq coreutils findutils home-manager ]}:$PATH"
-                make -C "${lib.cleanSource ./.}" "$@"
-              '';
+              run = with nixpkgsWithOverlays; writeShellApplication {
+                name = "run";
+                text = ''
+                  make -C "${lib.cleanSource ./.}" "$@"
+                '';
+                runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
+              };
 
               coredns = pkgs.buildGoApplication {
                 pname = "coredns";
