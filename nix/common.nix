@@ -4777,7 +4777,7 @@ in
     binfmt = { inherit (prefs) emulatedSystems; };
     inherit (prefs)
       kernelParams extraModulePackages kernelModules kernelPatches
-      kernelPackages;
+      kernelPackages blacklistedKernelModules;
     kernel.sysctl = prefs.kernelSysctl;
     loader = {
       generationsDir = {

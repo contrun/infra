@@ -387,7 +387,7 @@ let
         # "jetbrains.datagrip"
         # "jetbrains.goland"
         # "jetbrains.pycharm-professional"
-        "androidStudioPackages.dev"
+        # "androidStudioPackages.dev"
         "go2nix"
         "gnum4"
         "clinfo"

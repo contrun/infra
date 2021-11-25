@@ -427,6 +427,7 @@ let
     extraModulePackages = [ ];
     kernelPatches = [ ];
     kernelParams = [ "boot.shell_on_fail" ];
+    blacklistedKernelModules = [ ];
     kernelModules = [
       # For the sysctl net.bridge.bridge-nf-call-* options to work
       "br_netfilter"
