@@ -4374,7 +4374,7 @@ in
 
               # Don't use frequently-visited websites, as this kind of robot activities may affect normal access.
               has_internet_connectivity() {
-                  curl -o /dev/null -sS --retry 1 --retry-all-errors https://startpage.com || curl -o /dev/null -sS --retry 1 --retry-all-errors https://streamable.com
+                  curl -o /dev/null -sS https://startpage.com || curl -o /dev/null -sS https://streamable.com
               }
 
               if has_internet_connectivity; then exit 0; fi
