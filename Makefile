@@ -1,6 +1,8 @@
 .DEFAULT_GOAL := nixos-deploy
 .PHONY: $(shell sed -n -e '/^$$/ { n ; /^[^ .\#][^ ]*:/ { s/:.*$$// ; p ; } ; }' $(MAKEFILE_LIST))
 
+POUND := \#
+
 HOST ?= $(shell hostname -s)
 USER ?= $(USER)
 
@@ -9,13 +11,13 @@ USER ?= $(USER)
 NIXFLAGS = $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going --keep-failed)
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
-DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".\#deploy-rs" --)
-HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix run ".\#home-manager" --)
+DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
+HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix run ".$(POUND)home-manager" --)
 EXTRADEPLOYFLAGS ?=
 DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs --keep-result $(EXTRADEPLOYFLAGS))
 
-NIXOSREBUILD.build = nix build ".\#nixosConfigurations.$(HOST).config.system.build.toplevel"
-NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".\#$(HOST)"
+NIXOSREBUILD.build = nix build ".$(POUND)nixosConfigurations.$(HOST).config.system.build.toplevel"
+NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
