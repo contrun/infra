@@ -1280,6 +1280,7 @@ in
 
     prometheus = {
       enable = prefs.enablePrometheus;
+      extraFlags = [ "--enable-feature=expand-external-labels" ];
       port = prefs.prometheusPort;
       exporters = {
         node = { enable = prefs.enablePrometheusExporters; };
@@ -1392,10 +1393,10 @@ in
         };
       };
       remoteWrite = [{
-        url = "\${REMOTE_WRITE_URL}";
+        url = "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push";
         basic_auth = {
-          password = "\${REMOTE_WRITE_PASSWORD}";
-          username = "\${REMOTE_WRITE_USERNAME}";
+          password_file = "/run/secrets/prometheus-remote-write-password";
+          username = "205817";
         };
       }];
       scrapeConfigs = lib.optionals prefs.enableTraefik [{

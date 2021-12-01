@@ -186,6 +186,10 @@ let
                 mode = "0400";
                 owner = "prometheus";
               };
+              prometheus-remote-write-password = {
+                mode = "0400";
+                owner = "prometheus";
+              };
             };
           }
           {
