@@ -372,10 +372,7 @@ in
       miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)
-    ] ++ (
-      # building failure on "aarch64-linux", even though it seems to be supported
-      inputs.nixpkgs.lib.optionals (builtins.elem system [ "x86_64-linux" ])
-        [ inputs.nix-ld.nixosModules.nix-ld ]);
+    ];
 
     specialArgs = moduleArgs;
   };
