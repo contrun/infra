@@ -510,7 +510,7 @@ let
         "coursier"
         "leiningen"
         "clojure"
-        "clojure-lsp"
+        # "clojure-lsp"
         # "julia"
         "scala"
         "scalafmt"
