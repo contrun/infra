@@ -1478,6 +1478,13 @@ in
           labels = { nodename = prefs.hostname; };
         }];
       }]
+      ++ lib.optionals prefs.enableDockerMetrics [{
+        job_name = "docker";
+        static_configs = [{
+          targets = [ "127.0.0.1:${toString prefs.dockerMetricsPort}" ];
+          labels = { nodename = prefs.hostname; };
+        }];
+      }]
       ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
         job_name = "postgres";
         static_configs = [{
@@ -2684,6 +2691,9 @@ in
     };
     docker = {
       enable = prefs.enableDocker && !prefs.replaceDockerWithPodman;
+      extraOptions = builtins.concatStringsSep " "
+        ([ "--experimental" ] ++
+          (lib.optionals prefs.enableDockerMetrics [ "--metrics-addr=127.0.0.1:${builtins.toString prefs.dockerMetricsPort}" ]));
       autoPrune.enable = true;
     };
     anbox = { enable = prefs.enableAnbox; };

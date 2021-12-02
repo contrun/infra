@@ -352,6 +352,8 @@ let
     enabledInputMethod = "fcitx";
     enableVirtualboxHost = !self.isMinimalSystem;
     enableDocker = !self.isMinimalSystem;
+    enableDockerMetrics = self.enablePrometheusExporters && self.enableDocker;
+    dockerMetricsPort = 9323;
     enablePodman = !self.isMinimalSystem;
     replaceDockerWithPodman = !self.enableDocker;
     enableLibvirtd = !self.isMinimalSystem;
