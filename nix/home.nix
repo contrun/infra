@@ -355,6 +355,7 @@ let
         "mitscheme"
         "guile"
         "myPackages.emacs"
+        "myPackages.magit"
         "mu"
         # "tsung"
         "wrk"

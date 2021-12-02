@@ -214,6 +214,7 @@
               (inputs.aioproxy.defaultPackage ? "${super.system}")
               {
                 aioproxy = inputs.aioproxy.defaultPackage.${super.system};
+                magit = inputs.self.packages.${super.system}.magit;
               };
           };
         };
@@ -262,6 +263,11 @@
                 type = "app";
                 program = "${self.packages."${system}".run}/bin/run";
               };
+
+              magit = {
+                type = "app";
+                program = "${self.packages."${system}".magit}/bin/magit";
+              };
             };
 
             defaultApp = apps.run;
@@ -273,6 +279,17 @@
                   make -C "${lib.cleanSource ./.}" "$@"
                 '';
                 runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
+              };
+
+              magit = with nixpkgsWithOverlays; writeShellApplication {
+                name = "magit";
+                text = ''
+                  emacs -q -eval "(progn (require 'magit) (magit))" "$@"
+                '';
+                runtimeInputs = [
+                  git
+                  (emacsWithPackages (epkgs: [ epkgs.magit ]))
+                ];
               };
 
               coredns = pkgs.buildGoApplication {

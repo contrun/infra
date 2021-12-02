@@ -2,3 +2,9 @@
 generated.*
 /artifacts/
 /nixos-bootstrap/artifacts/
+.deploy-gc/
+.idea/
+.metals/
+.vscode/
+*.qcow2
+/result
