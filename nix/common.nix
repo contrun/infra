@@ -1284,8 +1284,12 @@ in
       extraFlags = [ "--enable-feature=expand-external-labels" ];
       port = prefs.prometheusPort;
       exporters = {
-        node = { enable = prefs.enablePrometheusExporters; };
+        node = {
+          enable = prefs.enablePrometheusExporters;
+          extraFlags = [ "--collector.netdev.address-info" ];
+        };
         domain = { enable = prefs.enablePrometheusExporters; };
+        systemd = { enable = prefs.enablePrometheusExporters; };
         blackbox = {
           enable = prefs.enablePrometheusExporters;
           configFile = toYAML "blackbox-config" {
@@ -1449,7 +1453,7 @@ in
             (builtins.map (x: "https://${x}") prefs.domains);
         }];
       }]
-      ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
+      ++ lib.optionals config.services.prometheus.exporters.domain.enable [{
         job_name = "domain";
         metrics_path = "/probe";
         relabel_configs = [
@@ -1466,6 +1470,13 @@ in
           }
         ];
         static_configs = [{ targets = [ prefs.mainDomain ]; }];
+      }]
+      ++ lib.optionals config.services.prometheus.exporters.systemd.enable [{
+        job_name = "systemd";
+        static_configs = [{
+          targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.systemd.port}" ];
+          labels = { nodename = prefs.hostname; };
+        }];
       }]
       ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
         job_name = "postgres";
