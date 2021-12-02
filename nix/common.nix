@@ -367,7 +367,7 @@ in
         nixos-generators
         niv
         nix-serve
-        inputs.home-manager.packages.${config.nixpkgs.system}.home-manager
+        (pkgs.myPackage.home-manager or home-manager)
         nixpkgs-fmt
         nix-du
         nix-index
@@ -497,9 +497,14 @@ in
         lldb
         sxhkd
 
-        (args.inputs.deploy-rs.defaultPackage.${config.nixpkgs.system} or null)
-        (args.inputs.nix-autobahn.defaultPackage.${config.nixpkgs.system} or null)
+        (pkgs.myPackages.deploy-rs or null)
+        (pkgs.myPackages.nix-autobahn or null)
         (pkgs.myPackages.aioproxy or null)
+        # Not working for now
+        # error: store path '/nix/store/7phspaj5lxw5qja709r5j3ivcllp0gk2-hyhhrcbzng0kgkyv63mqhznhrp67fhf5-source-crate2nix' is not allowed to have references
+        # See https://github.com/NixOS/nix/issues/5647
+        # (pkgs.myPackages.helix or helix)
+        helix
 
         # gnome.adwaita-icon-theme
         # gnome.dconf
@@ -1066,7 +1071,7 @@ in
     davfs2 = { enable = prefs.enableDavfs2; };
     coredns = {
       enable = prefs.enableCoredns;
-      package = args.inputs.self.packages.${config.nixpkgs.system}.coredns;
+      package = pkgs.myPackages.coredns;
       config =
         let
           dnsServers = builtins.concatStringsSep " " prefs.dnsServers;

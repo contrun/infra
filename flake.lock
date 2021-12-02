@@ -121,6 +121,21 @@
         "type": "github"
       }
     },
+    "devshell": {
+      "locked": {
+        "lastModified": 1632436039,
+        "narHash": "sha256-OtITeVWcKXn1SpVEnImpTGH91FycCskGBPqmlxiykv4=",
+        "owner": "numtide",
+        "repo": "devshell",
+        "rev": "7a7a7aa0adebe5488e5abaec688fd9ae0f8ea9c6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "devshell",
+        "type": "github"
+      }
+    },
     "dotfiles": {
       "locked": {
         "lastModified": 1637168429,
@@ -284,6 +299,33 @@
         "type": "github"
       }
     },
+    "helix": {
+      "inputs": {
+        "flakeCompat": [
+          "flake-compat"
+        ],
+        "nixCargoIntegration": "nixCargoIntegration",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1638420687,
+        "narHash": "sha256-FG4qP8sgDTwVAH5htgVFRVOy9JxKgBtaeI4KsdUq0SQ=",
+        "owner": "helix-editor",
+        "repo": "helix",
+        "rev": "27ffc79c44710a18ca93cb2f0e91ee18ea19f98d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "helix-editor",
+        "repo": "helix",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -438,6 +480,32 @@
       "original": {
         "owner": "Mic92",
         "repo": "nix-ld",
+        "type": "github"
+      }
+    },
+    "nixCargoIntegration": {
+      "inputs": {
+        "devshell": "devshell",
+        "nixpkgs": [
+          "helix",
+          "nixpkgs"
+        ],
+        "rustOverlay": [
+          "helix",
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1634796585,
+        "narHash": "sha256-CW4yx6omk5qCXUIwXHp/sztA7u0SpyLq9NEACPnkiz8=",
+        "owner": "yusdacra",
+        "repo": "nix-cargo-integration",
+        "rev": "a84a2137a396f303978f1d48341e0390b0e16a8b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yusdacra",
+        "repo": "nix-cargo-integration",
         "type": "github"
       }
     },
@@ -633,6 +701,7 @@
         "flake-firefox-nightly": "flake-firefox-nightly",
         "flake-utils": "flake-utils",
         "gomod2nix": "gomod2nix",
+        "helix": "helix",
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
         "nix-autobahn": "nix-autobahn",
@@ -646,8 +715,32 @@
         "nixpkgs-wayland": "nixpkgs-wayland",
         "nur-no-pkgs": "nur-no-pkgs",
         "old-ghc-nix": "old-ghc-nix",
+        "rust-overlay": "rust-overlay",
         "smos": "smos",
         "sops-nix": "sops-nix"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1638411370,
+        "narHash": "sha256-/IgcziVuytcPYMJuhzP6MdMstT9Q0R6W14QYBhEwL5Y=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "0901e383f2381bde37ddc8c7def9dd84c408aeef",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     },
     "smos": {

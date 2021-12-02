@@ -2,6 +2,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;
@@ -11,53 +12,80 @@
       url = "github:teto/flake-compat/8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed";
       flake = false;
     };
+
     nixpkgs-wayland = { url = "github:nix-community/nixpkgs-wayland"; };
     nixpkgs-wayland.inputs.nixpkgs.follows = "nixpkgs";
+
     nix-ld.url = "github:Mic92/nix-ld";
     nix-ld.inputs.nixpkgs.follows = "nixpkgs";
     nix-ld.inputs.utils.follows = "flake-utils";
+
     nix-autobahn.url = "github:Lassulus/nix-autobahn";
     nix-autobahn.inputs.nixpkgs.follows = "nixpkgs";
     nix-autobahn.inputs.flake-utils.follows = "flake-utils";
+
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
     deploy-rs.inputs.utils.follows = "flake-utils";
     deploy-rs.inputs.flake-compat.follows = "flake-compat";
+
+    helix.url = "github:helix-editor/helix";
+    helix.inputs.nixpkgs.follows = "nixpkgs";
+    helix.inputs.rust-overlay.follows = "rust-overlay";
+    helix.inputs.flakeCompat.follows = "flake-compat";
+
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.inputs.flake-utils.follows = "flake-utils";
+
     gomod2nix.url = "github:tweag/gomod2nix";
     gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
     gomod2nix.inputs.utils.follows = "flake-utils";
+
     nixpkgs-nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-20.09";
+
     aioproxy.url = "github:contrun/aioproxy";
     aioproxy.inputs.nixpkgs.follows = "nixpkgs";
     aioproxy.inputs.gomod2nix.follows = "gomod2nix";
     aioproxy.inputs.flake-utils.follows = "flake-utils";
+
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
     nur-no-pkgs.url = "github:nix-community/NUR";
+
     authinfo = {
       url = "github:aartamonau/authinfo";
       flake = false;
     };
+
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     emacs-overlay.url = "github:nix-community/emacs-overlay";
+
     flake-firefox-nightly.url = "github:colemickens/flake-firefox-nightly";
     flake-firefox-nightly.inputs.nixpkgs.follows = "nixpkgs";
+
     nixpkgs-mozilla = {
       url = "github:mozilla/nixpkgs-mozilla";
       flake = false;
     };
+
     smos = {
       url = "github:NorfairKing/smos";
       flake = false;
     };
+
     old-ghc-nix = {
       url = "github:mpickering/old-ghc-nix";
       flake = false;
     };
+
     dotfiles.url = "github:contrun/dotfiles";
+
     jtojnar-nixfiles = {
       url = "github:jtojnar/nixfiles";
       inputs = {
@@ -66,6 +94,7 @@
         flake-compat.follows = "flake-compat";
       };
     };
+
     nixos-vscode-server = {
       url = "github:msteen/nixos-vscode-server";
       flake = false;
@@ -214,7 +243,12 @@
               (inputs.aioproxy.defaultPackage ? "${super.system}")
               {
                 aioproxy = inputs.aioproxy.defaultPackage.${super.system};
+                deploy-rs = inputs.deploy-rs.defaultPackage.${super.system};
+                home-manager = inputs.home-manager.defaultPackage.${super.system};
+                nix-autobahn = inputs.nix-autobahn.defaultPackage.${super.system};
+                helix = inputs.helix.defaultPackage.${super.system};
                 magit = inputs.self.packages.${super.system}.magit;
+                coredns = inputs.self.packages.${super.system}.coredns;
               };
           };
         };

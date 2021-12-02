@@ -955,6 +955,7 @@ let
         "monit"
         "mujs"
         "multitail"
+        # "myPackages.helix"
         "helix"
         "neovim"
         "kakoune"
