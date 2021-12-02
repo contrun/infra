@@ -631,6 +631,7 @@ in
     adb.enable = prefs.enableADB;
     slock.enable = prefs.enableSlock;
     bash = { enableCompletion = true; };
+    fish = { enable = prefs.enableFish; };
     zsh = {
       enable = prefs.enableZSH;
       enableCompletion = true;

@@ -324,6 +324,7 @@ let
     enablePipewire = !self.isMinimalSystem;
     enableSlock = true;
     enableZSH = true;
+    enableFish = true;
     enableJava = !self.isMinimalSystem;
     enableCcache = true;
     enableFirewall = false;

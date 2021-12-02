@@ -197,6 +197,7 @@ let
         "bash-completion"
         "zsh-completions"
         "nushell"
+        "fish"
         "pgcli"
         "mycli"
         "sdcv"
