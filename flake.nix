@@ -318,7 +318,33 @@
               magit = with nixpkgsWithOverlays; writeShellApplication {
                 name = "magit";
                 text = ''
-                  emacs -q -eval "(progn (require 'magit) (magit))" "$@"
+                  function usage() {
+                      cat <<EOF
+                  magit [EMACS_OPTIONS] [PATH]
+                  If the last arguments is a valid directory, then run magit within it,
+                  else all arguments are passed to emacs.
+                  Run emacs --help to see emacs options.
+                  EOF
+                  }
+
+                  for i in "$@" ; do
+                      if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
+                          usage
+                          exit
+                      fi
+                  done
+
+                  emacs_arguments=( "''${@}" )
+
+                  if [[ $# -gt 0 ]]; then
+                      path="''${*: -1}"
+                      if [[ -d "$path" ]]; then
+                          cd "$path"
+                          emacs_arguments=( "''${@:1: (( $# -1 )) }" )
+                      fi
+                  fi
+
+                  emacs -q -l magit -f magit --eval "(local-set-key \"q\" #'kill-emacs)" -f delete-other-windows "''${emacs_arguments[@]}"
                 '';
                 runtimeInputs = [
                   git
