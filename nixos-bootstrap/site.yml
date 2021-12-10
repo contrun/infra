@@ -6,6 +6,7 @@
   gather_facts: no
   tasks:
     - name: Make partitions
+      when: skip_partition is not defined
       become: true
       block:
         - include_role:
