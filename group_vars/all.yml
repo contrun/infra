@@ -4,7 +4,10 @@ use_zerotier: true
 zerotier_register_short_hostname: true
 configure_systemd_resolved: true
 edge_proxy_tcp_forwarding_ports: [80, 2022, 2122, 2222, 443, 4443, 4000, 5678, 8080]
+edge_proxy_udp_forwarding_ports: [80, 2022, 2122, 2222, 443, 4443, 4000, 5678, 8080]
+edge_proxy_resolvers: ["127.0.0.53"]
 edge_proxy_port_mappings: {}
 use_nginx: false
 use_envoy: true
 use_cockroachdb: true
+edge_proxy_backend_ip_addresses: ""

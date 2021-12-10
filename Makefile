@@ -86,3 +86,18 @@ nixos-update-channels:
 
 nixos-vagrant-box:
 	nix run github:nix-community/nixos-generators -- --flake ".#dbx" -f vagrant-virtualbox
+
+ansible-requirements:
+	ansible-galaxy install -r requirements.yaml
+
+ansible-inventory-hosts:
+	ansible-vault edit inventory/hosts
+
+ansible-edge-proxies:
+	ansible-playbook site.yaml --extra-vars 'deployments=["edge_proxies"]'
+
+ansible-overlay-nodes:
+	ansible-playbook site.yaml --extra-vars 'deployments=["overlay_nodes"]'
+
+ansible-databases:
+	ansible-playbook site.yaml --extra-vars 'deployments=["databases"]'
