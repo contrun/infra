@@ -47,7 +47,7 @@
     - set_fact:
         tcp_forwarding_ports: "{{ edge_proxy_tcp_forwarding_ports }}"
         udp_forwarding_ports: "{{ edge_proxy_udp_forwarding_ports }}"
-        resolver: "{{ edge_proxy_resolvers }}"
+        resolvers: "{{ edge_proxy_resolvers }}"
         backend_ips: "{{ edge_proxy_backend_ip_addresses.split(',') }}"
         port_mappings: "{{ edge_proxy_port_mappings }}"
 

@@ -21,6 +21,8 @@ NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
+ANSIBLEPLAYBOOK ?= ansible-playbook -i inventory
+
 pull:
 	git pull --rebase --autostash
 
@@ -91,13 +93,13 @@ ansible-requirements:
 	ansible-galaxy install -r requirements.yaml
 
 ansible-inventory-hosts:
-	ansible-vault edit inventory/hosts
+	ansible-vault edit inventory/hosts.yaml
 
 ansible-edge-proxies:
-	ansible-playbook site.yaml --extra-vars 'deployments=["edge_proxies"]'
+	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["edge_proxies"]'
 
 ansible-overlay-nodes:
-	ansible-playbook site.yaml --extra-vars 'deployments=["overlay_nodes"]'
+	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["overlay_nodes"]'
 
 ansible-databases:
-	ansible-playbook site.yaml --extra-vars 'deployments=["databases"]'
+	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["databases"]'
