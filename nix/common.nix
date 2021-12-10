@@ -1241,6 +1241,15 @@ in
         monthly = 0;
       };
     };
+    syncoid = {
+      enable = prefs.enableSyncoid;
+      commands = prefs.syncoidCommands;
+      commonArgs = [ "--debug" ];
+    };
+    sanoid = {
+      enable = prefs.enableSanoid;
+      datasets = prefs.sanoidDatasets;
+    };
 
     grafana = {
       enable = prefs.enableGrafana;

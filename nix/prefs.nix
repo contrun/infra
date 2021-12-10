@@ -155,6 +155,9 @@ let
     enableDebugInfo = false;
     enableBtrfs = false;
     enableZfs = !self.isMinimalSystem;
+    enableSanoid = false;
+    enableSyncoid = false;
+    syncoidCommands = { };
     enableZfsUnstable = self.enableZfs;
     enableCrashDump = false;
     enableDnsmasq = false;
@@ -636,6 +639,37 @@ let
       enableAllOciContainers = true;
       enableClashRedirWatchdog = true;
       enableNetworkWatchdog = true;
+      enableSyncoid = true;
+      syncoidCommands = {
+        home = {
+          source = "tank/HOME/home";
+          target = "bpool/HOME/${self.hostname}";
+        };
+        var = {
+          source = "tank/VAR/var";
+          target = "bpool/VAR/${self.hostname}";
+        };
+      };
+      sanoidDatasets = {
+        "tank/HOME/home" = {
+          autoprune = true;
+          autosnap = true;
+          daily = 7;
+          hourly = 24;
+          monthly = 1;
+          yearly = 1;
+          extraArgs = [ "--verbose" "--readonly" "--debug" ];
+        };
+        "tank/VAR/var" = {
+          autoprune = true;
+          autosnap = true;
+          daily = 7;
+          hourly = 24;
+          monthly = 1;
+          yearly = 1;
+          extraArgs = [ "--verbose" "--readonly" "--debug" ];
+        };
+      };
       enableJupyter = true;
       enableTraefik = true;
       enableGrafana = true;
