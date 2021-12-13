@@ -640,16 +640,23 @@ let
       enableClashRedirWatchdog = true;
       enableNetworkWatchdog = true;
       enableSyncoid = true;
-      syncoidCommands = {
-        home = {
-          source = "tank/HOME/home";
-          target = "bpool/HOME/${self.hostname}";
+      syncoidCommands =
+        let
+          sendOptions = "-v";
+          recvOptions = "-v";
+        in
+        {
+          home = {
+            inherit sendOptions recvOptions;
+            source = "tank/HOME/home";
+            target = "bpool/HOME/${self.hostname}";
+          };
+          var = {
+            inherit sendOptions recvOptions;
+            source = "tank/VAR/var";
+            target = "bpool/VAR/${self.hostname}";
+          };
         };
-        var = {
-          source = "tank/VAR/var";
-          target = "bpool/VAR/${self.hostname}";
-        };
-      };
       sanoidDatasets = {
         "tank/HOME/home" = {
           autoprune = true;

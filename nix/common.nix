@@ -1244,6 +1244,8 @@ in
     syncoid = {
       enable = prefs.enableSyncoid;
       commands = prefs.syncoidCommands;
+      localSourceAllow = options.services.syncoid.localSourceAllow.default;
+      localTargetAllow = options.services.syncoid.localTargetAllow.default ++ [ "destroy" "dedup" ];
       commonArgs = [ "--debug" ];
     };
     sanoid = {
