@@ -2152,7 +2152,7 @@ in
       backupAll = true;
     };
     udisks2.enable = prefs.enableUdisks2;
-    redis.enable = prefs.enableRedis;
+    redis.servers.redis.enable = prefs.enableRedis;
     fail2ban.enable = prefs.enableFail2ban && config.networking.firewall.enable;
     mpd.enable = prefs.enableMpd;
     # mosquitto.enable = true;
