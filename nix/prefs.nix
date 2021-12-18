@@ -85,6 +85,7 @@ let
     hostname = "hostname";
     hostId = "346b7a87";
     helpers = import self.helpersPath { lib = args.inputs.nixpkgs.lib; };
+    edgeProxyHostnames = [ "nrk" "pkn" ];
     autosshServers = with args.inputs.nixpkgs.lib;
       let
         configFiles = [ "${self.home}/.ssh/config" ];

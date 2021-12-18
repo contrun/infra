@@ -1334,6 +1334,22 @@ in
                 prober = "http";
                 timeout = "5s";
               };
+              # Technically not 3xx
+              http_3xx = {
+                http = {
+                  valid_status_codes = [ 301 302 303 304 307 308 ];
+                  follow_redirects = false;
+                };
+                prober = "http";
+                timeout = "5s";
+              };
+              http_404 = {
+                http = {
+                  valid_status_codes = [ 404 ];
+                };
+                prober = "http";
+                timeout = "5s";
+              };
               http_header_match_origin = {
                 http = {
                   fail_if_header_not_matches = [{
@@ -1452,37 +1468,61 @@ in
             port = prefs.traefikMetricsPort;
           }
         ]
-        ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
-          job_name = "blackbox";
-          metrics_path = "/probe";
-          params = { module = [ "http_2xx" ]; };
-          relabel_configs = [
-            {
-              source_labels = [ "__address__" ];
-              target_label = "__param_target";
-            }
-            {
-              source_labels = [ "__param_target" ];
-              target_label = "instance";
-            }
-            {
-              replacement = "127.0.0.1:${
+        ++ lib.optionals config.services.prometheus.exporters.blackbox.enable (
+          let
+            go = { name, targets, module ? [ "http_2xx" ], enable ? true }: lib.optionals enable [{
+              job_name = name;
+              metrics_path = "/probe";
+              params = { inherit module; };
+              relabel_configs = [
+                {
+                  source_labels = [ "__address__" ];
+                  target_label = "__param_target";
+                }
+                {
+                  source_labels = [ "__param_target" ];
+                  target_label = "instance";
+                }
+                {
+                  replacement = "127.0.0.1:${
                   builtins.toString
-                  config.services.prometheus.exporters.domain.port
+                  config.services.prometheus.exporters.blackbox.port
                 }";
-              target_label = "__address__";
+                  target_label = "__address__";
+                }
+              ];
+              static_configs = [{
+                inherit targets;
+                labels = { nodename = prefs.hostname; };
+              }];
+            }];
+          in
+          builtins.concatMap go [
+            {
+              name = "blackbox_public_websites";
+              targets = [
+                "https://startpage.com"
+                "https://www.baidu.com"
+                "http://neverssl.com"
+              ];
             }
-          ];
-          static_configs = [{
-            labels = { nodename = prefs.hostname; };
-            targets = [
-              "https://www.google.com"
-              "https://www.baidu.com"
-              "http://neverssl.com"
-            ] ++ lib.optionals prefs.enableTraefik
-              (builtins.map (x: "https://${x}") prefs.domains);
-          }];
-        }]
+            {
+              name = "blackbox_edge_proxies";
+              module = [ "http_3xx" ];
+              targets = builtins.map (p: "http://${p}") prefs.edgeProxyHostnames;
+            }
+            {
+              name = "blackbox_domain_home";
+              module = [ "http_404" ];
+              targets = builtins.map (p: "${p}://${prefs.mainDomain}") [ "http" "https" ];
+            }
+            {
+              enable = prefs.enableTraefik;
+              name = "blackbox_current_host_home";
+              targets = builtins.map (x: "https://${x}") prefs.domains;
+            }
+          ]
+        )
         ++ lib.optionals config.services.prometheus.exporters.domain.enable [{
           job_name = "domain";
           metrics_path = "/probe";
