@@ -1306,6 +1306,13 @@ in
         };
         domain = { enable = prefs.enablePrometheusExporters; };
         systemd = { enable = prefs.enablePrometheusExporters; };
+        smartctl = rec {
+          # Devices will be used generate systemd unit DeviceAllow, without which
+          # smartctl exporter will fail with permission denied
+          enable = prefs.enableSmartctlExporter && devices != [ ];
+          devices = prefs.smartctlExporterDevices;
+          listenAddress = "127.0.0.1";
+        };
         blackbox = {
           enable = prefs.enablePrometheusExporters;
           configFile = toYAML "blackbox-config" {
@@ -1432,7 +1439,7 @@ in
           simpleScrape = name: with config.services.prometheus.exporters."${name}";
             scrape { inherit name enable port; };
         in
-        builtins.concatMap simpleScrape [ "node" "postgres" "systemd" ]
+        builtins.concatMap simpleScrape [ "node" "postgres" "systemd" "smartctl" ]
         ++ builtins.concatMap scrape [
           {
             name = "docker";

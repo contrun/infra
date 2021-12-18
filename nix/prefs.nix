@@ -275,6 +275,8 @@ let
     grafanaPort = 2342;
     enablePrometheus = false;
     enablePrometheusExporters = !self.isMinimalSystem;
+    enableSmartctlExporter = self.enablePrometheusExporters;
+    smartctlExporterDevices = [ ];
     prometheusPort = 9001;
     enableLoki = false;
     lokiHttpPort = 3100;
@@ -552,6 +554,7 @@ let
       enableX2goServer = true;
       enableHidpi = false;
       maxJobs = 6;
+      smartctlExporterDevices = [ "/dev/nvme0n1" ];
       enableCfssl = true;
       # enableK3s = true;
       enablePrometheus = true;
@@ -576,6 +579,7 @@ let
           # super.pkgsRelatedPrefs.rtl8188gu
         ];
       };
+      smartctlExporterDevices = [ "/dev/nvme0n1" ];
       enableNetworkWatchdog = true;
       enablePrometheus = true;
       enablePromtail = true;
@@ -637,6 +641,10 @@ let
       enableCalibreServer = true;
       linkedJdks = [ "openjdk8" ];
       enableEmacs = false;
+      smartctlExporterDevices = [
+        "/dev/sda"
+        "/dev/sdb"
+      ];
       enableAllOciContainers = true;
       enableClashRedirWatchdog = true;
       enableNetworkWatchdog = true;
