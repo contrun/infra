@@ -946,6 +946,7 @@ let
         "kpcli"
         "bitwarden"
         "bitwarden-cli"
+        "rbw"
         "keepassxc"
         "mkpasswd"
         "scrot"

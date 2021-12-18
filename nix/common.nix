@@ -2650,9 +2650,9 @@ in
               };
             };
           groups = {
-            # Programs running as users in this group is not proxied by clash-redir.
-            "noproxy" = { };
             "${prefs.ownerGroup}" = { gid = prefs.ownerGroupGid; };
+            # Programs running as users in this group is not proxied by clash-redir.
+            "${prefs.noproxyGroup}" = { };
           };
         })
       {
@@ -4027,13 +4027,13 @@ in
             "zerotierone" = { wantedBy = lib.mkForce [ ]; };
           } // lib.optionalAttrs prefs.buildZerotierone
           {
-            "zerotierone" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
+            "zerotierone" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
           } // lib.optionalAttrs prefs.enableSyncthing
           {
-            "syncthing" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
+            "syncthing" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
           } // lib.optionalAttrs prefs.enableTailScale
           {
-            "tailscaled" = { serviceConfig = { SupplementaryGroups = "noproxy"; }; };
+            "tailscaled" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
           } // lib.optionalAttrs (config.virtualisation.docker.enable) {
           "docker" = {
             serviceConfig = {
@@ -4336,6 +4336,7 @@ in
               ExecStart = "${script} start";
               ExecStop = "${script} stop";
               ExecReload = "${script} reload";
+              Environment = "CLASH_NOPROXY_GROUP=${prefs.noproxyGroup}";
             };
           };
 

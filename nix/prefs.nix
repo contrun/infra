@@ -74,6 +74,7 @@ let
     ownerUid = 1000;
     ownerGroup = "users";
     ownerGroupGid = 100;
+    noproxyGroup = "noproxy";
     home = "/home/${self.owner}";
     syncFolder = "${self.home}/Sync";
     nixosSystem = "x86_64-linux";
