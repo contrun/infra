@@ -1420,99 +1420,77 @@ in
           username = "205817";
         };
       }];
-      scrapeConfigs = lib.optionals prefs.enableTraefik [{
-        job_name = "traefik";
-        static_configs = [{
-          targets =
-            [ "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}" ];
-          labels = { nodename = prefs.hostname; };
-        }];
-      }] ++ lib.optionals config.services.prometheus.exporters.node.enable [{
-        job_name = "node";
-        static_configs = [{
-          targets = [
-            "127.0.0.1:${
-              toString config.services.prometheus.exporters.node.port
-            }"
-          ];
-          labels = { nodename = prefs.hostname; };
-        }];
-      }]
-      ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
-        job_name = "blackbox";
-        metrics_path = "/probe";
-        params = { module = [ "http_2xx" ]; };
-        relabel_configs = [
+      scrapeConfigs =
+        let
+          scrape = { name, enable, port }: lib.optionals enable [{
+            job_name = name;
+            static_configs = [{
+              targets = [ "127.0.0.1:${toString port}" ];
+              labels = { nodename = prefs.hostname; };
+            }];
+          }];
+          simpleScrape = name: with config.services.prometheus.exporters."${name}";
+            scrape { inherit name enable port; };
+        in
+        builtins.concatMap simpleScrape [ "node" "postgres" "systemd" ]
+        ++ builtins.concatMap scrape [
           {
-            source_labels = [ "__address__" ];
-            target_label = "__param_target";
+            name = "docker";
+            enable = prefs.enableDockerMetrics;
+            port = prefs.dockerMetricsPort;
           }
           {
-            source_labels = [ "__param_target" ];
-            target_label = "instance";
+            name = "traefik";
+            enable = prefs.enableTraefik;
+            port = prefs.traefikMetricsPort;
           }
-          {
-            replacement = "127.0.0.1:${
+        ]
+        ++ lib.optionals config.services.prometheus.exporters.blackbox.enable [{
+          job_name = "blackbox";
+          metrics_path = "/probe";
+          params = { module = [ "http_2xx" ]; };
+          relabel_configs = [
+            {
+              source_labels = [ "__address__" ];
+              target_label = "__param_target";
+            }
+            {
+              source_labels = [ "__param_target" ];
+              target_label = "instance";
+            }
+            {
+              replacement = "127.0.0.1:${
                   builtins.toString
                   config.services.prometheus.exporters.domain.port
                 }";
-            target_label = "__address__";
-          }
-        ];
-        static_configs = [{
-          labels = { nodename = prefs.hostname; };
-          targets = [
-            "https://www.google.com"
-            "https://www.baidu.com"
-            "http://neverssl.com"
-          ] ++ lib.optionals prefs.enableTraefik
-            (builtins.map (x: "https://${x}") prefs.domains);
-        }];
-      }]
-      ++ lib.optionals config.services.prometheus.exporters.domain.enable [{
-        job_name = "domain";
-        metrics_path = "/probe";
-        relabel_configs = [
-          {
-            source_labels = [ "__address__" ];
-            target_label = "__param_target";
-          }
-          {
-            replacement = "127.0.0.1:${
-                  builtins.toString
-                  config.services.prometheus.exporters.domain.port
-                }";
-            target_label = "__address__";
-          }
-        ];
-        static_configs = [{ targets = [ prefs.mainDomain ]; }];
-      }]
-      ++ lib.optionals config.services.prometheus.exporters.systemd.enable [{
-        job_name = "systemd";
-        static_configs = [{
-          targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.systemd.port}" ];
-          labels = { nodename = prefs.hostname; };
-        }];
-      }]
-      ++ lib.optionals prefs.enableDockerMetrics [{
-        job_name = "docker";
-        static_configs = [{
-          targets = [ "127.0.0.1:${toString prefs.dockerMetricsPort}" ];
-          labels = { nodename = prefs.hostname; };
-        }];
-      }]
-      ++ lib.optionals config.services.prometheus.exporters.postgres.enable [{
-        job_name = "postgres";
-        static_configs = [{
-          targets = [
-            "127.0.0.1:${
-                builtins.toString
-                config.services.prometheus.exporters.postgres.port
-              }"
+              target_label = "__address__";
+            }
           ];
-          labels = { nodename = prefs.hostname; };
+          static_configs = [{
+            labels = { nodename = prefs.hostname; };
+            targets = [
+              "https://www.google.com"
+              "https://www.baidu.com"
+              "http://neverssl.com"
+            ] ++ lib.optionals prefs.enableTraefik
+              (builtins.map (x: "https://${x}") prefs.domains);
+          }];
+        }]
+        ++ lib.optionals config.services.prometheus.exporters.domain.enable [{
+          job_name = "domain";
+          metrics_path = "/probe";
+          relabel_configs = [
+            {
+              source_labels = [ "__address__" ];
+              target_label = "__param_target";
+            }
+            {
+              replacement = "127.0.0.1:${builtins.toString config.services.prometheus.exporters.domain.port}";
+              target_label = "__address__";
+            }
+          ];
+          static_configs = [{ targets = [ prefs.mainDomain ]; }];
         }];
-      }];
     };
 
     promtail = {
