@@ -1,5 +1,5 @@
 # Taken liberally from https://github.com/malob/nixpkgs/blob/master/.github/workflows/ci.yml
-name: nix
+name: Build nixos profiles
 
 on:
   workflow_dispatch:
@@ -38,7 +38,7 @@ on:
     - cron: "0 16 * * 5"
 
 jobs:
-  nixos-profiles:
+  nixos:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

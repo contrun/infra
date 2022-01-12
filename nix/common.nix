@@ -2787,6 +2787,13 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "bookwyrm" =
+                    let image = "docker.io/contrun/bookwyrm:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "wger" =
                     let image = "docker.io/wger/apache:2.0-dev";
                     in { "x86_64-linux" = image; };
@@ -3168,6 +3175,21 @@ in
             dependsOn = [ "postgresql" ];
             environmentFiles = [ "/run/secrets/recipes-env" ];
             traefikForwardingPort = 8080;
+          } // mkContainer "bookwyrm" prefs.ociContainers.enableBookwyrm {
+            volumes = [
+              "/var/data/bookwyrm/images:/app/images"
+              "/var/data/bookwyrm/static:/app/static"
+            ];
+            dependsOn = [ "postgresql" ];
+            environment = rec {
+              DOMAIN = prefs.getFullDomainName "bookwyrm";
+              USE_HTTPS = "true";
+              EMAIL = "admin@${DOMAIN}";
+            };
+            environmentFiles = [ "/run/secrets/bookwyrm-env" ];
+            entrypoint = "python";
+            cmd = [ "manage.py" "runserver" "0.0.0.0:8000" ];
+            traefikForwardingPort = 8000;
           } // mkContainer "wger" prefs.ociContainers.enableWger {
             volumes = [ "/var/data/wger/media:/home/wger/media" ];
             dependsOn = [ "postgresql" ];
@@ -3531,6 +3553,13 @@ in
                             subtitle = "cooking recipes";
                             tag = "house-keeping";
                             url = "https://${prefs.getFullDomainName "recipes"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableBookwyrm;
+                            name = "bookwyrm";
+                            subtitle = "books cataloging";
+                            tag = "reading";
+                            url = "https://${prefs.getFullDomainName "bookwyrm"}";
                           }
                           {
                             enable = prefs.ociContainers.enableWger;

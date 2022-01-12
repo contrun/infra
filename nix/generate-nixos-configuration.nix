@@ -123,6 +123,7 @@ let
           wallabag-env = { };
           recipes-env = { };
           wger-env = { };
+          bookwyrm-env = { };
           restic-password = { };
           rclone-config = { };
           yandex-passwd = {

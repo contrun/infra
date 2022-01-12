@@ -546,6 +546,8 @@ let
         "libunwind"
         "gmp"
         "libevdev"
+        "libevent"
+        "cunit"
         "libcap"
         "libuuid"
         "libxml2"
