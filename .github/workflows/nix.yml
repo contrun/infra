@@ -224,6 +224,10 @@ jobs:
       - name: Push commit with updated inputs
         if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
         run: |
+          # Upstream may update dependencies. In that case, `flake.lock` may have been changed.
+          if git --no-pager diff; then
+              git commit --all --amend
+          fi
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
           # Only push x86_64-linux updates to master branch.
