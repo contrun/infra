@@ -1,28 +1,57 @@
-name: Build container images
+name: Build containers images
 
 on:
   workflow_dispatch: {}
+  schedule:
+    - cron: "0 16 * * 5"
 
 jobs:
-  build-container-images:
+  container:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         repository:
           - "bookwyrm-social/bookwyrm"
+          - "elasticdog/tiddlywiki-docker"
+          - "contrun/keeweb-local-server"
+          # Images not working for now.
+          # - "DeviaVir/zenbot"
 
     steps:
       - name: Set upstream information
         id: upstream
         run: |
           repository=${{ matrix.repository }}
-          name="$(awk -F / '{print $2}' <<< "$repository")"
-          directory="$name"
+
+          case "$repository" in
+            "elasticdog/tiddlywiki-docker")
+              name=tiddlywiki
+              ;;
+
+            *)
+              name="$(awk -F / '{print $2}' <<< "$repository")"
+              ;;
+          esac
+
+          case "$repository" in
+            *)
+              directory="$name"
+              ;;
+          esac
+
+          case "$repository" in
+            *)
+              platforms="linux/amd64,linux/arm64"
+              ;;
+          esac
+
           echo "::set-output name=name::$name"
           echo "::set-output name=directory::$directory"
+          echo "::set-output name=platforms::$platforms"
           echo "::set-output name=repository::$repository"
 
-      - name: Checkout ${{ steps.upstream.outputs.name }} from ${{ steps.upstream.outputs.repository }}
+      - name: Checkout ${{ steps.upstream.outputs.repository }} to ${{ steps.upstream.outputs.name }}
         uses: actions/checkout@v2
         with:
           repository: ${{ steps.upstream.outputs.repository }}
@@ -50,6 +79,17 @@ jobs:
           echo "::set-output name=DOCKER_IMAGE_CACHE::$DOCKER_IMAGE_CACHE"
           echo "::set-output name=DOCKER_TAGS::$DOCKER_IMAGE,$DOCKER_IMAGE_LATEST"
 
+          case "${{ steps.upstream.outputs.repository }}" in
+            "DeviaVir/zenbot")
+              sed -i 's/npm install/env LIBSASS_EXT=no npm install/g' Dockerfile
+              ;;
+            "bookwyrm-social/bookwyrm")
+              # In the official Dockerfile, the code is not added to the container image.
+              # See https://github.com/bookwyrm-social/bookwyrm/blob/de0c50196ee74e062d9d023c536a7f8af458b2d2/Dockerfile
+              sed -i '/RUN pip install -r requirements.txt --no-cache-dir/a COPY . /app' Dockerfile
+              ;;
+          esac
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
@@ -65,7 +105,7 @@ jobs:
         with:
           context: ${{ steps.upstream.outputs.directory }}
           push: ${{ github.event_name != 'pull_request' }}
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ steps.upstream.outputs.platforms }}
           tags: ${{ steps.env.outputs.DOCKER_TAGS }}
           cache-from: ${{ steps.env.outputs.DOCKER_IMAGE_CACHE }}
           cache-to: ${{ steps.env.outputs.DOCKER_IMAGE_CACHE }}
