@@ -2754,6 +2754,7 @@ in
                 {
                   "postgresql" = postgresql;
                   "postgresql-init" = postgresql;
+                  "postgresql-debug" = postgresql;
                   "redis" = {
                     "x86_64-linux" = "docker.io/redis:6";
                     "aarch64-linux" = "docker.io/arm64v8/redis:6";
@@ -3019,6 +3020,18 @@ in
               "/run/secrets/postgresql-backup-env"
             ];
             entrypoint = "/my/init-user-db.sh";
+            enableTraefik = false;
+          } // mkContainer "postgresql-debug" prefs.ociContainers.enablePostgresql {
+            autoStart = false;
+            volumes =
+              [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
+            dependsOn = [ "postgresql" ];
+            environmentFiles = [
+              "/run/secrets/postgresql-env"
+              "/run/secrets/postgresql-backup-env"
+            ];
+            entrypoint = "/bin/sh";
+            cmd = [ "-c" "tail -f /dev/null" ];
             enableTraefik = false;
           } // mkContainer "redis" prefs.ociContainers.enableRedis {
             # https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume
