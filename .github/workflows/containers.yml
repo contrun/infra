@@ -87,6 +87,9 @@ jobs:
               # In the official Dockerfile, the code is not added to the container image.
               # See https://github.com/bookwyrm-social/bookwyrm/blob/de0c50196ee74e062d9d023c536a7f8af458b2d2/Dockerfile
               sed -i '/RUN pip install -r requirements.txt --no-cache-dir/a COPY . /app' Dockerfile
+              echo >> bookwyrm/settings.py
+              echo 'INSTALLED_APPS.append("django.contrib.sites")' >> bookwyrm/settings.py
+              echo 'SITE_ID = int(env("SITE_ID", 1))' >> bookwyrm/settings.py
               ;;
           esac
 
