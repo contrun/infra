@@ -690,9 +690,7 @@ let
       };
       enableJupyter = true;
       enableTraefik = true;
-      enableGrafana = true;
       enablePrometheus = true;
-      enableLoki = true;
       enablePromtail = true;
       enableAcme = true;
       enableSmosServer = true;
