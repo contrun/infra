@@ -3188,7 +3188,9 @@ in
             };
             environmentFiles = [ "/run/secrets/bookwyrm-env" ];
             entrypoint = "python";
-            cmd = [ "manage.py" "runserver" "0.0.0.0:8000" ];
+            # We are running django directly. Serving static files requires `--insecure`.
+            # See https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/#cmdoption-runserver-insecure
+            cmd = [ "manage.py" "runserver" "--insecure" "0.0.0.0:8000" ];
             traefikForwardingPort = 8000;
           } // mkContainer "wger" prefs.ociContainers.enableWger {
             volumes = [ "/var/data/wger/media:/home/wger/media" ];
