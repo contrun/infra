@@ -613,14 +613,14 @@ in
       PATH = [ "$HOME/.bin" "$HOME/.local/bin" ]
         ++ (map (x: x + "/bin") [ CABALPATH CARGOPATH GOPATH ])
         ++ [ "${NODE_PATH}/node_modules/.bin" ] ++ [ "/usr/local/bin" ];
-      LESS = "-F -X -R";
+      LESS = "-x4RFsX";
+      PAGER = "less";
       EDITOR = "nvim";
     } // lib.optionalAttrs (pkgs ? myPackages) {
       # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
       MYPYTHONPATH =
         (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
           [ (pkgs.myPackages.python or pkgs.python) ];
-      PAGER = "nvimpager";
     });
     variables = {
       # systemctl --user does not work without this
