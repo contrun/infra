@@ -957,7 +957,7 @@ let
         "mcabber"
         "mdadm"
         "mg"
-        "mongodb"
+        # "mongodb"
         "monit"
         "mujs"
         "multitail"

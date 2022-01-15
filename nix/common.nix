@@ -161,8 +161,10 @@ in
   security = {
     acme = {
       acceptTerms = true;
-      email = prefs.acmeEmail;
       certs = prefs.acmeCerts;
+      defaults = {
+        email = prefs.acmeEmail;
+      };
     };
     polkit = {
       extraConfig = ''
