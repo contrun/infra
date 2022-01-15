@@ -98,6 +98,9 @@ ansible-inventory-hosts:
 ansible-edge-proxies:
 	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["edge_proxies"]'
 
+ansible-edge-proxy-logs:
+	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["edge_proxy-logs"]'
+
 ansible-overlay-nodes:
 	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["overlay_nodes"]'
 
