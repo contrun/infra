@@ -5,12 +5,13 @@ roles:
     version: da90c892350c0e77db0ee511f591678ec89c051a
   - name: artis3n.tailscale
   - name: hugoprudente.envoyproxy
+    version: v0.1.3
   - name: patrickjahns.promtail
   - name: ajaykumar4.zerotier
     src: https://github.com/ajaykumar4/ansible-role-zerotier.git
   - name: nginxinc.nginx_config
     src: https://github.com/nginxinc/ansible-role-nginx-config.git
-    version: 1e3a22886dffa449c8a60b3b734bfaa975dab551
+    version: 028f954619fc4100dbd147df56b358efa7694bdd
 
 collections:
   - name: community.general
