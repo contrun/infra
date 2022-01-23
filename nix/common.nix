@@ -4541,6 +4541,48 @@ in
         };
       })
 
+      # TODO: figure out why zerotier always goes offline
+      (
+        let
+          name = "zerotierone";
+          watchdogName = "${name}-watchdog";
+        in
+        lib.optionalAttrs
+          prefs.buildZerotierone
+          {
+            services."${watchdogName}" = {
+              description = "zerotierone watchdog";
+              enable = true;
+              after = [ "network-online.target" ];
+              onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
+              path = with pkgs; [ coreutils systemd zerotierone ];
+              script = ''
+                set -euo pipefail
+                if ! systemctl is-active zerotierone; then
+                    exit 0
+                fi
+                if zerotier-cli -p${builtins.toString config.services.zerotierone.port} info | grep -i offline; then
+                    systemctl restart zerotierone
+                fi
+                zerotier-cli -p${builtins.toString config.services.zerotierone.port} info 
+                zerotier-cli -p${builtins.toString config.services.zerotierone.port} peers 
+              '';
+              serviceConfig = { Type = "oneshot"; };
+            };
+            timers."${watchdogName}" = {
+              enable = true;
+              wantedBy =
+                if prefs.enableZerotierone then [ "default.target" ] else [ ];
+              after = [ "network-online.target" ];
+              timerConfig = {
+                RandomizedDelaySec = 2 * 60;
+                OnCalendar = "*-*-* *:3/5:00";
+                Unit = "${watchdogName}.service";
+              };
+            };
+          }
+      )
+
       (
         let
           nextcloudUnitName = "${prefs.ociContainerBackend}-nextcloud";
