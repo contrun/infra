@@ -13,8 +13,8 @@ jobs:
       matrix:
         repository:
           - "bookwyrm-social/bookwyrm"
+          - "200ok-ch/organice"
           - "elasticdog/tiddlywiki-docker"
-          - "contrun/keeweb-local-server"
           # Images not working for now.
           # - "DeviaVir/zenbot"
 
