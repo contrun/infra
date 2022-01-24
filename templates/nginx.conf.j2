@@ -17,9 +17,11 @@ stream {
     access_log  /var/log/nginx/access.log format;
 
     map $ssl_preread_server_name $ssl_backend {
-{% if host_aliases is defined %}
-{% for d in host_aliases %}
-        ~^([^.]+\.)*{{ d.alias }}\.[^.]+\.[^.]+$   {{ d.real_name }}:$server_port;
+{% if backend_servers is defined %}
+{% for h in backend_servers %}
+{% for b in h.backends %}
+        ~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+$  {{ b }}:$server_port;
+{% endfor %}
 {% endfor %}
 {% endif %}
         ~^([^.]+\.)*(?P<my_hostname>[^.]+)\.[^.]+\.[^.]+$   $my_hostname:$server_port;
@@ -29,9 +31,11 @@ stream {
     }
 
     map $hostname $backend {
-{% if host_aliases is defined %}
-{% for d in host_aliases %}
-        ~^([^.]+\.)*{{ d.alias }}\.[^.]+\.[^.]+$   {{ d.real_name }}:$server_port;
+{% if backend_servers is defined %}
+{% for h in backend_servers %}
+{% for b in h.backends %}
+        ~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+$  {{ b }}:$server_port;
+{% endfor %}
 {% endfor %}
 {% endif %}
         ~^([^.]+\.)*(?P<my_hostname>[^.]+)\.[^.]+\.[^.]+$   $my_hostname:$server_port;
