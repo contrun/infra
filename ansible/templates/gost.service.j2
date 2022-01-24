@@ -1,0 +1,12 @@
+[Unit]
+Description=gost
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/gost {{ gost_arguments }}
+Restart=always
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,7 @@
 - name: deploy
   import_playbook: "{{ deployment }}.yml"
+  # TODO: find a way to override vars from an encrypted file.
+  # vars specified below has high priority over hosts.yml, which is undesirable.
   vars:
     use_tailscale: true
     use_zerotier: true
@@ -14,3 +16,4 @@
     enable_promtail: true
     use_cockroachdb: true
     edge_proxy_backend_ip_addresses: ""
+    # gost_arguments: "-L=http2://:3443 -L=socks5://:3080 -L=ss://aes-128-cfb:123456@:3338"

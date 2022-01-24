@@ -1,0 +1,34 @@
+- hosts: edge_proxies
+  tasks:
+    - name: Get latest release
+      ansible.builtin.shell: |
+        set -xeuo pipefail
+        download_url=$(curl --silent https://api.github.com/repos/ginuerzh/gost/releases/latest | awk -F'"' '/browser_download_url.*linux-amd64/ {print $4}')
+        filename="$(basename $download_url)"
+        if ! [[ -f "$filename" ]]; then
+            curl -L -o "$filename" "$download_url"
+        fi
+        gunzip "$filename"
+        GLOBIGNORE="*.gz" chmod +x gost*
+        GLOBIGNORE="*.gz" mv gost* /usr/local/bin/gost
+        gost -V
+      args:
+        executable: /bin/bash
+
+    - name: Copy systemd unit
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "0644"
+      loop:
+        - src: gost.service.j2
+          dest: /etc/systemd/system/gost.service
+      register: gost_unit
+
+    - name: Start/reload gost
+      ansible.builtin.systemd:
+        name: gost
+        state: restarted
+        daemon_reload: yes
+        enabled: yes
+      when: gost_unit.changed
