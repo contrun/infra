@@ -90,19 +90,10 @@ nixos-vagrant-box:
 	nix run github:nix-community/nixos-generators -- --flake ".#dbx" -f vagrant-virtualbox
 
 ansible-requirements:
-	ansible-galaxy install -r requirements.yaml
+	cd ansible && ansible-galaxy install -r requirements.yml
 
 ansible-inventory-hosts:
-	ansible-vault edit inventory/hosts.yaml
+	cd ansible && ansible-vault edit inventory/hosts.yml
 
-ansible-edge-proxies:
-	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["edge_proxies"]'
-
-ansible-edge-proxy-logs:
-	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["edge_proxy-logs"]'
-
-ansible-overlay-nodes:
-	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["overlay_nodes"]'
-
-ansible-databases:
-	$(ANSIBLEPLAYBOOK) site.yaml --extra-vars 'deployments=["databases"]'
+ansible-deploy:
+	cd ansible && $(ANSIBLEPLAYBOOK) site.yml --extra-vars deployment=$(DEPLOYMENT)

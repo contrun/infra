@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        artifacts_dir: "{{ playbook_dir }}/artifacts"
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default(lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
+        default_namespace: "default"
+
+    - name: "Ensures {{ artifacts_dir }} exists"
+      file:
+        path: "{{ artifacts_dir }}"
+        state: directory
+
