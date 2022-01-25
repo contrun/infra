@@ -1,0 +1,5 @@
+- hosts: edge_proxies
+  tasks:
+    - name: Install wireguard
+      include_role:
+        name: githubixx.ansible_role_wireguard
