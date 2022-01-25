@@ -3,14 +3,17 @@
     - name: Get latest release
       ansible.builtin.shell: |
         set -xeuo pipefail
+        latest_version=$(curl -s https://api.github.com/repos/ginuerzh/gost/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")' | sed 's/^v//')
+        if command -v gost && gost -V | grep $latest_version; then
+            exit 0
+        fi
         download_url=$(curl --silent https://api.github.com/repos/ginuerzh/gost/releases/latest | awk -F'"' '/browser_download_url.*linux-amd64/ {print $4}')
         filename="$(basename $download_url)"
-        if ! [[ -f "$filename" ]]; then
-            curl -L -o "$filename" "$download_url"
-        fi
+        curl -L -o "$filename" "$download_url"
         gunzip "$filename"
-        GLOBIGNORE="*.gz" chmod +x gost*
-        GLOBIGNORE="*.gz" mv gost* /usr/local/bin/gost
+        rm "$filename"
+        chmod +x gost*
+        mv gost* /usr/local/bin/gost
         gost -V
       args:
         executable: /bin/bash
