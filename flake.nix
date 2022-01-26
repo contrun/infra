@@ -105,7 +105,9 @@
     let
       lib = nixpkgs.lib;
 
-      getNixConfig = path: ./. + "/nix/${path}";
+      getConfig = path: ./. + "/${path}";
+
+      getNixConfig = path: getConfig "nix/${path}";
 
       getHostPreference = hostname:
         let

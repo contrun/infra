@@ -236,6 +236,22 @@ in
       # userControlled = { enable = true; };
       iwd.enable = prefs.enableIwd;
     };
+    wg-quick =
+      let
+        peers = with builtins; fromJSON (readFile (./.. + "/fixtures/wireguard.json"));
+        generateConfig = index:
+          {
+            inherit peers;
+            address = [ "10.233.0.${index}/16" ];
+            privateKeyFile = "/run/wireguard-private-key";
+            postUp = [ "/run/secrets/wireguard-post-up" ];
+          };
+      in
+      {
+        interfaces = lib.optionalAttrs prefs.enableWireguard {
+          wg0 = generateConfig (builtins.toString prefs.wireguardHostIndex);
+        };
+      };
     supplicant = lib.optionalAttrs prefs.enableSupplicant {
       "WLAN" = {
         configFile =
@@ -364,6 +380,7 @@ in
         nftables
         ipset
         dnsmasq
+        wireguard
         nixFlakes
         nix-info
         nixos-generators
@@ -4091,7 +4108,22 @@ in
               }
             '';
           };
-        } // lib.optionalAttrs
+        } // lib.optionalAttrs prefs.enableWireguard
+          (
+            let
+              interfaces = builtins.attrNames config.networking.wg-quick.interfaces;
+            in
+            builtins.foldl'
+              (acc: e: acc //
+              {
+                "wg-quick-${e}" = {
+                  path = [ pkgs.gawk pkgs.iptables ];
+                };
+              })
+              { }
+              interfaces
+          )
+        // lib.optionalAttrs
           (prefs.buildZerotierone && !prefs.enableZerotierone)
           {
             # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;

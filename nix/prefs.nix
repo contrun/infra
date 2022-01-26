@@ -107,6 +107,22 @@ let
     enableGenerationsDir = false;
     bootloader = "systemd";
     enableGrub = self.bootloader == "grub";
+    enableWireguard = self.wireguardHostIndex != null;
+    wireguardHostIndex =
+      let
+        startForNixosHosts = 51;
+        f = acc: e: acc //
+          (
+            let next = acc."__next__" or startForNixosHosts; in
+            {
+              "${e}" = next;
+              "__next__" = next + 1;
+            }
+          );
+        l = builtins.foldl' f { } self.normalNodes;
+        hostnameToIndex = builtins.removeAttrs l [ "__next__" ];
+      in
+        hostnameToIndex."${self.hostname}" or null;
     enableSystemdBoot = self.bootloader == "systemd";
     enableRaspberryPiBoot = self.bootloader == "raspberrypi";
     efiCanTouchEfiVariables = true;
@@ -581,6 +597,7 @@ let
           # super.pkgsRelatedPrefs.rtl8188gu
         ];
       };
+      enableWireguard = false;
       smartctlExporterDevices = [ "/dev/nvme0n1" ];
       enableNetworkWatchdog = true;
       enablePrometheus = true;

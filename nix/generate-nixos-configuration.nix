@@ -138,6 +138,18 @@ let
             in acc // go e)
           { } [
           {
+            enable = prefs.enableWireguard;
+            config = {
+              wireguard-post-up = {
+                mode = "0500";
+              };
+              "wireguard-private-key-${builtins.toString prefs.wireguardHostIndex}" = {
+                mode = "0400";
+                path = "/run/wireguard-private-key";
+              };
+            };
+          }
+          {
             enable = prefs.enableAcme;
             config = {
               acme-env = {
