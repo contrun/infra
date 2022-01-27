@@ -6,9 +6,10 @@ POUND := \#
 HOST ?= $(shell hostname -s)
 USER ?= $(USER)
 
+EXTRANIXFLAGS ?=
 # TODO: Remove impure
 # error: attribute 'currentSystem' missing https://github.com/obsidiansystems/obelisk/issues/854
-NIXFLAGS = $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going --keep-failed)
+NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going --keep-failed) $(EXTRANIXFLAGS))
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
