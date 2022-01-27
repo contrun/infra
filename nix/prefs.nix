@@ -188,7 +188,7 @@ let
     '';
     dnsmasqServers = [ "223.6.6.6" "180.76.76.76" "8.8.8.8" "9.9.9.9" ];
     enableArbtt = false;
-    enableActivityWatch = !self.isMinimalSystem;
+    enableActivityWatch = false;
     enableAria2 = !self.isMinimalSystem;
     xWindowManager =
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";

@@ -303,7 +303,7 @@ in
         table-others
       ];
       fcitx.engines = with pkgs.fcitx-engines; [
-        libpinyin
+        # libpinyin
         cloudpinyin
         rime
         table-extra

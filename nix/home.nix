@@ -832,7 +832,7 @@ let
         "freemind"
         "xmind"
         "zotero"
-        "papis"
+        "stable.papis"
         # "k2pdfopt"
         "pdftk"
         # "jfbview"
@@ -1100,7 +1100,7 @@ in
           Service = {
             Type = "oneshot";
             ExecStart =
-              "${config.programs.smos.smosPackages.smos-sync-client}/bin/smos-sync-client sync";
+              "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
             EnvironmentFile = "/run/secrets/smos-sync-env";
           };
         };

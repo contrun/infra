@@ -7,4 +7,6 @@ generated.*
 .metals/
 .vscode/
 *.qcow2
+prefs.*.json
+*.log
 /result
