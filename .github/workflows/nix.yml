@@ -5,7 +5,11 @@ on:
   workflow_dispatch:
     inputs:
       update-nix-inputs:
-        description: "Whether to update nix flake inputs"
+        description: "whether to update nix flake inputs"
+        required: false
+        default: "yes"
+      deploy-to-nodes:
+        description: "whether to deploy to nodes"
         required: false
         default: "yes"
   pull_request:
@@ -73,7 +77,7 @@ jobs:
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 
       - name: Setup cachix
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' }}
         uses: cachix/cachix-action@v10
         with:
           name: ${{ steps.variables.outputs.cachixName }}
@@ -83,7 +87,7 @@ jobs:
 
       # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
       - name: Install qemu
-        if: ${{ matrix.nix-system == 'aarch64-linux' && steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }}
+        if: ${{ matrix.nix-system == 'aarch64-linux' && steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' }}
         run: |
           sudo env DEBIAN_FRONTEND=noninteractive apt-get update -q -y
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -q -y qemu-system-aarch64 qemu-efi binfmt-support qemu-user-static
@@ -99,7 +103,7 @@ jobs:
       # https://github.com/actions/virtual-environments/issues/2840#issuecomment-790492173
       # https://github.com/actions/virtual-environments/issues/709
       - name: Free some disk space
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' }}
         run: |
           set +e
           echo "=============================================================================="
@@ -150,7 +154,7 @@ jobs:
           echo "=============================================================================="
           df -h
 
-      - name: Check inputs up to date
+      - name: Update nix flake inputs
         id: check-nix-inputs-update-available
         if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
         run: |
@@ -168,21 +172,29 @@ jobs:
           if ! git diff; then
               echo "Abort now. No updates available."
               # No way for github actions workflow to early return
-              # Make sure later steps check noUpdateShouldAbort == 'yes'
-              echo '::set-output name=noUpdateShouldAbort::yes'
+              # Make sure later steps check noUpdateAvailableShouldAbort == 'yes'
+              echo '::set-output name=noUpdateAvailableShouldAbort::yes'
           fi
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git commit --all --message "automatically update nix at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
       - name: Build ${{ matrix.nix-system }} nixos
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }} }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' }} }}
         run: |
           make HOST=cicd-${{ matrix.nix-system }} nixos-build nixos-profile-path-info
           df -h
 
+      # In case following steps failed, we can still push build results from the preceding steps.
+      # Waiting for https://github.com/cachix/cachix-action/issues/83 to land
+      # Command copied from https://github.com/cachix/cachix-action/blob/37b92535c36e3c2071fa5ef392ae43e396e640b4/dist/main/index.js#L1090
+      - name: Push build results to cachix
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' }}
+        run: |
+          $HOME/work/_actions/cachix/cachix-action/*/dist/main/list-nix-store.sh "$HOME/.nix-profile/bin/cachix" "${{ steps.variables.outputs.cachixName }}" "${{ steps.variables.outputs.cachixPushfilter }}"
+
       - name: Build deploy node nixos
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
         run: |
           make HOST=${{ steps.variables.outputs.deployHost }} nixos-build nixos-profile-path-info
           df -h
@@ -190,12 +202,12 @@ jobs:
       # Following steps need these caches.
       # Command copied from https://github.com/cachix/cachix-action/blob/37b92535c36e3c2071fa5ef392ae43e396e640b4/dist/main/index.js#L1090
       - name: Push build results to cachix
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' }}
         run: |
           $HOME/work/_actions/cachix/cachix-action/*/dist/main/list-nix-store.sh "$HOME/.nix-profile/bin/cachix" "${{ steps.variables.outputs.cachixName }}" "${{ steps.variables.outputs.cachixPushfilter }}"
 
       - name: Import vault token
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
         uses: hashicorp/vault-action@v2.4.0
         with:
           method: approle
@@ -211,7 +223,7 @@ jobs:
         env:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
+        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy-to-nodes == 'yes')) && steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' && matrix.nix-system == steps.variables.outputs.deployHostSystem }}
         run: |
           set -euo pipefail
           nix profile install -f '<nixpkgs>' vault wstunnel openssh
@@ -222,7 +234,7 @@ jobs:
           make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ steps.variables.outputs.deployHost }}" nixos-deploy
 
       - name: Push commit with updated inputs
-        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
+        if: ${{ steps.check-nix-inputs-update-available.outputs.noUpdateAvailableShouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
         run: |
           # Upstream may update dependencies. In that case, `flake.lock` may have been changed.
           if git --no-pager diff; then
