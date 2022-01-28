@@ -58,11 +58,18 @@ let
         self.normalNodes // {
         hub = "mdq";
       };
-    pkgsRelatedPrefs = {
+    pkgsRelatedPrefs = rec {
       kernelPackages = pkgs.linuxPackages_latest;
+      extraModulePackages = [
+        # super.pkgsRelatedPrefs.rtl8188gu
+      ];
       rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage
         ./hardware/rtl8188gu.nix
         { });
+      extraUdevRules = ''
+        SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+        KERNEL=="uinput", GROUP="${self.ownerGroup}", MODE="0660", OPTIONS+="static_node=uinput"
+      '';
     };
     isMinimalSystem = true;
     homeManagerStateVersion = "21.05";
@@ -579,24 +586,17 @@ let
       enablePromtail = true;
       enableWireless = true;
       enableAcme = true;
-      pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-        extraModulePackages = [
-          # super.pkgsRelatedPrefs.rtl8188gu
-        ];
-        consoleFont =
-          "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
-      };
+      pkgsRelatedPrefs = super.pkgsRelatedPrefs // (with super.pkgsRelatedPrefs;
+        {
+          consoleFont =
+            "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
+        });
       enableTraefik = true;
       enableAllOciContainers = false;
       ociContainers = super.ociContainers // { };
     } else if hostname == "jxt" then {
       isMinimalSystem = false;
       hostId = "5ee92b8d";
-      pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-        extraModulePackages = [
-          # super.pkgsRelatedPrefs.rtl8188gu
-        ];
-      };
       enableWireguard = false;
       smartctlExporterDevices = [ "/dev/nvme0n1" ];
       enableNetworkWatchdog = true;
@@ -711,6 +711,41 @@ let
       enablePromtail = true;
       enableAcme = true;
       enableSmosServer = true;
+      pkgsRelatedPrefs = super.pkgsRelatedPrefs // (with super.pkgsRelatedPrefs;
+        {
+          extraModulePackages = extraModulePackages ++ [
+            kernelPackages.rtl88x2bu
+          ];
+          consoleFont =
+            "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
+          extraUdevRules =
+            let
+              name = "rfkill-wrapper";
+              application = with pkgs; writeShellApplication {
+                inherit name;
+                text = ''
+                  action="$1"
+                  device_name="$2"
+                  id="$(rfkill --output-all | grep -Po "([0-9]+)(?=.*$device_name)")"
+                  rfkill "$action" "$id"
+                '';
+                runtimeInputs = [
+                  utillinux
+                  coreutils
+                ];
+              };
+              wrapper = "${application}/bin/${name}";
+              internalWirelessDevice = "acer-wireless";
+            in
+            builtins.concatStringsSep "\n" [
+              extraUdevRules
+              # Internal wireless card "acer-wireless" seems to be defunct
+              ''
+                ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} unblock ${internalWirelessDevice}"
+                ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} block ${internalWirelessDevice}"
+              ''
+            ];
+        });
     } else {
       isMinimalSystem = true;
     });
