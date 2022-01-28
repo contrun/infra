@@ -4114,7 +4114,7 @@ in
               (acc: e: acc //
               {
                 "wg-quick-${e}" = {
-                  path = [ pkgs.gawk pkgs.iptables ];
+                  path = [ pkgs.gawk pkgs.iptables pkgs.bash ];
                 };
               })
               { }

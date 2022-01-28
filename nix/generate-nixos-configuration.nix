@@ -141,7 +141,7 @@ let
             enable = prefs.enableWireguard;
             config = {
               wireguard-post-up = {
-                mode = "0500";
+                mode = "0550";
               };
               "wireguard-private-key-${builtins.toString prefs.wireguardHostIndex}" = {
                 mode = "0400";
