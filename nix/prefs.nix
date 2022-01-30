@@ -308,6 +308,9 @@ let
     enablePromtail = false;
     promtailHttpPort = 28183;
     promtailGrpcPort = 0;
+    enableCadvisor = !self.isMinimalSystem;
+    cadvisorPort = 28184;
+    cadvisorExtraOptions = [ ];
     enablePostgresql = false;
     enableRedis = false;
     enableVsftpd = !self.isMinimalSystem;

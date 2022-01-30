@@ -1084,6 +1084,12 @@ in
         tlsPem = "/run/secrets/glusterfs-cert";
       };
     };
+    cadvisor = {
+      enable = prefs.enableCadvisor;
+      port = prefs.cadvisorPort;
+      extraOptions = prefs.cadvisorExtraOptions;
+      storageDriver = "stdout";
+    };
     davfs2 = { enable = prefs.enableDavfs2; };
     coredns = {
       enable = prefs.enableCoredns;
@@ -1477,6 +1483,11 @@ in
             name = "docker";
             enable = prefs.enableDockerMetrics;
             port = prefs.dockerMetricsPort;
+          }
+          {
+            name = "cadvisor";
+            enable = prefs.enableCadvisor;
+            port = prefs.cadvisorPort;
           }
           {
             name = "traefik";
