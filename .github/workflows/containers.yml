@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         repository:
+          - "contrun/kosyncsrv"
           - "bookwyrm-social/bookwyrm"
           - "200ok-ch/organice"
           - "elasticdog/tiddlywiki-docker"
