@@ -2830,6 +2830,13 @@ in
                     "aarch64-linux" =
                       "docker.io/blackheat/freeipa-server:fedora-34-4.9.6";
                   };
+                  "kosyncsrv" =
+                    let image = "docker.io/contrun/kosyncsrv:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "cloudbeaver" = {
                     "x86_64-linux" = "docker.io/dbeaver/cloudbeaver:latest";
                   };
@@ -3141,6 +3148,10 @@ in
             else
               [ ]);
             traefikForwardingPort = 443;
+          } // mkContainer "kosyncsrv" prefs.ociContainers.enableKosyncsrv {
+            volumes =
+              [ "/var/data/kosyncsrv:/data" ];
+            traefikForwardingPort = 8080;
           } // mkContainer "cloudbeaver" prefs.ociContainers.enableCloudBeaver {
             autoStart = false;
             volumes =
@@ -3490,6 +3501,13 @@ in
                             subtitle = "account management";
                             tag = "auth";
                             url = "https://${prefs.getFullDomainName "freeipa"}";
+                          }
+                          {
+                            enable = prefs.ociContainers.enableKosyncsrv;
+                            name = "kosyncsrv";
+                            subtitle = "koreader progress sync";
+                            tag = "reading";
+                            url = "https://${prefs.getFullDomainName "kosyncsrv"}";
                           }
                           {
                             enable = prefs.ociContainers.enableCloudBeaver;

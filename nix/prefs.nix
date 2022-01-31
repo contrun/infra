@@ -418,6 +418,7 @@ let
     ociContainers = {
       enablePostgresql = self.enableAllOciContainers;
       enableRedis = self.enableAllOciContainers;
+      enableKosyncsrv = self.enableAllOciContainers;
       enableCloudBeaver = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
       enableAuthelia = self.enableAllOciContainers || self.enableTraefik;
