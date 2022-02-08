@@ -34,6 +34,9 @@
     helix.inputs.rust-overlay.follows = "rust-overlay";
     helix.inputs.flakeCompat.follows = "flake-compat";
 
+    crate2nix.url = "github:kolloch/crate2nix";
+    crate2nix.flake = false;
+
     rust-overlay.url = "github:oxalica/rust-overlay";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.inputs.flake-utils.follows = "flake-utils";
@@ -106,7 +109,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, rust-overlay, crate2nix, ... }@inputs:
     let
       lib = nixpkgs.lib;
 
@@ -241,22 +244,34 @@
           mozillaOverlay = import inputs.nixpkgs-mozilla;
 
           myPackagesOverlay = self: super: {
-            myPackages = (super.myPackages or { }) // super.lib.optionalAttrs
-              (inputs.flake-firefox-nightly.packages ? "${super.system}")
-              {
-                firefox =
-                  inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin;
-              } // super.lib.optionalAttrs
-              (inputs.aioproxy.defaultPackage ? "${super.system}")
-              {
-                aioproxy = inputs.aioproxy.defaultPackage.${super.system};
-                deploy-rs = inputs.deploy-rs.defaultPackage.${super.system};
-                home-manager = inputs.home-manager.defaultPackage.${super.system};
-                nix-autobahn = inputs.nix-autobahn.defaultPackage.${super.system};
-                helix = inputs.helix.defaultPackage.${super.system};
-                magit = inputs.self.packages.${super.system}.magit;
-                coredns = inputs.self.packages.${super.system}.coredns;
-              };
+            myPackages =
+              let
+                list =
+                  [{
+                    name = "firefox";
+                    pkg = inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin or null;
+                  }]
+                  ++
+                  (builtins.map
+                    (name: {
+                      inherit name;
+                      pkg = inputs.${name}.defaultPackage.${super.system} or null;
+                    })
+                    [ "aioproxy" "deploy-rs" "home-manager" "nix-autobahn" "helix" ])
+                  ++
+                  (builtins.map
+                    (name: {
+                      inherit name;
+                      pkg = inputs.self.packages.${super.system}.${name} or null;
+                    })
+                    [ "magit" "wallabag-saver" "coredns" ]);
+                function = acc: elem: acc //
+                  (if (elem.pkg != null) then {
+                    ${elem.name} = elem.pkg;
+                  } else
+                    { });
+              in
+              (builtins.foldl' function { } list) // (super.myPackages or { });
           };
         };
 
@@ -271,8 +286,22 @@
           let
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [ gomod2nix.overlay ];
+              overlays = [
+                gomod2nix.overlay
+                rust-overlay.overlay
+                (self: super: {
+                  # Because rust-overlay bundles multiple rust packages into one
+                  # derivation, specify that mega-bundle here, so that crate2nix
+                  # will use them automatically.
+                  rustc = self.rust-bin.stable.latest.default;
+                  cargo = self.rust-bin.stable.latest.default;
+                })
+              ];
             };
+
+            inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
+              generatedCargoNix;
+
             nixpkgsWithOverlays = import nixpkgs {
               inherit system;
               overlays = self.overlayList;
@@ -308,6 +337,11 @@
               magit = {
                 type = "app";
                 program = "${self.packages."${system}".magit}/bin/magit";
+              };
+
+              wallabag-savor = {
+                name = "wallabag-saver";
+                drv = packages.wallabag-saver;
               };
             };
 
@@ -359,6 +393,7 @@
                 ];
               };
 
+
               coredns = pkgs.buildGoApplication {
                 pname = "coredns";
                 version = "latest";
@@ -366,6 +401,19 @@
                 src = ./coredns;
                 modules = ./coredns/gomod2nix.toml;
               };
+
+              wallabag-saver =
+                let
+                  name = "wallabag-saver";
+                  project =
+                    pkgs.callPackage
+                      (generatedCargoNix {
+                        inherit name;
+                        src = ./wallabag;
+                      })
+                      { inherit pkgs; };
+                in
+                project.rootCrate.build;
 
               # TODO: gomod2nix failed
               # caddy = pkgs.buildGoApplication {

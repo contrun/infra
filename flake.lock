@@ -92,6 +92,22 @@
         "type": "github"
       }
     },
+    "crate2nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1643636139,
+        "narHash": "sha256-d+SsMV/ysXNu5mE1qIywpQdgleEKOdsK6L4h58AoFdc=",
+        "owner": "kolloch",
+        "repo": "crate2nix",
+        "rev": "7178e530f7d617ac0b61a6e53c7f3b28710fb6cf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kolloch",
+        "repo": "crate2nix",
+        "type": "github"
+      }
+    },
     "deploy-rs": {
       "inputs": {
         "flake-compat": [
@@ -797,6 +813,7 @@
       "inputs": {
         "aioproxy": "aioproxy",
         "authinfo": "authinfo",
+        "crate2nix": "crate2nix",
         "deploy-rs": "deploy-rs",
         "dotfiles": "dotfiles",
         "emacs-overlay": "emacs-overlay",
