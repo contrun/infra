@@ -155,6 +155,7 @@ let
     buildZerotierone = !self.isMinimalSystem;
     enableZerotierone = self.buildZerotierone;
     zerotieroneNetworks = [ "9bee8941b5ce6172" ];
+    enablePocketToWallabag = false;
     smartdnsSettings = {
       bind = ":5533 -no-rule -group example";
       cache-size = 4096;
@@ -671,6 +672,7 @@ let
       enableAllOciContainers = true;
       enableClashRedirWatchdog = true;
       enableNetworkWatchdog = true;
+      enablePocketToWallabag = true;
       enableSyncoid = true;
       syncoidCommands =
         let
