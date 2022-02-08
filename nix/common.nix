@@ -2763,6 +2763,8 @@ in
         ([ "--experimental" ] ++
           (lib.optionals prefs.enableDockerMetrics [ "--metrics-addr=127.0.0.1:${builtins.toString prefs.dockerMetricsPort}" ]));
       autoPrune.enable = true;
+    } // lib.optionalAttrs prefs.enableZfs {
+      storageDriver = "zfs";
     };
     anbox = { enable = prefs.enableAnbox; };
     oci-containers =
