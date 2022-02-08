@@ -49,7 +49,6 @@ jobs:
       matrix:
         nix-system:
           - "x86_64-linux"
-          - "aarch64-linux"
 
     steps:
       - name: Set up common variables
