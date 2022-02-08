@@ -67,11 +67,17 @@ jobs:
             substituters = https://cache.nixos.org/ https://hydra.iohk.io
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 
+      - name: Configure git
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
       - name: Update nix flake inputs
         id: update-nix-inputs
         if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
         run: |
           set -xeuo pipefail
+          echo '::set-output name=didTryToUpdateNixInputs::yes'
           nix flake update
 
           # Remove broken packages in ./nix/broken-packages.nix when the package can now be built.
@@ -86,8 +92,6 @@ jobs:
               echo "Abort now. No updates available."
               echo '::set-output name=shouldAbort::yes'
           fi
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
       - name: Set up common variables
@@ -102,8 +106,11 @@ jobs:
           echo '::set-output name=cachixPushFilter::clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
 
           if [[ '${{ steps.update-nix-inputs.outputs.shouldAbort }}' != 'yes' ]]; then
-              echo '::set-output name=shouldPushUpdates::yes'
               echo '::set-output name=shouldBuildNixos::yes'
+
+              if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
+                  echo '::set-output name=shouldPushUpdates::yes'
+              fi
 
               if [[ "${{ matrix.nix-system }}" != "x86_64-linux" ]]; then
                   echo '::set-output name=shouldSetupQemu::yes'
@@ -112,9 +119,21 @@ jobs:
               if [[ "${{ matrix.nix-system }}" == "$deployHostSystem" ]]; then
                   echo '::set-output name=shouldBuildDeployNodeNixos::yes'
 
-                  if [[ '${{ github.event_name }}' == 'workflow_dispatch' ]] && [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
-                      echo '::set-output name=shouldDeployToNode::yes'
-                  fi
+                  case '${{ github.event_name }}' in
+                      'push')
+                          echo '::set-output name=shouldDeployToNode::yes'
+                          break
+                          ;;
+                      'workflow_dispatch')
+                          if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
+                              echo '::set-output name=shouldDeployToNode::yes'
+                          fi
+                          break
+                          ;;
+                      *)
+                          break
+                          ;;
+                  esac
               fi
           fi
 
