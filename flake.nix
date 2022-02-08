@@ -56,6 +56,11 @@
 
     nur-no-pkgs.url = "github:nix-community/NUR";
 
+    wallabag-client = {
+      url = "github:artur-shaik/wallabag-client";
+      flake = false;
+    };
+
     authinfo = {
       url = "github:aartamonau/authinfo";
       flake = false;
@@ -211,7 +216,7 @@
           inputs.emacs-overlay.overlay
         ] ++ (lib.attrValues self.overlays);
 
-        overlays = (import (getNixConfig "overlays.nix")) // {
+        overlays = (import (getNixConfig "overlays.nix") { inherit inputs; }) // {
           nixpkgsChannelsOverlay = self: super: {
             unstable = import inputs.nixpkgs-unstable {
               inherit (super) system config;

@@ -1,3 +1,5 @@
+{ inputs }:
+
 let
   # collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
   # TODO: not actually work.
@@ -499,10 +501,87 @@ let
             };
           };
 
+
+        wallabag-client = with super;
+          let
+            # Copied from https://github.com/NixOS/nixpkgs/pull/149376
+            markdownify = with python3Packages; buildPythonPackage rec {
+              name = "markdownify";
+              version = "0.10.1";
+
+              src = fetchFromGitHub {
+                owner = "matthewwithanm";
+                repo = "python-markdownify";
+                rev = version;
+                sha256 = "xT7LNyfzEbO4xLFbdVEL0soMrFvurTcxENetXODycYs=";
+              };
+
+              propagatedBuildInputs = [ beautifulsoup4 six ];
+
+              nativeBuildInputs = [ flake8 ];
+
+              checkInputs = [ pytestCheckHook ];
+
+              pythonImportsCheck = [ "markdownify" ];
+
+              meta = with lib; {
+                description = "Convert HTML to Markdown";
+                homepage = "https://github.com/matthewwithanm/python-markdownify";
+                license = licenses.mit;
+                maintainers = with maintainers; [ milahu ];
+              };
+            }; in
+
+          python3Packages.buildPythonApplication rec {
+            pname = "wallabag-client";
+            version = inputs.wallabag-client.shortRev or "HEAD";
+            src = inputs.wallabag-client;
+
+            propagatedBuildInputs = with python3Packages; [
+              beautifulsoup4
+              pycryptodome
+              requests
+              click
+              click-spinner
+              click-repl
+              pyxdg
+              colorama
+              delorean
+              humanize
+              lxml
+              tzlocal
+              tabulate
+              packaging
+              markdownify
+            ];
+
+            nativeBuildInputs = with python3Packages; [
+              setuptools-scm
+            ];
+
+            SETUPTOOLS_SCM_PRETEND_VERSION = version;
+
+            postPatch = ''
+              sed -i '/pytest-runner/d; /setuptools_scm/d' setup.py
+            '';
+
+            checkPhase = ''
+              $out/bin/wallabag --help
+            '';
+
+            meta = with lib; {
+              description = "Command line client for the self hosted read-it-later app Wallabag";
+              homepage = "https://github.com/artur-shaik/wallabag-client";
+              license = licenses.mit;
+
+              maintainers = [ maintainers.contrun ];
+            };
+          };
+
         authinfo = with super;
           stdenv.mkDerivation rec {
-            version = "HEAD";
             pname = "authinfo";
+            version = inputs.authinfo.shortRev or "HEAD";
             src = inputs.authinfo;
 
             buildInputs = [ gpgme libassuan python ];

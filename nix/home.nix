@@ -660,6 +660,7 @@ let
         "tcpdump"
         "geoipWithDatabase"
         # "syncthing"
+        "myPackages.wallabag-client"
         "sslh"
         "miniupnpc_2"
         "miniupnpd"
