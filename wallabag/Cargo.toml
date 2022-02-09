@@ -8,7 +8,5 @@ edition = "2021"
 [dependencies]
 wallabag-api = "0.4.1"
 futures = "0.3.21"
-
-[dependencies.async-std]
-version = "1.10.0"
-features = ["attributes"]
+clap = { version = "3.0.14", features = ["derive"] }
+async-std = { version = "1.10.0", features = ["attributes"] }
