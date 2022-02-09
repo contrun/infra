@@ -4823,7 +4823,7 @@ in
                 script = ''
                   set -euo pipefail
                   curl -sS "https://getpocket.com/users/$POCKET_USERNAME/feed/unread" | sfeed | awk -F'\t' '{print $3}' | parallel --will-cite --verbose -r -j 5 -N 40 wallabag-saver --
-                  curl -sS "https://getpocket.com/users/$POCKET_USERNAME/feed/read" | sfeed | awk -F'\t' '{print $3}' | parallel --will-cite --verbose -r -j 2 -N 5 wallabag-saver -- -a
+                  curl -sS "https://getpocket.com/users/$POCKET_USERNAME/feed/read" | sfeed | awk -F'\t' '{print $3}' | parallel --will-cite --verbose -r -j 5 -N 40 wallabag-saver -- -a
                 '';
                 serviceConfig = {
                   Type = "oneshot";

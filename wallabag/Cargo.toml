@@ -10,3 +10,4 @@ wallabag-api = "0.4.1"
 futures = "0.3.21"
 clap = { version = "3.0.14", features = ["derive"] }
 async-std = { version = "1.10.0", features = ["attributes"] }
+anyhow = "1.0.53"

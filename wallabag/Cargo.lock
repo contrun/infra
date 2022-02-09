@@ -1745,6 +1745,7 @@ dependencies = [
 name = "wallabag-saver"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-std",
  "clap",
  "futures",

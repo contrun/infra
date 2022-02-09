@@ -2,9 +2,9 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use futures::future::try_join_all;
-
+use anyhow::{bail, Context, Result};
 use clap::Parser;
+use futures::future::{join_all, try_join_all};
 use wallabag_api::errors::ClientResult;
 use wallabag_api::types::{
     Config, Entries, EntriesFilter, Entry, ExistsInfo, NewEntry, PatchEntry, ID as EntryID,
@@ -43,7 +43,7 @@ pub struct State {
 impl State {
     async fn new<T: Into<String>>(urls: Vec<T>) -> ClientResult<Self> {
         let mut s = Self::new_with_ids_from_wallabag(urls).await?;
-        s.create_non_existent_entries().await?;
+        s.maybe_create_non_existent_entries().await;
         Ok(s)
     }
 
@@ -87,8 +87,6 @@ impl State {
             .into_iter()
             .collect();
 
-        dbg!(&results);
-
         s.merge_entries(results);
 
         Ok(s)
@@ -100,26 +98,34 @@ impl State {
         Ok(s)
     }
 
-    async fn create_non_existent_entries(&mut self) -> ClientResult<()> {
+    // In an ideal world, this should return an optional error.
+    // But, we are not able to add some artilces to wallabag due to some persistent backend error.
+    // See https://github.com/wallabag/wallabag/issues/5558
+    // https://github.com/wallabag/wallabag/issues/5437
+    // https://blog.wallaroolabs.com/2018/09/make-python-pandas-go-fast
+    // Error: Other(BadGateway, "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n")
+    async fn maybe_create_non_existent_entries(&mut self) {
         let urls = self
             .inner
             .iter()
             .filter(|(_, v)| v.is_none())
             .map(|(url, _)| url.to_owned());
-        let results: HashMap<String, Entry> = try_join_all(urls.map(|url| async move {
-            let entry = create_entry_for_url(&url).await;
-            entry.map(|e| (url, e))
+        let results: HashMap<String, Entry> = join_all(urls.map(|url| async move {
+            let result = create_entry_for_url(&url).await;
+            (url, result)
         }))
-        .await?
+        .await
         .into_iter()
-        .map(|(url, entry)| (url.to_owned(), entry))
+        .filter_map(|(url, result)| match result {
+            Ok(e) => Some((url.to_owned(), e)),
+            Err(e) => {
+                dbg!("creating entry for url failed", &url, &e);
+                None
+            }
+        })
         .collect();
 
-        dbg!(&results);
-
         self.merge_entries(results);
-
-        Ok(())
     }
 
     fn new_without_ids<T: Into<String>>(urls: Vec<T>) -> Self {
@@ -144,11 +150,28 @@ impl State {
     }
 
     fn merge_entries(&mut self, entries: HashMap<String, Entry>) {
+        if !entries.is_empty() {
+            dbg!(&entries);
+        }
         self.inner.extend(
             entries
                 .into_iter()
                 .map(|(url, e)| (url, Some(EntryInfo::Entry(e)))),
         );
+    }
+
+    fn check(&self) -> Result<()> {
+        let urls: Vec<&String> = self
+            .inner
+            .iter()
+            .filter(|(_, v)| v.is_none())
+            .map(|(url, _)| url)
+            .collect();
+        if urls.is_empty() {
+            Ok(())
+        } else {
+            bail!("Following URLs have no associated entries: {:?}", urls)
+        }
     }
 }
 
@@ -191,21 +214,24 @@ async fn archive_entry_with_id(id: EntryID) -> ClientResult<Entry> {
 
 async fn create_entry_for_url(url: &str) -> ClientResult<Entry> {
     let mut client = get_client();
-    dbg!(url);
     let e = NewEntry::new_with_url(url.to_owned());
     client.create_entry(&e).await
 }
 
 #[async_std::main]
-async fn main() -> ClientResult<()> {
+async fn main() -> Result<()> {
     let args = Args::parse();
 
     let res = if args.archive {
-        State::new_from_archived_urls(args.urls).await
+        State::new_from_archived_urls(args.urls)
+            .await
+            .context("Failed to add archived entries")?
     } else {
-        State::new(args.urls).await
+        State::new(args.urls)
+            .await
+            .context("Failed to add entries")?
     };
 
     dbg!(&res);
-    res.map(|_| ())
+    res.check()
 }
