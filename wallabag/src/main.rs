@@ -1,11 +1,14 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use futures::future::try_join_all;
 
 use clap::Parser;
 use wallabag_api::errors::ClientResult;
-use wallabag_api::types::{Config, Entry, ExistsInfo, NewEntry, PatchEntry, ID as EntryID};
+use wallabag_api::types::{
+    Config, Entries, EntriesFilter, Entry, ExistsInfo, NewEntry, PatchEntry, ID as EntryID,
+};
 use wallabag_api::Client;
 
 #[derive(Debug)]
@@ -46,10 +49,35 @@ impl State {
 
     async fn new_from_archived_urls<T: Into<String>>(urls: Vec<T>) -> ClientResult<Self> {
         let mut s = Self::new(urls).await?;
-        let url_entries = s
+        let mut url_entries: HashMap<String, EntryID> = s
             .inner
             .iter()
-            .filter_map(|(url, entry)| entry.as_ref().map(|e| (url.to_owned(), e.into())));
+            .filter_map(|(url, entry)| entry.as_ref().map(|e| (url.to_owned(), e.into())))
+            .collect();
+
+        let len = url_entries.len();
+        // If there are many entries to archive, we'd better check if these entries are archived
+        // first before continue.
+        if len > 10 {
+            let recent_archived_entries: HashSet<EntryID> = get_archived_entries_since(
+                SystemTime::now()
+                    .checked_sub(Duration::from_secs(3600 * 24 * 30))
+                    .unwrap(),
+            )
+            .await?
+            .into_iter()
+            .map(|e| e.into())
+            .collect();
+
+            dbg!(&recent_archived_entries);
+
+            url_entries = url_entries
+                .into_iter()
+                .filter(|(_, e)| !recent_archived_entries.contains(e))
+                .collect();
+            dbg!(&url_entries);
+        }
+
         let results: HashMap<String, Entry> =
             try_join_all(url_entries.into_iter().map(|(url, e)| async move {
                 let entry = archive_entry_with_id(e).await;
@@ -102,8 +130,9 @@ impl State {
 
     async fn fill_in_ids(&mut self) -> ClientResult<()> {
         let mut client = get_client();
-        let result = client.check_urls_exist(self.inner.keys().collect()).await?;
-        self.merge_exists_info(result);
+        let check_urls_result = client.check_urls_exist(self.inner.keys().collect()).await?;
+        dbg!(&check_urls_result);
+        self.merge_exists_info(check_urls_result);
         Ok(())
     }
 
@@ -135,6 +164,22 @@ fn get_client() -> Client {
     Client::new(config)
 }
 
+async fn get_archived_entries_since(time: SystemTime) -> ClientResult<Entries> {
+    let secs = time
+        .duration_since(UNIX_EPOCH)
+        .expect("valid time")
+        .as_secs();
+    let mut client = get_client();
+    let filter = EntriesFilter {
+        archive: Some(true),
+        since: secs as i64,
+        ..Default::default()
+    };
+    let archived_entries = client.get_entries_with_filter(&filter).await;
+    dbg!(&archived_entries);
+    archived_entries
+}
+
 async fn archive_entry_with_id(id: EntryID) -> ClientResult<Entry> {
     let mut client = get_client();
     let archive_it = PatchEntry {
@@ -146,6 +191,7 @@ async fn archive_entry_with_id(id: EntryID) -> ClientResult<Entry> {
 
 async fn create_entry_for_url(url: &str) -> ClientResult<Entry> {
     let mut client = get_client();
+    dbg!(url);
     let e = NewEntry::new_with_url(url.to_owned());
     client.create_entry(&e).await
 }
@@ -154,12 +200,12 @@ async fn create_entry_for_url(url: &str) -> ClientResult<Entry> {
 async fn main() -> ClientResult<()> {
     let args = Args::parse();
 
-    let state = if args.archive {
-        State::new_from_archived_urls(args.urls).await?
+    let res = if args.archive {
+        State::new_from_archived_urls(args.urls).await
     } else {
-        State::new(args.urls).await?
+        State::new(args.urls).await
     };
 
-    dbg!(&state);
-    Ok(())
+    dbg!(&res);
+    res.map(|_| ())
 }
