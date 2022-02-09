@@ -9,6 +9,5 @@ let
 in
 {
   inherit imports;
-  nix.binaryCaches = [ "https://cache.nixos.org/" ];
+  nix.settings.binary-caches = [ "https://cache.nixos.org/" ];
 }
-    

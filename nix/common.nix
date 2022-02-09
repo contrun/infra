@@ -303,7 +303,7 @@ in
         table-others
       ];
       fcitx.engines = with pkgs.fcitx-engines; [
-        # libpinyin
+        libpinyin
         cloudpinyin
         rime
         table-extra
@@ -4995,22 +4995,25 @@ in
     };
 
   nix = {
-    inherit (prefs) buildMachines buildCores maxJobs distributedBuilds;
+    inherit (prefs) buildMachines distributedBuilds;
     package = pkgs.nixFlakes;
     extraOptions = lib.optionalString (config.nix.package == pkgs.nixFlakes)
       "experimental-features = nix-command flakes";
-    binaryCaches =
-      [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
-    binaryCachePublicKeys = [ ];
-    useSandbox = true;
-    trustedUsers = [ "root" prefs.owner "@wheel" ];
+    settings = {
+      sandbox = true;
+      trusted-users = [ "root" prefs.owner "@wheel" ];
+      max-jobs = prefs.maxJobs;
+      build-cores = prefs.buildCores;
+      binary-caches =
+        [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
+      binary-cache-public-keys = [ ];
+      auto-optimise-store = true;
+    };
     gc = {
       automatic = true;
       options = "--delete-older-than 60d";
     };
     optimise = { automatic = true; };
-    autoOptimiseStore = true;
-
     nixPath = [ "/etc/nix/path" ];
 
     registry.nixpkgs.flake = inputs.nixpkgs;
