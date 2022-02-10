@@ -339,9 +339,9 @@
                 program = "${self.packages."${system}".magit}/bin/magit";
               };
 
-              wallabag-savor = {
-                name = "wallabag-saver";
-                drv = packages.wallabag-saver;
+              wallabag-saver = {
+                type = "app";
+                program = "${self.packages."${system}".wallabag-saver}/bin/wallabag-saver";
               };
             };
 
