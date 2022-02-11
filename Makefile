@@ -50,7 +50,7 @@ clean:
 	if [[ "$(realpath result)" == /nix/store/* ]]; then rm -f result; fi
 
 sops:
-	nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
+	sops ./nix/sops/secrets.yaml
 
 create-dirs:
 	mkdir -p tmp

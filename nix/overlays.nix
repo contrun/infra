@@ -366,7 +366,6 @@ let
           contrib
           pruviloj
           lightyear
-          protobuf
         ]);
 
         lua = super.lua.withPackages

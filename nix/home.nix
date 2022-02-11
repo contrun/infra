@@ -668,6 +668,7 @@ let
         "strongswan"
         "stunnel"
         "shadowsocks-libev"
+        "gost"
         "v2ray"
         "clash"
         "simplescreenrecorder"
