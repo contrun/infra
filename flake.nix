@@ -30,7 +30,6 @@
     deploy-rs.inputs.flake-compat.follows = "flake-compat";
 
     helix.url = "github:helix-editor/helix";
-    helix.inputs.nixpkgs.follows = "nixpkgs";
     helix.inputs.rust-overlay.follows = "rust-overlay";
     helix.inputs.flakeCompat.follows = "flake-compat";
 
@@ -97,7 +96,6 @@
     jtojnar-nixfiles = {
       url = "github:jtojnar/nixfiles";
       inputs = {
-        nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
         flake-compat.follows = "flake-compat";
       };
