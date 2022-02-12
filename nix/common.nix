@@ -1335,6 +1335,7 @@ in
           devices = prefs.smartctlExporterDevices;
           listenAddress = "127.0.0.1";
         };
+        wireguard = { enable = prefs.enablePrometheusExporters && prefs.enableWireguard; };
         blackbox = {
           enable = prefs.enablePrometheusExporters;
           configFile = toYAML "blackbox-config" {
@@ -1477,7 +1478,7 @@ in
           simpleScrape = name: with config.services.prometheus.exporters."${name}";
             scrape { inherit name enable port; };
         in
-        builtins.concatMap simpleScrape [ "node" "postgres" "systemd" "smartctl" ]
+        builtins.concatMap simpleScrape [ "node" "wireguard" "postgres" "systemd" "smartctl" ]
         ++ builtins.concatMap scrape [
           {
             name = "docker";
