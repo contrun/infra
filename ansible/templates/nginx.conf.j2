@@ -19,9 +19,16 @@ stream {
     map $ssl_preread_server_name $ssl_backend {
 {% if backend_servers is defined %}
 {% for h in backend_servers %}
+{% if 'backends' in h %}
 {% for b in h.backends %}
-        ~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+$  {{ b }}:$server_port;
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }}:$server_port;
 {% endfor %}
+{% endif %}
+{% if 'full_backends' in h %}
+{% for b in h.full_backends %}
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }};
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% endif %}
         ~^([^.]+\.)*(?P<my_hostname>[^.]+)\.[^.]+\.[^.]+$   $my_hostname:$server_port;
@@ -33,9 +40,16 @@ stream {
     map $hostname $backend {
 {% if backend_servers is defined %}
 {% for h in backend_servers %}
+{% if 'backends' in h %}
 {% for b in h.backends %}
-        ~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+$  {{ b }}:$server_port;
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }}:$server_port;
 {% endfor %}
+{% endif %}
+{% if 'full_backends' in h %}
+{% for b in h.full_backends %}
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }};
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% endif %}
         ~^([^.]+\.)*(?P<my_hostname>[^.]+)\.[^.]+\.[^.]+$   $my_hostname:$server_port;
