@@ -19,3 +19,4 @@
 # use_cockroachdb: true
 # edge_proxy_backend_ip_addresses: ""
 # gost_arguments: "-L=http2://:3443 -L=socks5://:3080 -L=ss://aes-128-cfb:123456@:3338"
+# configure_etc_hosts_for_wireguard: true

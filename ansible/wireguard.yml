@@ -3,3 +3,26 @@
     - name: Install wireguard
       include_role:
         name: githubixx.ansible_role_wireguard
+
+     - name: Configure /etc/hosts
+      when:
+        - configure_etc_hosts_for_wireguard
+      block:
+        - name: Add wireguard IP addresses from host configuration
+          lineinfile:
+            dest: /etc/hosts
+            line: "{{ hostvars[item].wireguard_address | ansible.netcommon.ipaddr('address') }} {{ hostvars[item].inventory_hostname_short }}"
+            state: present
+          when:
+            - hostvars[item].wireguard_address is defined
+            - hostvars[item].inventory_hostname_short is defined
+            - inventory_hostname_short != hostvars[item].inventory_hostname_short
+          with_items: "{{ groups.all }}"
+
+        - name: Add wireguard IP addresses from unmanaged peers configuration
+          lineinfile:
+            dest: /etc/hosts
+            line: "{{ item.allowed_ips | ansible.netcommon.ipaddr('address') }} {{ item.hostnames | join(' ') }}"
+            state: present
+          when: item.hostnames is defined
+          with_items: "{{ wireguard_unmanaged_peers.values() | list }}"

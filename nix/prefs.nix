@@ -115,12 +115,12 @@ let
     bootloader = "systemd";
     enableGrub = self.bootloader == "grub";
     enableWireguard = self.wireguardHostIndex != null;
+    wireguardIPOffsetForNixosHosts = 51;
     wireguardHostIndex =
       let
-        startForNixosHosts = 51;
         f = acc: e: acc //
           (
-            let next = acc."__next__" or startForNixosHosts; in
+            let next = acc."__next__" or self.wireguardIPOffsetForNixosHosts; in
             {
               "${e}" = next;
               "__next__" = next + 1;
