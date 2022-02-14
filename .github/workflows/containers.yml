@@ -4,6 +4,15 @@ on:
   workflow_dispatch: {}
   schedule:
     - cron: "0 16 * * 5"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - ".github/workflows/containers.yml"
 
 jobs:
   container:
