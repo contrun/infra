@@ -27,7 +27,7 @@ jobs:
           - "elasticdog/tiddlywiki-docker"
           - "logseq/logseq"
           - "karlicoss/promnesia"
-          - "perkeep/perkeep"
+          - "mkorenkov/docker-perkeep"
           # Images not working for now.
           # - "DeviaVir/zenbot"
 
@@ -47,9 +47,8 @@ jobs:
             "elasticdog/tiddlywiki-docker")
               name=tiddlywiki
               ;;
-            # perkeep Dockerfile downloads amd64 go binaries
-            "perkeep/perkeep")
-              platforms="linux/amd64"
+            "mkorenkov/docker-perkeep")
+              name=perkeep
               ;;
             "karlicoss/promnesia")
               dockerfile="$repository_path/docker/docker_files/Dockerfile"
@@ -94,6 +93,9 @@ jobs:
           case "${{ steps.upstream.outputs.repository }}" in
             "DeviaVir/zenbot")
               sed -i 's/npm install/env LIBSASS_EXT=no npm install/g' Dockerfile
+              ;;
+            "mkorenkov/docker-perkeep")
+              sed -i '/git reset --hard "$PERKEEP_VERSION" && \\/d; s/ --sqlite=false//g' Dockerfile
               ;;
             "bookwyrm-social/bookwyrm")
               # In the official Dockerfile, the code is not added to the container image.
