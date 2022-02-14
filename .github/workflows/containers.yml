@@ -77,8 +77,8 @@ jobs:
           echo "::set-output name=DOCKER_HUB_USERNAME::$DOCKER_HUB_USERNAME"
           echo "::set-output name=DOCKER_IMAGE::$DOCKER_IMAGE"
           echo "::set-output name=DOCKER_IMAGE_LATEST::$DOCKER_IMAGE_LATEST"
-          echo "::set-output name=DOCKER_IMAGE_CACHE::$DOCKER_IMAGE_CACHE"
-          echo "::set-output name=DOCKER_TAGS::$DOCKER_IMAGE,$DOCKER_IMAGE_LATEST"
+          echo "::set-output name=DOCKER_IMAGE_CACHE::ghcr.io/$DOCKER_IMAGE_CACHE"
+          echo "::set-output name=DOCKER_TAGS::ghcr.io/$DOCKER_IMAGE,ghcr.io/$DOCKER_IMAGE_LATEST,$DOCKER_IMAGE,$DOCKER_IMAGE_LATEST"
 
           case "${{ steps.upstream.outputs.repository }}" in
             "DeviaVir/zenbot")
@@ -102,6 +102,13 @@ jobs:
         with:
           username: ${{ steps.env.outputs.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         id: docker_build
