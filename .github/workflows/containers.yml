@@ -33,47 +33,39 @@ jobs:
       - name: Set upstream information
         id: upstream
         run: |
-          repository=${{ matrix.repository }}
+          repository="${{ matrix.repository }}"
+          repository_path="${{ matrix.repository }}"
+          repository_name="$(awk -F / '{print $2}' <<< "${{ matrix.repository }}")"
+          name="$repository_name"
+          dockerfile="$repository_path/Dockerfile"
+          dockerfile_context="$repository_path"
+          platforms="linux/amd64,linux/arm64"
 
           case "$repository" in
             "elasticdog/tiddlywiki-docker")
               name=tiddlywiki
               ;;
-
-            *)
-              name="$(awk -F / '{print $2}' <<< "$repository")"
-              ;;
-          esac
-
-          case "$repository" in
-            *)
-              directory="$name"
-              ;;
-          esac
-
-          case "$repository" in
-            *)
-              platforms="linux/amd64,linux/arm64"
-              ;;
           esac
 
           echo "::set-output name=name::$name"
-          echo "::set-output name=directory::$directory"
-          echo "::set-output name=platforms::$platforms"
           echo "::set-output name=repository::$repository"
+          echo "::set-output name=platforms::$platforms"
+          echo "::set-output name=repository_path::$repository_path"
+          echo "::set-output name=dockerfile::$dockerfile"
+          echo "::set-output name=dockerfile_context::$dockerfile_context"
 
-      - name: Checkout ${{ steps.upstream.outputs.repository }} to ${{ steps.upstream.outputs.name }}
+      - name: Checkout ${{ steps.upstream.outputs.repository }} to ${{ steps.upstream.outputs.repository_path }}
         uses: actions/checkout@v2
         with:
           repository: ${{ steps.upstream.outputs.repository }}
-          path: ${{ steps.upstream.outputs.directory }}
+          path: ${{ steps.upstream.outputs.repository_path }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
       - name: Get docker environment
         id: env
-        working-directory: ${{ steps.upstream.outputs.directory }}
+        working-directory: ${{ steps.upstream.outputs.repository_path }}
         run: |
           set -xeuo pipefail
           [[ -z "${DOCKER_HUB_USERNAME:-}" ]] && DOCKER_HUB_USERNAME="$(awk -F / '{print $1}' <<< "$GITHUB_REPOSITORY")"
@@ -124,7 +116,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: ${{ steps.upstream.outputs.directory }}
+          context: ${{ steps.upstream.outputs.dockerfile_context }}
+          file: ${{ steps.upstream.outputs.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
           platforms: ${{ steps.upstream.outputs.platforms }}
           tags: ${{ steps.env.outputs.DOCKER_TAGS }}
