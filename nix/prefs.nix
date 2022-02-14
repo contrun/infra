@@ -451,6 +451,7 @@ let
       enableDokuwiki = self.enableAllOciContainers;
       enableTrilium = self.enableAllOciContainers;
       enableHomer = self.enableAllOciContainers || self.enableTraefik;
+      enablePerkeep = self.enableAllOciContainers;
       enableVaultwarden = self.enableAllOciContainers;
       enablePleroma = self.enableAllOciContainers;
       enableLivebook = self.enableAllOciContainers;

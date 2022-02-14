@@ -2918,6 +2918,13 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "perkeep" =
+                    let image = "ghcr.io/contrun/perkeep:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "pleroma" =
                     let image = "git.pleroma.social:5050/pleroma/pleroma:latest";
                     in
@@ -3333,6 +3340,10 @@ in
             };
             environmentFiles = [ "/run/secrets/gitea-env" ];
             traefikForwardingPort = 3000;
+          } // mkContainer "perkeep" prefs.ociContainers.enablePerkeep {
+            volumes = [ "/var/data/perkeep:/srv/perkeep" ];
+            environment = { };
+            traefikForwardingPort = 3179;
           } // mkContainer "vaultwarden" prefs.ociContainers.enableVaultwarden {
             dependsOn = [ "postgresql" ];
             volumes = [ "/var/data/vaultwarden:/data" ];
@@ -3719,6 +3730,13 @@ in
                         }/dashboard/";
                           }
                           {
+                            enable = prefs.ociContainers.enablePerkeep;
+                            name = "perkeep";
+                            subtitle = "personal datastore system";
+                            tag = "digital-perseverance";
+                            url = "https://${prefs.getFullDomainName "perkeep"}";
+                          }
+                          {
                             enable = prefs.ociContainers.enableVaultwarden;
                             name = "vaultwarden";
                             subtitle = "password management";
@@ -3913,6 +3931,8 @@ in
             "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
             "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
             "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
+          ] ++ lib.optionals prefs.ociContainers.enablePerkeep [
+            "d /var/data/perkeep - 1000 1000 -"
           ] ++ lib.optionals prefs.ociContainers.enableSftpgo [
             "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
             "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"

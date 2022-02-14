@@ -1001,6 +1001,7 @@ let
         # seahorse
         "speedcrunch"
         "sshfs"
+        "perkeep"
         # "s3ql"
         "ssh-to-pgp"
         "sftpman"
