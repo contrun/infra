@@ -27,6 +27,7 @@ jobs:
           - "elasticdog/tiddlywiki-docker"
           - "logseq/logseq"
           - "karlicoss/promnesia"
+          - "perkeep/perkeep"
           # Images not working for now.
           # - "DeviaVir/zenbot"
 
@@ -45,6 +46,10 @@ jobs:
           case "$repository" in
             "elasticdog/tiddlywiki-docker")
               name=tiddlywiki
+              ;;
+            # perkeep Dockerfile downloads amd64 go binaries
+            "perkeep/perkeep")
+              platforms="linux/amd64"
               ;;
             "karlicoss/promnesia")
               dockerfile="$repository_path/docker/docker_files/Dockerfile"
