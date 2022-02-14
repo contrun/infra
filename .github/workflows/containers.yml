@@ -26,6 +26,7 @@ jobs:
           - "200ok-ch/organice"
           - "elasticdog/tiddlywiki-docker"
           - "logseq/logseq"
+          - "karlicoss/promnesia"
           # Images not working for now.
           # - "DeviaVir/zenbot"
 
@@ -44,6 +45,9 @@ jobs:
           case "$repository" in
             "elasticdog/tiddlywiki-docker")
               name=tiddlywiki
+              ;;
+            "karlicoss/promnesia")
+              dockerfile="$repository_path/docker/docker_files/Dockerfile"
               ;;
           esac
 
