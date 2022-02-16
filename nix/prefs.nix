@@ -603,7 +603,6 @@ let
     } else if hostname == "jxt" then {
       isMinimalSystem = false;
       hostId = "5ee92b8d";
-      enableWireguard = false;
       smartctlExporterDevices = [ "/dev/nvme0n1" ];
       enableNetworkWatchdog = true;
       enablePrometheus = true;
