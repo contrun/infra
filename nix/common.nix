@@ -1325,6 +1325,22 @@ in
         node = {
           enable = prefs.enablePrometheusExporters;
           extraFlags = [ "--collector.netdev.address-info" ];
+          enabledCollectors = [
+            "ethtool"
+            "interrupts"
+            "ksmd"
+            "lnstat"
+            "logind"
+            "network_route"
+            "ntp"
+            # TODO: perf does not work because of permission
+            # node_exporter[3667114]: panic: Couldn't create metrics handler: couldn't create collector: Failed to setup CPU cycle profiler: pid (-1) cpu (0) "permission denied"; Failed to CPU setup instruction profiler: pid (-1) cpu (0) "permission denied"; Failed to setup cache ref profiler: pid (-1) cpu (0) "permission denied"; Failed to setup cache misses profiler: pid (-1) cpu (0) "permission denied"; Failed to setup branch instruction profiler: pid (-1) cpu (0) "permission denied"; Failed to setup branch miss profiler: pid (-1) cpu (0) "permission denied"; Failed to setup bus cycles profiler: pid (-1) cpu (0) "permission denied"; Failed to setup stalled fronted cycles profiler: pid (-1) cpu (0) "no such file or directory"; Failed to setup stalled backend cycles profiler: pid (-1) cpu (0) "no such file or directory"; Failed to setup ref CPU cycles profiler: pid (-1) cpu (0) "permission denied"
+            # "perf"
+            "processes"
+            "qdisc"
+            "systemd"
+            "wifi"
+          ];
         };
         domain = { enable = prefs.enablePrometheusExporters; };
         systemd = { enable = prefs.enablePrometheusExporters; };
