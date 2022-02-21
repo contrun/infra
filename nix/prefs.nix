@@ -251,6 +251,7 @@ let
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = !self.isMinimalSystem;
     enableSyncthing = !self.isMinimalSystem;
+    syncthingIgnores = [ "roam/.emacs.d/straight" "roam/public" ];
     syncthingDevices = {
       ssg = {
         id =

@@ -2488,6 +2488,21 @@ in
         user = prefs.owner;
         dataDir = prefs.home;
         extraOptions = {
+          defaults = {
+            ignores =
+              let
+                fileContent = builtins.readFile (prefs.getDotfile "private_dot_stglobalignore");
+                originalLines = lib.splitString "\n" fileContent;
+                # I used # and // to comment lines
+                # because this way I can share the ignore file in git and syncthing.
+                isUseless = x: (lib.hasPrefix "//" x) || (lib.hasPrefix "#" x) || (x == "");
+                fileLines = builtins.filter (x: !(isUseless x)) originalLines;
+                lines = fileLines ++ prefs.syncthingIgnores;
+              in
+              {
+                inherit lines;
+              };
+          };
           gui = {
             user = "e";
             # TODO: didn't find way to hide it, but this password has enough entropy.
@@ -3004,16 +3019,16 @@ in
                     [
                       "--label=traefik.http.routers.${name}.service=${name}"
                       "--label=traefik.http.services.${name}.loadbalancer.server.port=${
-                      builtins.toString traefikForwardingPort
-                    }"
+builtins.toString traefikForwardingPort
+}"
                     ] ++ (lib.optionals (entrypoints != [ ]) [
                       "--label=traefik.http.routers.${name}.entrypoints=${
-                      builtins.concatStringsSep "," entrypoints
-                    }"
+builtins.concatStringsSep "," entrypoints
+}"
                     ]) ++ (lib.optionals (middlewares != [ ]) [
                       "--label=traefik.http.routers.${name}.middlewares=${
-                      builtins.concatStringsSep "," middlewares
-                    }"
+builtins.concatStringsSep "," middlewares
+}"
                     ]) ++ (lib.optionals (enableTraefikTls)
                       [ "--label=traefik.http.routers.${name}.tls=true" ])
                   else
@@ -3102,8 +3117,8 @@ in
                   "--mount=type=bind,source=/run/secrets/${x},target=/myconfig/${x}")
                 ([ "authelia-users" ] ++ configs)) ++ [
                 "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
-                prefs.getFullDomainName "authelia"
-              }"
+prefs.getFullDomainName "authelia"
+}"
                 "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
                 "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
                 "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
@@ -3298,8 +3313,8 @@ in
             volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
             extraOptions = [
               "--user=${builtins.toString prefs.ownerUid}:${
-              builtins.toString prefs.ownerGroupGid
-            }"
+builtins.toString prefs.ownerGroupGid
+}"
             ];
             cmd = [ "--listen" "host=0.0.0.0" ];
             middlewares = [ "authelia" ];
@@ -3347,8 +3362,8 @@ in
             volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
             extraOptions = [
               "--user=${builtins.toString prefs.ownerUid}:${
-              builtins.toString prefs.ownerGroupGid
-            }"
+builtins.toString prefs.ownerGroupGid
+}"
             ];
             environmentFiles = [ "/run/secrets/livebook-env" ];
             traefikForwardingPort = 8080;
@@ -3382,7 +3397,7 @@ in
             ];
             environment = {
               "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
-              (prefs.getFullDomainNames "nextcloud")}";
+(prefs.getFullDomainNames "nextcloud")}";
             };
             environmentFiles = [ "/run/secrets/nextcloud-env" ]
             ++ (if prefs.ociContainers.enablePostgresql then
@@ -3395,14 +3410,14 @@ in
           } // mkContainer "sftpgo" prefs.ociContainers.enableSftpgo {
             extraOptions = [
               "--user=${builtins.toString prefs.ownerUid}:${
-              builtins.toString prefs.ownerGroupGid
-            }"
+builtins.toString prefs.ownerGroupGid
+}"
               "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
               "--label=traefik.http.routers.sftpgo-webdav.middlewares=cors@file"
               "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
               "--label=traefik.http.routers.sftpgo-webdav.rule=${
-              getTraefikRuleByDomainPrefix "webdav"
-            }"
+getTraefikRuleByDomainPrefix "webdav"
+}"
               "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
             ];
             ports = [ "2122:2022" ];
@@ -3709,8 +3724,8 @@ in
                             subtitle = "traefik dashboard";
                             tag = "operations";
                             url = "https://${
-                          prefs.getFullDomainName "traefik"
-                        }/dashboard/";
+prefs.getFullDomainName "traefik"
+}/dashboard/";
                           }
                           {
                             enable = prefs.ociContainers.enablePerkeep;
@@ -3863,8 +3878,8 @@ in
             middlewares = [ "authelia" ];
             extraOptions = [
               "--user=${builtins.toString prefs.ownerUid}:${
-              builtins.toString prefs.ownerGroupGid
-            }"
+builtins.toString prefs.ownerGroupGid
+}"
             ];
             environment = { "DOCKER_USER" = "${prefs.owner}"; };
             cmd = [
@@ -4135,8 +4150,8 @@ in
               SystemCallArchitectures = "native";
             };
             script = ''
-              exec wstunnel --verbose --server 127.0.0.1:${
-                builtins.toString prefs.wstunnelPort
+                            exec wstunnel --verbose --server 127.0.0.1:${
+              builtins.toString prefs.wstunnelPort
               }
             '';
           };
@@ -4290,8 +4305,8 @@ in
                 Type = "simple";
                 ExecStart =
                   "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${
-                  builtins.toString prefs.aioproxyPort
-                } -u 127.0.0.1:8000 -p both -ssh 127.0.0.1:22 -eternal-terminal 127.0.0.1:2022 -http 127.0.0.1:8080 -tls 127.0.0.1:30443";
+builtins.toString prefs.aioproxyPort
+} -u 127.0.0.1:8000 -p both -ssh 127.0.0.1:22 -eternal-terminal 127.0.0.1:2022 -http 127.0.0.1:8080 -tls 127.0.0.1:30443";
                 ExecStartPost = [
                   "-${pkgs.systemd}/bin/systemctl start --no-block local-transparent-proxy-setup"
                 ];
@@ -4316,8 +4331,8 @@ in
             what = prefs.syncFolder;
             type = "fuse.bindfs";
             options = "map=${builtins.toString prefs.ownerUid}/33:@${
-              builtins.toString prefs.ownerGroupGid
-            }/@33";
+builtins.toString prefs.ownerGroupGid
+}/@33";
             unitConfig = { RequiresMountsFor = prefs.syncFolder; };
           }];
         }
@@ -4335,8 +4350,8 @@ in
             what = prefs.nextcloudWhat;
             type = "davfs";
             options = "rw,uid=${builtins.toString prefs.ownerUid},gid=${
-              builtins.toString prefs.ownerGroupGid
-            }";
+builtins.toString prefs.ownerGroupGid
+}";
             wantedBy = [ "remote-fs.target" ];
             after = [ "network-online.target" ];
           }];
@@ -4355,8 +4370,8 @@ in
             what = prefs.yandexWhat;
             type = "davfs";
             options = "rw,user=uid=${builtins.toString prefs.ownerUid},gid=${
-              builtins.toString prefs.ownerGroupGid
-            }";
+builtins.toString prefs.ownerGroupGid
+}";
             wantedBy = [ "remote-fs.target" ];
             after = [ "network-online.target" ];
           }];
@@ -4875,19 +4890,19 @@ in
             name = "hole-puncher";
             unitName = "${name}@";
             script = pkgs.writeShellScript "hole-puncher" ''
-              set -euo pipefail
-              instance="44443-${
-                builtins.toString
-                (if prefs.enableAioproxy then prefs.aioproxyPort else 44443)
+                            set -euo pipefail
+                            instance="44443-${
+              builtins.toString
+              (if prefs.enableAioproxy then prefs.aioproxyPort else 44443)
               }"
-              if [[ -n "$1" ]] && grep -Eq '[0-9]+-[0-9]+' <<< "$1"; then instance="$1"; fi
-              externalPort="$(awk -F- '{print $2}' <<< "$instance")"
-              internalPort="$(awk -F- '{print $1}' <<< "$instance")"
-              interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}' | grep -v veth)"
-              ipAddresses="$(parallel -k ip addr show dev {1} ::: $interfaces | grep -Po 'inet \K[\d.]+')"
-              protocols="tcp udp"
-              result="$(parallel -r -v upnpc -m {1} -a {2} $internalPort $externalPort {3} ::: $interfaces :::+ $ipAddresses ::: $protocols || true)"
-              awk -v OFS=, '/is redirected to/ {print $2, $8, $3}' <<< "$result"
+                            if [[ -n "$1" ]] && grep -Eq '[0-9]+-[0-9]+' <<< "$1"; then instance="$1"; fi
+                            externalPort="$(awk -F- '{print $2}' <<< "$instance")"
+                            internalPort="$(awk -F- '{print $1}' <<< "$instance")"
+                            interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}' | grep -v veth)"
+                            ipAddresses="$(parallel -k ip addr show dev {1} ::: $interfaces | grep -Po 'inet \K[\d.]+')"
+                            protocols="tcp udp"
+                            result="$(parallel -r -v upnpc -m {1} -a {2} $internalPort $externalPort {3} ::: $interfaces :::+ $ipAddresses ::: $protocols || true)"
+                            awk -v OFS=, '/is redirected to/ {print $2, $8, $3}' <<< "$result"
             '';
           in
           {
@@ -4987,9 +5002,9 @@ in
                 Restart = "always";
                 ExecStart =
                   "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${prefs.syncFolder}' ${
-                lib.concatMapStringsSep " " (dir: "--exclude-dirs='${dir}'")
-                prefs.yandexExcludedDirs
-              }";
+lib.concatMapStringsSep " " (dir: "--exclude-dirs='${dir}'")
+prefs.yandexExcludedDirs
+}";
               };
             };
           } else
