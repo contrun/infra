@@ -3217,10 +3217,11 @@ in
               EMAIL = "admin@${DOMAIN}";
             };
             environmentFiles = [ "/run/secrets/bookwyrm-env" ];
-            entrypoint = "python";
+            entrypoint = "sh";
+            # TODO: `--insecure` does not seem to work any more. Fix this.
             # We are running django directly. Serving static files requires `--insecure`.
             # See https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/#cmdoption-runserver-insecure
-            cmd = [ "manage.py" "runserver" "--insecure" "0.0.0.0:8000" ];
+            cmd = [ "-c" "python manage.py migrate; exec python manage.py runserver --insecure 0.0.0.0:8000" ];
             traefikForwardingPort = 8000;
           } // mkContainer "wger" prefs.ociContainers.enableWger {
             volumes = [ "/var/data/wger/media:/home/wger/media" ];
