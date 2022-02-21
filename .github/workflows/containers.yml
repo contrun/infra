@@ -22,6 +22,7 @@ jobs:
       matrix:
         repository:
           - "contrun/kosyncsrv"
+          - "contrun/eudyptula"
           - "bookwyrm-social/bookwyrm"
           - "200ok-ch/organice"
           - "elasticdog/tiddlywiki-docker"
