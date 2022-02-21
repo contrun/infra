@@ -2545,15 +2545,27 @@ in
                 maxAge = "315360000";
               };
             };
-            getFolderConfig = { id, path, excludedDevices ? [ ] }: rec {
-              inherit id path;
-              devices = lib.subtractLists excludedDevices allDevices;
-              ignorePerms = false;
-              versioning = getVersioningPolicy id;
-            };
+            getFolderConfig = { id, enable, excludedDevices, config }: lib.optionalAttrs enable
+              (
+                {
+                  inherit id;
+                  devices = lib.subtractLists excludedDevices allDevices;
+                  ignorePerms = false;
+                  versioning = getVersioningPolicy id;
+                } // config
+              );
           in
-          let folders = (lib.filterAttrs (id: config: config.enable) prefs.syncFolders); in
-          builtins.mapAttrs (id: config: getFolderConfig { inherit id; inherit (config) path; }) folders;
+          let
+            c = builtins.mapAttrs
+              (id: config: getFolderConfig {
+                inherit id;
+                enable = config.enable or true;
+                excludedDevices = config.excludedDevices or [ ];
+                config = builtins.removeAttrs config [ "enable" "excludedDevices" ];
+              })
+              prefs.syncFolders;
+          in
+          lib.filterAttrs (id: config: config != { }) c;
       };
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;

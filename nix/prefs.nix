@@ -384,16 +384,14 @@ let
     calibreServerPort = 8213;
     syncFolders = {
       calibre = {
-        enable = true;
         path = "${self.home}/Storage/Calibre";
       };
       sync = {
-        enable = true;
         path = "${self.home}/Sync";
       };
       upload = {
-        enable = false;
         path = "${self.home}/Storage/Upload";
+        type = "sendonly";
       };
     };
     enablePipewire = !self.isMinimalSystem;
@@ -717,8 +715,8 @@ let
       enableSyncoid = true;
       syncFolders = super.syncFolders // {
         upload = {
-          enable = true;
           path = "${self.home}/Storage/Upload";
+          type = "sendreceive";
         };
       };
       syncoidCommands =
