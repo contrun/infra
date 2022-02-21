@@ -2481,32 +2481,7 @@ in
 
     syncthing =
       let
-        devices = {
-          ssg = {
-            id =
-              "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
-          };
-          shl = {
-            id =
-              "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
-          };
-          jxt = {
-            id =
-              "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
-          };
-          mdq = {
-            id =
-              "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
-          };
-          gcv = {
-            id =
-              "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
-          };
-          ngk = {
-            id =
-              "VVCUJWN-7XTDGK4-7CI4VJD-CANANFV-I7Q4SLK-Z554ASF-CYDHMJF-HYJISAU";
-          };
-        };
+        devices = prefs.syncthingDevices;
       in
       {
         enable = prefs.enableSyncthing;
@@ -2562,17 +2537,8 @@ in
               versioning = getVersioningPolicy id;
             };
           in
-          {
-            "${prefs.calibreFolder}" = getFolderConfig {
-              id = "calibre";
-              path = prefs.calibreFolder;
-            };
-
-            "${prefs.syncFolder}" = getFolderConfig {
-              id = "sync";
-              path = prefs.syncFolder;
-            };
-          };
+          let folders = (lib.filterAttrs (id: config: config.enable) prefs.syncFolders); in
+          builtins.mapAttrs (id: config: getFolderConfig { inherit id; inherit (config) path; }) folders;
       };
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;

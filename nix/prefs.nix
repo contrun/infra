@@ -251,6 +251,33 @@ let
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = !self.isMinimalSystem;
     enableSyncthing = !self.isMinimalSystem;
+    syncthingDevices = {
+      ssg = {
+        id =
+          "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+      };
+      shl = {
+        id =
+          "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+      };
+      jxt = {
+        id =
+          "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+      };
+      mdq = {
+        id =
+          "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+      };
+      gcv = {
+        id =
+          "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
+      };
+      ngk = {
+        id =
+          "VVCUJWN-7XTDGK4-7CI4VJD-CANANFV-I7Q4SLK-Z554ASF-CYDHMJF-HYJISAU";
+      };
+      mmms = { id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL"; };
+    };
     yandexConfig = {
       directory = "${self.home}/Sync";
       excludes = "";
@@ -352,9 +379,22 @@ let
     enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
     enableCalibreServer = false;
-    calibreServerLibraries = [ self.calibreFolder ];
+    calibreServerLibraries = [ self.syncFolders.calibre.path ];
     calibreServerPort = 8213;
-    calibreFolder = "${self.home}/Storage/Calibre";
+    syncFolders = {
+      calibre = {
+        enable = true;
+        path = "${self.home}/Storage/Calibre";
+      };
+      sync = {
+        enable = true;
+        path = "${self.home}/Sync";
+      };
+      upload = {
+        enable = false;
+        path = "${self.home}/Storage/Upload";
+      };
+    };
     enablePipewire = !self.isMinimalSystem;
     enableSlock = true;
     enableZSH = true;
@@ -674,6 +714,12 @@ let
       enableNetworkWatchdog = true;
       enablePocketToWallabag = true;
       enableSyncoid = true;
+      syncFolders = super.syncFolders // {
+        upload = {
+          enable = true;
+          path = "${self.home}/Storage/Upload";
+        };
+      };
       syncoidCommands =
         let
           sendOptions = "-v";
