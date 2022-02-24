@@ -654,20 +654,6 @@ let
       enableZerotierone = false;
       autoStartClashRedir = false;
       dnsServers = [ "10.10.61.128" "10.10.61.129" ];
-      buildMachines = super.buildMachines ++ [
-        {
-          hostName = "node1";
-          systems = [ "x86_64-linux" "i686-linux" ];
-          maxJobs = 32;
-          supportedFeatures = [ "kvm" "big-parallel" ];
-        }
-        {
-          hostName = "node2";
-          systems = [ "x86_64-linux" "i686-linux" ];
-          maxJobs = 32;
-          supportedFeatures = [ "kvm" "big-parallel" ];
-        }
-      ];
       ociContainers = super.ociContainers // { };
     } else if hostname == "shl" then {
       enableXserver = false;
