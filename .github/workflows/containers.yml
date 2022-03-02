@@ -64,7 +64,7 @@ jobs:
           echo "::set-output name=dockerfile_context::$dockerfile_context"
 
       - name: Checkout ${{ steps.upstream.outputs.repository }} to ${{ steps.upstream.outputs.repository_path }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{ steps.upstream.outputs.repository }}
           path: ${{ steps.upstream.outputs.repository_path }}
