@@ -1319,7 +1319,7 @@ in
 
     prometheus = {
       enable = prefs.enablePrometheus;
-      extraFlags = [ "--enable-feature=expand-external-labels" ];
+      extraFlags = [ "--enable-feature=expand-external-labels" ] ++ (if prefs.enablePrometheusAgent then [ "--enable-feature=agent" ] else [ ]);
       port = prefs.prometheusPort;
       exporters = {
         node = {
