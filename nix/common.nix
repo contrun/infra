@@ -4267,6 +4267,8 @@ builtins.toString prefs.ownerGroupGid
               done
             '';
           };
+        } // lib.optionalAttrs (prefs.enableCoredns) {
+          "coredns" = { serviceConfig = { CPUQuota = "20%"; }; };
         } // lib.optionalAttrs (prefs.enablePostgresql) {
           "postgresql" = { serviceConfig = { SupplementaryGroups = "keys"; }; };
         } // lib.optionalAttrs (prefs.enableTraefik) {
