@@ -371,7 +371,7 @@ in
     extraOutputsToInstall = prefs.extraOutputsToInstall;
     systemPackages = with pkgs;
       builtins.filter (x: x != null) ([
-        manpages
+        man-pages
         fuse
         bindfs
         iptables
@@ -380,7 +380,7 @@ in
         nftables
         ipset
         dnsmasq
-        wireguard
+        wireguard-tools
         nixFlakes
         nix-info
         nixos-generators

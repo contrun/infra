@@ -644,7 +644,7 @@ let
         "you-get"
         "uget"
         "udptunnel"
-        "wireguard"
+        "wireguard-tools"
         "qutebrowser"
         "gomuks"
         "spectral"

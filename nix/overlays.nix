@@ -329,7 +329,7 @@ let
             # cookiecutter
           ];
         makeEmacsPkg = emacsPkg:
-          (super.emacsPackagesGen emacsPkg).emacsWithPackages (epkgs:
+          (super.emacsPackagesFor emacsPkg).emacsWithPackages (epkgs:
             [
               super.mu
               # super.notmuch
