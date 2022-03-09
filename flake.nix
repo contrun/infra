@@ -56,6 +56,10 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    microvm.url = "github:astro/microvm.nix";
+    microvm.inputs.nixpkgs.follows = "nixpkgs";
+    microvm.inputs.flake-utils.follows = "flake-utils";
+
     nur-no-pkgs.url = "github:nix-community/NUR";
 
     wallabag-client = {
@@ -176,7 +180,7 @@
     in
     let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
-      vmNodes = [ "dbx" "bigvm" ];
+      vmNodes = [ "dbx" "dvm" "bigvm" ];
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
@@ -353,6 +357,14 @@
                 '';
                 runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
               };
+
+              dvm =
+                let
+                  inherit (self.nixosConfigurations.dvm) config;
+                  # quickly build with another hypervisor if this MicroVM is built as a package
+                  hypervisor = "qemu";
+                in
+                config.microvm.runner.${hypervisor};
 
               magit = with nixpkgsWithOverlays; writeShellApplication {
                 name = "magit";

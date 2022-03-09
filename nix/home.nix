@@ -1095,7 +1095,7 @@ in
     };
   };
 
-  services = { kdeconnect = { enable = (builtins.elem prefs.nixosSystem [ "x86_64-linux" "aarch64-linux" ]); }; };
+  services = { kdeconnect = { enable = prefs.enableKdeConnect; }; };
 
   systemd.user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     (

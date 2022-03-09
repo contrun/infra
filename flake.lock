@@ -387,6 +387,29 @@
         "type": "github"
       }
     },
+    "microvm": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1646166420,
+        "narHash": "sha256-Jz+pfKThToXWO3ha8iyf8GkhhjDW4Ne5XPybPmrVajM=",
+        "owner": "astro",
+        "repo": "microvm.nix",
+        "rev": "ec91bbaca903bb777d8e0122d1a741067bb5f6e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "astro",
+        "repo": "microvm.nix",
+        "type": "github"
+      }
+    },
     "mozilla": {
       "flake": false,
       "locked": {
@@ -746,6 +769,7 @@
         "helix": "helix",
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
+        "microvm": "microvm",
         "nix-autobahn": "nix-autobahn",
         "nix-ld": "nix-ld",
         "nixos-vscode-server": "nixos-vscode-server",

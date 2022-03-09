@@ -58,6 +58,18 @@ let
 
   commonConfiguration = import (getNixConfig "common.nix");
 
+  microvmHostConfiguration = { config, pkgs, lib, inputs, ... }:
+    lib.optionalAttrs prefs.enableMicrovmHost {
+      imports = [ inputs.microvm.nixosModules.host ];
+      microvm = prefs.microvmHostConfig;
+    };
+
+  microvmGuestConfiguration = { config, pkgs, lib, inputs, ... }:
+    lib.optionalAttrs prefs.enableMicrovmGuest {
+      imports = [ inputs.microvm.nixosModules.microvm ];
+      microvm = prefs.microvmGuestConfig;
+    };
+
   sopsConfiguration = { config, pkgs, lib, inputs, ... }:
     let
       sopsSecretsFile = getNixConfig "/sops/secrets.yaml";
@@ -390,6 +402,8 @@ in
       inputs.nixpkgs.nixosModules.notDetected
       inputs.sops-nix.nixosModules.sops
       sopsConfiguration
+      microvmHostConfiguration
+      microvmGuestConfiguration
       inputs.home-manager.nixosModules.home-manager
       homeManagerConfiguration
       miscConfiguration

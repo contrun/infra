@@ -391,7 +391,6 @@ in
         nix-du
         nix-index
         nix-top
-        udiskie
         fzf
         jq
         mailutils
@@ -420,7 +419,6 @@ in
         (pkgs.myPackages.nvimdiff or null)
         ruby
         perl
-        emacs
         neovim
         vim
         libffi
@@ -469,6 +467,8 @@ in
       ] ++ (if prefs.isMinimalSystem then [ ] else [
         ly
 
+        hardinfo
+        udiskie
         ydotool
         wev
         slurp
@@ -563,15 +563,14 @@ in
       ++ (if prefs.enableDocker then [ docker-buildx ] else [ ])
       ++ (if prefs.enableWstunnel then [ wstunnel ] else [ ])
       ++ (if prefs.enableXmonad then [ xmobar ] else [ ])
+      ++ (if prefs.enableEmacs then [ emacs ] else [ ])
       ++ (if (!prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux")) then [
         wine
       ] else
         [ ])
       ++ (if (prefs.nixosSystem == "x86_64-linux") then [
-        hardinfo
         # steam-run-native
         # aqemu
-        wine
         bpftool
         prefs.kernelPackages.perf
         # TODO: broken for now, see https://github.com/NixOS/nixpkgs/issues/140358
@@ -602,7 +601,6 @@ in
       PERLBREW_ROOT = "$HOME/.perlbrew-root";
       LOCALBINPATH = "$HOME/.local/bin";
 
-      NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
       # Don't set NIX_LD_LIBRARY_PATH here, there will be various problems.
       MY_NIX_LD_LIBRARY_PATH =
         "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
@@ -633,6 +631,10 @@ in
       LESS = "-x4RFsX";
       PAGER = "less";
       EDITOR = "nvim";
+    } // lib.optionalAttrs (!prefs.enableMicrovmGuest) {
+      # TODO: failed to build on microvm guest
+      # error: access to canonical path '/nix/store/lz5pb4y9z79lc65asdx6j0wiicm3p12q-binutils-wrapper-2.35.2/nix-support/dynamic-linker' is forbidden in restricted mode
+      NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
     } // lib.optionalAttrs (pkgs ? myPackages) {
       # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
       MYPYTHONPATH =
@@ -1159,7 +1161,7 @@ in
       enable = true;
       useDns = true;
       allowSFTP = true;
-      forwardX11 = true;
+      forwardX11 = prefs.enableSshX11Forwarding;
       gatewayPorts = "yes";
       permitRootLogin = "yes";
       startWhenNeeded = true;
@@ -5064,9 +5066,6 @@ prefs.yandexExcludedDirs
 
   boot = {
     binfmt = { inherit (prefs) emulatedSystems; };
-    inherit (prefs)
-      kernelParams extraModulePackages kernelModules kernelPatches
-      kernelPackages blacklistedKernelModules;
     kernel.sysctl = prefs.kernelSysctl;
     loader = {
       generationsDir = {
@@ -5113,5 +5112,11 @@ prefs.yandexExcludedDirs
             && prefs.hostKeys != [ ];
         };
     };
+  }
+  # microvm use its own kernel config.
+  // lib.optionalAttrs (!prefs.enableMicrovmGuest) {
+    inherit (prefs)
+      kernelParams extraModulePackages kernelModules kernelPatches
+      kernelPackages blacklistedKernelModules;
   };
 }

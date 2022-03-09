@@ -52,7 +52,7 @@ let
     (builtins.hashString "sha512" "hostname: ${hostname}");
 
   default = self: {
-    normalNodes = [ "ssg" "jxt" "shl" "mdq" "dbx" ];
+    normalNodes = [ "ssg" "jxt" "shl" "mdq" "dbx" "dvm" ];
     hostAliases =
       builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
         self.normalNodes // {
@@ -143,6 +143,16 @@ let
     enableBumblebee = false;
     enableMediaKeys = true;
     enableEternalTerminal = !self.isMinimalSystem;
+    # TODO: enable microvm host failed with
+    #    Failed assertions:
+    #    - The security.wrappers.qemu-bridge-helper wrapper is not valid:
+    #        setuid/setgid and capabilities are mutually exclusive.
+    enableMicrovmHost = false;
+    enableMicrovmGuest = false;
+    microvmHostConfig = { };
+    microvmGuestConfig = { };
+    # cannot enable X11 forwarding without setting xauth location
+    enableSshX11Forwarding = !self.isMinimalSystem && !self.enableMicrovmGuest;
     dnsServers = [ "1.0.0.1" "8.8.4.4" "9.9.9.9" "180.76.76.76" "223.5.5.5" ];
     enableResolved = true;
     enableCoredns = !self.isMinimalSystem;
@@ -176,7 +186,7 @@ let
     sslhPort = 44443;
     enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
-    enableTailScale = true;
+    enableTailScale = !self.isMinimalSystem;
     enableX2goServer = false;
     enableDebugInfo = false;
     enableBtrfs = false;
@@ -206,6 +216,7 @@ let
     enableI3 = !self.isMinimalSystem;
     enableAwesome = !self.isMinimalSystem;
     enableSway = !self.isMinimalSystem;
+    enableKdeConnect = !self.isMinimalSystem && (builtins.elem self.nixosSystem [ "x86_64-linux" "aarch64-linux" ]);
     enableSwayForGreeted = self.enableSway;
     enablePamMount = !self.isMinimalSystem;
     enableFontConfig = !self.isMinimalSystem;
@@ -618,6 +629,32 @@ let
     } else if hostname == "dbx" then {
       isMinimalSystem = true;
       isVagrantBox = true;
+    } else if hostname == "dvm" then {
+      isMinimalSystem = true;
+      enableMicrovmGuest = true;
+      microvmGuestConfig = {
+        volumes = [
+          {
+            mountPoint = "/var";
+            image = "var.img";
+            size = 10 * 1024;
+          }
+        ];
+        shares = [{
+          # use "virtiofs" for MicroVMs that are started by systemd
+          proto = "9p";
+          tag = "ro-store";
+          # a host's /nix/store will be picked up so that the
+          # size of the /dev/vda can be reduced.
+          source = "/nix/store";
+          mountPoint = "/nix/.ro-store";
+        }];
+        socket = "control.socket";
+        # relevant for delarative MicroVM management
+        hypervisor = "qemu";
+        vcpu = 4;
+        mem = 4 * 1024;
+      };
     } else if hostname == "ssg" then {
       isMinimalSystem = false;
       hostId = "b6653e48";
