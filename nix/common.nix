@@ -2664,6 +2664,7 @@ in
   };
 
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
+  xdg.portal.wlr.enable = prefs.enableXdgPortalWlr;
 
   users =
     let
