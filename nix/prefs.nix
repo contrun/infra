@@ -447,6 +447,7 @@ let
     enableUnifi = false;
     enableUdisks2 = !self.isMinimalSystem;
     enableAvahi = !self.isMinimalSystem;
+    avahiHostname = self.hostname;
     enableGvfs = !self.isMinimalSystem;
     enableCodeServer = !self.isMinimalSystem;
     enablePrinting = !self.isMinimalSystem;

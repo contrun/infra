@@ -1209,6 +1209,12 @@ in
       browseDomains = [ prefs.mainDomain ];
       enable = prefs.enableAvahi;
       nssmdns = true;
+      ipv6 = false;
+      hostName = prefs.avahiHostname;
+      extraConfig = ''
+        [server]
+        deny-interfaces=virbr0,docker0
+      '';
       publish = {
         enable = true;
         userServices = true;
@@ -4185,6 +4191,27 @@ builtins.toString prefs.ownerGroupGid
               { }
               interfaces
           )
+        // lib.optionalAttrs (prefs.enableAvahi) {
+          "avahi-daemon" = {
+            serviceConfig = {
+              # We use avahi and openshift/coredns-mdns to discover hosts.
+              # Coredns-mdns requires hosts to publish  _workstation._tcp.
+              # But avahi daemon seems to be not publishing  _workstation._tcp on start up.
+              # If it is the case, we try to restart it, because manually restarting it works.
+              Restart = "always";
+              ExecStartPost = "${pkgs.writeShellScript "maybe-restart-avahi" ''
+                    for i in $(seq 1 4); do
+                        if avahi-browse --parsable --resolve --terminate _workstation._tcp | grep ';127.0.0.1;'; then
+                            exit 0
+                        else
+                            sleep "$i"
+                        fi
+                    done
+                    exit 1
+                  ''}";
+            };
+          };
+        }
         // lib.optionalAttrs
           (prefs.buildZerotierone && !prefs.enableZerotierone)
           {
