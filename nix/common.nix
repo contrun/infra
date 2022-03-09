@@ -1115,15 +1115,16 @@ in
               rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
               # fail fast on cache miss
               cancel 0.01s
-              epicmdns ${prefs.mainDomain} {
-                force_unicast true
-                min_ttl 180
-                browse_period 40
-                cache_purge_period 300
-                browse _workstation._tcp.local
-                browse _ssh._tcp.local
-              }
-              # mdns ${prefs.mainDomain}
+              mdns ${prefs.mainDomain} 0
+              # epicmdns ${prefs.mainDomain} {
+              # mdns ${prefs.mainDomain} 0
+              #   force_unicast true
+              #   min_ttl 180
+              #   browse_period 40
+              #   cache_purge_period 300
+              #   browse _workstation._tcp.local
+              #   browse _ssh._tcp.local
+              # }
               alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
           }
 
