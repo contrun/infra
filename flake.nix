@@ -350,6 +350,32 @@
             defaultApp = apps.run;
 
             packages = {
+              containers = {
+                texlive = with nixpkgsWithOverlays; dockerTools.buildImage
+                  rec {
+                    name = "texlive-full";
+                    tag = "latest";
+                    created = "now";
+                    contents = buildEnv {
+                      inherit name;
+                      paths = [
+                        (texlive.combine { inherit (texlive) scheme-full; })
+                        adoptopenjdk-bin
+                        font-awesome_4
+                        font-awesome_5
+                        nerdfonts
+                        pdftk
+                        bash
+                        gnugrep
+                        gnused
+                        coreutils
+                        gnumake
+                      ];
+                    };
+                    config.Cmd = [ "/bin/bash" ];
+                  };
+              };
+
               run = with nixpkgsWithOverlays; writeShellApplication {
                 name = "run";
                 text = ''
