@@ -237,16 +237,6 @@ let
             };
           }
           {
-            enable = prefs.enablePocketToWallabag;
-            config = {
-              pocket-to-wallabag-env = {
-                mode = "0400";
-                owner = prefs.owner;
-                group = prefs.ownerGroup;
-              };
-            };
-          }
-          {
             enable = prefs.enablePromtail;
             config = {
               promtail-env = {

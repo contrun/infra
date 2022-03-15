@@ -4871,45 +4871,6 @@ builtins.toString prefs.ownerGroupGid
           }
         )
 
-        (
-          let
-            name = "pocket-to-wallabag";
-          in
-          lib.optionalAttrs
-            prefs.enablePocketToWallabag
-            {
-              services."${name}" = {
-                description = "Save urls from pocket feed to wallabag";
-                enable = true;
-                after = [ "network-online.target" ];
-                onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-                path = with pkgs; [ myPackages.wallabag-saver sfeed curl gawk parallel ];
-                script = ''
-                  set -euo pipefail
-                  curl -sS "https://getpocket.com/users/$POCKET_USERNAME/feed/unread" | sfeed | awk -F'\t' '{print $3}' | parallel --will-cite --verbose -r -j 5 -N 40 wallabag-saver --
-                  curl -sS "https://getpocket.com/users/$POCKET_USERNAME/feed/read" | sfeed | awk -F'\t' '{print $3}' | parallel --will-cite --verbose -r -j 5 -N 40 wallabag-saver -a --
-                '';
-                serviceConfig = {
-                  Type = "oneshot";
-                  EnvironmentFile = "/run/secrets/pocket-to-wallabag-env";
-                  # Below is needed for parallel to work.
-                  # parallel tries to run $SHELL, which may not be available.
-                  Environment = "SHELL=";
-                };
-              };
-              timers."${name}" = {
-                enable = true;
-                wantedBy = [ "default.target" ];
-                after = [ "network-online.target" ];
-                timerConfig = {
-                  RandomizedDelaySec = 60;
-                  OnCalendar = "*-*-* *:3/5:00";
-                  Unit = "${name}.service";
-                };
-              };
-            }
-        )
-
         {
           services.nextcloud-client = {
             enable = prefs.enableNextcloudClient;

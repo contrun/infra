@@ -266,7 +266,7 @@
                       inherit name;
                       pkg = inputs.self.packages.${super.system}.${name} or null;
                     })
-                    [ "magit" "wallabag-saver" "coredns" ]);
+                    [ "magit" "coredns" ]);
                 function = acc: elem: acc //
                   (if (elem.pkg != null) then {
                     ${elem.name} = elem.pkg;
@@ -339,11 +339,6 @@
               magit = {
                 type = "app";
                 program = "${self.packages."${system}".magit}/bin/magit";
-              };
-
-              wallabag-saver = {
-                type = "app";
-                program = "${self.packages."${system}".wallabag-saver}/bin/wallabag-saver";
               };
             };
 
@@ -438,20 +433,7 @@
                 modules = ./coredns/gomod2nix.toml;
               };
 
-              wallabag-saver =
-                let
-                  name = "wallabag-saver";
-                  project =
-                    pkgs.callPackage
-                      (generatedCargoNix {
-                        inherit name;
-                        src = ./wallabag;
-                      })
-                      { inherit pkgs; };
-                in
-                project.rootCrate.build;
-
-              # TODO: gomod2nix failed
+              # Todo: gomod2nix failed
               # caddy = pkgs.buildGoApplication {
               #   pname = "caddy";
               #   version = "latest";
