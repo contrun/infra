@@ -43,7 +43,7 @@ on:
     - cron: "0 16 * * 5"
 
 jobs:
-  build-nixos:
+  nixos:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -52,11 +52,9 @@ jobs:
           - host: "cicd-x86_64-linux"
             nix-system: "x86_64-linux"
             deploy: false
-            push-updates: false
           - host: "mdq"
             nix-system: "x86_64-linux"
             deploy: true
-            push-updates: true
 
     steps:
       - name: Checkout repository
@@ -64,8 +62,7 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup nix
-        uses: ./
+      - uses: contrun/infra@master
         with:
           setup-cachix: true
           cachix-push-filter: 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
@@ -106,11 +103,6 @@ jobs:
         run: |
           echo '::set-output name=shouldBuildNixos::yes'
 
-          deployHost() {
-              echo '::set-output name=shouldDeployToNode::yes'
-              echo '::set-output name=hostToDeploy::${{ matrix.host }}'
-          }
-
           if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
               echo '::set-output name=shouldPushUpdates::yes'
           fi
@@ -118,11 +110,11 @@ jobs:
           if [[ "${{ matrix.deploy }}" == "true" ]]; then
               case '${{ github.event_name }}' in
                   'push')
-                      deployHost
+                      echo '::set-output name=shouldDeployToNode::yes'
                       ;;
                   'workflow_dispatch')
                       if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
-                          deployHost
+                          echo '::set-output name=shouldDeployToNode::yes'
                       fi
                       ;;
                   *)
@@ -137,6 +129,33 @@ jobs:
           make HOST=${{ matrix.host }} nixos-build nixos-profile-path-info
           df -h
 
+      - name: Import vault token
+        if: steps.variables.outputs.shouldDeployToNode == 'yes'
+        uses: hashicorp/vault-action@v2.4.0
+        with:
+          method: "approle"
+          url: "${{ secrets.VAULT_ADDR }}"
+          roleId: "${{ secrets.VAULT_ROLE_ID }}"
+          secretId: "${{ secrets.VAULT_SECRET_ID }}"
+          exportToken: true
+          exportEnv: true
+          secrets: |
+            ssh-host-signer/config/ca public_key | SSH_CA_PUBLIC_KEY ;
+
+      - name: Deploy to node
+        if: steps.variables.outputs.shouldDeployToNode == 'yes'
+        env:
+          VAULT_ADDR: "${{ secrets.VAULT_ADDR }}"
+          SSH_CONFIG: "${{ secrets.SSH_CONFIG }}"
+        run: |
+          set -euo pipefail
+          nix profile install -f '<nixpkgs>' vault wstunnel openssh
+          echo y | ssh-keygen -f $HOME/.ssh/id_ed25519 -t ed25519 -P ""
+          vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
+          echo "$SSH_CONFIG" >> ~/.ssh/config
+          echo "@cert-authority * $SSH_CA_PUBLIC_KEY" >> ~/.ssh/known_hosts
+          make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ matrix.host }}" nixos-deploy
+
       - name: Push commit with updated inputs
         if: steps.variables.outputs.shouldPushUpdates == 'yes'
         run: |
@@ -147,21 +166,6 @@ jobs:
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
           # Only push to master branch when we are building x86_64-linux
-          if [[ "${{ matrix.push-updates }}" == "true" ]]; then git push; fi
+          if [[ '${{ matrix.nix-system }}' == 'x86_64-linux' ]]; then git push; fi
           git switch -C ${{ matrix.nix-system }}
           git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}
-
-  # TODO: hostToDeploy may be set a few times in the matrix tasks.
-  # This is currently not supported in github actions
-  # https://github.community/t/needs-based-on-matrix/132400/5
-  deploy-nixos:
-    needs: build-nixos
-    uses: ./.github/workflows/deploy-nixos.yml
-    with:
-      deploy: ${{ needs.build-nixos.outputs.shouldDeployToNode == 'yes' }}
-      host: "${{ needs.build-nixos.outputs.hostToDeploy }}"
-    secrets:
-      vault-url: "${{ secrets.VAULT_ADDR }}"
-      vault-role-id: "${{ secrets.VAULT_ROLE_ID }}"
-      vault-secret-id: "${{ secrets.VAULT_SECRET_ID }}"
-      ssh-config: "${{ secrets.SSH_CONFIG }}"
