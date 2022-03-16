@@ -52,9 +52,11 @@ jobs:
           - host: "cicd-x86_64-linux"
             nix-system: "x86_64-linux"
             deploy: false
+            push-updates: false
           - host: "mdq"
             nix-system: "x86_64-linux"
             deploy: true
+            push-updates: true
 
     steps:
       - name: Checkout repository
@@ -62,12 +64,14 @@ jobs:
         with:
           submodules: true
 
-      - uses: contrun/infra@master
+      - name: Setup nix
+        uses: ./
         with:
           setup-cachix: true
           cachix-push-filter: 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
           cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           setup-qemu: true
+          free-disk-space: true
           nix-systems: "${{ matrix.nix-system }}"
 
       - name: Configure git
@@ -166,6 +170,6 @@ jobs:
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
           # Only push to master branch when we are building x86_64-linux
-          if [[ '${{ matrix.nix-system }}' == 'x86_64-linux' ]]; then git push; fi
+          if [[ '${{ matrix.push-updates }}' == 'x86_64-linux' ]]; then git push; fi
           git switch -C ${{ matrix.nix-system }}
           git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}
