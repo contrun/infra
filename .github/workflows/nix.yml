@@ -51,10 +51,10 @@ jobs:
         include:
           - host: "cicd-x86_64-linux"
             nix-system: "x86_64-linux"
-            deploy: "no"
+            deploy: false
           - host: "mdq"
             nix-system: "x86_64-linux"
-            deploy: "yes"
+            deploy: true
 
     steps:
       - name: Checkout repository
@@ -62,16 +62,13 @@ jobs:
         with:
           submodules: true
 
-      - name: Install nix
-        uses: cachix/install-nix-action@v16
+      - uses: contrun/infra@master
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.7.0pre20220203_bd383d1/install
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-            substituters = https://cache.nixos.org/ https://hydra.iohk.io
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+          setup-cachix: true
+          cachix-push-filter: 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
+          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          setup-qemu: true
+          nix-systems: "${{ matrix.nix-system }}"
 
       - name: Configure git
         run: |
@@ -80,7 +77,7 @@ jobs:
 
       - name: Update nix flake inputs
         id: update-nix-inputs
-        if: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')) }}
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')
         run: |
           set -xeuo pipefail
           echo '::set-output name=didTryToUpdateNixInputs::yes'
@@ -101,148 +98,55 @@ jobs:
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
       - name: Set up common variables
+        if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
         id: variables
         run: |
-          echo '::set-output name=cachixName::${{ github.repository_owner }}'
-          echo '::set-output name=cachixPushFilter::clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
+          echo '::set-output name=shouldBuildNixos::yes'
 
-          if [[ '${{ steps.update-nix-inputs.outputs.shouldAbort }}' != 'yes' ]]; then
-              echo '::set-output name=shouldBuildNixos::yes'
-
-              if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
-                  echo '::set-output name=shouldPushUpdates::yes'
-              fi
-
-              if [[ "${{ matrix.nix-system }}" != "x86_64-linux" ]]; then
-                  echo '::set-output name=shouldSetupQemu::yes'
-              fi
-
-              if [[ "${{ matrix.deploy }}" == "yes" ]]; then
-                  case '${{ github.event_name }}' in
-                      'push')
-                          echo '::set-output name=shouldDeployToNode::yes'
-                          ;;
-                      'workflow_dispatch')
-                          if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
-                              echo '::set-output name=shouldDeployToNode::yes'
-                          fi
-                          ;;
-                      *)
-                          :
-                          ;;
-                  esac
-              fi
+          if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
+              echo '::set-output name=shouldPushUpdates::yes'
           fi
 
-      - name: Setup cachix
-        if: ${{ steps.variables.outputs.shouldBuildNixos == 'yes' }}
-        uses: cachix/cachix-action@v10
-        with:
-          name: ${{ steps.variables.outputs.cachixName }}
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          pushFilter: ${{ steps.variables.outputs.cachixPushfilter }}
-
-      # https://github.com/actions/virtual-environments/issues/2840#issuecomment-790492173
-      # https://github.com/actions/virtual-environments/issues/709
-      - name: Free some disk space
-        if: ${{ steps.variables.outputs.shouldBuildNixos == 'yes' }}
-        run: |
-          set +e
-          echo "=============================================================================="
-          echo "Listing 100 largest packages"
-          echo "=============================================================================="
-          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
-          echo "=============================================================================="
-          echo "Removing large packages"
-          echo "=============================================================================="
-          sudo snap remove chromium
-          sudo snap remove gnome
-          sudo snap remove lxd
-          sudo apt-get remove -y '^ghc-.*'
-          sudo apt-get remove -y '^adoptopenjdk-.*'
-          sudo apt-get remove -y '^dotnet-.*'
-          sudo apt-get remove -y '^llvm-.*'
-          sudo apt-get remove -y 'libllvm.*'
-          sudo apt-get remove -y 'libclang.*'
-          sudo apt-get remove -y 'php.*'
-          sudo apt-get remove -y '^mysql-server.*'
-          sudo apt-get remove -y '^mongodb.*'
-          sudo apt-get remove -y azure-cli
-          sudo apt-get remove -y google-cloud-sdk
-          sudo apt-get remove -y hhvm
-          sudo apt-get remove -y google-chrome-stable
-          sudo apt-get remove -y firefox
-          sudo apt-get remove -y libgl1-mesa-dri
-          sudo apt-get remove -y powershell
-          sudo apt-get remove -y snapd
-          sudo apt-get clean
-          echo "=============================================================================="
-          echo "Removing large directories"
-          echo "=============================================================================="
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf /root/.nuget
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/rust
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /var/lib/snapd
-          sudo rm -rf /usr/local/graalvm
-          sudo rm -rf /home/linuxbrew/.linuxbrew
-          sudo rm -rf /usr/local/.ghcup/ghc
-          echo "=============================================================================="
-          echo "Showing disk usage"
-          echo "=============================================================================="
-          df -h
-
-      # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
-      - name: Install qemu on ${{ matrix.system }}
-        if: ${{ steps.variables.outputs.shouldSetupQemu == 'yes' }}
-        run: |
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get update -q -y
-          case '${{ matrix.nix-system }}' in
-              'aarch64-linux')
-                  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -q -y qemu-system-aarch64 qemu-efi binfmt-support qemu-user-static
-                  ;;
-              *)
-                  echo "Unknown system: ${{ matrix.nix-system }}"
-                  ;;
-          esac
-
-          mkdir -p ~/.config/nix
-          sudo mkdir -p /etc/nix
-          cat <<EOF | tee -a ~/.config/nix/nix.conf
-          sandbox = false
-          system = ${{ matrix.nix-system }}
-          extra-platforms = ${{ matrix.nix-system }}
-          system-features = ${{ matrix.nix-system }} arm-linux x86_64-linux
-          EOF
+          if [[ "${{ matrix.deploy }}" == "true" ]]; then
+              case '${{ github.event_name }}' in
+                  'push')
+                      echo '::set-output name=shouldDeployToNode::yes'
+                      ;;
+                  'workflow_dispatch')
+                      if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
+                          echo '::set-output name=shouldDeployToNode::yes'
+                      fi
+                      ;;
+                  *)
+                      :
+                      ;;
+              esac
+          fi
 
       - name: Build profile for ${{ matrix.host }}
-        if: ${{ steps.variables.outputs.shouldBuildNixos == 'yes' }}
+        if: steps.variables.outputs.shouldBuildNixos == 'yes'
         run: |
           make HOST=${{ matrix.host }} nixos-build nixos-profile-path-info
           df -h
 
       - name: Import vault token
-        if: ${{ steps.variables.outputs.shouldDeployToNode == 'yes' }}
+        if: steps.variables.outputs.shouldDeployToNode == 'yes'
         uses: hashicorp/vault-action@v2.4.0
         with:
-          method: approle
-          url: ${{ secrets.VAULT_ADDR }}
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          method: "approle"
+          url: "${{ secrets.VAULT_ADDR }}"
+          roleId: "${{ secrets.VAULT_ROLE_ID }}"
+          secretId: "${{ secrets.VAULT_SECRET_ID }}"
           exportToken: true
           exportEnv: true
           secrets: |
             ssh-host-signer/config/ca public_key | SSH_CA_PUBLIC_KEY ;
 
       - name: Deploy to node
+        if: steps.variables.outputs.shouldDeployToNode == 'yes'
         env:
-          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-          SSH_CONFIG: ${{ secrets.SSH_CONFIG }}
-        if: ${{ steps.variables.outputs.shouldDeployToNode == 'yes' }}
+          VAULT_ADDR: "${{ secrets.VAULT_ADDR }}"
+          SSH_CONFIG: "${{ secrets.SSH_CONFIG }}"
         run: |
           set -euo pipefail
           nix profile install -f '<nixpkgs>' vault wstunnel openssh
@@ -253,7 +157,7 @@ jobs:
           make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ matrix.host }}" nixos-deploy
 
       - name: Push commit with updated inputs
-        if: ${{ steps.variables.outputs.shouldPushUpdates == 'yes' }}
+        if: steps.variables.outputs.shouldPushUpdates == 'yes'
         run: |
           # Flake upstreams may update dependencies. In that case, `flake.lock` may have been changed.
           if git --no-pager diff; then
@@ -261,7 +165,7 @@ jobs:
           fi
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
-          # Only push to master branch when we are building the master nix system
-          if [[ '${{ matrix.nix-system }}' == '${{ steps.variables.outputs.masterNixSystem }}' ]]; then git push; fi
+          # Only push to master branch when we are building x86_64-linux
+          if [[ '${{ matrix.nix-system }}' == 'x86_64-linux' ]]; then git push; fi
           git switch -C ${{ matrix.nix-system }}
           git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}
