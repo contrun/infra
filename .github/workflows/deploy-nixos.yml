@@ -1,0 +1,73 @@
+name: deploy nixos profile
+
+on:
+  workflow_call:
+    inputs:
+      deploy:
+        description: 'whether to really deploy nixos profile, used for early return'
+        default: true
+        required: false
+        type: string
+      host:
+        description: 'nixos host to deploy'
+        required: true
+        type: string
+    secrets:
+      vault-url:
+        description: 'full url of vault server'
+        required: true
+      vault-role-id:
+        description: 'vault role id'
+        required: true
+      vault-secret-id:
+        description: 'vault secret id'
+        required: true
+      ssh-config:
+        description: 'ssh config'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        if: inputs.deploy
+        uses: actions/checkout@v3
+        with:
+          repository: "contrun/infra"
+          submodules: true
+
+      - name: Setup nix
+        uses: ./
+        if: inputs.deploy
+        with:
+          setup-cachix: false
+          setup-qemu: false
+          free-disk-space: false
+
+      - name: Import vault token
+        if: inputs.deploy
+        uses: hashicorp/vault-action@v2.4.0
+        with:
+          method: "approle"
+          url: "${{ secrets.vault-url }}"
+          Roleid: "${{ secrets.vault-role-id }}"
+          secretId: "${{ secrets.vault-secret-id }}"
+          exportToken: true
+          exportEnv: true
+          secrets: |
+            ssh-host-signer/config/ca public_key | SSH_CA_PUBLIC_KEY ;
+
+      - name: Deploy to node
+        if: inputs.deploy
+        env:
+          VAULT_ADDR: "${{ secrets.vault-url }}"
+          SSH_CONFIG: "${{ secrets.ssh-config }}"
+        run: |
+          set -euo pipefail
+          nix profile install -f '<nixpkgs>' vault wstunnel openssh
+          echo y | ssh-keygen -f $HOME/.ssh/id_ed25519 -t ed25519 -P ""
+          vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
+          echo "$SSH_CONFIG" > ~/.ssh/config
+          echo "@cert-authority * $SSH_CA_PUBLIC_KEY" > ~/.ssh/known_hosts
+          make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ matrix.host }}" nixos-deploy

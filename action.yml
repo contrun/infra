@@ -47,7 +47,7 @@ runs:
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 
     - name: Setup cachix
-      if: inputs.setup-cachix
+      if: ${{ inputs.setup-cachix }}
       uses: cachix/cachix-action@v10
       with:
         name: ${{ inputs.cachix-name == '' && github.repository_owner || inputs.cachix-name }}
@@ -57,7 +57,7 @@ runs:
     # https://github.com/actions/virtual-environments/issues/2840#issuecomment-790492173
     # https://github.com/actions/virtual-environments/issues/709
     - name: Free some disk space
-      if: inputs.free-disk-space
+      if: ${{ inputs.free-disk-space }}
       shell: bash
       run: |
         set +e
@@ -111,7 +111,7 @@ runs:
 
     # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
     - name: Install qemu on ${{ matrix.system }}
-      if: inputs.setup-qemu && inputs.nix-systems != '' && inputs.nix-systems != 'x86_64-linux'
+      if: ${{ inputs.setup-qemu && inputs.nix-systems != '' && inputs.nix-systems != 'x86_64-linux' }}
       shell: bash
       run: |
         sudo env DEBIAN_FRONTEND=noninteractive apt-get update -q -y
