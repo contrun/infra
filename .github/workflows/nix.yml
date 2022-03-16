@@ -32,6 +32,7 @@ on:
       - ci
       - "releases/*"
     paths:
+      - ".github/workflows/nix.yml"
       - "*.nix"
       - "**/*.nix"
       - "nix/**"
@@ -47,14 +48,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        nix-system:
-          - "x86_64-linux"
+        include:
+          - host: "cicd-x86_64-linux"
+            nix-system: "x86_64-linux"
+            deploy: "no"
+          - host: "mdq"
+            nix-system: "x86_64-linux"
+            deploy: "yes"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          submodules: true
 
       - name: Install nix
         uses: cachix/install-nix-action@v16
@@ -97,11 +103,6 @@ jobs:
       - name: Set up common variables
         id: variables
         run: |
-          export deployHost=mdq deployHostSystem=x86_64-linux masterNixSystem=x86_64-linux
-          echo "::set-output name=deployHost::$deployHost"
-          echo "::set-output name=deployHostSystem::$deployHostSystem"
-          echo "::set-output name=masterNixSystem::$masterNixSystem"
-
           echo '::set-output name=cachixName::${{ github.repository_owner }}'
           echo '::set-output name=cachixPushFilter::clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
 
@@ -116,22 +117,18 @@ jobs:
                   echo '::set-output name=shouldSetupQemu::yes'
               fi
 
-              if [[ "${{ matrix.nix-system }}" == "$deployHostSystem" ]]; then
-                  echo '::set-output name=shouldBuildDeployNodeNixos::yes'
-
+              if [[ "${{ matrix.deploy }}" == "yes" ]]; then
                   case '${{ github.event_name }}' in
                       'push')
                           echo '::set-output name=shouldDeployToNode::yes'
-                          break
                           ;;
                       'workflow_dispatch')
                           if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
                               echo '::set-output name=shouldDeployToNode::yes'
                           fi
-                          break
                           ;;
                       *)
-                          break
+                          :
                           ;;
                   esac
               fi
@@ -142,7 +139,6 @@ jobs:
         uses: cachix/cachix-action@v10
         with:
           name: ${{ steps.variables.outputs.cachixName }}
-          extraPullNames: iohk
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           pushFilter: ${{ steps.variables.outputs.cachixPushfilter }}
 
@@ -201,18 +197,16 @@ jobs:
           df -h
 
       # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
-      - name: Install qemu on ${{ matrix.nix-system }}
+      - name: Install qemu on ${{ matrix.system }}
         if: ${{ steps.variables.outputs.shouldSetupQemu == 'yes' }}
         run: |
           sudo env DEBIAN_FRONTEND=noninteractive apt-get update -q -y
           case '${{ matrix.nix-system }}' in
               'aarch64-linux')
                   sudo env DEBIAN_FRONTEND=noninteractive apt-get install -q -y qemu-system-aarch64 qemu-efi binfmt-support qemu-user-static
-                  break
                   ;;
               *)
                   echo "Unknown system: ${{ matrix.nix-system }}"
-                  break
                   ;;
           esac
 
@@ -225,32 +219,11 @@ jobs:
           system-features = ${{ matrix.nix-system }} arm-linux x86_64-linux
           EOF
 
-      - name: Build ${{ matrix.nix-system }} nixos
+      - name: Build profile for ${{ matrix.host }}
         if: ${{ steps.variables.outputs.shouldBuildNixos == 'yes' }}
         run: |
-          make HOST=cicd-${{ matrix.nix-system }} nixos-build nixos-profile-path-info
+          make HOST=${{ matrix.host }} nixos-build nixos-profile-path-info
           df -h
-
-      # In case following steps failed, we can still push build results from the preceding steps.
-      # Waiting for https://github.com/cachix/cachix-action/issues/83 to land
-      # Command copied from https://github.com/cachix/cachix-action/blob/37b92535c36e3c2071fa5ef392ae43e396e640b4/dist/main/index.js#L1090
-      - name: Push build results to cachix
-        if: ${{ steps.variables.outputs.shouldBuildNixos == 'yes' }}
-        run: |
-          $HOME/work/_actions/cachix/cachix-action/*/dist/main/list-nix-store.sh "$HOME/.nix-profile/bin/cachix" "${{ steps.variables.outputs.cachixName }}" "${{ steps.variables.outputs.cachixPushfilter }}"
-
-      - name: Build deploy node nixos
-        if: ${{ steps.variables.outputs.shouldBuildDeployNodeNixos == 'yes' }}
-        run: |
-          make HOST=${{ steps.variables.outputs.deployHost }} nixos-build nixos-profile-path-info
-          df -h
-
-      # Following steps need these caches.
-      # Command copied from https://github.com/cachix/cachix-action/blob/37b92535c36e3c2071fa5ef392ae43e396e640b4/dist/main/index.js#L1090
-      - name: Push build results to cachix
-        if: ${{ steps.variables.outputs.shouldBuildDeployNodeNixos == 'yes' }}
-        run: |
-          $HOME/work/_actions/cachix/cachix-action/*/dist/main/list-nix-store.sh "$HOME/.nix-profile/bin/cachix" "${{ steps.variables.outputs.cachixName }}" "${{ steps.variables.outputs.cachixPushfilter }}"
 
       - name: Import vault token
         if: ${{ steps.variables.outputs.shouldDeployToNode == 'yes' }}
@@ -277,7 +250,7 @@ jobs:
           vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
           echo "$SSH_CONFIG" >> ~/.ssh/config
           echo "@cert-authority * $SSH_CA_PUBLIC_KEY" >> ~/.ssh/known_hosts
-          make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ steps.variables.outputs.deployHost }}" nixos-deploy
+          make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ matrix.host }}" nixos-deploy
 
       - name: Push commit with updated inputs
         if: ${{ steps.variables.outputs.shouldPushUpdates == 'yes' }}
