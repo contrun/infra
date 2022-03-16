@@ -1885,6 +1885,18 @@ in
               service = "organice";
               tls = { };
             };
+            temp = {
+              rule = getTraefikRuleByDomainPrefix "temp";
+              service = "temp";
+              middlewares = [ ];
+              tls = { };
+            };
+            test = {
+              rule = getTraefikRuleByDomainPrefix "test";
+              service = "test";
+              middlewares = [ ];
+              tls = { };
+            };
           } // lib.optionalAttrs prefs.ociContainers.enableHomer {
             homer = {
               rule = getTraefikBareDomainRule;
@@ -2039,6 +2051,16 @@ in
               loadBalancer = {
                 passHostHeader = false;
                 servers = [{ url = "https://organice.200ok.ch/"; }];
+              };
+            };
+            temp = {
+              loadBalancer = {
+                servers = [{ url = "http://127.0.0.1:7080/"; }];
+              };
+            };
+            test = {
+              loadBalancer = {
+                servers = [{ url = "http://127.0.0.1:7081/"; }];
               };
             };
           } // lib.optionalAttrs prefs.enableCodeServer {
