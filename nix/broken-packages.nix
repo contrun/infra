@@ -1,7 +1,1 @@
-[
-  "impressive"
-  "pdf2djvu"
-  "aqemu"
-  "radiotray-ng"
-  "haskellPackages.patat"
-]
+[ "aqemu" "haskellPackages.patat" "impressive" "pdf2djvu" ]
