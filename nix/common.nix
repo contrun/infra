@@ -472,7 +472,7 @@ in
         ydotool
         wev
         slurp
-        kanshi
+        # kanshi
         wayvnc
         waypipe
         (pkgs.waylandPkgs.wlvncc or null)
@@ -492,7 +492,7 @@ in
         xcape
         xautolock
         xdotool
-        xlibs.xmodmap
+        xorg.xmodmap
         xmacro
         autokey
         xsel
