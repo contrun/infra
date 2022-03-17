@@ -206,13 +206,13 @@ in
               domain = "*";
               type = "hard";
               item = "nofile";
-              value = "51200";
+              value = "131 071";
             }
             {
               domain = "*";
               type = "soft";
               item = "nofile";
-              value = "51200";
+              value = "131 071";
             }
           ];
           enableGnomeKeyring = prefs.enableGnomeKeyring;
@@ -3960,7 +3960,10 @@ builtins.toString prefs.ownerGroupGid
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       {
-        extraConfig = "DefaultTimeoutStopSec=10s";
+        extraConfig = ''
+          DefaultLimitNOFILE=8192:524288
+          DefaultTimeoutStopSec=10s
+        '';
         tmpfiles = {
           rules = [
             "d /root/.cache/trash - root root 30d"

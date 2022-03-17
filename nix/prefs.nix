@@ -525,7 +525,7 @@ let
       "br_netfilter"
     ];
     kernelSysctl = {
-      "fs.file-max" = 51200;
+      "fs.file-max" = 131071;
       "net.core.rmem_max" = 67108864;
       "net.core.wmem_max" = 67108864;
       "net.core.netdev_max_backlog" = 250000;
