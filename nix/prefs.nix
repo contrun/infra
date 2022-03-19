@@ -376,6 +376,7 @@ let
     enableNextcloud = false;
     enableYandex = false;
     nextcloudWhere = "/nc/sync";
+    enableCgroupAccounting = false;
     nextcloudContainerDataDirectory = "/var/data/nextcloud-data";
     ownerNextcloudContainerDataDirectory =
       "${self.nextcloudContainerDataDirectory}/${self.owner}/files";
@@ -416,7 +417,7 @@ let
     enableCompton = false;
     enableFcron = false;
     enableRedshift = false;
-    enablePostfix = !self.isMinimalSystem;
+    enablePostfix = false;
     enableNfs = !self.isMinimalSystem;
     linkedJdks =
       if self.isMinimalSystem then

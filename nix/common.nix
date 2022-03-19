@@ -3964,6 +3964,7 @@ builtins.toString prefs.ownerGroupGid
           DefaultLimitNOFILE=8192:524288
           DefaultTimeoutStopSec=10s
         '';
+        enableCgroupAccounting = prefs.enableCgroupAccounting;
         tmpfiles = {
           rules = [
             "d /root/.cache/trash - root root 30d"
@@ -4713,8 +4714,8 @@ builtins.toString prefs.ownerGroupGid
                 if zerotier-cli -p${builtins.toString config.services.zerotierone.port} info | grep -i offline; then
                     systemctl restart zerotierone
                 fi
-                zerotier-cli -p${builtins.toString config.services.zerotierone.port} info 
-                zerotier-cli -p${builtins.toString config.services.zerotierone.port} peers 
+                zerotier-cli -p${builtins.toString config.services.zerotierone.port} info
+                zerotier-cli -p${builtins.toString config.services.zerotierone.port} peers
               '';
               serviceConfig = { Type = "oneshot"; };
             };
