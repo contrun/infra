@@ -18,6 +18,11 @@ let
   # YAML is a superset of JSON.
   toYAML = name: attrs: builtins.toFile "${name}.json" (builtins.toJSON attrs);
 
+  # Helper to make merging a ton of optional feature more clear.
+  mergeOptionalConfigs = list: builtins.foldl' (acc: e: acc // (lib.optionalAttrs e.enable e.config)) { } list;
+
+  mergeOptionalLists = list: builtins.foldl' (acc: e: acc ++ (lib.optionals e.enable e.list)) [ ] list;
+
   # Copied from https://github.com/tejing1/nixos-config/blob/5c08d09dd785c569941021aedaa6ff80bc86be63/lib/sys/mkFlake.nix
   generateFlake =
     let
@@ -293,24 +298,29 @@ in
       "fr_FR.UTF-8/UTF-8"
       "zh_CN.UTF-8/UTF-8"
     ];
-  } // lib.optionalAttrs prefs.enableInputMethods {
-    inputMethod = {
-      enabled = prefs.enabledInputMethod;
-      ibus.engines = with pkgs.ibus-engines; [
-        libpinyin
-        table
-        table-chinese
-        table-others
-      ];
-      fcitx.engines = with pkgs.fcitx-engines; [
-        libpinyin
-        cloudpinyin
-        rime
-        table-extra
-        table-other
-      ];
-    };
-  };
+  } // (mergeOptionalConfigs [
+    {
+      enable = prefs.enableInputMethods;
+      config = {
+        inputMethod = {
+          enabled = prefs.enabledInputMethod;
+          ibus.engines = with pkgs.ibus-engines; [
+            libpinyin
+            table
+            table-chinese
+            table-others
+          ];
+          fcitx.engines = with pkgs.fcitx-engines; [
+            libpinyin
+            cloudpinyin
+            rime
+            table-extra
+            table-other
+          ];
+        };
+      };
+    }
+  ]);
 
   time = {
     timeZone = "Asia/Shanghai";
@@ -318,55 +328,69 @@ in
   };
 
   environment = {
-    etc = {
-      "nix/path/nixpkgs".source = inputs.nixpkgs;
-      "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
-      "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
-      "nix/path/home-manager".source = inputs.home-manager;
-      "nix/path/pkgs".source = mypkgs;
-      "nix/path/activeconfig".source = inputs.self;
-      "davfs2/secrets" = {
-        enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
-        mode = "0600";
-        source = prefs.davfs2Secrets;
-      };
-      "keyd/default.cfg" = {
-        text = ''
-          capslock = layer(C)
-          rightalt = layer(A)
-          leftmeta = layer(M-A)
-          rightmeta = oneshot(G)
-          rightcontrol = layer(M)
+    etc =
+      {
+        "nix/path/nixpkgs".source = inputs.nixpkgs;
+        "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
+        "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
+        "nix/path/home-manager".source = inputs.home-manager;
+        "nix/path/pkgs".source = mypkgs;
+        "nix/path/activeconfig".source = inputs.self;
+        "davfs2/secrets" = {
+          enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
+          mode = "0600";
+          source = prefs.davfs2Secrets;
+        };
+        "keyd/default.cfg" = {
+          text = ''
+            capslock = layer(C)
+            rightalt = layer(A)
+            leftmeta = layer(M-A)
+            rightmeta = oneshot(G)
+            rightcontrol = layer(M)
 
-          space = overload(myspace, space)
-          [myspace]
-          n = pagedown
-          p = pageup
-          h = left
-          j = down
-          k = up
-          l = right
-          d = delete
-          b = backspace
-          o = enter
-          e = escape
-          m = menu
-          t = tab
-          c = capslock
-        '';
-        mode = "0644";
-      };
-      hosts.mode = "0644";
-    } // lib.optionalAttrs (builtins.pathExists "${prefs.home}/Workspace/infra") {
-      "nix/path/config".source = "${prefs.home}/Workspace/infra";
-    } // lib.optionalAttrs (prefs.enableCrio && prefs.enableZfs) {
-      "crio/crio.conf.d/01-zfs.conf".text = ''
-        [crio]
-        storage_driver = "zfs"
-      '';
-    } // lib.optionalAttrs prefs.enableResolved {
-      "systemd/resolved.conf" = { mode = "0644"; };
-    };
+            space = overload(myspace, space)
+            [myspace]
+            n = pagedown
+            p = pageup
+            h = left
+            j = down
+            k = up
+            l = right
+            d = delete
+            b = backspace
+            o = enter
+            e = escape
+            m = menu
+            t = tab
+            c = capslock
+          '';
+          mode = "0644";
+        };
+        hosts.mode = "0644";
+      } // (mergeOptionalConfigs [
+        {
+          enable = builtins.pathExists "${prefs.home}/Workspace/infra";
+          config = {
+            "nix/path/config".source = "${prefs.home}/Workspace/infra";
+          };
+        }
+        {
+          enable = prefs.enableCrio && prefs.enableZfs;
+          config = {
+            "crio/crio.conf.d/01-zfs.conf".text = ''
+              [crio]
+              storage_driver = "zfs"
+            '';
+          };
+        }
+        {
+          enable = prefs.enableResolved;
+          config = {
+            "systemd/resolved.conf" = { mode = "0644"; };
+          };
+        }
+      ]);
 
     extraOutputsToInstall = prefs.extraOutputsToInstall;
     systemPackages = with pkgs;
@@ -464,127 +488,127 @@ in
         fcron
         gmp
         libcap
-      ] ++ (if prefs.isMinimalSystem then [ ] else [
-        ly
+      ] ++ (mergeOptionalLists [
+        {
+          enable = ! prefs.isMinimalSystem;
+          list = [
+            ly
 
-        hardinfo
-        udiskie
-        ydotool
-        wev
-        slurp
-        # kanshi
-        wayvnc
-        waypipe
-        (pkgs.waylandPkgs.wlvncc or null)
-        brightnessctl
-        wl-clipboard
-        wlsunset
-        wlroots
-        wayland
-        wayland-protocols
-        wlr-randr
-        wdisplays
-        autotiling
+            hardinfo
+            udiskie
+            ydotool
+            wev
+            slurp
+            # kanshi
+            wayvnc
+            waypipe
+            (pkgs.waylandPkgs.wlvncc or null)
+            brightnessctl
+            wl-clipboard
+            wlsunset
+            wlroots
+            wayland
+            wayland-protocols
+            wlr-randr
+            wdisplays
+            autotiling
 
-        acpilight
-        pulsemixer
-        xbindkeys
-        xcape
-        xautolock
-        xdotool
-        xorg.xmodmap
-        xmacro
-        autokey
-        xsel
-        xvkbd
+            acpilight
+            pulsemixer
+            xbindkeys
+            xcape
+            xautolock
+            xdotool
+            xorg.xmodmap
+            xmacro
+            autokey
+            xsel
+            xvkbd
 
-        (pkgs.myPackages.keyd or null)
+            (pkgs.myPackages.keyd or null)
 
-        xorg.xev
-        xorg.libX11
-        xorg.libXft
-        xorg.libXpm
-        xorg.libXinerama
-        xorg.libXext
-        xorg.libXrandr
-        xorg.libXrender
-        xorg.xorgproto
-        libxkbcommon
-        pixman
-        libevdev
+            xorg.xev
+            xorg.libX11
+            xorg.libXft
+            xorg.libXpm
+            xorg.libXinerama
+            xorg.libXext
+            xorg.libXrandr
+            xorg.libXrender
+            xorg.xorgproto
+            libxkbcommon
+            pixman
+            libevdev
 
-        lldb
-        sxhkd
+            lldb
+            sxhkd
 
-        (pkgs.myPackages.deploy-rs or null)
-        (pkgs.myPackages.nix-autobahn or null)
-        (pkgs.myPackages.aioproxy or null)
-        # Not working for now
-        # error: store path '/nix/store/7phspaj5lxw5qja709r5j3ivcllp0gk2-hyhhrcbzng0kgkyv63mqhznhrp67fhf5-source-crate2nix' is not allowed to have references
-        # See https://github.com/NixOS/nix/issues/5647
-        # (pkgs.myPackages.helix or helix)
-        helix
+            (pkgs.myPackages.deploy-rs or null)
+            (pkgs.myPackages.nix-autobahn or null)
+            (pkgs.myPackages.aioproxy or null)
+            # Not working for now
+            # error: store path '/nix/store/7phspaj5lxw5qja709r5j3ivcllp0gk2-hyhhrcbzng0kgkyv63mqhznhrp67fhf5-source-crate2nix' is not allowed to have references
+            # See https://github.com/NixOS/nix/issues/5647
+            # (pkgs.myPackages.helix or helix)
+            helix
 
-        # gnome.adwaita-icon-theme
-        # gnome.dconf
-        # gnome.gsettings-desktop-schemas
-        # gnome.zenity
-        # font-manager
+            # gnome.adwaita-icon-theme
+            # gnome.dconf
+            # gnome.gsettings-desktop-schemas
+            # gnome.zenity
+            # font-manager
 
-        dunst
-        rofi
-        compton
-        blueman
-        virt-manager
-        fdm
-        notify-osd-customizable
-        noti
-        gparted
+            dunst
+            rofi
+            compton
+            blueman
+            virt-manager
+            fdm
+            notify-osd-customizable
+            noti
+            gparted
 
-        bluez
-        dmenu
-        alacritty
-        gnome.seahorse
-        pinentry
-        rxvt-unicode
-        bluez-tools
-        i3blocks
-        i3lock
-        i3status-rust
-        firefox
-        termite
-        foot
-      ]) ++ (if (prefs.enableTailScale) then [ tailscale ] else [ ])
-      ++ (if (prefs.enableCodeServer) then [ code-server ] else [ ])
-      ++ (if (prefs.enableZfs) then [ zfsbackup ] else [ ])
-      ++ (if (prefs.enableBtrfs) then [ btrbk btrfs-progs ] else [ ])
-      ++ (if (prefs.enableClashRedir) then [ clash ] else [ ])
-      ++ (if (prefs.enableK3s) then [ k3s ] else [ ])
-      ++ (if prefs.enableDocker then [ docker-buildx ] else [ ])
-      ++ (if prefs.enableWstunnel then [ wstunnel ] else [ ])
-      ++ (if prefs.enableXmonad then [ xmobar ] else [ ])
-      ++ (if prefs.enableEmacs then [ emacs ] else [ ])
-      ++ (if (!prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux")) then [
-        wine
-      ] else
-        [ ])
-      ++ (if (prefs.nixosSystem == "x86_64-linux") then [
-        # steam-run-native
-        # aqemu
-        bpftool
-        prefs.kernelPackages.perf
-        # TODO: broken for now, see https://github.com/NixOS/nixpkgs/issues/140358
-        # prefs.kernelPackages.bpftrace
-        prefs.kernelPackages.bcc
-      ] else
-        [ ]) ++ (if prefs.enableActivityWatch then
-        with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [
-          aw-server-rust
-          aw-watcher-afk
-          aw-watcher-window
-        ]
-      else
-        [ ])
+            bluez
+            dmenu
+            alacritty
+            gnome.seahorse
+            pinentry
+            rxvt-unicode
+            bluez-tools
+            i3blocks
+            i3lock
+            i3status-rust
+            firefox
+            termite
+            foot
+          ];
+        }
+        { enable = prefs.enableTailScale; list = [ tailscale ]; }
+        { enable = prefs.enableCodeServer; list = [ code-server ]; }
+        { enable = prefs.enableZfs; list = [ zfsbackup ]; }
+        { enable = prefs.enableBtrfs; list = [ btrbk btrfs-progs ]; }
+        { enable = prefs.enableClashRedir; list = [ clash ]; }
+        { enable = prefs.enableK3s; list = [ k3s ]; }
+        { enable = prefs.enableDocker; list = [ docker-buildx ]; }
+        { enable = prefs.enableWstunnel; list = [ wstunnel ]; }
+        { enable = prefs.enableXmonad; list = [ xmobar ]; }
+        { enable = prefs.enableEmacs; list = [ emacs ]; }
+        { enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux"); list = [ wine ]; }
+        {
+          enable = prefs.nixosSystem == "x86_64-linux";
+          list = [
+            # steam-run-native
+            # aqemu
+            bpftool
+            prefs.kernelPackages.perf
+            # TODO: broken for now, see https://github.com/NixOS/nixpkgs/issues/140358
+            # prefs.kernelPackages.bpftrace
+            prefs.kernelPackages.bcc
+          ];
+        }
+        { enable = prefs.enableActivityWatch; list = with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [ aw-server-rust aw-watcher-afk aw-watcher-window ]; }
+      ]
+      )
       );
     enableDebugInfo = prefs.enableDebugInfo;
     shellAliases = {
@@ -631,16 +655,25 @@ in
       LESS = "-x4RFsX";
       PAGER = "less";
       EDITOR = "nvim";
-    } // lib.optionalAttrs (!prefs.enableMicrovmGuest) {
-      # TODO: failed to build on microvm guest
-      # error: access to canonical path '/nix/store/lz5pb4y9z79lc65asdx6j0wiicm3p12q-binutils-wrapper-2.35.2/nix-support/dynamic-linker' is forbidden in restricted mode
-      NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
-    } // lib.optionalAttrs (pkgs ? myPackages) {
-      # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
-      MYPYTHONPATH =
-        (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
-          [ (pkgs.myPackages.python or pkgs.python) ];
-    });
+    } // (mergeOptionalConfigs [
+      {
+        enable = !prefs.enableMicrovmGuest;
+        config = {
+          # TODO: failed to build on microvm guest
+          # error: access to canonical path '/nix/store/lz5pb4y9z79lc65asdx6j0wiicm3p12q-binutils-wrapper-2.35.2/nix-support/dynamic-linker' is forbidden in restricted mode
+          NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+        };
+      }
+      {
+        enable = pkgs ? myPackages;
+        config = {
+          # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
+          MYPYTHONPATH =
+            (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
+              [ (pkgs.myPackages.python or pkgs.python) ];
+        };
+      }
+    ]));
     variables = {
       # systemctl --user does not work without this
       # https://serverfault.com/questions/887283/systemctl-user-process-org-freedesktop-systemd1-exited-with-status-1/887298#887298
@@ -1897,80 +1930,121 @@ in
               middlewares = [ ];
               tls = { };
             };
-          } // lib.optionalAttrs prefs.ociContainers.enableHomer {
-            homer = {
-              rule = getTraefikBareDomainRule;
-              service = "homer@docker";
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableCodeServer {
-            codeserver = {
-              rule = getTraefikRuleByDomainPrefix "codeserver";
-              service = "codeserver";
-              middlewares = [ ];
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableWstunnel {
-            wstunnel-with-auth = {
-              rule = "(${
+          } // (mergeOptionalConfigs [
+            {
+              enable = prefs.ociContainers.enableHomer;
+              config = {
+                homer = {
+                  rule = getTraefikBareDomainRule;
+                  service = "homer@docker";
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableCodeServer;
+              config = {
+                codeserver = {
+                  rule = getTraefikRuleByDomainPrefix "codeserver";
+                  service = "codeserver";
+                  middlewares = [ ];
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableWstunnel;
+              config = {
+                wstunnel-with-auth = {
+                  rule = "(${
                   getTraefikRuleByDomainPrefix "wstunnel"
                 }) && !PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
-              middlewares = [ "authelia@docker" "wstunnel" ];
-              service = "dummy";
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableWstunnel {
-            wstunnel = {
-              rule = "(${
+                  middlewares = [ "authelia@docker" "wstunnel" ];
+                  service = "dummy";
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableWstunnel;
+              config = {
+                wstunnel = {
+                  rule = "(${
                   getTraefikRuleByDomainPrefix "wstunnel"
                 }) && PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
-              service = "wstunnel";
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableSyncthing {
-            syncthing = {
-              rule = getTraefikRuleByDomainPrefix "syncthing";
-              service = "syncthing";
-              middlewares = [ "authelia@docker" "syncthing" ];
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableGrafana {
-            grafana = {
-              rule = getTraefikRuleByDomainPrefix "grafana";
-              service = "grafana";
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableJupyter {
-            jupyter = {
-              rule = getTraefikRuleByDomainPrefix "jupyter";
-              service = "jupyter";
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableSmosServer {
-            smos = {
-              rule = getTraefikRuleByDomainPrefix "smos";
-              service = "smos";
-              tls = { };
-            };
-            smos-api = {
-              rule = getTraefikRuleByDomainPrefix "smos-api";
-              service = "smos-api";
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableActivityWatch {
-            activitywatch = {
-              rule = getTraefikRuleByDomainPrefix "activitywatch";
-              service = "activitywatch";
-              middlewares = [ "authelia@docker" ];
-              tls = { };
-            };
-          } // lib.optionalAttrs prefs.enableTtyd {
-            ttyd = {
-              rule = getTraefikRuleByDomainPrefix "ttyd";
-              service = "ttyd";
-              tls = { };
-            };
-          };
+                  service = "wstunnel";
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableSyncthing;
+              config = {
+                syncthing = {
+                  rule = getTraefikRuleByDomainPrefix "syncthing";
+                  service = "syncthing";
+                  middlewares = [ "authelia@docker" "syncthing" ];
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableGrafana;
+              config = {
+                grafana = {
+                  rule = getTraefikRuleByDomainPrefix "grafana";
+                  service = "grafana";
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableJupyter;
+              config = {
+                jupyter = {
+                  rule = getTraefikRuleByDomainPrefix "jupyter";
+                  service = "jupyter";
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableSmosServer;
+              config = {
+                smos = {
+                  rule = getTraefikRuleByDomainPrefix "smos";
+                  service = "smos";
+                  tls = { };
+                };
+                smos-api = {
+                  rule = getTraefikRuleByDomainPrefix "smos-api";
+                  service = "smos-api";
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableActivityWatch;
+              config = {
+                activitywatch = {
+                  rule = getTraefikRuleByDomainPrefix "activitywatch";
+                  service = "activitywatch";
+                  middlewares = [ "authelia@docker" ];
+                  tls = { };
+                };
+              };
+            }
+            {
+              enable = prefs.enableTtyd;
+              config = {
+                ttyd = {
+                  rule = getTraefikRuleByDomainPrefix "ttyd";
+                  service = "ttyd";
+                  tls = { };
+                };
+              };
+            }
+          ]);
           middlewares = {
             aria2 = {
               replacePathRegex = {
@@ -2063,86 +2137,117 @@ in
                 servers = [{ url = "http://127.0.0.1:7081/"; }];
               };
             };
-          } // lib.optionalAttrs prefs.enableCodeServer {
-            codeserver = {
-              loadBalancer = {
-                servers = [{ url = "http://127.0.0.1:4050/"; }];
+          } // (mergeOptionalConfigs [{
+            enable = prefs.enableCodeServer;
+            config = {
+              codeservear = {
+                loadBalancer = {
+                  servers = [{ url = "http://127.0.0.1:4050/"; }];
+                };
               };
             };
-          } // lib.optionalAttrs prefs.enableWstunnel {
-            wstunnel = {
-              loadBalancer = {
-                servers = [{
-                  url =
-                    "http://127.0.0.1:${builtins.toString prefs.wstunnelPort}/";
-                }];
+          }
+            {
+              enable = prefs.enableWstunnel;
+              config = {
+                wstunnel = {
+                  loadBalancer = {
+                    servers = [{
+                      url =
+                        "http://127.0.0.1:${builtins.toString prefs.wstunnelPort}/";
+                    }];
+                  };
+                };
               };
-            };
-          } // lib.optionalAttrs prefs.enableSyncthing {
-            syncthing = {
-              loadBalancer = {
-                passHostHeader = false;
-                servers = [{ url = "http://127.0.0.1:8384/"; }];
+            }
+            {
+              enable = prefs.enableSyncthing;
+              config = {
+                syncthing = {
+                  loadBalancer = {
+                    passHostHeader = false;
+                    servers = [{ url = "http://127.0.0.1:8384/"; }];
+                  };
+                };
               };
-            };
-          } // lib.optionalAttrs prefs.enableGrafana {
-            grafana = {
-              loadBalancer = {
-                servers = [{
-                  url =
-                    "http://127.0.0.1:${toString config.services.grafana.port}";
-                }];
+            }
+            {
+              enable = prefs.enableGrafana;
+              config = {
+                grafana = {
+                  loadBalancer = {
+                    servers = [{
+                      url =
+                        "http://127.0.0.1:${toString config.services.grafana.port}";
+                    }];
+                  };
+                };
               };
-            };
-          } // lib.optionalAttrs prefs.enableJupyter {
-            jupyter = {
-              loadBalancer = {
-                servers = [{
-                  url = "http://127.0.0.1:${
+            }
+            {
+              enable = prefs.enableJupyter;
+              config = {
+                jupyter = {
+                  loadBalancer = {
+                    servers = [{
+                      url = "http://127.0.0.1:${
                       toString config.services.jupyterhub.port
                     }";
-                }];
+                    }];
+                  };
+                };
               };
-            };
-          } // lib.optionalAttrs prefs.enableSmosServer {
-            smos = {
-              loadBalancer = {
-                servers = [{
-                  url = "http://localhost:${
+            }
+            {
+              enable = prefs.enableSmosServer;
+              config = {
+                smos = {
+                  loadBalancer = {
+                    servers = [{
+                      url = "http://localhost:${
                       builtins.toString
                       config.services.smos.production.web-server.port
                     }/";
-                }];
-              };
-            };
-            smos-api = {
-              loadBalancer = {
-                servers = [{
-                  url = "http://localhost:${
+                    }];
+                  };
+                };
+                smos-api = {
+                  loadBalancer = {
+                    servers = [{
+                      url = "http://localhost:${
                       builtins.toString
                       config.services.smos.production.api-server.port
                     }/";
-                }];
+                    }];
+                  };
+                };
               };
-            };
-          } // lib.optionalAttrs prefs.enableActivityWatch {
-            activitywatch = {
-              loadBalancer = {
-                servers = [{ url = "http://localhost:5600/"; }];
+            }
+            {
+              enable = prefs.enableActivityWatch;
+              config = {
+                activitywatch = {
+                  loadBalancer = {
+                    servers = [{ url = "http://localhost:5600/"; }];
+                  };
+                };
               };
-            };
-          } // lib.optionalAttrs prefs.enableTtyd {
-            ttyd = {
-              loadBalancer = {
-                passHostHeader = true;
-                servers = [{
-                  url = "http://localhost:${
+            }
+            {
+              enable = prefs.enableTtyd;
+              config = {
+                ttyd = {
+                  loadBalancer = {
+                    passHostHeader = true;
+                    servers = [{
+                      url = "http://localhost:${
                       builtins.toString config.services.ttyd.port
                     }/";
-                }];
+                    }];
+                  };
+                };
               };
-            };
-          };
+            }]);
         };
         tcp = {
           routers = {
@@ -2237,7 +2342,7 @@ in
                 "unix:///var/run/podman/podman.sock";
             network = "${prefs.ociContainerNetwork}";
           };
-        } // lib.optionalAttrs (prefs.enableK3s) { kubernetesIngress = { }; };
+        } // (mergeOptionalConfigs [{ enable = (prefs.enableK3s); config = { kubernetesIngress = { }; }; }]);
       };
     };
     postgresql = {
@@ -2652,7 +2757,7 @@ in
           package = pkgs.i3-gaps;
         };
         awesome.enable = prefs.enableAwesome;
-      } // (if (prefs.enableXmonad) then {
+      } // (lib.optionalAttrs prefs.enableXmonad {
         xmonad = {
           enable = true;
           enableContribAndExtras = true;
@@ -2670,8 +2775,7 @@ in
               dbus
             ];
         };
-      } else
-        { });
+      });
       displayManager =
         let
           defaultSession = prefs.xDefaultSession;
@@ -2811,7 +2915,11 @@ in
     anbox = { enable = prefs.enableAnbox; };
     oci-containers =
       let
-        mkContainer = name: enable: config:
+        mkContainer =
+          { name
+          , enable ? true
+          , config
+          }:
           lib.optionalAttrs enable (
             let
               images =
@@ -3090,849 +3198,1073 @@ builtins.concatStringsSep "," middlewares
                   "networkName"
                 ];
             in
-            { "${name}" = getConfig config; }
+            {
+              "${name}" = getConfig config;
+            }
           );
       in
       lib.optionalAttrs prefs.enableOciContainers {
         backend = prefs.ociContainerBackend;
         containers =
-          mkContainer "postgresql" prefs.ociContainers.enablePostgresql
+          builtins.foldl' (acc: e: acc // (mkContainer e)) { } [
             {
-              volumes = [ "/var/data/postgresql:/var/lib/postgresql/data" ];
-              ports = [ "5432:5432" ];
-              environmentFiles = [ "/run/secrets/postgresql-env" ];
-              enableTraefik = false;
-            }
-          // mkContainer "postgresql-init" prefs.ociContainers.enablePostgresql {
-            volumes =
-              [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
-            dependsOn = [ "postgresql" ];
-            environmentFiles = [
-              "/run/secrets/postgresql-env"
-              "/run/secrets/postgresql-backup-env"
-            ];
-            entrypoint = "/my/init-user-db.sh";
-            enableTraefik = false;
-          } // mkContainer "postgresql-debug" prefs.ociContainers.enablePostgresql {
-            autoStart = false;
-            volumes =
-              [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
-            dependsOn = [ "postgresql" ];
-            environmentFiles = [
-              "/run/secrets/postgresql-env"
-              "/run/secrets/postgresql-backup-env"
-            ];
-            entrypoint = "/bin/sh";
-            cmd = [ "-c" "tail -f /dev/null" ];
-            enableTraefik = false;
-          } // mkContainer "redis" prefs.ociContainers.enableRedis {
-            # https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume
-            extraOptions = [
-              "--mount"
-              "type=bind,source=/run/secrets/redis-conf,target=/etc/redis.conf,readonly"
-            ];
-            ports = [ "6379:6379" ];
-            cmd = [ "redis-server" "/etc/redis.conf" ];
-            enableTraefik = false;
-          } // mkContainer "authelia" prefs.ociContainers.enableAuthelia (
-            let
-              configs = ([ "authelia-conf" ]
-              ++ (lib.optionals prefs.ociContainers.enableAutheliaLocalUsers
-                [ "authelia-local-users-conf" ])
-              ++ (lib.optionals (!prefs.ociContainers.enableAutheliaLocalUsers)
-                [ "authelia-ldap-users-conf" ])
-              ++ (lib.optionals prefs.ociContainers.enablePostgresql
-                [ "authelia-postgres-conf" ])
-              ++ (lib.optionals (!prefs.ociContainers.enablePostgresql)
-                [ "authelia-sqlite-conf" ])
-              ++ (lib.optionals prefs.ociContainers.enableRedis
-                [ "authelia-redis-conf" ]));
-            in
-            {
-              volumes = [ "/var/data/authelia:/config" ];
-              cmd =
-                lib.concatMap (x: [ "--config" ] ++ [ "/myconfig/${x}" ]) configs;
-              environment = {
-                AUTHELIA_DEFAULT_REDIRECTION_URL = "https://${prefs.domain}";
-                AUTHELIA_TOTP_ISSUER = prefs.getFullDomainName "authelia";
+              name = "postgresql";
+              enable = prefs.ociContainers.enablePostgresql;
+              config = {
+                volumes = [ "/var/data/postgresql:/var/lib/postgresql/data" ];
+                ports = [ "5432:5432" ];
+                environmentFiles = [ "/run/secrets/postgresql-env" ];
+                enableTraefik = false;
               };
-              extraOptions = (builtins.map
-                (x:
-                  "--mount=type=bind,source=/run/secrets/${x},target=/myconfig/${x}")
-                ([ "authelia-users" ] ++ configs)) ++ [
-                "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
+
+            }
+            {
+              name = "postgresql-init";
+              enable = prefs.ociContainers.enablePostgresql;
+              config = {
+                volumes =
+                  [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
+                dependsOn = [ "postgresql" ];
+                environmentFiles = [
+                  "/run/secrets/postgresql-env"
+                  "/run/secrets/postgresql-backup-env"
+                ];
+                entrypoint = "/my/init-user-db.sh";
+                enableTraefik = false;
+              };
+            }
+            {
+              name = "postgresql-debug";
+              enable = prefs.ociContainers.enablePostgresql;
+              config = {
+                autoStart = false;
+                volumes =
+                  [ "/run/secrets/postgresql-initdb-script:/my/init-user-db.sh" ];
+                dependsOn = [ "postgresql" ];
+                environmentFiles = [
+                  "/run/secrets/postgresql-env"
+                  "/run/secrets/postgresql-backup-env"
+                ];
+                entrypoint = "/bin/sh";
+                cmd = [ "-c" "tail -f /dev/null" ];
+                enableTraefik = false;
+              };
+            }
+            {
+              name = "redis";
+              enable = prefs.ociContainers.enableRedis;
+              config = {
+                # https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume
+                extraOptions = [
+                  "--mount"
+                  "type=bind,source=/run/secrets/redis-conf,target=/etc/redis.conf,readonly"
+                ];
+                ports = [ "6379:6379" ];
+                cmd = [ "redis-server" "/etc/redis.conf" ];
+                enableTraefik = false;
+              };
+            }
+            {
+
+              name = "authelia";
+              enable = prefs.ociContainers.enableAuthelia;
+              config = (
+                let
+                  configs = ([ "authelia-conf" ]
+                    ++ (lib.optionals prefs.ociContainers.enableAutheliaLocalUsers
+                    [ "authelia-local-users-conf" ])
+                    ++ (lib.optionals (!prefs.ociContainers.enableAutheliaLocalUsers)
+                    [ "authelia-ldap-users-conf" ])
+                    ++ (lib.optionals prefs.ociContainers.enablePostgresql
+                    [ "authelia-postgres-conf" ])
+                    ++ (lib.optionals (!prefs.ociContainers.enablePostgresql)
+                    [ "authelia-sqlite-conf" ])
+                    ++ (lib.optionals prefs.ociContainers.enableRedis
+                    [ "authelia-redis-conf" ]));
+                in
+                {
+                  volumes = [ "/var/data/authelia:/config" ];
+                  cmd =
+                    lib.concatMap (x: [ "--config" ] ++ [ "/myconfig/${x}" ]) configs;
+                  environment = {
+                    AUTHELIA_DEFAULT_REDIRECTION_URL = "https://${prefs.domain}";
+                    AUTHELIA_TOTP_ISSUER = prefs.getFullDomainName "authelia";
+                  };
+                  extraOptions = (builtins.map
+                    (x:
+                      "--mount=type=bind,source=/run/secrets/${x},target=/myconfig/${x}")
+                    ([ "authelia-users" ] ++ configs)) ++ [
+                    "--label=traefik.http.middlewares.authelia.forwardauth.address=http://localhost:9091/api/verify?rd=https://${
 prefs.getFullDomainName "authelia"
 }"
-                "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
-                "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
-                "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
-                "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
-                "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
-              ];
-              ports = [ "9091:9091" ];
-              traefikForwardingPort = 9091;
+                    "--label=traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+                    "--label=traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+                    "--label=traefik.http.middlewares.authelia-basic.forwardauth.address=http://localhost:9091/api/verify?auth=basic"
+                    "--label=traefik.http.middlewares.authelia-basic.forwardauth.trustForwardHeader=true"
+                    "--label=traefik.http.middlewares.authelia-basic.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+                  ];
+                  ports = [ "9091:9091" ];
+                  traefikForwardingPort = 9091;
+                }
+              );
             }
-          ) // mkContainer "freeipa" prefs.ociContainers.enableFreeipa {
-            extraOptions = [
-              "-h"
-              "freeipa.home.arpa"
-              "--sysctl"
-              "net.ipv6.conf.lo.disable_ipv6=0"
-              "--label=traefik.http.services.freeipa.loadbalancer.server.scheme=https"
-              "--label=traefik.http.services.freeipa.loadbalancer.serverstransport=insecureSkipVerify@file"
-            ];
-            environment = {
-              IPA_SERVER_INSTALL_OPTS =
-                "--ds-password=The-directory-server-password --admin-password=The-admin-password";
-            };
-            cmd = [
-              "ipa-server-install"
-              "-U"
-              "--no-ntp"
-              "--domain"
-              "freeipa.home.arpa"
-              "--realm=HOME.ARPA"
-            ];
-            volumes = [ "/var/data/freeipa:/data:Z" ]
-            ++ (if prefs.ociContainerBackend == "docker" then
-              [ "/sys/fs/cgroup:/sys/fs/cgroup:ro" ]
-            else
-              [ ]);
-            traefikForwardingPort = 443;
-          } // mkContainer "kosyncsrv" prefs.ociContainers.enableKosyncsrv {
-            volumes =
-              [ "/var/data/kosyncsrv:/data" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "cloudbeaver" prefs.ociContainers.enableCloudBeaver {
-            autoStart = false;
-            volumes =
-              [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
-            traefikForwardingPort = 8978;
-            middlewares = [ "authelia" ];
-          } // mkContainer "hledger" prefs.ociContainers.enableHledger {
-            dependsOn = [ "hledger-init" ];
-            volumes = [ "/var/data/hledger:/data" ];
-            traefikForwardingPort = 5000;
-            middlewares = [ "authelia-basic" ];
-            environment = {
-              "HLEDGER_BASE_URL" = "https://${prefs.getFullDomainName "hledger"}";
-              "HLEDGER_CAPABILITIES" = "view,add,manage";
-            };
-          } // mkContainer "hledger-init" prefs.ociContainers.enableHledger {
-            volumes = [ "/var/data/hledger:/data" ];
-            cmd = [
-              "bash"
-              "-c"
-              "sudo chown -R $(id -u) /data; echo . | hledger add -f /data/hledger.journal --no-new-accounts"
-            ];
-            enableTraefik = false;
-          } // mkContainer "searx" prefs.ociContainers.enableSearx {
-            environment = {
-              # Generate a new searx configuration, otherwise searx will not auto use the generated config.
-              "SEARX_SETTINGS_PATH" = "/searx.settings.yml";
-              # Currently does not work, https://github.com/searxng/searxng/blob/332e3a2a09d6a708ea2c17d2e731335b051c45aa/dockerfiles/docker-entrypoint.sh#L71
-              # assumes the default instance name is searx, which is not true for searxng.
-              "INSTANCE_NAME" = "searx@${prefs.domainPrefix}";
-              "AUTOCOMPLETE" = "duckduckgo";
-              "BASE_URL" = "https://${prefs.getFullDomainName "searx"}";
-            };
-            volumes = [ "/var/data/searx:/etc/searx" ];
-            traefikForwardingPort = 8080;
-            # middlewares = [ "authelia" ];
-          } // mkContainer "rss-bridge" prefs.ociContainers.enableRssBridge {
-            extraOptions = [
-              "--mount"
-              "type=bind,source=/run/secrets/rss-bridge-whitelist,target=/app/whitelist.txt"
-            ];
-            traefikForwardingPort = 80;
-          } // mkContainer "wallabag" prefs.ociContainers.enableWallabag {
-            dependsOn = [ "postgresql" ];
-            environment = {
-              "SYMFONY__ENV__DOMAIN_NAME" =
-                "https://${prefs.getFullDomainName "wallabag"}";
-            };
-            volumes = [
-              "/var/data/wallabag/data:/var/www/wallabag/data"
-              "/var/data/wallabag/images:/var/www/wallabag/web/assets/images"
-            ];
-            environmentFiles = [ "/run/secrets/wallabag-env" ];
-          } // mkContainer "recipes" prefs.ociContainers.enableRecipes {
-            volumes = [
-              "/var/data/recipes/staticfiles:/opt/recipes/staticfiles"
-              "/var/data/recipes/mediafiles:/opt/recipes/mediafiles"
-            ];
-            dependsOn = [ "postgresql" ];
-            environmentFiles = [ "/run/secrets/recipes-env" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "bookwyrm" prefs.ociContainers.enableBookwyrm {
-            volumes = [
-              "/var/data/bookwyrm/images:/app/images"
-              "/var/data/bookwyrm/static:/app/static"
-            ];
-            dependsOn = [ "postgresql" ];
-            environment = rec {
-              DOMAIN = prefs.getFullDomainName "bookwyrm";
-              USE_HTTPS = "true";
-              EMAIL = "admin@${DOMAIN}";
-            };
-            environmentFiles = [ "/run/secrets/bookwyrm-env" ];
-            entrypoint = "sh";
-            # TODO: `--insecure` does not seem to work any more. Fix this.
-            # We are running django directly. Serving static files requires `--insecure`.
-            # See https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/#cmdoption-runserver-insecure
-            cmd = [ "-c" "python manage.py migrate; exec python manage.py runserver --insecure 0.0.0.0:8000" ];
-            traefikForwardingPort = 8000;
-          } // mkContainer "wger" prefs.ociContainers.enableWger {
-            volumes = [ "/var/data/wger/media:/home/wger/media" ];
-            dependsOn = [ "postgresql" ];
-            environment = {
-              "SITE_URL" = "https://${prefs.getFullDomainName "wger"}";
-            };
-            environmentFiles = [ "/run/secrets/wger-env" ];
-            traefikForwardingPort = 80;
-          } // mkContainer "n8n" prefs.ociContainers.enableN8n {
-            volumes = [ "/var/data/n8n:/home/node/.n8n" ];
-            dependsOn = [ "postgresql" ];
-            middlewares = [ "authelia" ];
-            environmentFiles = [ "/run/secrets/n8n-env" ];
-            traefikForwardingPort = 5678;
-          } // mkContainer "wikijs" prefs.ociContainers.enableWikijs {
-            autoStart = false;
-            environmentFiles = [ "/run/secrets/wikijs-env" ];
-            traefikForwardingPort = 3000;
-          } // mkContainer "grocy" prefs.ociContainers.enableGrocy {
-            volumes = [ "/var/data/grocy:/config" ];
-            environment = {
-              "PUID" = "${builtins.toString prefs.ownerUid}";
-              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-              "TZ" = "Asia/Shanghai";
-              "GROCY_CURRENCY" = "CNY";
-              "GROCY_MODE" = "production";
-            };
-            traefikForwardingPort = 80;
-          } // mkContainer "calibre-web" prefs.ociContainers.enableCalibreWeb {
-            volumes = [
-              "/var/data/calibre-web:/config"
-              "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
-            ];
-            extraOptions = [ "--label=domainprefix=calibre" ];
-            environment = {
-              "PUID" = "${builtins.toString prefs.ownerUid}";
-              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-              "TZ" = "Asia/Shanghai";
-              "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
-            };
-            traefikForwardingPort = 8083;
-          } // mkContainer "dokuwiki" prefs.ociContainers.enableDokuwiki {
-            volumes = [
-              "/var/data/dokuwiki:/config"
-              "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
-            ];
-            environment = {
-              "PUID" = "${builtins.toString prefs.ownerUid}";
-              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-              "TZ" = "Asia/Shanghai";
-              "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
-            };
-            traefikForwardingPort = 80;
-          } // mkContainer "trilium" prefs.ociContainers.enableTrilium {
-            volumes = [ "/var/data/trilium:/home/node/trilium-data" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "xwiki" prefs.ociContainers.enableXwiki {
-            autoStart = false;
-            dependsOn = [ "postgresql" ];
-            environmentFiles = [ "/run/secrets/xwiki-env" ];
-            volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "huginn" prefs.ociContainers.enableHuginn {
-            autoStart = false;
-            dependsOn = [ "postgresql" ];
-            environmentFiles = [ "/run/secrets/huginn-env" ];
-            traefikForwardingPort = 3000;
-            environment = {
-              "TIMEZONE" = "Beijing";
-              "DOMAIN" = "https://${prefs.getFullDomainName "huginn"}";
-            };
-          } // mkContainer "tiddlywiki" prefs.ociContainers.enableTiddlyWiki {
-            volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
-            extraOptions = [
-              "--user=${builtins.toString prefs.ownerUid}:${
+            {
+              name = "freeipa";
+              enable = prefs.ociContainers.enableFreeipa;
+              config = {
+                extraOptions = [
+                  "-h"
+                  "freeipa.home.arpa"
+                  "--sysctl"
+                  "net.ipv6.conf.lo.disable_ipv6=0"
+                  "--label=traefik.http.services.freeipa.loadbalancer.server.scheme=https"
+                  "--label=traefik.http.services.freeipa.loadbalancer.serverstransport=insecureSkipVerify@file"
+                ];
+                environment = {
+                  IPA_SERVER_INSTALL_OPTS =
+                    "--ds-password=The-directory-server-password --admin-password=The-admin-password";
+                };
+                cmd = [
+                  "ipa-server-install"
+                  "-U"
+                  "--no-ntp"
+                  "--domain"
+                  "freeipa.home.arpa"
+                  "--realm=HOME.ARPA"
+                ];
+                volumes = [ "/var/data/freeipa:/data:Z" ]
+                  ++ (if prefs.ociContainerBackend == "docker" then
+                  [ "/sys/fs/cgroup:/sys/fs/cgroup:ro" ]
+                else
+                  [ ]);
+                traefikForwardingPort = 443;
+              };
+            }
+            {
+              name = "kosyncsrv";
+              enable = prefs.ociContainers.enableKosyncsrv;
+              config = {
+                volumes =
+                  [ "/var/data/kosyncsrv:/data" ];
+                traefikForwardingPort = 8080;
+              };
+            }
+            {
+
+              name = "cloudbeaver";
+              enable = prefs.ociContainers.enableCloudBeaver;
+              config = {
+                autoStart = false;
+                volumes =
+                  [ "/var/data/cloudbeaver/workspace:/opt/cloudbeaver/workspace" ];
+                traefikForwardingPort = 8978;
+                middlewares = [ "authelia" ];
+              };
+            }
+            {
+              name = "hledger";
+              enable = prefs.ociContainers.enableHledger;
+              config = {
+                dependsOn = [ "hledger-init" ];
+                volumes = [ "/var/data/hledger:/data" ];
+                traefikForwardingPort = 5000;
+                middlewares = [ "authelia-basic" ];
+                environment = {
+                  "HLEDGER_BASE_URL" = "https://${prefs.getFullDomainName "hledger"}";
+                  "HLEDGER_CAPABILITIES" = "view,add,manage";
+                };
+              };
+            }
+            {
+              name = "hledger-init";
+              enable = prefs.ociContainers.enableHledger;
+              config = {
+                volumes = [ "/var/data/hledger:/data" ];
+                cmd = [
+                  "bash"
+                  "-c"
+                  "sudo chown -R $(id -u) /data; echo . | hledger add -f /data/hledger.journal --no-new-accounts"
+                ];
+                enableTraefik = false;
+              };
+            }
+            {
+              name = "searx";
+              enable = prefs.ociContainers.enableSearx;
+              config = {
+                environment = {
+                  # Generate a new searx configuration, otherwise searx will not auto use the generated config.
+                  "SEARX_SETTINGS_PATH" = "/searx.settings.yml";
+                  # Currently does not work, https://github.com/searxng/searxng/blob/332e3a2a09d6a708ea2c17d2e731335b051c45aa/dockerfiles/docker-entrypoint.sh#L71
+                  # assumes the default instance name is searx, which is not true for searxng.
+                  "INSTANCE_NAME" = "searx@${prefs.domainPrefix}";
+                  "AUTOCOMPLETE" = "duckduckgo";
+                  "BASE_URL" = "https://${prefs.getFullDomainName "searx"}";
+                };
+                volumes = [ "/var/data/searx:/etc/searx" ];
+                traefikForwardingPort = 8080;
+                # middlewares = [ "authelia" ];
+              };
+            }
+            {
+              name = "rss-bridge";
+              enable = prefs.ociContainers.enableRssBridge;
+              config =
+                {
+                  extraOptions = [
+                    "--mount"
+                    "type=bind,source=/run/secrets/rss-bridge-whitelist,target=/app/whitelist.txt"
+                  ];
+                  traefikForwardingPort = 80;
+                };
+            }
+            {
+              name = "wallabag";
+              enable = prefs.ociContainers.enableWallabag;
+              config = {
+                dependsOn = [ "postgresql" ];
+                environment = {
+                  "SYMFONY__ENV__DOMAIN_NAME" =
+                    "https://${prefs.getFullDomainName "wallabag"}";
+                };
+                volumes = [
+                  "/var/data/wallabag/data:/var/www/wallabag/data"
+                  "/var/data/wallabag/images:/var/www/wallabag/web/assets/images"
+                ];
+                environmentFiles = [ "/run/secrets/wallabag-env" ];
+              };
+            }
+            {
+              name = "recipes";
+              enable = prefs.ociContainers.enableRecipes;
+              config =
+                {
+                  volumes = [
+                    "/var/data/recipes/staticfiles:/opt/recipes/staticfiles"
+                    "/var/data/recipes/mediafiles:/opt/recipes/mediafiles"
+                  ];
+                  dependsOn = [ "postgresql" ];
+                  environmentFiles = [ "/run/secrets/recipes-env" ];
+                  traefikForwardingPort = 8080;
+                };
+            }
+            {
+              name = "bookwyrm";
+              enable = prefs.ociContainers.enableBookwyrm;
+              config = {
+                volumes = [
+                  "/var/data/bookwyrm/images:/app/images"
+                  "/var/data/bookwyrm/static:/app/static"
+                ];
+                dependsOn = [ "postgresql" ];
+                environment = rec {
+                  DOMAIN = prefs.getFullDomainName "bookwyrm";
+                  USE_HTTPS = "true";
+                  EMAIL = "admin@${DOMAIN}";
+                };
+                environmentFiles = [ "/run/secrets/bookwyrm-env" ];
+                entrypoint = "sh";
+                # TODO: `--insecure` does not seem to work any more. Fix this.
+                # We are running django directly. Serving static files requires `--insecure`.
+                # See https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/#cmdoption-runserver-insecure
+                cmd = [ "-c" "python manage.py migrate; exec python manage.py runserver --insecure 0.0.0.0:8000" ];
+                traefikForwardingPort = 8000;
+              };
+            }
+            {
+              name = "wger";
+              enable = prefs.ociContainers.enableWger;
+              config =
+                {
+                  volumes = [ "/var/data/wger/media:/home/wger/media" ];
+                  dependsOn = [ "postgresql" ];
+                  environment = {
+                    "SITE_URL" = "https://${prefs.getFullDomainName "wger"}";
+                  };
+                  environmentFiles = [ "/run/secrets/wger-env" ];
+                  traefikForwardingPort = 80;
+                };
+            }
+            {
+              name = "n8n";
+              enable = prefs.ociContainers.enableN8n;
+              config = {
+                volumes = [ "/var/data/n8n:/home/node/.n8n" ];
+                dependsOn = [ "postgresql" ];
+                middlewares = [ "authelia" ];
+                environmentFiles = [ "/run/secrets/n8n-env" ];
+                traefikForwardingPort = 5678;
+              };
+            }
+            {
+              name = "wikijs";
+              enable = prefs.ociContainers.enableWikijs;
+              config =
+                {
+                  autoStart = false;
+                  environmentFiles = [ "/run/secrets/wikijs-env" ];
+                  traefikForwardingPort = 3000;
+                };
+            }
+            {
+              name = "grocy";
+              enable = prefs.ociContainers.enableGrocy;
+              config = {
+                volumes = [ "/var/data/grocy:/config" ];
+                environment = {
+                  "PUID" = "${builtins.toString prefs.ownerUid}";
+                  "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+                  "TZ" = "Asia/Shanghai";
+                  "GROCY_CURRENCY" = "CNY";
+                  "GROCY_MODE" = "production";
+                };
+                traefikForwardingPort = 80;
+              };
+            }
+            {
+              name = "calibre-web";
+              enable = prefs.ociContainers.enableCalibreWeb;
+              config =
+                {
+                  volumes = [
+                    "/var/data/calibre-web:/config"
+                    "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
+                  ];
+                  extraOptions = [ "--label=domainprefix=calibre" ];
+                  environment = {
+                    "PUID" = "${builtins.toString prefs.ownerUid}";
+                    "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+                    "TZ" = "Asia/Shanghai";
+                    "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
+                  };
+                  traefikForwardingPort = 8083;
+                };
+            }
+            {
+              name = "dokuwiki";
+              enable = prefs.ociContainers.enableDokuwiki;
+              config = {
+                volumes = [
+                  "/var/data/dokuwiki:/config"
+                  "${builtins.elemAt prefs.calibreServerLibraries 0}:/books"
+                ];
+                environment = {
+                  "PUID" = "${builtins.toString prefs.ownerUid}";
+                  "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+                  "TZ" = "Asia/Shanghai";
+                  "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
+                };
+                traefikForwardingPort = 80;
+              };
+            }
+            {
+              name = "trilium";
+              enable = prefs.ociContainers.enableTrilium;
+              config =
+                {
+                  volumes = [ "/var/data/trilium:/home/node/trilium-data" ];
+                  traefikForwardingPort = 8080;
+                };
+            }
+            {
+              name = "xwiki";
+              enable = prefs.ociContainers.enableXwiki;
+              config = {
+                autoStart = false;
+                dependsOn = [ "postgresql" ];
+                environmentFiles = [ "/run/secrets/xwiki-env" ];
+                volumes = [ "/var/data/xwiki:/usr/local/xwiki" ];
+                traefikForwardingPort = 8080;
+              };
+            }
+            {
+              name = "huginn";
+              enable = prefs.ociContainers.enableHuginn;
+              config =
+                {
+                  autoStart = false;
+                  dependsOn = [ "postgresql" ];
+                  environmentFiles = [ "/run/secrets/huginn-env" ];
+                  traefikForwardingPort = 3000;
+                  environment = {
+                    "TIMEZONE" = "Beijing";
+                    "DOMAIN" = "https://${prefs.getFullDomainName "huginn"}";
+                  };
+                };
+            }
+            {
+              name = "tiddlywiki";
+              enable = prefs.ociContainers.enableTiddlyWiki;
+              config = {
+                volumes = [ "/var/data/tiddlywiki:/tiddlywiki" ];
+                extraOptions = [
+                  "--user=${builtins.toString prefs.ownerUid}:${
 builtins.toString prefs.ownerGroupGid
 }"
-            ];
-            cmd = [ "--listen" "host=0.0.0.0" ];
-            middlewares = [ "authelia" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "gitea" prefs.ociContainers.enableGitea {
-            volumes = [
-              "/var/data/gitea:/data"
-              "/etc/timezone:/etc/timezone:ro"
-              "/etc/localtime:/etc/localtime:ro"
-            ];
-            dependsOn = [ "postgresql" ];
-            environment = {
-              "PUID" = "${builtins.toString prefs.ownerUid}";
-              "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-              "USER_UID" = "${builtins.toString prefs.ownerUid}";
-              "USER_GID" = "${builtins.toString prefs.ownerGroupGid}";
-              "TZ" = "Asia/Shanghai";
-              "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
-              "GITEA__server__ROOT_URL" =
-                "https://${prefs.getFullDomainName "gitea"}";
-            };
-            environmentFiles = [ "/run/secrets/gitea-env" ];
-            traefikForwardingPort = 3000;
-          } // mkContainer "perkeep" prefs.ociContainers.enablePerkeep {
-            volumes = [ "/var/data/perkeep:/srv/perkeep" ];
-            environment = { };
-            traefikForwardingPort = 3179;
-          } // mkContainer "vaultwarden" prefs.ociContainers.enableVaultwarden {
-            dependsOn = [ "postgresql" ];
-            volumes = [ "/var/data/vaultwarden:/data" ];
-            environment = {
-              "DOMAIN" = "https://${prefs.getFullDomainName "vaultwarden"}";
-            };
-            environmentFiles = [ "/run/secrets/vaultwarden-env" ];
-            traefikForwardingPort = 80;
-          } // mkContainer "pleroma" prefs.ociContainers.enablePleroma {
-            autoStart = false;
-            dependsOn = [ "postgresql" ];
-            volumes = [ "/var/data/pleroma:/var/lib/pleroma" ];
-            environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
-            environmentFiles = [ "/run/secrets/pleroma-env" ];
-            traefikForwardingPort = 4000;
-          } // mkContainer "livebook" prefs.ociContainers.enableLivebook {
-            autoStart = false;
-            volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
-            extraOptions = [
-              "--user=${builtins.toString prefs.ownerUid}:${
+                ];
+                cmd = [ "--listen" "host=0.0.0.0" ];
+                middlewares = [ "authelia" ];
+                traefikForwardingPort = 8080;
+              };
+            }
+            {
+              name = "gitea";
+              enable = prefs.ociContainers.enableGitea;
+              config =
+                {
+                  volumes = [
+                    "/var/data/gitea:/data"
+                    "/etc/timezone:/etc/timezone:ro"
+                    "/etc/localtime:/etc/localtime:ro"
+                  ];
+                  dependsOn = [ "postgresql" ];
+                  environment = {
+                    "PUID" = "${builtins.toString prefs.ownerUid}";
+                    "PGID" = "${builtins.toString prefs.ownerGroupGid}";
+                    "USER_UID" = "${builtins.toString prefs.ownerUid}";
+                    "USER_GID" = "${builtins.toString prefs.ownerGroupGid}";
+                    "TZ" = "Asia/Shanghai";
+                    "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
+                    "GITEA__server__ROOT_URL" =
+                      "https://${prefs.getFullDomainName "gitea"}";
+                  };
+                  environmentFiles = [ "/run/secrets/gitea-env" ];
+                  traefikForwardingPort = 3000;
+                };
+            }
+            {
+              name = "perkeep";
+              enable = prefs.ociContainers.enablePerkeep;
+              config = {
+                volumes = [ "/var/data/perkeep:/srv/perkeep" ];
+                environment = { };
+                traefikForwardingPort = 3179;
+              };
+            }
+            {
+              name = "vaultwarden";
+              enable = prefs.ociContainers.enableVaultwarden;
+              config =
+                {
+                  dependsOn = [ "postgresql" ];
+                  volumes = [ "/var/data/vaultwarden:/data" ];
+                  environment = {
+                    "DOMAIN" = "https://${prefs.getFullDomainName "vaultwarden"}";
+                  };
+                  environmentFiles = [ "/run/secrets/vaultwarden-env" ];
+                  traefikForwardingPort = 80;
+                };
+            }
+            {
+              name = "pleroma";
+              enable = prefs.ociContainers.enablePleroma;
+              config = {
+                autoStart = false;
+                dependsOn = [ "postgresql" ];
+                volumes = [ "/var/data/pleroma:/var/lib/pleroma" ];
+                environment = { "DOMAIN" = prefs.getFullDomainName "pleroma"; };
+                environmentFiles = [ "/run/secrets/pleroma-env" ];
+                traefikForwardingPort = 4000;
+              };
+            }
+            {
+              name = "livebook";
+              enable = prefs.ociContainers.enableLivebook;
+              config =
+                {
+                  autoStart = false;
+                  volumes = [ "${prefs.syncFolder}/docs/livebook:/data" ];
+                  extraOptions = [
+                    "--user=${builtins.toString prefs.ownerUid}:${
 builtins.toString prefs.ownerGroupGid
 }"
-            ];
-            environmentFiles = [ "/run/secrets/livebook-env" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "joplin" prefs.ociContainers.enableJoplin {
-            dependsOn = [ "postgresql" ];
-            environment = {
-              "APP_BASE_URL" = "https://${prefs.getFullDomainName "joplin"}";
-            };
-            environmentFiles = [ "/run/secrets/joplin-env" ];
-            traefikForwardingPort = 22300;
-          } // mkContainer "miniflux" prefs.ociContainers.enableMiniflux {
-            dependsOn = [ "postgresql" ];
-            environment = {
-              "BASE_URL" = "https://${prefs.getFullDomainName "miniflux"}";
-            };
-            environmentFiles = [ "/run/secrets/miniflux-env" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "nextcloud" prefs.ociContainers.enableNextcloud {
-            # Need to initialize the database manually,
-            # cat $(systemctl cat docker-nextcloud.service | awk -F= '/ExecStart=/ {print $2}') | grep -v nextcloud-data
-            # see also https://help.nextcloud.com/t/the-username-is-already-being-used-after-reinstalling-nextcloud-version-20-0-7-1/108219/3
-            dependsOn =
-              lib.optionals prefs.ociContainers.enablePostgresql [ "postgresql" ]
-              ++ lib.optionals prefs.ociContainers.enableRedis [ "redis" ];
-            # TODO: We need to periodically run `./occ files:scan --all` to keep
-            # nextcloud database and the underlying directory tree structure in synchronization.
-            # see https://github.com/nextcloud/server/issues/17550
-            volumes = [
-              "/var/data/nextcloud:/var/www/html"
-              "${prefs.nextcloudContainerDataDirectory}:/var/www/html/data"
-            ];
-            environment = {
-              "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
+                  ];
+                  environmentFiles = [ "/run/secrets/livebook-env" ];
+                  traefikForwardingPort = 8080;
+                };
+            }
+            {
+              name = "joplin";
+              enable = prefs.ociContainers.enableJoplin;
+              config = {
+                dependsOn = [ "postgresql" ];
+                environment = {
+                  "APP_BASE_URL" = "https://${prefs.getFullDomainName "joplin"}";
+                };
+                environmentFiles = [ "/run/secrets/joplin-env" ];
+                traefikForwardingPort = 22300;
+              };
+            }
+            {
+              name = "miniflux";
+              enable = prefs.ociContainers.enableMiniflux;
+              config =
+                {
+                  dependsOn = [ "postgresql" ];
+                  environment = {
+                    "BASE_URL" = "https://${prefs.getFullDomainName "miniflux"}";
+                  };
+                  environmentFiles = [ "/run/secrets/miniflux-env" ];
+                  traefikForwardingPort = 8080;
+                };
+            }
+            {
+              name = "nextcloud";
+              enable = prefs.ociContainers.enableNextcloud;
+              config = {
+                # Need to initialize the database manually,
+                # cat $(systemctl cat docker-nextcloud.service | awk -F= '/ExecStart=/ {print $2}') | grep -v nextcloud-data
+                # see also https://help.nextcloud.com/t/the-username-is-already-being-used-after-reinstalling-nextcloud-version-20-0-7-1/108219/3
+                dependsOn =
+                  lib.optionals prefs.ociContainers.enablePostgresql [ "postgresql" ]
+                  ++ lib.optionals prefs.ociContainers.enableRedis [ "redis" ];
+                # TODO: We need to periodically run `./occ files:scan --all` to keep
+                # nextcloud database and the underlying directory tree structure in synchronization.
+                # see https://github.com/nextcloud/server/issues/17550
+                volumes = [
+                  "/var/data/nextcloud:/var/www/html"
+                  "${prefs.nextcloudContainerDataDirectory}:/var/www/html/data"
+                ];
+                environment = {
+                  "NEXTCLOUD_TRUSTED_DOMAINS" = "${builtins.concatStringsSep " "
 (prefs.getFullDomainNames "nextcloud")}";
-            };
-            environmentFiles = [ "/run/secrets/nextcloud-env" ]
-            ++ (if prefs.ociContainers.enablePostgresql then
-              [ "/run/secrets/nextcloud-postgres-env" ]
-            else
-              [ "/run/secrets/nextcloud-sqlite-env" ])
-            ++ (lib.optionals prefs.ociContainers.enableRedis
-              [ "/run/secrets/nextcloud-redis-env" ]);
-            traefikForwardingPort = 80;
-          } // mkContainer "sftpgo" prefs.ociContainers.enableSftpgo {
-            extraOptions = [
-              "--user=${builtins.toString prefs.ownerUid}:${
+                };
+                environmentFiles = [ "/run/secrets/nextcloud-env" ]
+                  ++ (if prefs.ociContainers.enablePostgresql then
+                  [ "/run/secrets/nextcloud-postgres-env" ]
+                else
+                  [ "/run/secrets/nextcloud-sqlite-env" ])
+                  ++ (lib.optionals prefs.ociContainers.enableRedis
+                  [ "/run/secrets/nextcloud-redis-env" ]);
+                traefikForwardingPort = 80;
+              };
+            }
+            {
+              name = "sftpgo";
+              enable = prefs.ociContainers.enableSftpgo;
+              config =
+                {
+                  extraOptions = [
+                    "--user=${builtins.toString prefs.ownerUid}:${
 builtins.toString prefs.ownerGroupGid
 }"
-              "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
-              "--label=traefik.http.routers.sftpgo-webdav.middlewares=cors@file"
-              "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
-              "--label=traefik.http.routers.sftpgo-webdav.rule=${
+                    "--label=traefik.http.routers.sftpgo-webdav.service=sftpgo-webdav"
+                    "--label=traefik.http.routers.sftpgo-webdav.middlewares=cors@file"
+                    "--label=traefik.http.routers.sftpgo-webdav.entrypoints=web,websecure"
+                    "--label=traefik.http.routers.sftpgo-webdav.rule=${
 getTraefikRuleByDomainPrefix "webdav"
 }"
-              "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
-            ];
-            ports = [ "2122:2022" ];
-            volumes = [
-              "/var/data/sftpgo/config:/var/lib/sftpgo"
-              "/var/data/sftpgo/data:/srv/sftpgo/data"
-              "${prefs.home}:/srv/sftpgo/data/${prefs.owner}"
-              "${prefs.syncFolder}:/srv/sftpgo/data/sync"
-              "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
-              "${prefs.syncFolder}/docs/org-mode:/srv/sftpgo/data/orgmode"
-              "/var/data/sftpgo/backups:/srv/sftpgo/backups"
-            ];
-            environment = {
-              "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
-              "SFTPGO_WEBDAVD__CORS__ENABLED" = "true";
-              "SFTPGO_WEBDAVD__CORS__ALLOWED_ORIGINS" = "*.${prefs.mainDomain}";
-              # Not working for now. See https://github.com/rs/cors/pull/120
-              "SFTPGO_WEBDAVD__CORS__ALLOWED_METHODS" = "*";
-              "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
-              # This is in the container world. It is presumably safe to do this.
-              "SFTPGO_COMMON__PROXY_ALLOWED" = "0.0.0.0/0";
-            };
-            traefikForwardingPort = 8080;
-          } // mkContainer "filestash" prefs.ociContainers.enableFilestash {
-            environment = {
-              APPLICATION_URL = prefs.getFullDomainName "filestash";
-            };
-            volumes = [ "/var/data/filestash:/app/data/state" ];
-            traefikForwardingPort = 8334;
-          } // mkContainer "vault" prefs.ociContainers.enableVault {
-            extraOptions = [ "--cap-add=IPC_LOCK" ];
-            cmd = [ "server" ];
-            environment = {
-              VAULT_API_ADDR = "https://${prefs.getFullDomainName "vault"}";
-            };
-            volumes = [
-              "/var/data/vault/config:/vault/config"
-              "/var/data/vault/logs:/vault/logs"
-              "/var/data/vault/file:/vault/file"
-            ];
-            environmentFiles = [ "/run/secrets/vault-env" ];
-            traefikForwardingPort = 8200;
-          } // mkContainer "homer" prefs.ociContainers.enableHomer {
-            volumes = [ "/var/data/homer:/www/assets" ];
-            traefikForwardingPort = 8080;
-            extraOptions =
-              let
-                config = toYAML "homer-config" {
-                  subtitle = "Home";
-                  title = "Dashboard";
-                  theme = "default";
-                  colors = {
-                    dark = {
-                      background = "#131313";
-                      card-background = "#2b2b2b";
-                      card-shadow = "rgba(0, 0, 0, 0.4)";
-                      highlight-hover = "#5a95f5";
-                      highlight-primary = "#3367d6";
-                      highlight-secondary = "#4285f4";
-                      link-hover = "#ffdd57";
-                      text = "#eaeaea";
-                      text-header = "#ffffff";
-                      text-subtitle = "#f5f5f5";
-                      text-title = "#fafafa";
-                    };
-                    light = {
-                      background = "#f5f5f5";
-                      card-background = "#ffffff";
-                      card-shadow = "rgba(0, 0, 0, 0.1)";
-                      highlight-hover = "#5a95f5";
-                      highlight-primary = "#3367d6";
-                      highlight-secondary = "#4285f4";
-                      link-hover = "#363636";
-                      text = "#363636";
-                      text-header = "#ffffff";
-                      text-subtitle = "#424242";
-                      text-title = "#303030";
-                    };
+                    "--label=traefik.http.services.sftpgo-webdav.loadbalancer.server.port=10080"
+                  ];
+                  ports = [ "2122:2022" ];
+                  volumes = [
+                    "/var/data/sftpgo/config:/var/lib/sftpgo"
+                    "/var/data/sftpgo/data:/srv/sftpgo/data"
+                    "${prefs.home}:/srv/sftpgo/data/${prefs.owner}"
+                    "${prefs.syncFolder}:/srv/sftpgo/data/sync"
+                    "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
+                    "${prefs.syncFolder}/docs/org-mode:/srv/sftpgo/data/orgmode"
+                    "/var/data/sftpgo/backups:/srv/sftpgo/backups"
+                  ];
+                  environment = {
+                    "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
+                    "SFTPGO_WEBDAVD__CORS__ENABLED" = "true";
+                    "SFTPGO_WEBDAVD__CORS__ALLOWED_ORIGINS" = "*.${prefs.mainDomain}";
+                    # Not working for now. See https://github.com/rs/cors/pull/120
+                    "SFTPGO_WEBDAVD__CORS__ALLOWED_METHODS" = "*";
+                    "SFTPGO_COMMON__PROXY_PROTOCOL" = "1";
+                    # This is in the container world. It is presumably safe to do this.
+                    "SFTPGO_COMMON__PROXY_ALLOWED" = "0.0.0.0/0";
                   };
-                  footer = false;
-                  header = false;
-                  icon = "fas fa-skull-crossbones";
-                  links = [ ];
-                  services = [{
-                    name = "Applications";
-                    icon = "fas fa-cloud";
-                    items =
-                      builtins.map (attrs: builtins.removeAttrs attrs [ "enable" ])
-                        (builtins.filter (x: x.enable or true) [
-                          {
-                            enable = prefs.ociContainers.enableFreeipa;
-                            name = "freeipa";
-                            subtitle = "account management";
-                            tag = "auth";
-                            url = "https://${prefs.getFullDomainName "freeipa"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableKosyncsrv;
-                            name = "kosyncsrv";
-                            subtitle = "koreader progress sync";
-                            tag = "reading";
-                            url = "https://${prefs.getFullDomainName "kosyncsrv"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableCloudBeaver;
-                            name = "cloud beaver";
-                            subtitle = "database management";
-                            tag = "database";
-                            url = "https://${prefs.getFullDomainName "cloudbeaver"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableAuthelia;
-                            name = "authelia";
-                            subtitle = "authentication and authorization";
-                            tag = "auth";
-                            url = "https://${prefs.getFullDomainName "authelia"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableHledger;
-                            name = "hledger";
-                            subtitle = "online ledger";
-                            tag = "house-keeping";
-                            url = "https://${prefs.getFullDomainName "hledger"}";
-                          }
-                          {
-                            enable = prefs.enableSmosServer;
-                            name = "smos";
-                            subtitle = "self-management";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "smos"}";
-                          }
-                          {
-                            enable = prefs.enableWstunnel;
-                            name = "wstunnel";
-                            subtitle = "websocket tunnel";
-                            tag = "network";
-                            url = "https://${prefs.getFullDomainName "wstunnel"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableSearx;
-                            name = "searx";
-                            subtitle = "search engine";
-                            tag = "search";
-                            url = "https://${prefs.getFullDomainName "searx"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableRssBridge;
-                            name = "rss-bridge";
-                            subtitle = "rss feeds generator";
-                            tag = "reading";
-                            url = "https://${prefs.getFullDomainName "rss-bridge"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableWallabag;
-                            name = "wallabag";
-                            subtitle = "read it later";
-                            tag = "reading";
-                            url = "https://${prefs.getFullDomainName "wallabag"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableCodeServer
-                            || prefs.enableCodeServer;
-                            name = "code server";
-                            subtitle = "text editing";
-                            tag = "coding";
-                            url = "https://${prefs.getFullDomainName "codeserver"}";
-                          }
-                          {
-                            enable = prefs.enableSyncthing;
-                            name = "syncthing";
-                            subtitle = "file synchronization";
-                            tag = "synchronization";
-                            url = "https://${prefs.getFullDomainName "syncthing"}";
-                          }
-                          {
-                            enable = prefs.enableGrafana;
-                            name = "grafana";
-                            subtitle = "monitoring dashboard";
-                            tag = "operation";
-                            url = "https://${prefs.getFullDomainName "grafana"}";
-                          }
-                          {
-                            enable = prefs.enableJupyter;
-                            name = "jupyter";
-                            subtitle = "jupyter notebook";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "jupyter"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableRecipes;
-                            name = "recipes";
-                            subtitle = "cooking recipes";
-                            tag = "house-keeping";
-                            url = "https://${prefs.getFullDomainName "recipes"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableBookwyrm;
-                            name = "bookwyrm";
-                            subtitle = "books cataloging";
-                            tag = "reading";
-                            url = "https://${prefs.getFullDomainName "bookwyrm"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableWger;
-                            name = "wger";
-                            subtitle = "fitness tracking";
-                            tag = "fitness";
-                            url = "https://${prefs.getFullDomainName "wger"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableEtesync;
-                            name = "etesync";
-                            subtitle = "contacts, calandar and tasks";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "etesync-pim"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableEtesyncDav;
-                            name = "etesync dav";
-                            subtitle = "etesync dav bridge";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "etesync-dav"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableEtesync;
-                            name = "etesync notes";
-                            subtitle = "note-taking";
-                            tag = "productivity";
-                            url =
-                              "https://${prefs.getFullDomainName "etesync-notes"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableN8n;
-                            name = "n8n";
-                            subtitle = "workflow automation";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "n8n"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableGitea;
-                            name = "gitea";
-                            subtitle = "version control";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "gitea"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableWikijs;
-                            name = "wikijs";
-                            subtitle = "personal wiki";
-                            tag = "documentation";
-                            url = "https://${prefs.getFullDomainName "wikijs"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableXwiki;
-                            name = "xwiki";
-                            subtitle = "personal wiki";
-                            tag = "documentation";
-                            url = "https://${prefs.getFullDomainName "xwiki"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableHuginn;
-                            name = "huginn";
-                            subtitle = "automation agents";
-                            tag = "automation";
-                            url = "https://${prefs.getFullDomainName "huginn"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableTiddlyWiki;
-                            name = "tiddlywiki";
-                            subtitle = "personal wiki";
-                            tag = "documentation";
-                            url = "https://${prefs.getFullDomainName "tiddlywiki"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableGrocy;
-                            name = "grocy";
-                            subtitle = "ERP for household";
-                            tag = "house-keeping";
-                            url = "https://${prefs.getFullDomainName "grocy"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableCalibreWeb;
-                            name = "calibre";
-                            subtitle = "digital books";
-                            tag = "reading";
-                            url = "https://${prefs.getFullDomainName "calibre"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableDokuwiki;
-                            name = "dokuwiki";
-                            subtitle = "personal wiki";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "dokuwiki"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableTrilium;
-                            name = "trilium";
-                            subtitle = "note-taking";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "trilium"}";
-                          }
-                          {
-                            name = "traefik";
-                            subtitle = "traefik dashboard";
-                            tag = "operations";
-                            url = "https://${
+                  traefikForwardingPort = 8080;
+                };
+            }
+            {
+              name = "filestash";
+              enable = prefs.ociContainers.enableFilestash;
+              config = {
+                environment = {
+                  APPLICATION_URL = prefs.getFullDomainName "filestash";
+                };
+                volumes = [ "/var/data/filestash:/app/data/state" ];
+                traefikForwardingPort = 8334;
+              };
+            }
+            {
+              name = "vault";
+              enable = prefs.ociContainers.enableVault;
+              config =
+                {
+                  extraOptions = [ "--cap-add=IPC_LOCK" ];
+                  cmd = [ "server" ];
+                  environment = {
+                    VAULT_API_ADDR = "https://${prefs.getFullDomainName "vault"}";
+                  };
+                  volumes = [
+                    "/var/data/vault/config:/vault/config"
+                    "/var/data/vault/logs:/vault/logs"
+                    "/var/data/vault/file:/vault/file"
+                  ];
+                  environmentFiles = [ "/run/secrets/vault-env" ];
+                  traefikForwardingPort = 8200;
+                };
+            }
+            {
+              name = "homer";
+              enable = prefs.ociContainers.enableHomer;
+              config = {
+                volumes = [ "/var/data/homer:/www/assets" ];
+                traefikForwardingPort = 8080;
+                extraOptions =
+                  let
+                    config = toYAML "homer-config" {
+                      subtitle = "Home";
+                      title = "Dashboard";
+                      theme = "default";
+                      colors = {
+                        dark = {
+                          background = "#131313";
+                          card-background = "#2b2b2b";
+                          card-shadow = "rgba(0, 0, 0, 0.4)";
+                          highlight-hover = "#5a95f5";
+                          highlight-primary = "#3367d6";
+                          highlight-secondary = "#4285f4";
+                          link-hover = "#ffdd57";
+                          text = "#eaeaea";
+                          text-header = "#ffffff";
+                          text-subtitle = "#f5f5f5";
+                          text-title = "#fafafa";
+                        };
+                        light = {
+                          background = "#f5f5f5";
+                          card-background = "#ffffff";
+                          card-shadow = "rgba(0, 0, 0, 0.1)";
+                          highlight-hover = "#5a95f5";
+                          highlight-primary = "#3367d6";
+                          highlight-secondary = "#4285f4";
+                          link-hover = "#363636";
+                          text = "#363636";
+                          text-header = "#ffffff";
+                          text-subtitle = "#424242";
+                          text-title = "#303030";
+                        };
+                      };
+                      footer = false;
+                      header = false;
+                      icon = "fas fa-skull-crossbones";
+                      links = [ ];
+                      services = [{
+                        name = "Applications";
+                        icon = "fas fa-cloud";
+                        items =
+                          builtins.map (attrs: builtins.removeAttrs attrs [ "enable" ])
+                            (builtins.filter (x: x.enable or true) [
+                              {
+                                enable = prefs.ociContainers.enableFreeipa;
+                                name = "freeipa";
+                                subtitle = "account management";
+                                tag = "auth";
+                                url = "https://${prefs.getFullDomainName "freeipa"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableKosyncsrv;
+                                name = "kosyncsrv";
+                                subtitle = "koreader progress sync";
+                                tag = "reading";
+                                url = "https://${prefs.getFullDomainName "kosyncsrv"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableCloudBeaver;
+                                name = "cloud beaver";
+                                subtitle = "database management";
+                                tag = "database";
+                                url = "https://${prefs.getFullDomainName "cloudbeaver"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableAuthelia;
+                                name = "authelia";
+                                subtitle = "authentication and authorization";
+                                tag = "auth";
+                                url = "https://${prefs.getFullDomainName "authelia"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableHledger;
+                                name = "hledger";
+                                subtitle = "online ledger";
+                                tag = "house-keeping";
+                                url = "https://${prefs.getFullDomainName "hledger"}";
+                              }
+                              {
+                                enable = prefs.enableSmosServer;
+                                name = "smos";
+                                subtitle = "self-management";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "smos"}";
+                              }
+                              {
+                                enable = prefs.enableWstunnel;
+                                name = "wstunnel";
+                                subtitle = "websocket tunnel";
+                                tag = "network";
+                                url = "https://${prefs.getFullDomainName "wstunnel"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableSearx;
+                                name = "searx";
+                                subtitle = "search engine";
+                                tag = "search";
+                                url = "https://${prefs.getFullDomainName "searx"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableRssBridge;
+                                name = "rss-bridge";
+                                subtitle = "rss feeds generator";
+                                tag = "reading";
+                                url = "https://${prefs.getFullDomainName "rss-bridge"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableWallabag;
+                                name = "wallabag";
+                                subtitle = "read it later";
+                                tag = "reading";
+                                url = "https://${prefs.getFullDomainName "wallabag"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableCodeServer
+                                  || prefs.enableCodeServer;
+                                name = "code server";
+                                subtitle = "text editing";
+                                tag = "coding";
+                                url = "https://${prefs.getFullDomainName "codeserver"}";
+                              }
+                              {
+                                enable = prefs.enableSyncthing;
+                                name = "syncthing";
+                                subtitle = "file synchronization";
+                                tag = "synchronization";
+                                url = "https://${prefs.getFullDomainName "syncthing"}";
+                              }
+                              {
+                                enable = prefs.enableGrafana;
+                                name = "grafana";
+                                subtitle = "monitoring dashboard";
+                                tag = "operation";
+                                url = "https://${prefs.getFullDomainName "grafana"}";
+                              }
+                              {
+                                enable = prefs.enableJupyter;
+                                name = "jupyter";
+                                subtitle = "jupyter notebook";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "jupyter"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableRecipes;
+                                name = "recipes";
+                                subtitle = "cooking recipes";
+                                tag = "house-keeping";
+                                url = "https://${prefs.getFullDomainName "recipes"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableBookwyrm;
+                                name = "bookwyrm";
+                                subtitle = "books cataloging";
+                                tag = "reading";
+                                url = "https://${prefs.getFullDomainName "bookwyrm"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableWger;
+                                name = "wger";
+                                subtitle = "fitness tracking";
+                                tag = "fitness";
+                                url = "https://${prefs.getFullDomainName "wger"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableEtesync;
+                                name = "etesync";
+                                subtitle = "contacts, calandar and tasks";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "etesync-pim"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableEtesyncDav;
+                                name = "etesync dav";
+                                subtitle = "etesync dav bridge";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "etesync-dav"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableEtesync;
+                                name = "etesync notes";
+                                subtitle = "note-taking";
+                                tag = "productivity";
+                                url =
+                                  "https://${prefs.getFullDomainName "etesync-notes"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableN8n;
+                                name = "n8n";
+                                subtitle = "workflow automation";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "n8n"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableGitea;
+                                name = "gitea";
+                                subtitle = "version control";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "gitea"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableWikijs;
+                                name = "wikijs";
+                                subtitle = "personal wiki";
+                                tag = "documentation";
+                                url = "https://${prefs.getFullDomainName "wikijs"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableXwiki;
+                                name = "xwiki";
+                                subtitle = "personal wiki";
+                                tag = "documentation";
+                                url = "https://${prefs.getFullDomainName "xwiki"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableHuginn;
+                                name = "huginn";
+                                subtitle = "automation agents";
+                                tag = "automation";
+                                url = "https://${prefs.getFullDomainName "huginn"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableTiddlyWiki;
+                                name = "tiddlywiki";
+                                subtitle = "personal wiki";
+                                tag = "documentation";
+                                url = "https://${prefs.getFullDomainName "tiddlywiki"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableGrocy;
+                                name = "grocy";
+                                subtitle = "ERP for household";
+                                tag = "house-keeping";
+                                url = "https://${prefs.getFullDomainName "grocy"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableCalibreWeb;
+                                name = "calibre";
+                                subtitle = "digital books";
+                                tag = "reading";
+                                url = "https://${prefs.getFullDomainName "calibre"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableDokuwiki;
+                                name = "dokuwiki";
+                                subtitle = "personal wiki";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "dokuwiki"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableTrilium;
+                                name = "trilium";
+                                subtitle = "note-taking";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "trilium"}";
+                              }
+                              {
+                                name = "traefik";
+                                subtitle = "traefik dashboard";
+                                tag = "operations";
+                                url = "https://${
 prefs.getFullDomainName "traefik"
 }/dashboard/";
-                          }
-                          {
-                            enable = prefs.ociContainers.enablePerkeep;
-                            name = "perkeep";
-                            subtitle = "personal datastore system";
-                            tag = "digital-perseverance";
-                            url = "https://${prefs.getFullDomainName "perkeep"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableVaultwarden;
-                            name = "vaultwarden";
-                            subtitle = "password management";
-                            tag = "security";
-                            url = "https://${prefs.getFullDomainName "vaultwarden"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableVault;
-                            name = "vault";
-                            subtitle = "secrets management";
-                            tag = "security";
-                            url = "https://${prefs.getFullDomainName "vault"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enablePleroma;
-                            name = "pleroma";
-                            subtitle = "microblogging";
-                            tag = "social";
-                            url = "https://${prefs.getFullDomainName "pleroma"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableLivebook;
-                            name = "livebook";
-                            subtitle = "elixir notebook";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "livebook"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableJoplin;
-                            name = "joplin";
-                            subtitle = "note-taking";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "joplin"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableMiniflux;
-                            name = "miniflux";
-                            subtitle = "rss reader";
-                            tag = "reading";
-                            url = "https://${prefs.getFullDomainName "miniflux"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableNextcloud;
-                            name = "nextcloud";
-                            subtitle = "file synchronization";
-                            tag = "synchronization";
-                            url = "https://${prefs.getFullDomainName "nextcloud"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableSftpgo;
-                            name = "sftpgo";
-                            subtitle = "file synchronization";
-                            tag = "synchronization";
-                            url = "https://${prefs.getFullDomainName "sftpgo"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableSftpgo;
-                            name = "webdav";
-                            subtitle = "file synchronization";
-                            tag = "synchronization";
-                            url = "https://${prefs.getFullDomainName "webdav"}";
-                          }
-                          {
-                            enable = prefs.ociContainers.enableFilestash;
-                            name = "filestash";
-                            subtitle = "file manager";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "filestash"}";
-                          }
-                          {
-                            name = "keeweb";
-                            enable = prefs.ociContainers.enableKeeweb;
-                            subtitle = "password management";
-                            tag = "security";
-                            url = "https://${prefs.getFullDomainName "keeweb"}";
-                          }
-                          {
-                            name = "clash";
-                            subtitle = "clash instance management";
-                            tag = "network";
-                            url = "https://${prefs.getFullDomainName "clash"}";
-                          }
-                          {
-                            name = "aria2";
-                            subtitle = "download management";
-                            tag = "network";
-                            url = "https://${prefs.getFullDomainName "aria2"}";
-                          }
-                          {
-                            name = "activitywatch";
-                            enable = prefs.enableActivityWatch;
-                            subtitle = "device usage monitor";
-                            tag = "productivity";
-                            url =
-                              "https://${prefs.getFullDomainName "activitywatch"}";
-                          }
-                          {
-                            enable = prefs.enableTtyd;
-                            name = "ttyd";
-                            subtitle = "web terminal emulator";
-                            tag = "coding";
-                            url = "https://${prefs.getFullDomainName "ttyd"}";
-                          }
-                          {
-                            name = "organice";
-                            subtitle = "org-mode files editing";
-                            tag = "productivity";
-                            url = "https://${prefs.getFullDomainName "organice"}";
-                          }
-                        ]);
-                  }];
+                              }
+                              {
+                                enable = prefs.ociContainers.enablePerkeep;
+                                name = "perkeep";
+                                subtitle = "personal datastore system";
+                                tag = "digital-perseverance";
+                                url = "https://${prefs.getFullDomainName "perkeep"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableVaultwarden;
+                                name = "vaultwarden";
+                                subtitle = "password management";
+                                tag = "security";
+                                url = "https://${prefs.getFullDomainName "vaultwarden"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableVault;
+                                name = "vault";
+                                subtitle = "secrets management";
+                                tag = "security";
+                                url = "https://${prefs.getFullDomainName "vault"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enablePleroma;
+                                name = "pleroma";
+                                subtitle = "microblogging";
+                                tag = "social";
+                                url = "https://${prefs.getFullDomainName "pleroma"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableLivebook;
+                                name = "livebook";
+                                subtitle = "elixir notebook";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "livebook"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableJoplin;
+                                name = "joplin";
+                                subtitle = "note-taking";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "joplin"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableMiniflux;
+                                name = "miniflux";
+                                subtitle = "rss reader";
+                                tag = "reading";
+                                url = "https://${prefs.getFullDomainName "miniflux"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableNextcloud;
+                                name = "nextcloud";
+                                subtitle = "file synchronization";
+                                tag = "synchronization";
+                                url = "https://${prefs.getFullDomainName "nextcloud"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableSftpgo;
+                                name = "sftpgo";
+                                subtitle = "file synchronization";
+                                tag = "synchronization";
+                                url = "https://${prefs.getFullDomainName "sftpgo"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableSftpgo;
+                                name = "webdav";
+                                subtitle = "file synchronization";
+                                tag = "synchronization";
+                                url = "https://${prefs.getFullDomainName "webdav"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableFilestash;
+                                name = "filestash";
+                                subtitle = "file manager";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "filestash"}";
+                              }
+                              {
+                                name = "keeweb";
+                                enable = prefs.ociContainers.enableKeeweb;
+                                subtitle = "password management";
+                                tag = "security";
+                                url = "https://${prefs.getFullDomainName "keeweb"}";
+                              }
+                              {
+                                name = "clash";
+                                subtitle = "clash instance management";
+                                tag = "network";
+                                url = "https://${prefs.getFullDomainName "clash"}";
+                              }
+                              {
+                                name = "aria2";
+                                subtitle = "download management";
+                                tag = "network";
+                                url = "https://${prefs.getFullDomainName "aria2"}";
+                              }
+                              {
+                                name = "activitywatch";
+                                enable = prefs.enableActivityWatch;
+                                subtitle = "device usage monitor";
+                                tag = "productivity";
+                                url =
+                                  "https://${prefs.getFullDomainName "activitywatch"}";
+                              }
+                              {
+                                enable = prefs.enableTtyd;
+                                name = "ttyd";
+                                subtitle = "web terminal emulator";
+                                tag = "coding";
+                                url = "https://${prefs.getFullDomainName "ttyd"}";
+                              }
+                              {
+                                name = "organice";
+                                subtitle = "org-mode files editing";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "organice"}";
+                              }
+                            ]);
+                      }];
+                    };
+                  in
+                  [
+                    "--mount=type=bind,source=${config},target=/www/assets/config.yml"
+                    "--label=domainprefix=home"
+                  ];
+              };
+            }
+            {
+              name = "etesync";
+              enable = prefs.ociContainers.enableEtesync;
+              config =
+                {
+                  volumes = [ "/var/data/etesync:/data" ];
+                  dependsOn = [ "postgresql" ];
+                  environmentFiles = [ "/run/secrets/etesync-env" ];
+                  traefikForwardingPort = 3735;
                 };
-              in
-              [
-                "--mount=type=bind,source=${config},target=/www/assets/config.yml"
-                "--label=domainprefix=home"
-              ];
-          } // mkContainer "etesync" prefs.ociContainers.enableEtesync {
-            volumes = [ "/var/data/etesync:/data" ];
-            dependsOn = [ "postgresql" ];
-            environmentFiles = [ "/run/secrets/etesync-env" ];
-            traefikForwardingPort = 3735;
-          } // mkContainer "etesync-dav" prefs.ociContainers.enableEtesyncDav {
-            volumes = [ "/var/data/etesync-dav:/data" ];
-            traefikForwardingPort = 37358;
-            environment = {
-              "ETESYNC_URL" = "https://${prefs.getFullDomainName "etesync"}";
-            };
-          } // mkContainer "keeweb" prefs.ociContainers.enableKeeweb {
-            volumes = [
-              "${prefs.syncFolder}/private/keepass:/var/www/keeweb-local-server/databases"
-            ];
-            environmentFiles = [ "/run/secrets/keeweb-env" ];
-            traefikForwardingPort = 8080;
-          } // mkContainer "codeserver" prefs.ociContainers.enableCodeServer {
-            volumes = [
-              "${prefs.home}:/home/coder"
-              # "${prefs.home}/Workspace:/home/coder/Workspace"
-              # "${prefs.home}/.vscode:/home/coder/.vscode"
-            ];
-            middlewares = [ "authelia" ];
-            extraOptions = [
-              "--user=${builtins.toString prefs.ownerUid}:${
+            }
+            {
+              name = "etesync-dav";
+              enable = prefs.ociContainers.enableEtesyncDav;
+              config = {
+                volumes = [ "/var/data/etesync-dav:/data" ];
+                traefikForwardingPort = 37358;
+                environment = {
+                  "ETESYNC_URL" = "https://${prefs.getFullDomainName "etesync"}";
+                };
+              };
+            }
+            {
+              name = "keeweb";
+              enable = prefs.ociContainers.enableKeeweb;
+              config =
+                {
+                  volumes = [
+                    "${prefs.syncFolder}/private/keepass:/var/www/keeweb-local-server/databases"
+                  ];
+                  environmentFiles = [ "/run/secrets/keeweb-env" ];
+                  traefikForwardingPort = 8080;
+                };
+            }
+            {
+              name = "codeserver";
+              enable = prefs.ociContainers.enableCodeServer;
+              config = {
+                volumes = [
+                  "${prefs.home}:/home/coder"
+                  # "${prefs.home}/Workspace:/home/coder/Workspace"
+                  # "${prefs.home}/.vscode:/home/coder/.vscode"
+                ];
+                middlewares = [ "authelia" ];
+                extraOptions = [
+                  "--user=${builtins.toString prefs.ownerUid}:${
 builtins.toString prefs.ownerGroupGid
 }"
-            ];
-            environment = { "DOCKER_USER" = "${prefs.owner}"; };
-            cmd = [
-              "--disable-telemetry"
-              "--user-data-dir=/home/coder/.vscode"
-              "--auth=none"
-            ];
-            traefikForwardingPort = 8080;
-          };
+                ];
+                environment = { "DOCKER_USER" = "${prefs.owner}"; };
+                cmd = [
+                  "--disable-telemetry"
+                  "--user-data-dir=/home/coder/.vscode"
+                  "--auth=none"
+                ];
+                traefikForwardingPort = 8080;
+              };
+            }
+          ];
       };
   };
 
@@ -3977,30 +4309,57 @@ builtins.toString prefs.ownerGroupGid
             "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
             "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
             "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
-          ] ++ lib.optionals prefs.ociContainers.enablePerkeep [
-            "d /var/data/perkeep - 1000 1000 -"
-          ] ++ lib.optionals prefs.ociContainers.enableSftpgo [
-            "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
-            "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
-            "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
-            "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
-          ] ++ lib.optionals prefs.ociContainers.enableEtesync [
-            "d /var/data/etesync - 373 373 -"
-            "d /var/data/etesync/media - 373 373 -"
-          ] ++ lib.optionals prefs.ociContainers.enableEtesyncDav
-            [ "d /var/data/etesync-dav - 1000 1000 -" ]
-          ++ lib.optionals prefs.ociContainers.enableTrilium
-            [ "d /var/data/trilium - 1000 1000 -" ]
-          ++ lib.optionals prefs.ociContainers.enableTiddlyWiki
-            [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ]
-          ++ lib.optionals prefs.ociContainers.enablePleroma
-            [ "d /var/data/pleroma - 100 0 -" ]
-          ++ lib.optionals prefs.ociContainers.enableFilestash
-            [ "d /var/data/filestash - 1000 1000 -" ]
-          ++ lib.optionals prefs.ociContainers.enableGitea [
-            "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
-            "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
-          ];
+          ] ++ (mergeOptionalLists [
+            {
+              enable = prefs.ociContainers.enablePerkeep;
+              list = [
+                "d /var/data/perkeep - 1000 1000 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableSftpgo;
+              list = [
+                "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableEtesync;
+              list = [
+                "d /var/data/etesync - 373 373 -"
+                "d /var/data/etesync/media - 373 373 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableEtesyncDav;
+              list = [ "d /var/data/etesync-dav - 1000 1000 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableTrilium;
+              list = [ "d /var/data/trilium - 1000 1000 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableTiddlyWiki;
+              list = [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ];
+            }
+            {
+              enable = prefs.ociContainers.enablePleroma;
+              list = [ "d /var/data/pleroma - 100 0 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableFilestash;
+              list = [ "d /var/data/filestash - 1000 1000 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableGitea;
+              list = [
+                "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
+              ];
+            }
+          ]);
         };
       }
 
@@ -4151,82 +4510,91 @@ builtins.toString prefs.ownerGroupGid
               Environment = "TMP_FILE=%T/%n";
             };
           };
-        } // lib.optionalAttrs prefs.enableWstunnel {
-          # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
-          "wstunnel" = {
-            description = "wstunnel server";
-            before =
-              let
-                wg-quick = map (iface: "wg-quick-${iface}.service")
-                  (lib.attrNames config.networking.wg-quick.interfaces);
-                wireguard = lib.optionals config.networking.wireguard.enable
-                  (map (iface: "wireguard-${iface}.service")
-                    (lib.attrNames config.networking.wireguard.interfaces));
-              in
-              wg-quick ++ wireguard;
-            after = [ "network.target" ];
-            wantedBy = [ "multi-user.target" ];
-            path = [ pkgs.wstunnel ];
-            serviceConfig = {
-              Restart = "always";
-              RestartSec = "1s";
-              # User
-              DynamicUser = true;
-              # Capabilities
-              AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
-              CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
-              # Security
-              NoNewPrivileges = true;
-              # Sandboxing
-              ProtectSystem = "strict";
-              ProtectHome = lib.mkDefault true;
-              PrivateTmp = true;
-              PrivateDevices = true;
-              ProtectHostname = true;
-              ProtectKernelTunables = true;
-              ProtectKernelModules = true;
-              ProtectControlGroups = true;
-              RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
-              RestrictNamespaces = true;
-              LockPersonality = true;
-              MemoryDenyWriteExecute = true;
-              RestrictRealtime = true;
-              RestrictSUIDSGID = true;
-              RemoveIPC = true;
-              PrivateMounts = true;
-              # System Call Filtering
-              SystemCallArchitectures = "native";
-            };
-            script = ''
-                            exec wstunnel --verbose --server 127.0.0.1:${
-              builtins.toString prefs.wstunnelPort
-              }
-            '';
-          };
-        } // lib.optionalAttrs prefs.enableWireguard
-          (
-            let
-              interfaces = builtins.attrNames config.networking.wg-quick.interfaces;
-            in
-            builtins.foldl'
-              (acc: e: acc //
-              {
-                "wg-quick-${e}" = {
-                  path = [ pkgs.gawk pkgs.iptables pkgs.bash pkgs.gost ];
+        } // (mergeOptionalConfigs [
+          {
+            enable = prefs.enableWstunnel;
+            config = {
+              # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
+              "wstunnel" = {
+                description = "wstunnel server";
+                before =
+                  let
+                    wg-quick = map (iface: "wg-quick-${iface}.service")
+                      (lib.attrNames config.networking.wg-quick.interfaces);
+                    wireguard = lib.optionals config.networking.wireguard.enable
+                      (map (iface: "wireguard-${iface}.service")
+                        (lib.attrNames config.networking.wireguard.interfaces));
+                  in
+                  wg-quick ++ wireguard;
+                after = [ "network.target" ];
+                wantedBy = [ "multi-user.target" ];
+                path = [ pkgs.wstunnel ];
+                serviceConfig = {
+                  Restart = "always";
+                  RestartSec = "1s";
+                  # User
+                  DynamicUser = true;
+                  # Capabilities
+                  AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+                  CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+                  # Security
+                  NoNewPrivileges = true;
+                  # Sandboxing
+                  ProtectSystem = "strict";
+                  ProtectHome = lib.mkDefault true;
+                  PrivateTmp = true;
+                  PrivateDevices = true;
+                  ProtectHostname = true;
+                  ProtectKernelTunables = true;
+                  ProtectKernelModules = true;
+                  ProtectControlGroups = true;
+                  RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+                  RestrictNamespaces = true;
+                  LockPersonality = true;
+                  MemoryDenyWriteExecute = true;
+                  RestrictRealtime = true;
+                  RestrictSUIDSGID = true;
+                  RemoveIPC = true;
+                  PrivateMounts = true;
+                  # System Call Filtering
+                  SystemCallArchitectures = "native";
                 };
-              })
-              { }
-              interfaces
-          )
-        // lib.optionalAttrs (prefs.enableAvahi) {
-          "avahi-daemon" = {
-            serviceConfig = {
-              # We use avahi and openshift/coredns-mdns to discover hosts.
-              # Coredns-mdns requires hosts to publish  _workstation._tcp.
-              # But avahi daemon seems to be not publishing  _workstation._tcp on start up.
-              # If it is the case, we try to restart it, because manually restarting it works.
-              Restart = "always";
-              ExecStartPost = "${pkgs.writeShellScript "maybe-restart-avahi" ''
+                script = ''
+                                              exec wstunnel --verbose --server 127.0.0.1:${
+                  builtins.toString prefs.wstunnelPort
+                  }
+                '';
+              };
+            };
+          }
+          {
+            enable = prefs.enableWireguard;
+            config = (
+              let
+                interfaces = builtins.attrNames config.networking.wg-quick.interfaces;
+              in
+              builtins.foldl'
+                (acc: e: acc //
+                {
+                  "wg-quick-${e}" = {
+                    path = [ pkgs.gawk pkgs.iptables pkgs.bash pkgs.gost ];
+                  };
+                })
+                { }
+                interfaces
+            );
+          }
+          {
+            enable = prefs.enableAvahi;
+            config = {
+              "avahi-daemon" = {
+                serviceConfig = {
+                  # We use avahi and openshift/coredns-mdns to discover hosts.
+                  # Coredns-mdns requires hosts to publish  _workstation._tcp.
+                  # But avahi daemon seems to be not publishing  _workstation._tcp on start up.
+                  # If it is the case, we try to restart it, because manually restarting it works.
+                  Restart = "always";
+                  ExecStartPost = "${pkgs.writeShellScript "maybe-restart-avahi" ''
                     for i in $(seq 1 4); do
                         if avahi-browse --parsable --resolve --terminate _workstation._tcp | grep ';127.0.0.1;'; then
                             exit 0
@@ -4236,154 +4604,225 @@ builtins.toString prefs.ownerGroupGid
                     done
                     exit 1
                   ''}";
-            };
-          };
-        }
-        // lib.optionalAttrs
-          (prefs.buildZerotierone && !prefs.enableZerotierone)
-          {
-            # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
-            "zerotierone" = { wantedBy = lib.mkForce [ ]; };
-          } // lib.optionalAttrs prefs.buildZerotierone
-          {
-            "zerotierone" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
-          } // lib.optionalAttrs prefs.enableSyncthing
-          {
-            "syncthing" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
-          } // lib.optionalAttrs prefs.enableTailScale
-          {
-            "tailscaled" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
-          } // lib.optionalAttrs (config.virtualisation.docker.enable) {
-          "docker" = {
-            serviceConfig = {
-              ExecStartPost = [
-                "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
-              ];
-            };
-          };
-        } // lib.optionalAttrs (prefs.enableK3s) {
-          "k3s" =
-            let
-              k3sPatchScript = pkgs.writeShellScript "add-k3s-config" ''
-                ${pkgs.k3s}/bin/k3s kubectl patch -n kube-system services traefik -p '{"spec":{"ports":[{"name":"http","nodePort":30080,"port":30080,"protocol":"TCP","targetPort":"http"},{"name":"https","nodePort":30443,"port":30443,"protocol":"TCP","targetPort":"https"},{"$patch":"replace"}]}}' || ${pkgs.coreutils}/bin/true
-                ${pkgs.coreutils}/bin/chown ${prefs.owner} /etc/rancher/k3s/k3s.yaml || ${pkgs.coreutils}/bin/true
-              '';
-            in
-            {
-              path = if prefs.enableZfs then [ pkgs.zfs ] else [ ];
-              serviceConfig = {
-                ExecStartPost = [
-                  "${k3sPatchScript}"
-                  "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
-                ];
+                };
               };
             };
-        } // lib.optionalAttrs (prefs.enableCrio) {
-          "crio" = {
-            path = with pkgs;
-              [ conntrack-tools ] ++ (lib.optionals prefs.enableZfs [ zfs ]);
-          };
-        } // lib.optionalAttrs (prefs.enableJupyter) {
-          "jupyterhub" = { path = with pkgs; [ nodejs_latest ]; };
-        } // lib.optionalAttrs (prefs.enableAria2) {
-          "aria2" = {
-            serviceConfig = {
-              Environment = "ARIA2_RPC_SECRET=token_nekot";
-              EnvironmentFile = "/run/secrets/aria2-env";
-            };
-          };
-        } // lib.optionalAttrs (prefs.enablePrometheus) {
-          "prometheus" = {
-            serviceConfig = {
-              EnvironmentFile = "/run/secrets/prometheus-env";
-            };
-          };
-        } // lib.optionalAttrs (prefs.enablePromtail) {
-          "promtail" = {
-            serviceConfig = { EnvironmentFile = "/run/secrets/promtail-env"; };
-          };
-        } // lib.optionalAttrs (prefs.enableGrafana) {
-          "grafana" = {
-            serviceConfig = { EnvironmentFile = "/run/secrets/grafana-env"; };
-          };
-        } // lib.optionalAttrs (prefs.ociContainers.enableWallabag) {
-          "${prefs.ociContainerBackend}-wallabag" = {
-            postStart = ''
-              set -euo pipefail
-              # https://github.com/moby/moby/issues/41890
-              export HOME=/root
-              retries=0
-              while ! ${prefs.ociContainerBackend} exec wallabag /entrypoint.sh migrate; do
-                  if (( retries > 10 )); then
-                      echo "Giving up on initializing postgresql database."
-                      exit 0
-                  else
-                      retries=$(( retries + 1 ))
-                      sleep 2
-                  fi
-              done
-            '';
-          };
-        } // lib.optionalAttrs (prefs.enableCoredns) {
-          "coredns" = { serviceConfig = { CPUQuota = "20%"; }; };
-        } // lib.optionalAttrs (prefs.enablePostgresql) {
-          "postgresql" = { serviceConfig = { SupplementaryGroups = "keys"; }; };
-        } // lib.optionalAttrs (prefs.enableTraefik) {
-          "traefik" = {
-            serviceConfig = {
-              LogsDirectory = "traefik";
-              EnvironmentFile = "/run/secrets/traefik-env";
-              SupplementaryGroups = "keys acme";
-            } // (lib.optionalAttrs (prefs.ociContainerBackend == "docker") {
-              SupplementaryGroups = "keys acme docker";
-            }) // (lib.optionalAttrs (prefs.ociContainerBackend == "podman") {
-              User = lib.mkForce "root";
-            }) // (lib.optionalAttrs (prefs.enableK3s) {
-              # TODO: Use a less privileged kube config.
-              Environment = "KUBECONFIG=/kubeconfig.yaml";
-              ExecStartPre =
-                "+${pkgs.acl}/bin/setfacl -m 'u:traefik:r--' /kubeconfig.yaml";
-              BindPaths = "/etc/rancher/k3s/k3s.yaml:/kubeconfig.yaml";
-            });
-          };
-        } // lib.optionalAttrs (prefs.enableCodeServer) {
-          "code-server" = {
-            enable = true;
-            description = "Remote VSCode Server";
-            after = [ "network.target" ];
-            wantedBy = [ "multi-user.target" ];
-            path = [ pkgs.go pkgs.git pkgs.direnv ];
-            serviceConfig = {
-              Type = "simple";
-              ExecStart =
-                "${pkgs.code-server}/bin/code-server --disable-telemetry --disable-update-check --user-data-dir ${prefs.home}/.vscode --extensions-dir ${prefs.home}/.vscode/extensions --bind-addr 127.0.0.1:4050 --auth password";
-              EnvironmentFile = "/run/secrets/code-server-env";
-              WorkingDirectory = prefs.home;
-              NoNewPrivileges = true;
-              User = prefs.owner;
-              Group = prefs.ownerGroup;
-            };
-          };
-        } // lib.optionalAttrs
-          (prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null))
+          }
           {
-            "aioproxy" = {
-              enable = true;
-              description = "All-in-one Reverse Proxy";
-              after = [ "network.target" ];
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig = {
-                Type = "simple";
-                ExecStart =
-                  "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${
+            enable = (prefs.buildZerotierone && !prefs.enableZerotierone);
+            config = {
+              # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
+              "zerotierone" = { wantedBy = lib.mkForce [ ]; };
+            };
+          }
+          {
+            enable = prefs.buildZerotierone;
+            config = {
+              "zerotierone" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
+            };
+          }
+          {
+            enable = prefs.enableSyncthing;
+            config =
+              {
+                "syncthing" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
+              };
+          }
+          {
+            enable = prefs.enableTailScale;
+            config =
+              {
+                "tailscaled" = { serviceConfig = { SupplementaryGroups = prefs.noproxyGroup; }; };
+              };
+          }
+          {
+            enable = config.virtualisation.docker.enable;
+            config = {
+              "docker" = {
+                serviceConfig = {
+                  ExecStartPost = [
+                    "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
+                  ];
+                };
+              };
+            };
+          }
+          {
+            enable = prefs.enableK3s;
+            config = {
+              "k3s" =
+                let
+                  k3sPatchScript = pkgs.writeShellScript "add-k3s-config" ''
+                    ${pkgs.k3s}/bin/k3s kubectl patch -n kube-system services traefik -p '{"spec":{"ports":[{"name":"http","nodePort":30080,"port":30080,"protocol":"TCP","targetPort":"http"},{"name":"https","nodePort":30443,"port":30443,"protocol":"TCP","targetPort":"https"},{"$patch":"replace"}]}}' || ${pkgs.coreutils}/bin/true
+                    ${pkgs.coreutils}/bin/chown ${prefs.owner} /etc/rancher/k3s/k3s.yaml || ${pkgs.coreutils}/bin/true
+                  '';
+                in
+                {
+                  path = if prefs.enableZfs then [ pkgs.zfs ] else [ ];
+                  serviceConfig = {
+                    ExecStartPost = [
+                      "${k3sPatchScript}"
+                      "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
+                    ];
+                  };
+                };
+            };
+          }
+          {
+            enable = prefs.enableCrio;
+            config = {
+              "crio" = {
+                path = with pkgs;
+                  [ conntrack-tools ] ++ (lib.optionals prefs.enableZfs [ zfs ]);
+              };
+            };
+          }
+          {
+            enable = prefs.enableJupyter;
+            config = {
+              "jupyterhub" = { path = with pkgs; [ nodejs_latest ]; };
+            };
+          }
+          {
+            enable = prefs.enableAria2;
+            config = {
+              "aria2" = {
+                serviceConfig = {
+                  Environment = "ARIA2_RPC_SECRET=token_nekot";
+                  EnvironmentFile = "/run/secrets/aria2-env";
+                };
+              };
+            };
+          }
+          {
+            enable = prefs.enablePrometheus;
+            config = {
+              "prometheus" = {
+                serviceConfig = {
+                  EnvironmentFile = "/run/secrets/prometheus-env";
+                };
+              };
+            };
+          }
+          {
+            enable = prefs.enablePromtail;
+            config = {
+              "promtail" = {
+                serviceConfig = { EnvironmentFile = "/run/secrets/promtail-env"; };
+              };
+            };
+          }
+          {
+            enable = prefs.enableGrafana;
+            config = {
+              "grafana" = {
+                serviceConfig = { EnvironmentFile = "/run/secrets/grafana-env"; };
+              };
+            };
+          }
+          {
+            enable = prefs.ociContainers.enableWallabag;
+            config = {
+              "${prefs.ociContainerBackend}-wallabag" = {
+                postStart = ''
+                  set -euo pipefail
+                  # https://github.com/moby/moby/issues/41890
+                  export HOME=/root
+                  retries=0
+                  while ! ${prefs.ociContainerBackend} exec wallabag /entrypoint.sh migrate; do
+                      if (( retries > 10 )); then
+                          echo "Giving up on initializing postgresql database."
+                          exit 0
+                      else
+                          retries=$(( retries + 1 ))
+                          sleep 2
+                      fi
+                  done
+                '';
+              };
+            };
+          }
+          {
+            enable = prefs.enableCoredns;
+            config = {
+              "coredns" = { serviceConfig = { CPUQuota = "20%"; }; };
+            };
+          }
+          {
+            enable = prefs.enablePostgresql;
+            config = {
+              "postgresql" = { serviceConfig = { SupplementaryGroups = "keys"; }; };
+            };
+          }
+          {
+            enable = prefs.enableTraefik;
+            config =
+              {
+                "traefik" =
+                  {
+                    serviceConfig =
+                      {
+                        LogsDirectory = "traefik";
+                        EnvironmentFile = "/run/secrets/traefik-env";
+                        SupplementaryGroups = "keys acme";
+                      } // (lib.optionalAttrs (prefs.ociContainerBackend == "docker") {
+                        SupplementaryGroups = "keys acme docker";
+                      }) // (lib.optionalAttrs (prefs.ociContainerBackend == "podman") {
+                        User = lib.mkForce "root";
+                      }) // (lib.optionalAttrs (prefs.enableK3s) {
+                        # TODO: Use a less privileged kube config.
+                        Environment = "KUBECONFIG=/kubeconfig.yaml";
+                        ExecStartPre =
+                          "+${pkgs.acl}/bin/setfacl -m 'u:traefik:r--' /kubeconfig.yaml";
+                        BindPaths = "/etc/rancher/k3s/k3s.yaml:/kubeconfig.yaml";
+                      });
+                  };
+              };
+          }
+          {
+            enable = (prefs.enableCodeServer);
+            config = {
+              "code-server" = {
+                enable = true;
+                description = "Remote VSCode Server";
+                after = [ "network.target" ];
+                wantedBy = [ "multi-user.target" ];
+                path = [ pkgs.go pkgs.git pkgs.direnv ];
+                serviceConfig = {
+                  Type = "simple";
+                  ExecStart =
+                    "${pkgs.code-server}/bin/code-server --disable-telemetry --disable-update-check --user-data-dir ${prefs.home}/.vscode --extensions-dir ${prefs.home}/.vscode/extensions --bind-addr 127.0.0.1:4050 --auth password";
+                  EnvironmentFile = "/run/secrets/code-server-env";
+                  WorkingDirectory = prefs.home;
+                  NoNewPrivileges = true;
+                  User = prefs.owner;
+                  Group = prefs.ownerGroup;
+                };
+              };
+            };
+          }
+          {
+            enable = prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null);
+            config = {
+              "aioproxy" = {
+                enable = true;
+                description = "All-in-one Reverse Proxy";
+                after = [ "network.target" ];
+                wantedBy = [ "multi-user.target" ];
+                serviceConfig = {
+                  Type = "simple";
+                  ExecStart =
+                    "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${
 builtins.toString prefs.aioproxyPort
 } -u 127.0.0.1:8000 -p both -ssh 127.0.0.1:22 -eternal-terminal 127.0.0.1:2022 -http 127.0.0.1:8080 -tls 127.0.0.1:30443";
-                ExecStartPost = [
-                  "-${pkgs.systemd}/bin/systemctl start --no-block local-transparent-proxy-setup"
-                ];
+                  ExecStartPost = [
+                    "-${pkgs.systemd}/bin/systemctl start --no-block local-transparent-proxy-setup"
+                  ];
+                };
               };
             };
-          };
+          }
+        ]);
       }
 
       (lib.foldAttrs (n: a: n ++ a) [ ] [
