@@ -136,6 +136,10 @@ let
           recipes-env = { };
           wger-env = { };
           bookwyrm-env = { };
+          superset-env = { };
+          superset-config = {
+            mode = "0444";
+          };
           restic-password = { };
           rclone-config = { };
           yandex-passwd = {

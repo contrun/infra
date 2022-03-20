@@ -488,6 +488,7 @@ let
       enableCodeServer = self.enableAllOciContainers && !self.enableCodeServer;
       enableRecipes = self.enableAllOciContainers;
       enableBookwyrm = self.enableAllOciContainers;
+      enableSuperset = self.enableAllOciContainers;
       enableWger = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
       enableEtesync = self.enableAllOciContainers;

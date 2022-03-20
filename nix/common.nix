@@ -2973,6 +2973,13 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "superset" =
+                    let image = "ghcr.io/contrun/superset:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "wger" =
                     let image = "docker.io/wger/apache:2.0-dev";
                     in { "x86_64-linux" = image; };
@@ -3469,6 +3476,34 @@ prefs.getFullDomainName "authelia"
                 # See https://docs.djangoproject.com/en/3.2/ref/contrib/staticfiles/#cmdoption-runserver-insecure
                 cmd = [ "-c" "python manage.py migrate; exec python manage.py runserver --insecure 0.0.0.0:8000" ];
                 traefikForwardingPort = 8000;
+              };
+            }
+            {
+              name = "superset";
+              enable = prefs.ociContainers.enableSuperset;
+              config = {
+                dependsOn = [ "postgresql" ];
+                extraOptions = [
+                  "--mount"
+                  "type=bind,source=/run/secrets/superset-config,target=/app/pythonpath/superset_config.py,readonly"
+                ];
+                volumes = [
+                  "/var/data/superset/pythonpath:/app/pythonpath"
+                ];
+                cmd = [
+                  "gunicorn"
+                  "--timeout"
+                  "120"
+                  "-b"
+                  "0.0.0.0:8088"
+                  "--limit-request-line"
+                  "0"
+                  "--limit-request-field_size"
+                  "0"
+                  "superset.app:create_app()"
+                ];
+                environmentFiles = [ "/run/secrets/superset-env" ];
+                traefikForwardingPort = 8088;
               };
             }
             {
@@ -3973,6 +4008,13 @@ getTraefikRuleByDomainPrefix "webdav"
                                 url = "https://${prefs.getFullDomainName "bookwyrm"}";
                               }
                               {
+                                enable = prefs.ociContainers.enableSuperset;
+                                name = "superset";
+                                subtitle = "bussiness intelligence";
+                                tag = "data";
+                                url = "https://${prefs.getFullDomainName "superset"}";
+                              }
+                              {
                                 enable = prefs.ociContainers.enableWger;
                                 name = "wger";
                                 subtitle = "fitness tracking";
@@ -4310,6 +4352,13 @@ builtins.toString prefs.ownerGroupGid
             "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
             "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
           ] ++ (mergeOptionalLists [
+            {
+              enable = prefs.ociContainers.enableSuperset;
+              list = [
+                "d /var/data/superset - 1000 1000 -"
+                "d /var/data/superset/pythonpath - 1000 1000 -"
+              ];
+            }
             {
               enable = prefs.ociContainers.enablePerkeep;
               list = [
