@@ -5182,7 +5182,9 @@ builtins.toString prefs.ownerGroupGid
             "${nextcloudMaintenanceUnitName}" =
               let
                 maintain-script = pkgs.writeShellScript "nextcloud-maintain-script" ''
-                  ${prefs.ociContainerBackend} exec --user 33 nextcloud ./occ files:scan e
+                  if ! ${prefs.ociContainerBackend} exec --user 33 nextcloud ./occ files:scan e; then
+                      :
+                  fi
                 '';
               in
               {
