@@ -13,6 +13,7 @@ on:
       - "releases/*"
     paths:
       - ".github/workflows/containers.yml"
+      - "containers/**/Dockerfile"
 
 jobs:
   container:
@@ -21,6 +22,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - path: "containers/superset"
+            kind: "local_directory"
           - path: "contrun/kosyncsrv"
             kind: "github_repository"
           - path: "contrun/eudyptula"
@@ -49,6 +52,10 @@ jobs:
           repository: "${{ matrix.path }}"
           path: "${{ matrix.path }}"
 
+      - name: Checkout
+        if: matrix.kind == 'local_directory'
+        uses: actions/checkout@v3
+
       - name: Get docker environment
         id: variables
         working-directory: ${{ matrix.path }}
@@ -64,11 +71,11 @@ jobs:
           case "${{ matrix.kind }}" in
             "github_repository")
               repository="${{ matrix.path }}"
-              directory="$repository"
-              name="$(basename "$repository")"
               ;;
           esac
           : "${repository:=}"
+          directory="${{ matrix.path }}"
+          name="$(basename "$directory")"
           dockerfile="$directory/Dockerfile"
           context="$directory"
           platforms="linux/amd64,linux/arm64"
