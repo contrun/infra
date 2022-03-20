@@ -20,28 +20,57 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        repository:
-          - "contrun/kosyncsrv"
-          - "contrun/eudyptula"
-          - "bookwyrm-social/bookwyrm"
-          - "200ok-ch/organice"
-          - "elasticdog/tiddlywiki-docker"
-          - "logseq/logseq"
-          - "karlicoss/promnesia"
-          - "mkorenkov/docker-perkeep"
+        include:
+          - path: "contrun/kosyncsrv"
+            kind: "github_repository"
+          - path: "contrun/eudyptula"
+            kind: "github_repository"
+          - path: "bookwyrm-social/bookwyrm"
+            kind: "github_repository"
+          - path: "200ok-ch/organice"
+            kind: "github_repository"
+          - path: "elasticdog/tiddlywiki-docker"
+            kind: "github_repository"
+          - path: "logseq/logseq"
+            kind: "github_repository"
+          - path: "karlicoss/promnesia"
+            kind: "github_repository"
+          - path: "mkorenkov/docker-perkeep"
+            kind: "github_repository"
           # Images not working for now.
-          # - "DeviaVir/zenbot"
+          # - path: "DeviaVir/zenbot"
+          #   kind: "github_repository"
 
     steps:
-      - name: Set upstream information
-        id: upstream
+      - name: Checkout ${{ matrix.path }} 
+        if: matrix.kind == 'github_repository'
+        uses: actions/checkout@v3
+        with:
+          repository: "${{ matrix.path }}"
+          path: "${{ matrix.path }}"
+
+      - name: Get docker environment
+        id: variables
+        working-directory: ${{ matrix.path }}
         run: |
-          repository="${{ matrix.repository }}"
-          repository_path="${{ matrix.repository }}"
-          repository_name="$(awk -F / '{print $2}' <<< "${{ matrix.repository }}")"
-          name="$repository_name"
-          dockerfile="$repository_path/Dockerfile"
-          dockerfile_context="$repository_path"
+          set -euo pipefail
+
+          set_output() {
+              for v in "$@"; do
+                  echo "::set-output name=$v::${!v}"
+              done 
+          }
+
+          case "${{ matrix.kind }}" in
+            "github_repository")
+              repository="${{ matrix.path }}"
+              directory="$repository"
+              name="$(basename "$repository")"
+              ;;
+          esac
+          : "${repository:=}"
+          dockerfile="$directory/Dockerfile"
+          context="$directory"
           platforms="linux/amd64,linux/arm64"
 
           case "$repository" in
@@ -52,46 +81,25 @@ jobs:
               name=perkeep
               ;;
             "karlicoss/promnesia")
-              dockerfile="$repository_path/docker/docker_files/Dockerfile"
+              dockerfile="$directory/docker/docker_files/Dockerfile"
               ;;
           esac
 
-          echo "::set-output name=name::$name"
-          echo "::set-output name=repository::$repository"
-          echo "::set-output name=platforms::$platforms"
-          echo "::set-output name=repository_path::$repository_path"
-          echo "::set-output name=dockerfile::$dockerfile"
-          echo "::set-output name=dockerfile_context::$dockerfile_context"
+          set_output name repository platforms directory dockerfile context
 
-      - name: Checkout ${{ steps.upstream.outputs.repository }} to ${{ steps.upstream.outputs.repository_path }}
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ steps.upstream.outputs.repository }}
-          path: ${{ steps.upstream.outputs.repository_path }}
+          github_username="${{ github.repository_owner }}"
+          : "${docker_hub_username:=$github_username}"
+          docker_hub_url="docker.io/$docker_hub_username/$name"
+          github_container_registry_url="ghcr.io/$github_username/$name"
+          git_commit_id="$(git log --format="%H" -n 1)"
+          docker_tags="$(echo {$docker_hub_url,$github_container_registry_url}:{latest,$git_commit_id} | tr ' ' ',')"
+          docker_image_cache="$github_container_registry_url:cache"
+          set_output github_username docker_hub_username docker_image_cache docker_tags
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Get docker environment
-        id: env
-        working-directory: ${{ steps.upstream.outputs.repository_path }}
+      - name: Patch source files
+        working-directory: ${{ steps.variables.outputs.directory }}
         run: |
-          set -xeuo pipefail
-          [[ -z "${DOCKER_HUB_USERNAME:-}" ]] && DOCKER_HUB_USERNAME="$(awk -F / '{print $1}' <<< "$GITHUB_REPOSITORY")"
-          PACKAGE_NAME=${{ steps.upstream.outputs.name }}
-          DOCKER_TAG="$(git log --format="%H" -n 1)"
-          DOCKER_HUB_URL="$DOCKER_HUB_USERNAME/$PACKAGE_NAME"
-          DOCKER_IMAGE="$DOCKER_HUB_URL:$DOCKER_TAG"
-          DOCKER_IMAGE_CACHE="$DOCKER_HUB_URL:cache"
-          DOCKER_IMAGE_LATEST="$DOCKER_HUB_URL:latest"
-          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"
-          echo "::set-output name=DOCKER_HUB_USERNAME::$DOCKER_HUB_USERNAME"
-          echo "::set-output name=DOCKER_IMAGE::$DOCKER_IMAGE"
-          echo "::set-output name=DOCKER_IMAGE_LATEST::$DOCKER_IMAGE_LATEST"
-          echo "::set-output name=DOCKER_IMAGE_CACHE::ghcr.io/$DOCKER_IMAGE_CACHE"
-          echo "::set-output name=DOCKER_TAGS::ghcr.io/$DOCKER_IMAGE,ghcr.io/$DOCKER_IMAGE_LATEST,$DOCKER_IMAGE,$DOCKER_IMAGE_LATEST"
-
-          case "${{ steps.upstream.outputs.repository }}" in
+          case "${{ steps.variables.outputs.repository }}" in
             "DeviaVir/zenbot")
               sed -i 's/npm install/env LIBSASS_EXT=no npm install/g' Dockerfile
               ;;
@@ -108,30 +116,34 @@ jobs:
               ;;
           esac
 
-      - name: Set up Docker Buildx
+      - name: Set up docker buildx
         uses: docker/setup-buildx-action@v1
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ steps.env.outputs.DOCKER_HUB_USERNAME }}
+          registry: docker.io
+          username: ${{ steps.variables.outputs.docker_hub_username }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ steps.variables.outputs.github_username }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
 
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: ${{ steps.upstream.outputs.dockerfile_context }}
-          file: ${{ steps.upstream.outputs.dockerfile }}
+          context: ${{ steps.variables.outputs.context }}
+          file: ${{ steps.variables.outputs.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
-          platforms: ${{ steps.upstream.outputs.platforms }}
-          tags: ${{ steps.env.outputs.DOCKER_TAGS }}
-          cache-from: ${{ steps.env.outputs.DOCKER_IMAGE_CACHE }}
-          cache-to: ${{ steps.env.outputs.DOCKER_IMAGE_CACHE }}
+          platforms: ${{ steps.variables.outputs.platforms }}
+          tags: ${{ steps.variables.outputs.docker_tags }}
+          cache-from: ${{ steps.variables.outputs.docker_image_cache }}
+          cache-to: ${{ steps.variables.outputs.docker_image_cache }}
