@@ -3487,8 +3487,12 @@ prefs.getFullDomainName "authelia"
                   "--mount"
                   "type=bind,source=/run/secrets/superset-config,target=/app/pythonpath/superset_config.py,readonly"
                 ];
+                environment = rec {
+                  BASEURL = "https://${prefs.getFullDomainName "superset"}";
+                };
                 volumes = [
                   "/var/data/superset/pythonpath:/app/pythonpath"
+                  "/var/data/superset/home:/app/superset_home"
                 ];
                 cmd = [
                   "gunicorn"
@@ -4357,6 +4361,7 @@ builtins.toString prefs.ownerGroupGid
               list = [
                 "d /var/data/superset - 1000 1000 -"
                 "d /var/data/superset/pythonpath - 1000 1000 -"
+                "d /var/data/superset/home - 1000 1000 -"
               ];
             }
             {
