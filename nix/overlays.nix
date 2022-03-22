@@ -47,144 +47,154 @@ let
     } // (super.lib.mapAttrs (name: p: dontCheckPkg p) { });
 
   shellsOverlay = self: super: {
-    # This env is used to setup LD_LIBRARY_PATH appropirately in nix-shell
-    # e.g. nix-shell -p zlib my-add-ld-library-path --run 'echo "$LD_LIBRARY_PATH"'
-    my-add-ld-library-path = super.stdenv.mkDerivation {
-      name = "my-add-ld-library-path";
-      phases = [ "fixupPhase" ];
-      setupHook = super.writeText "setupHook.sh" ''
-        addLdLibraryPath() {
-          addToSearchPath LD_LIBRARY_PATH $1/lib
-        }
+    myShells = {
+      # Usage: nix-shell -E "with import $HOME/Workspace/infra {}; myShells.buildShellForPackage hello"
+      # cd /src/to/hello;
+      # CC=bear-gcc src=. dontPatch=y dontUnpack=y dontInstall=y out=/tmp/build genericBuild
+      buildShellForPackage =
+        let
+          my-drop-into-build-shell = super.stdenv.mkDerivation {
+            # Copied from https://discourse.nixos.org/t/nix-shell-and-output-path/4043/5
+            name = "my-drop-into-build-shell";
+            phases = [ "fixupPhase" ];
+            setupHook = super.writeText "setupHook.sh" ''
+              dropIntoBuildShell() {
+                if [[ -v "NIX_SET_LOCAL_OUTPUTS" ]] && [[ "$NIX_SET_LOCAL_OUTPUTS" ]]; then
+                  return
+                fi
 
-        addEnvHooks "$targetOffset" addLdLibraryPath
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-      '';
-    };
+                # Note: we override TMPDIR to avoid auditTmpdir failure
+                # (outputs cannot be children of "$TMPDIR")
+                export base="$(mktemp -t -d "build-$name.XXXXXXXXXX")"
+                export TMPDIR="$base/tmpdir"
+                mkdir -p "$TMPDIR"
 
-    my-drop-into-build-shell = super.stdenv.mkDerivation {
-      # Copied from https://discourse.nixos.org/t/nix-shell-and-output-path/4043/5
-      # Usage: nix-shell -E 'with import <nixpkgs> {}; hello.overrideAttrs ({ nativeBuildInputs ? [], ...} : { nativeBuildInputs = nativeBuildInputs ++ [ dropIntoBuildShellHook ]; })'
-      name = "my-drop-into-build-shell";
-      phases = [ "fixupPhase" ];
-      setupHook = super.writeText "setupHook.sh" ''
-        dropIntoBuildShell() {
-          if [[ -v "NIX_SET_LOCAL_OUTPUTS" ]] && [[ "$NIX_SET_LOCAL_OUTPUTS" ]]; then
-            return
-          fi
+                echo "dropIntoBuildShell: settings outputs in $base directory"
+                for output in $outputs; do
+                  export "$output"="$base/$output"
+                done
 
-          # Note: we override TMPDIR to avoid auditTmpdir failure
-          # (outputs cannot be children of "$TMPDIR")
-          export base="$(mktemp -t -d "build-$name.XXXXXXXXXX")"
-          export TMPDIR="$base/tmpdir"
-          mkdir -p "$TMPDIR"
+                echo "dropIntoBuildShell: moving to $TMPDIR"
+                cd "$TMPDIR"
 
-          echo "dropIntoBuildShell: settings outputs in $base directory"
-          for output in $outputs; do
-            export "$output"="$base/$output"
-          done
+                echo "dropIntoBuildShell: will automatically run genericBuild"
+                export shellHook+=" genericBuild"
 
-          echo "dropIntoBuildShell: moving to $TMPDIR"
-          cd "$TMPDIR"
-
-          echo "dropIntoBuildShell: will automatically run genericBuild"
-          export shellHook+=" genericBuild"
-
-          export NIX_SET_LOCAL_OUTPUTS=1
-        }
-        addEnvHooks "$hostOffset" dropIntoBuildShell
-      '';
-    };
-
-    # Usage: nix-shell -E 'with import <nixpkgs> {}; myDropIntoBuildShell hello'
-    myDropIntoBuildShell = pkg:
-      pkg.overrideAttrs ({ nativeBuildInputs ? [ ], ... }: {
-        nativeBuildInputs = nativeBuildInputs
-          ++ [ self.my-drop-into-build-shell ];
-      });
-
-    myBuildEnv = super.stdenv.mkDerivation {
-      name = "my-build-env";
-      nativeBuildInputs = [ super.pkg-config ];
-      phases = [ "fixupPhase" ];
-      setupHook = super.writeText "setupHook.sh" ''
-        addPkgConfigPath() {
-                addToSearchPath PKG_CONFIG_PATH $1/lib/pkgconfig
-                addToSearchPath PKG_CONFIG_PATH $1/share/pkgconfig
-        }
-
-        addLdLibraryPath() {
-                addToSearchPath LD_LIBRARY_PATH $1/lib
-        }
-
-        addEnvHooks "$targetOffset" addLdLibraryPath
-        addEnvHooks "$targetOffset" addPkgConfigPath
-        # echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-        # echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-      '';
-    };
-
-    myRustDevEnvFn =
-      let
-        defaultMozillaOverlay = import (builtins.fetchTarball
-          "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz");
-      in
-      { pkgsPath ? <nixpkgs>
-      , mozillaOverlay ? defaultMozillaOverlay
-      , crossSystem ? null
-      , channel ? "nightly"
-      }:
-      let
-        pkgs = import pkgsPath {
-          inherit crossSystem;
-          overlays = [ mozillaOverlay ];
-        };
-        targets =
-          [ super.stdenv.targetPlatform.config "wasm32-unknown-unknown" ];
-        myBuildPackageRust =
-          super.buildPackages.buildPackages.latest.rustChannels."${channel}".rust.override {
-            inherit targets;
+                export NIX_SET_LOCAL_OUTPUTS=1
+              }
+              addEnvHooks "$hostOffset" dropIntoBuildShell
+            '';
           };
-        myRust =
-          super.rustChannels."${channel}".rust.override { inherit targets; };
-      in
-      with super;
-      let my_static_openssl = openssl.override { static = true; };
-      in
-      stdenv.mkDerivation {
-        name = "my-rust-dev-env";
-        # build time dependencies targeting the build platform
-        depsBuildBuild = [ buildPackages.stdenv.cc ];
-        HOST_CC = "cc";
-        OPENSSL_LIB_DIR = "${my_static_openssl.out}/lib";
-        OPENSSL_STATIC = "yes";
-        OPENSSL_LIBRARIES = "${my_static_openssl.out}/lib";
-        OPENSSL_INCLUDE_DIR = "${my_static_openssl.dev}/include";
-        # build time dependencies targeting the host platform
-        nativeBuildInputs =
-          [ llvmPackages.libclang stdenv.cc.cc.lib pkgconfig ];
-        buildInputs = [
-          stdenv.cc.cc.lib
-          libgcc
-          llvmPackages.libclang
-          llvmPackages.libstdcxxClang
-          pkgconfig
-          rocksdb
-          my_static_openssl
-          my_static_openssl.dev
-          protobuf
-          myRust
-        ];
-        CARGO_BUILD_TARGET = [ super.stdenv.targetPlatform.config ];
+        in
+        package:
+        package.overrideAttrs ({ nativeBuildInputs ? [ ], ... }: {
+          nativeBuildInputs = nativeBuildInputs
+            ++ [ my-drop-into-build-shell ];
+        });
 
-        # run time dependencies
-        LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
-        RUST_BACKTRACE = "full";
-        PROTOC = "${protobuf}/bin/protoc";
+      # Magic copied from https://github.com/NixOS/nix/blob/d5322698a2abbc6d141e1d244e17b0d226a2f18b/src/nix-build/nix-build.cc#L268-L274
+      # Usage: nix-shell -E "with import $HOME/Workspace/infra {}; myShells.buildEnvironmentWithPackages [libbpf]"
+      buildEnvironmentWithPackages =
+        let
+          # Copied from https://github.com/NixOS/nixpkgs/blob/6326d1b3979dc2468827f8c11d677ad82b7c8f84/pkgs/build-support/pkg-config-wrapper/setup-hook.sh
+          my-build-env = super.stdenv.mkDerivation {
+            name = "my-build-env";
+            nativeBuildInputs = [ super.pkg-config ];
+            phases = [ "fixupPhase" ];
+            setupHook = super.writeText "setupHook.sh" ''
+              addPkgConfigPath() {
+                      addToSearchPath PKG_CONFIG_PATH $1/lib/pkgconfig
+                      addToSearchPath PKG_CONFIG_PATH $1/share/pkgconfig
+              }
+
+              addLdLibraryPath() {
+                      addToSearchPath LD_LIBRARY_PATH $1/lib
+              }
+
+              addEnvHooks "$targetOffset" addLdLibraryPath
+              addEnvHooks "$targetOffset" addPkgConfigPath
+              # echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+              # echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+            '';
+          }; in
+        packages: super.runCommandCC "shell" { buildInputs = [ my-build-env ] ++ packages; } "";
+
+      # TODO: refactor or remove this.
+      # This env is used to setup LD_LIBRARY_PATH appropirately in nix-shell
+      # e.g. nix-shell -p zlib my-add-ld-library-path --run 'echo "$LD_LIBRARY_PATH"'
+      my-add-ld-library-path = super.stdenv.mkDerivation {
+        name = "my-add-ld-library-path";
+        phases = [ "fixupPhase" ];
+        setupHook = super.writeText "setupHook.sh" ''
+          addLdLibraryPath() {
+            addToSearchPath LD_LIBRARY_PATH $1/lib
+          }
+
+          addEnvHooks "$targetOffset" addLdLibraryPath
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        '';
       };
 
-    myRustDevEnv = { ... }@args:
-      self.myRustDevEnvFn args // { };
+      # TODO: update or remove this.
+      rustShell =
+        let
+          defaultMozillaOverlay = import (builtins.fetchTarball
+            "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz");
+        in
+        { pkgsPath ? <nixpkgs>
+        , mozillaOverlay ? defaultMozillaOverlay
+        , crossSystem ? null
+        , channel ? "nightly"
+        }:
+        let
+          pkgs = import pkgsPath {
+            inherit crossSystem;
+            overlays = [ mozillaOverlay ];
+          };
+          targets =
+            [ super.stdenv.targetPlatform.config "wasm32-unknown-unknown" ];
+          myBuildPackageRust =
+            super.buildPackages.buildPackages.latest.rustChannels."${channel}".rust.override {
+              inherit targets;
+            };
+          myRust =
+            super.rustChannels."${channel}".rust.override { inherit targets; };
+        in
+        with super;
+        let my_static_openssl = openssl.override { static = true; };
+        in
+        stdenv.mkDerivation {
+          name = "my-rust-dev-env";
+          # build time dependencies targeting the build platform
+          depsBuildBuild = [ buildPackages.stdenv.cc ];
+          HOST_CC = "cc";
+          OPENSSL_LIB_DIR = "${my_static_openssl.out}/lib";
+          OPENSSL_STATIC = "yes";
+          OPENSSL_LIBRARIES = "${my_static_openssl.out}/lib";
+          OPENSSL_INCLUDE_DIR = "${my_static_openssl.dev}/include";
+          # build time dependencies targeting the host platform
+          nativeBuildInputs =
+            [ llvmPackages.libclang stdenv.cc.cc.lib pkgconfig ];
+          buildInputs = [
+            stdenv.cc.cc.lib
+            libgcc
+            llvmPackages.libclang
+            llvmPackages.libstdcxxClang
+            pkgconfig
+            rocksdb
+            my_static_openssl
+            my_static_openssl.dev
+            protobuf
+            myRust
+          ];
+          CARGO_BUILD_TARGET = [ super.stdenv.targetPlatform.config ];
+
+          # run time dependencies
+          LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
+          RUST_BACKTRACE = "full";
+          PROTOC = "${protobuf}/bin/protoc";
+        };
+    };
   };
 
   isInList = a: list: builtins.foldl' (acc: x: x == a || acc) false list;

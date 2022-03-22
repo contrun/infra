@@ -196,11 +196,6 @@
         apps = inputs.home-manager.apps;
       }
       {
-        # Make packages from nixpkgs available, we can, for example, run
-        # nix shell '.#python3Packages.invoke'
-        legacyPackages = inputs.nixpkgs.legacyPackages;
-      }
-      {
         nixosConfigurations = builtins.foldl'
           (acc: hostname: acc // generateHostConfigurations hostname inputs)
           { }
@@ -312,6 +307,10 @@
           rec {
             nixpkgs = nixpkgsWithOverlays;
 
+            # Make packages from nixpkgs available, we can, for example, run
+            # nix shell '.#python3Packages.invoke'
+            legacyPackages = nixpkgsWithOverlays;
+
             devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
 
             devShells = {
@@ -329,7 +328,6 @@
                 '';
               };
             };
-
             apps = {
               run = {
                 type = "app";
