@@ -3493,6 +3493,7 @@ prefs.getFullDomainName "authelia"
                 volumes = [
                   "/var/data/superset/pythonpath:/app/pythonpath"
                   "/var/data/superset/home:/app/superset_home"
+                  "/var/data/warehouse:/app/superset_home/warehouse"
                 ];
                 cmd = [
                   "gunicorn"
@@ -3804,6 +3805,7 @@ getTraefikRuleByDomainPrefix "webdav"
                     "${prefs.syncFolder}/private/keepass:/srv/sftpgo/data/keepass"
                     "${prefs.syncFolder}/docs/org-mode:/srv/sftpgo/data/orgmode"
                     "/var/data/sftpgo/backups:/srv/sftpgo/backups"
+                    "/var/data/warehouse:/srv/sftpgo/data/warehouse"
                   ];
                   environment = {
                     "SFTPGO_WEBDAVD__BINDINGS__0__PORT" = "10080";
@@ -4349,6 +4351,8 @@ builtins.toString prefs.ownerGroupGid
             "d /root/.local/share/Trash - root root 30d"
             "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
             "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+          ] ++ [
+            "d /var/data/warehouse - ${prefs.owner} ${prefs.ownerGroup} -"
           ] ++ [
             # Otherwise the parent directory's owner is root.
             # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
