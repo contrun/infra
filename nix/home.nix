@@ -1096,51 +1096,67 @@ in
 
   services = { kdeconnect = { enable = prefs.enableKdeConnect; }; };
 
-  systemd.user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-    (
-      let name = "smos-sync";
-      in
-      lib.optionalAttrs prefs.enableSmosSync {
-        services.${name} = {
-          Unit = { Description = "sync smos"; };
-          Service = {
-            Type = "oneshot";
-            ExecStart =
-              "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
-            EnvironmentFile = "/run/secrets/smos-sync-env";
+  systemd.user =
+    let
+      # Copied from https://github.com/NixOS/nixpkgs/blob/634141959076a8ab69ca2cca0f266852256d79ee/nixos/modules/services/editors/emacs.nix#L91
+      # set-environment is needed for some environment variables.
+      # We use /etc/set-environment as the config config.system.build.setEnvironment is nixos config, not home-manager config.
+      importEnvironmentForCommand = command:
+        let script = pkgs.writeShellApplication
+          {
+            name = "import-environment";
+            text = ''
+              if [[ -f /etc/set-environment ]]; then
+                  # shellcheck disable=SC1091
+                  source /etc/set-environment;
+              fi
+              exec "$@"
+            '';
           };
-        };
-        timers.${name} = {
-          Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
-          Install = { WantedBy = [ "default.target" ]; };
-          Timer = {
-            OnCalendar = "*-*-* *:1/3:00";
-            Unit = "${name}.service";
-            Persistent = true;
+        in
+        "${script} ${command}"; in
+    builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+      (
+        let name = "smos-sync";
+        in
+        lib.optionalAttrs prefs.enableSmosSync {
+          services.${name} = {
+            Unit = { Description = "sync smos"; };
+            Service = {
+              Type = "oneshot";
+              ExecStart =
+                "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
+              EnvironmentFile = "/run/secrets/smos-sync-env";
+            };
           };
-        };
-      }
-    )
+          timers.${name} = {
+            Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
+            Install = { WantedBy = [ "default.target" ]; };
+            Timer = {
+              OnCalendar = "*-*-* *:1/3:00";
+              Unit = "${name}.service";
+              Persistent = true;
+            };
+          };
+        }
+      )
 
-    (
-      let name = "foot";
-      in
-      lib.optionalAttrs prefs.enableFoot {
-        services.${name} = {
-          Unit = { Description = "foot server"; };
-          # TODO: need to start after wayland compositor
-          # also need to run `systemctl --user import-environment WAYLAND_DISPLAY`
-          # Install = { WantedBy = [ "default.target" ]; };
-          Service = {
-            Type = "simple";
-            Restart = "always";
-            ExecStart =
-              "${pkgs.foot}/bin/foot --server";
+      (
+        let name = "foot";
+        in
+        lib.optionalAttrs prefs.enableFoot {
+          services.${name} = {
+            Unit = { Description = "foot server"; };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service = {
+              Type = "simple";
+              Restart = "always";
+              ExecStart = importEnvironmentForCommand "${pkgs.foot}/bin/foot --server";
+            };
           };
-        };
-      }
-    )
-  ];
+        }
+      )
+    ];
 
   home = {
     extraOutputsToInstall = prefs.extraOutputsToInstall;
