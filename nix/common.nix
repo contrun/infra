@@ -1054,6 +1054,20 @@ in
       install = true;
       path = [ pkgs.libsecret pkgs.dbus ];
     };
+    nomad = {
+      enable = prefs.enableNomad;
+      settings = prefs.nomadSettings;
+      dropPrivileges = true;
+    };
+    consul = {
+      enable = prefs.enableConsul;
+      interface = {
+        advertise = prefs.consulInterface;
+        bind = prefs.consulInterface;
+      };
+      webUi = prefs.enableConsulWebUi;
+      dropPrivileges = true;
+    };
     pipewire = {
       enable = prefs.enablePipewire;
       pulse = { enable = true; };

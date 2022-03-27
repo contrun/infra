@@ -372,6 +372,20 @@ let
     enableContainerd = false;
     enableCrio = false;
     enableK3s = false;
+    enableNomad = false;
+    nomadSettings = {
+      # A minimal config example:
+      server = {
+        enabled = true;
+        bootstrap_expect = 1; # for demo; no fault tolerance
+      };
+      client = {
+        enabled = true;
+      };
+    };
+    enableConsul = false;
+    consulInterface = "wg0";
+    enableConsulWebUi = false;
     buildMachines = [ ];
     distributedBuilds = true;
     enableNextcloud = false;
