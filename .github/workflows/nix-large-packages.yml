@@ -34,7 +34,7 @@ jobs:
 
           system=${{ matrix.system }}
           freeDiskSpace=${{ matrix.free-disk-space }}
-          packageToBuild=".#nixosConfigurations.maximal-${{ matrix.system }}.${{ matrix.package }}"
+          nixExpression="with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.maximal-${{ matrix.system }}.${{ matrix.package }}"
           shouldSkip=false
           case '${{ github.event_name }}' in
               'push')
@@ -47,7 +47,7 @@ jobs:
                   ;;
           esac
 
-          set_output system freeDiskSpace packageToBuild shouldSkip
+          set_output system freeDiskSpace nixExpression shouldSkip
 
       - name: Checkout repository
         if: steps.variables.outputs.shouldSkip != 'true'
@@ -68,7 +68,7 @@ jobs:
       - name: Build the package
         if: steps.variables.outputs.shouldSkip != 'true'
         run: |
-          nix build "${{ steps.variables.outputs.packageToBuild }}"
+          nix build --impure --expr "${{ steps.variables.outputs.nixExpression }}"
 
   # Rebuildng with some disk spaces freed
   retry-building:
@@ -92,4 +92,4 @@ jobs:
 
       - name: Build the package
         run: |
-          nix build "${{ needs.build.steps.variables.outputs.packageToBuild }}"
+          nix build --impure --expr "${{ needs.build.steps.variables.outputs.nixExpression }}"
