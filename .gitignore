@@ -10,3 +10,5 @@ generated.*
 prefs.*.json
 *.log
 /result
+tmp/
+temp.nix

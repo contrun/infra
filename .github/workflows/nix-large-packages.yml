@@ -14,17 +14,32 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - package: "config.virtualisation.virtualbox.host.package"
+          - type: "expression"
+            # TODO: any better way to build overrided virtualbox derivation?
+            data: |
+              with (builtins.getFlake (builtins.toString ./.));
+              let
+                systemPackages = nixosConfigurations.maximal-x86_64-linux.config.environment.systemPackages;
+                packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
+                package = builtins.elemAt packages 0;
+              in package
             system: "x86_64-linux"
-          - package: "pkgs.clojure-lsp"
+          - type: "package"
+            data: "config.boot.kernelPackages.kernel"
             system: "x86_64-linux"
-          - package: "pkgs.llvmPackages_latest.llvm"
+          - type: "package"
+            data: "pkgs.clojure-lsp"
+            system: "x86_64-linux"
+          - type: "package"
+            data: "pkgs.llvmPackages_latest.llvm"
             system: "x86_64-linux"
 
     steps:
       - name: Set up common variables
         if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
         id: variables
+        env:
+          DATA: ${{ matrix.data }}
         run: |
           set_output() {
               for v in "$@"; do
@@ -34,7 +49,6 @@ jobs:
 
           system=${{ matrix.system }}
           freeDiskSpace=${{ matrix.free-disk-space }}
-          nixExpression="with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.maximal-${{ matrix.system }}.${{ matrix.package }}"
           shouldSkip=false
           case '${{ github.event_name }}' in
               'push')
@@ -47,7 +61,19 @@ jobs:
                   ;;
           esac
 
-          set_output system freeDiskSpace nixExpression shouldSkip
+          case '${{ matrix.type }}' in
+              'expression')
+                  nixExpressionBase64="$(base64 -w 0 <<< "$DATA")"
+                  ;;
+              'package')
+                  nixExpressionBase64="$(base64 -w 0 <<< 'with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.maximal-${{ matrix.system }}.${{ matrix.data }}')"
+                  ;;
+              *)
+                  exit 1
+                  ;;
+          esac
+
+          set_output system freeDiskSpace shouldSkip nixExpressionBase64
 
       - name: Checkout repository
         if: steps.variables.outputs.shouldSkip != 'true'
@@ -68,9 +94,11 @@ jobs:
       - name: Build the package
         if: steps.variables.outputs.shouldSkip != 'true'
         run: |
-          nix build --impure --expr "${{ steps.variables.outputs.nixExpression }}"
+          base64 -d <<< "${{ steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
+          nix build -f temp.nix
 
-  # Rebuildng with some disk spaces freed
+  # Rebuildng with some disk spaces freed.
+  # TODO: find a way to reuse the matrix above.
   retry-building:
     runs-on: ubuntu-latest
     needs: build
@@ -92,4 +120,5 @@ jobs:
 
       - name: Build the package
         run: |
-          nix build --impure --expr "${{ needs.build.steps.variables.outputs.nixExpression }}"
+          base64 -d <<< "${{ needs.build.steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
+          nix build -f temp.nix
