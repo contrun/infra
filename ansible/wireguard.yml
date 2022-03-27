@@ -4,7 +4,7 @@
       include_role:
         name: githubixx.ansible_role_wireguard
 
-     - name: Configure /etc/hosts
+    - name: Configure /etc/hosts
       when:
         - configure_etc_hosts_for_wireguard
       block:

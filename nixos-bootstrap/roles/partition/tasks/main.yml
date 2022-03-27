@@ -89,7 +89,7 @@
     boot_partitions: "{{ boot_partitions_blkid_result.stdout_lines }}"
 
 - name: Get zpool partitions uuid stepstone
-  shell:  |
+  shell: |
     set -xeu
     # blkid -s UUID -o value {{ zpool_partitions_glob_path }} | sed 's#^#/dev/disk/by-uuid/#'
     blkid -s PARTUUID -o value {{ zpool_partitions_glob_path }} | sed 's#^#/dev/disk/by-partuuid/#'
@@ -146,7 +146,10 @@
   args:
     executable: "{{ remote_shell_executable }}"
   with_items:
-    - { device: "{{ zfs_pool_name }}/ROOT/nixos", mountpoint: "{{ tmp_mount_path }}" }
+    - {
+        device: "{{ zfs_pool_name }}/ROOT/nixos",
+        mountpoint: "{{ tmp_mount_path }}",
+      }
 
 - name: Create other datasets
   shell: |
@@ -159,9 +162,18 @@
   args:
     executable: "{{ remote_shell_executable }}"
   with_items:
-    - { device: "{{ zfs_pool_name }}/NIX/nix", mountpoint: "{{ tmp_mount_path }}/nix" }
-    - { device: "{{ zfs_pool_name }}/VAR/var", mountpoint: "{{ tmp_mount_path }}/var" }
-    - { device: "{{ zfs_pool_name }}/HOME/home", mountpoint: "{{ tmp_mount_path }}/home" }
+    - {
+        device: "{{ zfs_pool_name }}/NIX/nix",
+        mountpoint: "{{ tmp_mount_path }}/nix",
+      }
+    - {
+        device: "{{ zfs_pool_name }}/VAR/var",
+        mountpoint: "{{ tmp_mount_path }}/var",
+      }
+    - {
+        device: "{{ zfs_pool_name }}/HOME/home",
+        mountpoint: "{{ tmp_mount_path }}/home",
+      }
 
 - name: Create tmp datasets
   shell: |
@@ -174,7 +186,10 @@
   args:
     executable: "{{ remote_shell_executable }}"
   with_items:
-    - { device: "{{ zfs_pool_name }}/TMP/tmp", mountpoint: "{{ tmp_mount_path }}/tmp" }
+    - {
+        device: "{{ zfs_pool_name }}/TMP/tmp",
+        mountpoint: "{{ tmp_mount_path }}/tmp",
+      }
 
 - name: Mount datasets
   shell: |
@@ -183,10 +198,22 @@
   args:
     executable: "{{ remote_shell_executable }}"
   with_items:
-    - { device: "{{ zfs_pool_name }}/NIX/nix", mountpoint: "{{ tmp_mount_path }}/nix" }
-    - { device: "{{ zfs_pool_name }}/VAR/var", mountpoint: "{{ tmp_mount_path }}/var" }
-    - { device: "{{ zfs_pool_name }}/HOME/home", mountpoint: "{{ tmp_mount_path }}/home" }
-    - { device: "{{ zfs_pool_name }}/TMP/tmp", mountpoint: "{{ tmp_mount_path }}/tmp" }
+    - {
+        device: "{{ zfs_pool_name }}/NIX/nix",
+        mountpoint: "{{ tmp_mount_path }}/nix",
+      }
+    - {
+        device: "{{ zfs_pool_name }}/VAR/var",
+        mountpoint: "{{ tmp_mount_path }}/var",
+      }
+    - {
+        device: "{{ zfs_pool_name }}/HOME/home",
+        mountpoint: "{{ tmp_mount_path }}/home",
+      }
+    - {
+        device: "{{ zfs_pool_name }}/TMP/tmp",
+        mountpoint: "{{ tmp_mount_path }}/tmp",
+      }
 
 - name: Mount boot partitions
   shell: |

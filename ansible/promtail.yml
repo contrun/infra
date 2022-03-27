@@ -81,4 +81,3 @@
                   - source_labels:
                       - __journal_container_tag
                     target_label: container_tag
-

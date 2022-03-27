@@ -1,5 +1,5 @@
 ---
- # This playbook deploys the whole application stack in this site.
+# This playbook deploys the whole application stack in this site.
 
 - name: Go
   hosts: "{{ host }}"
@@ -10,7 +10,7 @@
       become: true
       block:
         - include_role:
-            name: '{{ item }}'
+            name: "{{ item }}"
           loop:
             - partition
 
@@ -19,6 +19,6 @@
       become: true
       block:
         - include_role:
-            name: '{{ item }}'
+            name: "{{ item }}"
           loop:
             - installation

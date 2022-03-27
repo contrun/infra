@@ -44,4 +44,3 @@
             enabled: yes
             daemon_reload: yes
           when: envoy_config.changed
-

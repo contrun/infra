@@ -49,7 +49,6 @@ jobs:
 
           set_output system freeDiskSpace packageToBuild shouldSkip
 
-
       - name: Checkout repository
         if: steps.variables.outputs.shouldSkip != 'true'
         uses: actions/checkout@v3

@@ -10,4 +10,3 @@
           when: tailscale_auth_key is not defined and tailscale_up_skip is not defined
         - include_role:
             role: artis3n.tailscale
-

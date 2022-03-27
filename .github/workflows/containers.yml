@@ -45,7 +45,7 @@ jobs:
           #   kind: "github_repository"
 
     steps:
-      - name: Checkout ${{ matrix.path }} 
+      - name: Checkout ${{ matrix.path }}
         if: matrix.kind == 'github_repository'
         uses: actions/checkout@v3
         with:

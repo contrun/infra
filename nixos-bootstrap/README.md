@@ -5,16 +5,19 @@ Ansible playbook to install nixos
 It is a little tricky to install nixos on raspberry bi. I made some trivial modification to https://github.com/NixOS/nixpkgs/issues/63720#issuecomment-522331183
 
 ## Set up live CD system
+
 - Connect to wifi
 - Obtain IP Address
 - Change password
 
 ## Setup some variables
+
 ```shell
 export nixos_hostname=shl nixos_host_ip=192.168.0.102 zfs_pool_name=rspool zfs_passphrase=zfs_passphrase root_password=root_password user=user user_password=user_password tmp_mount_path=/tmpmount
 ```
 
 ## Make partitions and Install
+
 ```shell
 echo "[$nixos_hostname]\n${nixos_host_ip} ansible_user=nixos" | tee -a inventory
 ssh-copy-id nixos@$nixos_host_ip

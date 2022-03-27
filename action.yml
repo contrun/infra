@@ -1,34 +1,34 @@
-name: 'Setup nix'
+name: "Setup nix"
 inputs:
   setup-cachix:
-    description: 'whether to set up cachix'
+    description: "whether to set up cachix"
     default: true
     required: false
     type: boolean
   cachix-push-filter:
-    description: 'push filter for cachix (fitler out upload for those outputs)'
+    description: "push filter for cachix (fitler out upload for those outputs)"
     required: false
     type: string
   cachix-name:
-    description: 'cachix name'
+    description: "cachix name"
     required: false
     type: string
   free-disk-space:
-    description: 'whether to free disk space'
+    description: "whether to free disk space"
     default: false
     required: false
     type: boolean
   setup-qemu:
-    description: 'whether to set up qemu'
+    description: "whether to set up qemu"
     default: true
     required: false
     type: boolean
   nix-systems:
-    description: 'list of extra nix systems (array separated by ,)'
+    description: "list of extra nix systems (array separated by ,)"
     required: false
     type: string
   cachix-auth-token:
-    description: 'auth token for cachix'
+    description: "auth token for cachix"
     required: false
     type: string
 

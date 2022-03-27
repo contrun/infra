@@ -4,7 +4,6 @@
 # I commented below out because, the variables defined in the inventory hosts
 # have lower priority than playbook groups_vas
 
-
 # use_tailscale: true
 # use_zerotier: true
 # zerotier_register_short_hostname: true

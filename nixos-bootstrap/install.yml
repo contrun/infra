@@ -1,5 +1,5 @@
 ---
- # This playbook deploys the whole application stack in this site.
+# This playbook deploys the whole application stack in this site.
 
 - name: Make partitions
   hosts: "{{ host }}"

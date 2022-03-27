@@ -68,7 +68,7 @@ jobs:
         uses: ./
         with:
           setup-cachix: true
-          cachix-push-filter: 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$'
+          cachix-push-filter: "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$"
           cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           setup-qemu: true
           free-disk-space: true
