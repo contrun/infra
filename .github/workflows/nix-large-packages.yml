@@ -96,29 +96,3 @@ jobs:
         run: |
           base64 -d <<< "${{ steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
           nix build -f temp.nix
-
-  # Rebuildng with some disk spaces freed.
-  # TODO: find a way to reuse the matrix above.
-  retry-building:
-    runs-on: ubuntu-latest
-    needs: build
-    if: failure()
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Setup nix
-        uses: ./
-        with:
-          setup-cachix: true
-          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          setup-qemu: true
-          free-disk-space: true
-          nix-systems: "${{ needs.build.steps.variables.outputs.system }}"
-
-      - name: Build the package
-        run: |
-          base64 -d <<< "${{ needs.build.steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
-          nix build -f temp.nix
