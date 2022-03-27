@@ -1,6 +1,12 @@
 name: Build large nix packages
 
 on:
+  # TODO: This does not need to run everytime "Build nixos profiles" runs
+  workflow_run:
+    workflows:
+      - "Build nixos profiles"
+    types:
+      - "completed"
   push:
     branches:
       - "x86_64-linux"
