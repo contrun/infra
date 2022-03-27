@@ -16,6 +16,8 @@ jobs:
         include:
           - package: "config.virtualisation.virtualbox.host.package"
             system: "x86_64-linux"
+          - package: "pkgs.clojure-lsp"
+            system: "x86_64-linux"
           - package: "pkgs.llvmPackages_latest.llvm"
             system: "x86_64-linux"
 

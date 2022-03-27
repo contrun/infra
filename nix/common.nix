@@ -373,6 +373,7 @@ in
           enable = builtins.pathExists "${prefs.home}/Workspace/infra";
           config = {
             "nix/path/config".source = "${prefs.home}/Workspace/infra";
+            "nix/path/infra".source = "${prefs.home}/Workspace/infra";
           };
         }
         {
@@ -436,9 +437,8 @@ in
         bind
         tree
         nix-prefetch-scripts
-        python3
-        # (pkgs.myPackages.pythonStable or python3)
-        # (pkgs.myPackages.python2 or python2)
+        # python3
+        (pkgs.myPackages.pythonStable or python3)
         nvimpager
         (pkgs.myPackages.nvimdiff or null)
         ruby
@@ -465,6 +465,8 @@ in
         sudo
         gettext
         mimeo
+        xdg-utils
+        xdg-launch
         libsecret
         mlocate
         htop
@@ -601,8 +603,7 @@ in
             # aqemu
             bpftool
             prefs.kernelPackages.perf
-            # TODO: broken for now, see https://github.com/NixOS/nixpkgs/issues/140358
-            # prefs.kernelPackages.bpftrace
+            prefs.kernelPackages.bpftrace
             prefs.kernelPackages.bcc
           ];
         }
