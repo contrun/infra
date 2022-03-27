@@ -17,5 +17,8 @@ rec {
       systemsList
     // builtins.foldl' (acc: current: acc // { "minimal-${current}" = current; })
       { }
+      systemsList
+    // builtins.foldl' (acc: current: acc // { "maximal-${current}" = current; })
+      { }
       systemsList;
 }

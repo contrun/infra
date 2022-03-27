@@ -72,6 +72,7 @@ let
       '';
     };
     isMinimalSystem = true;
+    isMaximalSystem = false;
     homeManagerStateVersion = "21.05";
     useLargePackages = !self.isMinimalSystem;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
@@ -587,7 +588,10 @@ let
       let
         nixosSystem = systems."${hostname}";
         isForCiCd = builtins.match "cicd-(.*)" hostname != null;
+        # Only enable essential packages.
         isMinimal = builtins.match "minimal-(.*)" hostname != null;
+        # Always enable everything to build fairly large packages.
+        isMaximal = builtins.match "maximal-(.*)" hostname != null;
       in
       ({
         inherit nixosSystem;
@@ -605,6 +609,23 @@ let
             false; # Building aarch64 on qemu is too slow to be of any use.
         } else
           { })
+      else
+        { })
+      // (if isMaximal then
+        {
+          isMaximalSystem = true;
+          isMinimalSystem = false;
+          enableAllOciContainers = true;
+          enableJupyter = true;
+          enableTraefik = true;
+          enablePrometheus = true;
+          enablePromtail = true;
+          enableAcme = true;
+          enableSmosServer = true;
+          enableVirtualboxHost = true;
+          enableZerotierone = true;
+          enableEmacs = true;
+        }
       else
         { }))
     else if hostname == "uzq" then {

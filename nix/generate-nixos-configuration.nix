@@ -4,10 +4,10 @@ in
 { prefs, inputs }:
 let
   inherit (prefs)
-    hostname isMinimalSystem isVirtualMachine system getDotfile getNixConfig;
+    hostname isMinimalSystem isMaximalSystem isVirtualMachine system getDotfile getNixConfig;
 
   moduleArgs = {
-    inherit inputs hostname prefs isMinimalSystem isVirtualMachine system;
+    inherit inputs hostname prefs isMinimalSystem isMaximalSystem isVirtualMachine system;
   };
 
   systemInfo = { lib, pkgs, config, ... }: {
@@ -47,7 +47,7 @@ let
   hardwareConfiguration =
     if isVirtualMachine then
       { config, lib, pkgs, modulesPath, ... }: { }
-    else if isMinimalSystem then
+    else if (isMinimalSystem || isMaximalSystem) then
       import
         (pathOr (getNixConfig "hardware/hardware-configuration.${hostname}.nix")
           (getNixConfig "hardware/hardware-configuration.example.nix"))
