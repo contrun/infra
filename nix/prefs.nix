@@ -135,12 +135,18 @@ let
     enableRaspberryPiBoot = self.bootloader == "raspberrypi";
     efiCanTouchEfiVariables = true;
     isRaspberryPi = false;
-    # wirelessBackend = "wpa_supplicant";
-    wirelessBackend = "iwd";
-    enableSupplicant = self.wirelessBackend == "wpa_supplicant";
-    enableConnman = false;
+    networkController = "connman";
+    enableSupplicant = self.networkController == "wpa_supplicant";
     enableWireless = self.enableSupplicant;
-    enableIwd = self.wirelessBackend == "iwd";
+    enableIwd = self.networkController == "iwd";
+    enableConnman = self.networkController == "connman";
+    connmanBackend = "wpa_supplicant";
+    connmanExtraConfig = ''
+      AllowHostnameUpdates=false
+      PersistentTetheringMode=true
+    '';
+    connmanExtraFlags = [ "--nodnsproxy" ];
+    connmanNetworkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "tailscale" "zt" "wg" "docker" "br-" ];
     enableBumblebee = false;
     enableMediaKeys = true;
     enableEternalTerminal = !self.isMinimalSystem;

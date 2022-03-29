@@ -236,11 +236,7 @@ in
   networking = {
     hostName = prefs.hostname;
     hostId = prefs.hostId;
-    wireless = {
-      enable = prefs.enableSupplicant;
-      # userControlled = { enable = true; };
-      iwd.enable = prefs.enableIwd;
-    };
+    firewall.enable = prefs.enableFirewall;
     wg-quick =
       let
         peers = with builtins; fromJSON (readFile (./.. + "/fixtures/wireguard.json"));
@@ -257,28 +253,41 @@ in
           wg0 = generateConfig (builtins.toString prefs.wireguardHostIndex);
         };
       };
-    supplicant = lib.optionalAttrs prefs.enableSupplicant {
-      "WLAN" = {
-        configFile =
-          let
-            defaultPath = "/etc/wpa_supplicant.conf";
-            path =
-              if builtins.pathExists impure.wpaSupplicantConfigFile then
-                impure.wpaSupplicantConfigFile
-              else
-                defaultPath;
-          in
-          {
-            # TODO: figure out why this does not work.
-            inherit (path)
-              ;
-            writable = true;
-          };
-      };
-    };
     proxy.default = prefs.proxy;
     enableIPv6 = prefs.enableIPv6;
-  };
+  } // (mergeOptionalConfigs [
+    {
+      enable = prefs.enableSupplicant;
+      config = {
+        wireless = { enable = true; };
+        supplicant = {
+          "WLAN" = {
+            configFile =
+              let
+                defaultPath = "/etc/wpa_supplicant.conf";
+                path =
+                  if builtins.pathExists impure.wpaSupplicantConfigFile then
+                    impure.wpaSupplicantConfigFile
+                  else
+                    defaultPath;
+              in
+              {
+                # TODO: figure out why this does not work.
+                inherit (path)
+                  ;
+                writable = true;
+              };
+          };
+        };
+      };
+    }
+    {
+      enable = prefs.enableIwd;
+      config = {
+        wireless = { iwd = { enable = true; }; };
+      };
+    }
+  ]);
 
   console = {
     font =
@@ -761,12 +770,6 @@ in
     ]);
   };
 
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  networking.firewall.enable = prefs.enableFirewall;
-
   sound = {
     enable = lib.mkForce true;
     mediaKeys = { enable = prefs.enableMediaKeys; };
@@ -938,7 +941,12 @@ in
     };
     arbtt = { enable = prefs.enableArbtt; };
     compton = { enable = prefs.enableCompton; };
-    connman = { enable = prefs.enableConnman; };
+    connman = {
+      enable = prefs.enableConnman;
+      extraConfig = prefs.connmanExtraConfig;
+      networkInterfaceBlacklist = prefs.connmanNetworkInterfaceBlacklist;
+      extraFlags = prefs.connmanExtraFlags;
+    };
     aria2 = {
       enable = prefs.enableAria2;
       extraArguments = "--rpc-listen-all --rpc-secret $ARIA2_RPC_SECRET";
