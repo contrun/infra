@@ -5093,34 +5093,171 @@ builtins.toString prefs.ownerGroupGid
               pkgs.sudo
               pkgs.curl
               pkgs.diffutils
+              pkgs.moreutils
+              pkgs.jq
+              pkgs.yj
               pkgs.libcap
               pkgs.utillinux
             ];
-            script = ''
-              set -euo pipefail
-              CLASH_USER=clash
-              CLASH_UID="$(id -u "$CLASH_USER")"
-              CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
-              CLASH_CONFIG=/etc/clash-redir/default.yaml
-              # We first try to download the config file on behave of "$CLASH_USER",
-              # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-              if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                  if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                      if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                          >&2 echo "Failed to download clash config"
-                          exit 1
-                      fi
-                  fi
-              fi
-              if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
-                  rm "$CLASH_TEMP_CONFIG"
-                  exit 0
-              fi
-              mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
-              if systemctl is-active --quiet ${name}; then
-                  systemctl reload ${name} || systemctl restart ${name}
-              fi
-            '';
+            script =
+              let
+                base = builtins.toFile "base.yaml" ''
+                  port: 7890
+                  socks-port: 7891
+                  redir-port: 7892
+                  tproxy-port: 7893
+                  mixed-port: 7894
+                  allow-lan: true
+                  mode: Rule
+                  log-level: debug
+                  ipv6: false
+                  external-controller: 127.0.0.1:9090
+                  clash-for-android:
+                    append-system-dns: false
+                  profile:
+                    tracing: true
+                  dns:
+                    enable: true
+                    listen: :8853
+                    ipv6: false
+                    enhanced-mode: redir-host
+                    fake-ip-filter:
+                      - "*.lan"
+                      - stun.*.*.*
+                      - stun.*.*
+                      - time.windows.com
+                      - time.nist.gov
+                      - time.apple.com
+                      - time.asia.apple.com
+                      - "*.ntp.org.cn"
+                      - "*.openwrt.pool.ntp.org"
+                      - time1.cloud.tencent.com
+                      - time.ustc.edu.cn
+                      - pool.ntp.org
+                      - ntp.ubuntu.com
+                      - ntp.aliyun.com
+                      - ntp1.aliyun.com
+                      - ntp2.aliyun.com
+                      - ntp3.aliyun.com
+                      - ntp4.aliyun.com
+                      - ntp5.aliyun.com
+                      - ntp6.aliyun.com
+                      - ntp7.aliyun.com
+                      - time1.aliyun.com
+                      - time2.aliyun.com
+                      - time3.aliyun.com
+                      - time4.aliyun.com
+                      - time5.aliyun.com
+                      - time6.aliyun.com
+                      - time7.aliyun.com
+                      - "*.time.edu.cn"
+                      - time1.apple.com
+                      - time2.apple.com
+                      - time3.apple.com
+                      - time4.apple.com
+                      - time5.apple.com
+                      - time6.apple.com
+                      - time7.apple.com
+                      - time1.google.com
+                      - time2.google.com
+                      - time3.google.com
+                      - time4.google.com
+                      - music.163.com
+                      - "*.music.163.com"
+                      - "*.126.net"
+                      - musicapi.taihe.com
+                      - music.taihe.com
+                      - songsearch.kugou.com
+                      - trackercdn.kugou.com
+                      - "*.kuwo.cn"
+                      - api-jooxtt.sanook.com
+                      - api.joox.com
+                      - joox.com
+                      - y.qq.com
+                      - "*.y.qq.com"
+                      - streamoc.music.tc.qq.com
+                      - mobileoc.music.tc.qq.com
+                      - isure.stream.qqmusic.qq.com
+                      - dl.stream.qqmusic.qq.com
+                      - aqqmusic.tc.qq.com
+                      - amobile.music.tc.qq.com
+                      - "*.xiami.com"
+                      - "*.music.migu.cn"
+                      - music.migu.cn
+                      - "*.msftconnecttest.com"
+                      - "*.msftncsi.com"
+                      - localhost.ptlogin2.qq.com
+                      - "*.*.*.srv.nintendo.net"
+                      - "*.*.stun.playstation.net"
+                      - xbox.*.*.microsoft.com
+                      - "*.ipv6.microsoft.com"
+                      - "*.*.xboxlive.com"
+                      - speedtest.cros.wr.pvp.net
+                    nameserver:
+                      - 1.2.4.8
+                      - 223.5.5.5
+                      - 180.76.76.76
+                      - 114.114.114.114
+                      - https://223.6.6.6/dns-query
+                      - https://dns.pub/dns-query
+                    fallback:
+                      - https://1.1.1.1/dns-query
+                      - tls://8.8.4.4
+                      - https://9.9.9.9/dns-query
+                      - https://mozilla.cloudflare-dns.com/dns-query
+                      - https://free.bravedns.com/dns-query
+                      - https://ordns.he.net/dns-query
+                    fallback-filter:
+                      geoip: true
+                      ipcidr:
+                        - 240.0.0.0/4
+                        - 0.0.0.0/32
+                        - 127.0.0.1/32
+                      domain:
+                        - +.google.com
+                        - +.facebook.com
+                        - +.twitter.com
+                        - +.youtube.com
+                        - +.xn--ngstr-lra8j.com
+                        - +.google.cn
+                        - +.googleapis.cn
+                        - +.googleapis.com
+                        - +.gvt1.com
+                ''; in
+              ''
+                set -euo pipefail
+
+                updateYamlWith() {
+                    jq -s '.[0] * .[1]' <(yj -yj < "$1") <(yj -yj < "$2") | yj -jy
+                }
+
+                CLASH_USER=clash
+                CLASH_UID="$(id -u "$CLASH_USER")"
+                CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
+                CLASH_CONFIG=/etc/clash-redir/default.yaml
+                # We first try to download the config file on behave of "$CLASH_USER",
+                # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
+
+                if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                    if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                        if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                            >&2 echo "Failed to download clash config"
+                            exit 1
+                        fi
+                    fi
+                fi
+
+                updateYamlWith "$CLASH_TEMP_CONFIG" "${base}" | sponge "$CLASH_TEMP_CONFIG"
+
+                if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
+                    rm "$CLASH_TEMP_CONFIG"
+                    exit 0
+                fi
+                mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+                if systemctl is-active --quiet ${name}; then
+                    systemctl reload ${name} || systemctl restart ${name}
+                fi
+              '';
             serviceConfig = {
               Type = "oneshot";
               EnvironmentFile = "/run/secrets/clash-env";
