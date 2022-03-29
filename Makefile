@@ -9,13 +9,13 @@ USER ?= $(USER)
 EXTRANIXFLAGS ?=
 # TODO: Remove impure
 # error: attribute 'currentSystem' missing https://github.com/obsidiansystems/obelisk/issues/854
-NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going --keep-failed) $(EXTRANIXFLAGS))
+NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going) $(EXTRANIXFLAGS))
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
 HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix run ".$(POUND)home-manager" --)
 EXTRADEPLOYFLAGS ?=
-DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs --keep-result $(EXTRADEPLOYFLAGS))
+DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs $(EXTRADEPLOYFLAGS))
 
 NIXOSREBUILD.build = nix build ".$(POUND)nixosConfigurations.$(HOST).config.system.build.toplevel"
 NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
