@@ -2368,6 +2368,9 @@ in
         } // (mergeOptionalConfigs [{ enable = (prefs.enableK3s); config = { kubernetesIngress = { }; }; }]);
       };
     };
+    clickhouse = {
+      enable = prefs.enableClickhouse;
+    };
     postgresql = {
       enable = prefs.enablePostgresql;
       package = pkgs.postgresql_13;

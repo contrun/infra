@@ -359,6 +359,7 @@ let
     cadvisorPort = 28184;
     cadvisorExtraOptions = [ ];
     enablePostgresql = false;
+    enableClickhouse = false;
     enableRedis = false;
     enableVsftpd = !self.isMinimalSystem;
     enableRsyncd = false;
