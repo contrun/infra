@@ -5227,36 +5227,51 @@ builtins.toString prefs.ownerGroupGid
               ''
                 set -euo pipefail
 
-                updateYamlWith() {
-                    jq -s '.[0] * .[1]' <(yj -yj < "$1") <(yj -yj < "$2") | yj -jy
-                }
-
-                CLASH_USER=clash
-                CLASH_UID="$(id -u "$CLASH_USER")"
+                : "''${CLASH_USER:=clash}"
+                : "''${CLASH_FOLDER:=/etc/clash-redir}"
+                : "''${CLASH_FILE:=default.yaml}"
+                : "''${DOWNLOAD_ONLY:=}"
+                CLASH_CONFIG="$CLASH_FOLDER/$CLASH_FILE"
                 CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
-                CLASH_CONFIG=/etc/clash-redir/default.yaml
-                # We first try to download the config file on behave of "$CLASH_USER",
-                # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
 
-                if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                    if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                        if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                            >&2 echo "Failed to download clash config"
-                            exit 1
+                downloadConfigFile() {
+                    # We first try to download the config file on behave of "$CLASH_USER",
+                    # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
+                    if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                        if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                            if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                                >&2 echo "Failed to download clash config"
+                                exit 1
+                            fi
                         fi
                     fi
-                fi
+                }
 
-                updateYamlWith "$CLASH_TEMP_CONFIG" "${base}" | sponge "$CLASH_TEMP_CONFIG"
+                fixupConfig() {
+                    jq -s '.[0] * .[1]' <(yj -yj < "$1") <(yj -yj < "${base}") | yj -jy | grep -v PROCESS-NAME
+                }
 
-                if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
-                    rm "$CLASH_TEMP_CONFIG"
-                    exit 0
-                fi
-                mv --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
-                if systemctl is-active --quiet ${name}; then
-                    systemctl reload ${name} || systemctl restart ${name}
-                fi
+                maybeSaveConfigFile() {
+                    if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
+                        rm "$CLASH_TEMP_CONFIG"
+                        exit 0
+                    fi
+                    mv -f --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+                }
+
+                maybeReloadService() {
+                    if [[ -z "$DOWNLOAD_ONLY" ]]; then
+                        return 0
+                    fi
+                    if systemctl is-active --quiet ${name}; then
+                        systemctl reload ${name} || systemctl restart ${name}
+                    fi
+                }
+
+                downloadConfigFile
+                fixupConfig "$CLASH_TEMP_CONFIG" | sponge "$CLASH_TEMP_CONFIG"
+                maybeSaveConfigFile
+                maybeReloadService
               '';
             serviceConfig = {
               Type = "oneshot";
