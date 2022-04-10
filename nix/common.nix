@@ -3135,6 +3135,13 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "atuin" =
+                    let image = "ghcr.io/ellie/atuin:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "nextcloud" =
                     let image = "docker.io/nextcloud:latest";
                     in
@@ -3775,6 +3782,25 @@ builtins.toString prefs.ownerGroupGid
                 };
             }
             {
+              name = "atuin";
+              enable = prefs.ociContainers.enableAtuin;
+              config =
+                let port = 8888; in
+                {
+                  dependsOn = [ "postgresql" ];
+                  environment = {
+                    ATUIN_HOST = "0.0.0.0";
+                    ATUIN_PORT = builtins.toString port;
+                  };
+                  cmd = [ "server" "start" ];
+                  volumes = [
+                    "/var/data/atuin:/config"
+                  ];
+                  environmentFiles = [ "/run/secrets/atuin-env" ];
+                  traefikForwardingPort = port;
+                };
+            }
+            {
               name = "nextcloud";
               enable = prefs.ociContainers.enableNextcloud;
               config = {
@@ -4201,6 +4227,13 @@ prefs.getFullDomainName "traefik"
                                 subtitle = "rss reader";
                                 tag = "reading";
                                 url = "https://${prefs.getFullDomainName "miniflux"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableAtuin;
+                                name = "atuin";
+                                subtitle = "command line history";
+                                tag = "utilities";
+                                url = "https://${prefs.getFullDomainName "atuin"}";
                               }
                               {
                                 enable = prefs.ociContainers.enableNextcloud;

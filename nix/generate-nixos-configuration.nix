@@ -122,6 +122,7 @@ let
           };
           joplin-env = { };
           miniflux-env = { };
+          atuin-env = { };
           nextcloud-env = { };
           nextcloud-sqlite-env = { };
           nextcloud-postgres-env = { };

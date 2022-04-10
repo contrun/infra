@@ -533,6 +533,7 @@ let
       enableLivebook = self.enableAllOciContainers;
       enableJoplin = self.enableAllOciContainers;
       enableMiniflux = self.enableAllOciContainers;
+      enableAtuin = self.enableAllOciContainers;
       enableNextcloud = false;
       enableSftpgo = self.enableAllOciContainers;
       enableFilestash = self.enableAllOciContainers
