@@ -568,6 +568,7 @@ let
         "openssl"
         "libnfnetlink"
         "zeromq"
+        "kerberos"
         "mkcert"
         "glib-networking"
         "myPackages.python2"

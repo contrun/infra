@@ -404,7 +404,11 @@ in
       miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)
-    ];
+    ] ++ (
+      inputs.nixpkgs.lib.optionals prefs.enableNixLd
+        [ inputs.nix-ld.nixosModules.nix-ld ]
+    );
+
 
     specialArgs = moduleArgs;
   };

@@ -625,65 +625,84 @@ in
       ssh = "ssh -C";
       bc = "bc -l";
     };
-    sessionVariables = lib.optionalAttrs (prefs.enableSessionVariables) (rec {
-      MYSHELL = if prefs.enableZSH then "zsh" else "bash";
-      MYTERMINAL = if prefs.enableUrxvtd then "urxvtc" else "alacritty";
-      GOPATH = "$HOME/.go";
-      CABALPATH = "$HOME/.cabal";
-      CARGOPATH = "$HOME/.cargo";
-      NODE_PATH = "$HOME/.node";
-      PERLBREW_ROOT = "$HOME/.perlbrew-root";
-      LOCALBINPATH = "$HOME/.local/bin";
+    sessionVariables = lib.optionalAttrs (prefs.enableSessionVariables) (
+      let
+        systemPaths = [
+          "/nix/var/nix/profiles/per-user/${prefs.owner}/home-manager/home-path"
+          "/run/current-system/sw"
+        ];
+        getPaths = basePaths: subdirectories:
+          let
+            getFullPaths = basePath: builtins.map (subfolder: "${basePath}/${subfolder}") subdirectories;
+          in
+          builtins.concatMap getFullPaths basePaths;
+        mkPaths = basePaths: subdirectories: separator:
+          builtins.concatStringsSep separator (getPaths basePaths subdirectories);
+        headerPath = mkPaths systemPaths [ "include" ] ":";
+        ldLibraryPath =
+          let
+            paths1 = getPaths systemPaths [ "lib" ];
+            paths2 = with pkgs; lib.makeLibraryPath [
+              stdenv.cc.cc
+            ];
+            paths = paths1 ++ [ paths2 ];
+          in
+          builtins.concatStringsSep ":" paths;
+        pkgconfigPath = mkPaths systemPaths [ "lib/pkgconfig" "share/pkgconfig" ] ":";
+      in
+      rec {
+        MYSHELL =
+          if prefs.enableZSH then "zsh" else "bash";
+        MYTERMINAL = if prefs.enableUrxvtd then "urxvtc" else "alacritty";
+        GOPATH = "$HOME/.go";
+        CABALPATH = "$HOME/.cabal";
+        CARGOPATH = "$HOME/.cargo";
+        NODE_PATH = "$HOME/.node";
+        PERLBREW_ROOT = "$HOME/.perlbrew-root";
+        LOCALBINPATH = "$HOME/.local/bin";
 
-      # Don't set NIX_LD_LIBRARY_PATH here, there will be various problems.
-      MY_NIX_LD_LIBRARY_PATH =
-        "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
+        # help building locally compiled programs
+        LIBRARY_PATH = ldLibraryPath;
+        # Don't set LD_LIBRARY_PATH here, there will be various problems.
+        MY_LD_LIBRARY_PATH = ldLibraryPath;
+        # cmake does not respect LIBRARY_PATH
+        CMAKE_LIBRARY_PATH = ldLibraryPath;
+        CC_LIBRARY_PATH = ldLibraryPath;
 
-      # help building locally compiled programs
-      LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
-      # Don't set LD_LIBRARY_PATH here, there will be various problems.
-      MY_LD_LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
-      # cmake does not respect LIBRARY_PATH
-      CMAKE_LIBRARY_PATH = "$HOME/.nix-profile/lib:/run/current-system/sw/lib";
-      # Linking can sometimes fails because ld is unable to find libraries like libstdc++.
-      # export LIBRARY_PATH="$LIBRARY_PATH:$CC_LIBRARY_PATH"
-      CC_LIBRARY_PATH = "/local/lib";
-      # header files
-      CPATH = "$HOME/.nix-profile/include:/run/current-system/sw/include";
-      C_INCLUDE_PATH =
-        "$HOME/.nix-profile/include:/run/current-system/sw/include";
-      CPLUS_INCLUDE_PATH =
-        "$HOME/.nix-profile/include:/run/current-system/sw/include";
-      CMAKE_INCLUDE_PATH =
-        "$HOME/.nix-profile/include:/run/current-system/sw/include";
-      # pkg-config
-      PKG_CONFIG_PATH =
-        "$HOME/.nix-profile/lib/pkgconfig:$HOME/.nix-profile/share/pkgconfig:/run/current-system/sw/lib/pkgconfig:/run/current-system/sw/share/pkgconfig";
-      PATH = [ "$HOME/.bin" "$HOME/.local/bin" ]
+        # header files
+        CPATH = headerPath;
+        C_INCLUDE_PATH = headerPath;
+        CPLUS_INCLUDE_PATH = headerPath;
+        CMAKE_INCLUDE_PATH = headerPath;
+
+        # pkg-config
+        PKG_CONFIG_PATH = pkgconfigPath;
+
+        PATH = [ "$HOME/.bin" "$HOME/.local/bin" ]
         ++ (map (x: x + "/bin") [ CABALPATH CARGOPATH GOPATH ])
         ++ [ "${NODE_PATH}/node_modules/.bin" ] ++ [ "/usr/local/bin" ];
-      LESS = "-x4RFsX";
-      PAGER = "less";
-      EDITOR = "nvim";
-    } // (mergeOptionalConfigs [
-      {
-        enable = !prefs.enableMicrovmGuest;
-        config = {
-          # TODO: failed to build on microvm guest
-          # error: access to canonical path '/nix/store/lz5pb4y9z79lc65asdx6j0wiicm3p12q-binutils-wrapper-2.35.2/nix-support/dynamic-linker' is forbidden in restricted mode
-          NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
-        };
-      }
-      {
-        enable = pkgs ? myPackages;
-        config = {
-          # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
-          MYPYTHONPATH =
-            (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
-              [ (pkgs.myPackages.python or pkgs.python) ];
-        };
-      }
-    ]));
+        LESS = "-x4RFsX";
+        PAGER = "less";
+        EDITOR = "nvim";
+      } // (mergeOptionalConfigs [
+        {
+          enable = prefs.enableNixLd;
+          config = {
+            NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+            NIX_LD_LIBRARY_PATH = ldLibraryPath;
+          };
+        }
+        {
+          enable = pkgs ? myPackages;
+          config = {
+            # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
+            MYPYTHONPATH =
+              (pkgs.myPackages.pythonPackages.makePythonPath or pkgs.python3Packages.makePythonPath)
+                [ (pkgs.myPackages.python or pkgs.python) ];
+          };
+        }
+      ])
+    );
     variables = {
       # systemctl --user does not work without this
       # https://serverfault.com/questions/887283/systemctl-user-process-org-freedesktop-systemd1-exited-with-status-1/887298#887298
@@ -838,13 +857,7 @@ in
           else
             "";
       in
-      lib.optionalAttrs (prefs.enableJava && jdks != [ ])
-        {
-          jdks = {
-            text = lib.concatMapStringsSep "\n" addjdk jdks;
-            deps = [ "local" ];
-          };
-        } // {
+      {
         mkCcacheDirs = {
           text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
           deps = [ ];
@@ -902,30 +915,6 @@ in
           deps = [ ];
         };
 
-        # Fuck pre-built dynamic binaries
-        # copied from https://github.com/NixOS/nixpkgs/pull/69057
-        ldlinux = {
-          text = with lib;
-            concatStrings (mapAttrsToList
-              (target: source: ''
-                mkdir -m 0755 -p $(dirname ${target})
-                ln -sfn ${escapeShellArg source} ${target}.tmp
-                mv -f ${target}.tmp ${target} # atomically replace
-              '') {
-              "i686-linux"."/lib/ld-linux.so.2" =
-                "${pkgs.glibc.out}/lib/ld-linux.so.2";
-              "x86_64-linux"."/lib/ld-linux.so.2" =
-                "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
-              "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" =
-                "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
-              "aarch64-linux"."/lib/ld-linux-aarch64.so.1" =
-                "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
-              "armv7l-linux"."/lib/ld-linux-armhf.so.3" =
-                "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
-            }.${pkgs.stdenv.system} or { });
-          deps = [ ];
-        };
-
         # make some symlinks to /bin, just for convenience
         binShortcuts = {
           text = ''
@@ -933,7 +922,46 @@ in
           '';
           deps = [ "binsh" "usrlocalbin" ];
         };
-      };
+      } // (mergeOptionalConfigs [
+        {
+          enable = (prefs.enableJava && jdks != [ ]);
+          config = {
+            jdks = {
+              text = lib.concatMapStringsSep "\n" addjdk jdks;
+              deps = [ "local" ];
+            };
+          };
+        }
+
+        {
+          enable = !prefs.enableNixLd;
+          config = {
+            # Fuck pre-built dynamic binaries
+            # copied from https://github.com/NixOS/nixpkgs/pull/69057
+            ldlinux = {
+              text = with lib;
+                concatStrings (mapAttrsToList
+                  (target: source: ''
+                    mkdir -m 0755 -p $(dirname ${target})
+                    ln -sfn ${escapeShellArg source} ${target}.tmp
+                    mv -f ${target}.tmp ${target} # atomically replace
+                  '') {
+                  "i686-linux"."/lib/ld-linux.so.2" =
+                    "${pkgs.glibc.out}/lib/ld-linux.so.2";
+                  "x86_64-linux"."/lib/ld-linux.so.2" =
+                    "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
+                  "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" =
+                    "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
+                  "aarch64-linux"."/lib/ld-linux-aarch64.so.1" =
+                    "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
+                  "armv7l-linux"."/lib/ld-linux-armhf.so.3" =
+                    "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
+                }.${pkgs.stdenv.system} or { });
+              deps = [ ];
+            };
+          };
+        }
+      ]);
   };
 
   services = {

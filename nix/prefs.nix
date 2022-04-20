@@ -150,6 +150,9 @@ let
     enableBumblebee = false;
     enableMediaKeys = true;
     enableEternalTerminal = !self.isMinimalSystem;
+    # TODO: failed to build on microvm guest
+    # error: access to canonical path '/nix/store/lz5pb4y9z79lc65asdx6j0wiicm3p12q-binutils-wrapper-2.35.2/nix-support/dynamic-linker' is forbidden in restricted mode
+    enableNixLd = !self.enableMicrovmGuest;
     # TODO: enable microvm host failed with
     #    Failed assertions:
     #    - The security.wrappers.qemu-bridge-helper wrapper is not valid:
