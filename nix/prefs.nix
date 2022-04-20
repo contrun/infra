@@ -434,6 +434,7 @@ let
     enableZSH = true;
     enableFish = true;
     enableJava = !self.isMinimalSystem;
+    enableSysdig = !self.isMinimalSystem;
     enableCcache = true;
     enableFirewall = false;
     enableCompton = false;

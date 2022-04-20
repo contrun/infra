@@ -695,6 +695,7 @@ in
     ccache = { enable = prefs.enableCcache; };
     java = { enable = prefs.enableJava; };
     gnupg.agent = { enable = prefs.enableGPGAgent; };
+    sysdig = { enable = prefs.enableSysdig; };
     ssh = { startAgent = true; };
     # vim.defaultEditor = true;
     adb.enable = prefs.enableADB;
@@ -2844,6 +2845,7 @@ in
                 "systemd-journal"
                 "qemu-libvirtd"
                 "audio"
+                "sysdig"
                 "disk"
                 "keys"
                 "aria2"
