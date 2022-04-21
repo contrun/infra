@@ -402,6 +402,8 @@ let
     enableYandex = false;
     nextcloudWhere = "/nc/sync";
     enableCgroupAccounting = false;
+    enableResticBackup = !self.isMinimalSystem;
+    enableResticPrune = self.enableResticBackup;
     nextcloudContainerDataDirectory = "/var/data/nextcloud-data";
     ownerNextcloudContainerDataDirectory =
       "${self.nextcloudContainerDataDirectory}/${self.owner}/files";

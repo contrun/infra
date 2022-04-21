@@ -1110,58 +1110,127 @@ in
       pulse = { enable = true; };
     };
     restic = {
-      backups =
-        let
-          restic-exclude-files = pkgs.writeTextFile {
-            name = "restic-excluded-files";
-            text = ''
-              ltximg
-              .stversions
-              .stfolder
-              .sync
-              .syncthing.*.tmp
-              ~syncthing~*.tmp
-            '';
-          };
-          go = name: conf: backend: {
-            "${name}-${backend}" = {
-              initialize = true;
-              passwordFile = "/run/secrets/restic-password";
-              repository = "rclone:${backend}:restic";
-              rcloneConfigFile = "/run/secrets/rclone-config";
-              timerConfig = {
-                OnCalendar = "00:05";
-                RandomizedDelaySec = 3600 * 6;
-              };
-              pruneOpts = [
-                "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
-              ];
-            } // conf;
-          };
-          mkBackup = name: conf:
-            go name conf "backup-primary" // go name conf "backup-secondary";
-        in
-        mkBackup "vardata"
-          {
-            extraBackupArgs = [
+      backups = lib.optionalAttrs prefs.enableResticBackup
+        (
+          let
+            restic-exclude-files = pkgs.writeTextFile {
+              name = "restic-excluded-files";
+              text = ''
+                ltximg
+                .stversions
+                .st folder
+                .sync
+                .syncthing.*.tmp
+                ~syncthing~*.tmp
+                .elixir_ls
+                *.beam
+                _build
+                .DS_Store
+                _internal_bibisco_projects_db_
+                .emacs.d/straight
+                *.aux
+                *.lof
+                *.log
+                *.lot
+                *.fls
+                *.out
+                *.toc
+                *.fmt
+                *.fot
+                *.cb
+                *.cb2
+                .*.lb
+                *.dvi
+                *.xdv
+                *-converted-to.*
+                *.bbl
+                *.bcf
+                *.blg
+                *-blx.aux
+                *-blx.bib
+                *.run.xml
+                *.fdb_latexmk
+                *.synctex
+                *.synctex(busy)
+                *.synctex.gz
+                *.synctex.gz(busy)
+                *.organice-bak
+                *.md~
+              '';
+            };
+            go = name: conf: rcloneBackend: backendName: {
+              "${name}-${backendName}" = {
+                # This takes time, disable after initialized.
+                initialize = true;
+                passwordFile = "/run/secrets/restic-password";
+                repository = "rclone:${rcloneBackend}:restic";
+                rcloneConfigFile = "/run/secrets/rclone-config";
+                timerConfig = {
+                  OnCalendar = "00:05";
+                  RandomizedDelaySec = 3600 * 8;
+                };
+              } // conf;
+            };
+            commonFlags = [
               "-v=3"
-              "--exclude=/postgresql"
-              "--exclude=/vault/logs"
-              "--exclude=/nextcloud-data"
-              "--exclude=/sftpgo/data"
-              "--exclude=/sftpgo/backups"
+              "--no-lock"
               "--exclude-file=${restic-exclude-files}"
             ];
-            paths = [ "/var/data" ];
-          } // mkBackup "sync" {
-          extraBackupArgs = [
-            "-v=3"
-            "--exclude-larger-than=500M"
-            "--exclude=.git"
-            "--exclude-file=${restic-exclude-files}"
-          ];
-          paths = [ "${prefs.syncFolder}" ];
-        };
+            mkBackup = { name, config, enable ? true }: lib.optionalAttrs enable
+              (go name config "backup-primary" "primary" // go name config "backup-secondary" "secondary");
+          in
+          builtins.foldl' (acc: e: acc // mkBackup e) { } [
+            {
+              # Fake restic unit to prune old snapshots.
+              # Do not use this on too many hosts, as prune locks the whole repository,
+              # it may block normal backups.
+              name = "prune";
+              enable = prefs.enableResticPrune;
+              config = {
+                dynamicFilesFrom = ''
+                  #! ${pkgs.stdenv.shell}
+                  set -euo pipefail
+                  # Try to unlock before prune. This may fail on a racing.
+                  ${pkgs.restic}/bin/restic unlock >& "$CACHE_DIRECTORY/unlock.log"
+                  file="$CACHE_DIRECTORY/pruneTime";
+                  date -R > $file;
+                  echo "$file"
+                '';
+                timerConfig = {
+                  OnCalendar = "weekly";
+                  RandomizedDelaySec = 3600 * 24 * 7;
+                };
+                pruneOpts = [
+                  "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
+                ];
+                extraBackupArgs = commonFlags;
+              };
+            }
+            {
+              name = "vardata";
+              config = {
+                extraBackupArgs = commonFlags ++ [
+                  "--exclude=/postgresql"
+                  "--exclude=/vault/logs"
+                  "--exclude=/nextcloud-data"
+                  "--exclude=/sftpgo/data"
+                  "--exclude=/sftpgo/backups"
+                ];
+                paths = [ "/var/data" ];
+              };
+            }
+            {
+              name = "sync";
+              config = {
+                extraBackupArgs = commonFlags ++ [
+                  "--exclude-larger-than=500M"
+                  "--exclude=.git"
+                ];
+                paths = [ "${prefs.syncFolder}" ];
+              };
+            }
+          ]
+        );
     };
     glusterfs = {
       enable = prefs.enableGlusterfs;
