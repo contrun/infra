@@ -3193,6 +3193,12 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "unigraph" =
+                    let image = "ghcr.io/contrun/unigraph:latest";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                    };
                   "vaultwarden" =
                     let image = "docker.io/vaultwarden/server:latest";
                     in
@@ -3783,6 +3789,29 @@ builtins.toString prefs.ownerGroupGid
               };
             }
             {
+              # TODO: the explorer hard coded web socket server to be `ws://${hst}:4002`
+              # in https://github.com/unigraph-dev/unigraph-dev/blob/b486c16f32eef0c931b4c0dfbf931dd7179abf0c/packages/unigraph-dev-explorer/src/init.tsx#L74
+              # which caused `SecurityError: The operation is insecure` when I
+              # tried to access explorer from a https website.
+              name = "unigraph";
+              enable = prefs.ociContainers.enableUnigraph;
+              config = {
+                volumes = [ "/var/data/unigraph:/opt/unigraph" ];
+                extraOptions = [
+                  "--label=traefik.http.routers.unigraph-ws.service=unigraph-ws"
+                  "--label=traefik.http.routers.unigraph-ws.rule=${getTraefikRuleByDomainPrefix "unigraph-ws"}"
+                  # TODO: add authorization
+                  # Actually does not work on the unigraph explorer, which seems to be not accepting
+                  # wss://user:password@unigraph-ws.example.com
+                  # "--label=traefik.http.routers.unigraph-ws.middlewares=authelia-basic"
+                  "--label=traefik.http.services.unigraph-ws.loadbalancer.server.port=4002"
+                  "--label=traefik.http.routers.unigraph-ws.entrypoints=web,websecure"
+                  "--label=traefik.http.routers.unigraph-ws.tls=true"
+                ];
+                traefikForwardingPort = 3000;
+              };
+            }
+            {
               name = "gitea";
               enable = prefs.ociContainers.enableGitea;
               config =
@@ -4241,6 +4270,13 @@ getTraefikRuleByDomainPrefix "webdav"
                                 subtitle = "personal wiki";
                                 tag = "documentation";
                                 url = "https://${prefs.getFullDomainName "tiddlywiki"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableUnigraph;
+                                name = "unigraph";
+                                subtitle = "personal knowledge management";
+                                tag = "pkm";
+                                url = "https://${prefs.getFullDomainName "unigraph"}";
                               }
                               {
                                 enable = prefs.ociContainers.enableGrocy;
