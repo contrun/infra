@@ -3040,6 +3040,7 @@ in
     anbox = { enable = prefs.enableAnbox; };
     oci-containers =
       let
+        timeZone = config.time.timeZone;
         mkContainer =
           { name
           , enable ? true
@@ -3294,6 +3295,7 @@ in
                 { enableTraefik ? true
                 , enableTraefikTls ? true
                 , traefikForwardingPort ? 80
+                , useHostTimeZone ? true
                 , entrypoints ? [ "web" "websecure" ]
                 , middlewares ? [ ]
                 , networkName ? prefs.ociContainerNetwork
@@ -3305,8 +3307,10 @@ in
                       images."${name}"."${prefs.nixosSystem}" or (builtins.throw
                         "Image for ${name} on ${prefs.nixosSystem} not found")
                     );
-                  extraOptions = (args.extraOptions or [ ])
-                  ++ (if enableTraefik then
+                  environment = (lib.optionalAttrs useHostTimeZone {
+                    "TZ" = timeZone;
+                  }) // (args.environment or { });
+                  extraOptions = (if enableTraefik then
                     [
                       "--label=traefik.http.routers.${name}.service=${name}"
                       "--label=traefik.http.services.${name}.loadbalancer.server.port=${
@@ -3325,7 +3329,7 @@ builtins.concatStringsSep "," middlewares
                   else
                     [ "--label=traefik.enable=false" ])
                   ++ (lib.optionals (networkName != null)
-                    [ "--network=${networkName}" ]);
+                    [ "--network=${networkName}" ]) ++ (args.extraOptions or [ ]);
                 };
               getConfig = config:
                 builtins.removeAttrs (f config) [
@@ -3682,11 +3686,12 @@ prefs.getFullDomainName "authelia"
               name = "grocy";
               enable = prefs.ociContainers.enableGrocy;
               config = {
-                volumes = [ "/var/data/grocy:/config" ];
+                volumes = [
+                  "/var/data/grocy:/config"
+                ];
                 environment = {
                   "PUID" = "${builtins.toString prefs.ownerUid}";
                   "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-                  "TZ" = "Asia/Shanghai";
                   "GROCY_CURRENCY" = "CNY";
                   "GROCY_MODE" = "production";
                 };
@@ -3706,7 +3711,6 @@ prefs.getFullDomainName "authelia"
                   environment = {
                     "PUID" = "${builtins.toString prefs.ownerUid}";
                     "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-                    "TZ" = "Asia/Shanghai";
                     "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
                   };
                   traefikForwardingPort = 8083;
@@ -3723,7 +3727,6 @@ prefs.getFullDomainName "authelia"
                 environment = {
                   "PUID" = "${builtins.toString prefs.ownerUid}";
                   "PGID" = "${builtins.toString prefs.ownerGroupGid}";
-                  "TZ" = "Asia/Shanghai";
                   "DOCKER_MODS" = "linuxserver/calibre-web:calibre";
                 };
                 traefikForwardingPort = 80;
@@ -3786,8 +3789,6 @@ builtins.toString prefs.ownerGroupGid
                 {
                   volumes = [
                     "/var/data/gitea:/data"
-                    "/etc/timezone:/etc/timezone:ro"
-                    "/etc/localtime:/etc/localtime:ro"
                   ];
                   dependsOn = [ "postgresql" ];
                   environment = {
@@ -3795,7 +3796,6 @@ builtins.toString prefs.ownerGroupGid
                     "PGID" = "${builtins.toString prefs.ownerGroupGid}";
                     "USER_UID" = "${builtins.toString prefs.ownerUid}";
                     "USER_GID" = "${builtins.toString prefs.ownerGroupGid}";
-                    "TZ" = "Asia/Shanghai";
                     "GITEA__server__DOMAIN" = prefs.getFullDomainName "gitea";
                     "GITEA__server__ROOT_URL" =
                       "https://${prefs.getFullDomainName "gitea"}";
