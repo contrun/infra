@@ -40,6 +40,8 @@ jobs:
             kind: "github_repository"
           - path: "mkorenkov/docker-perkeep"
             kind: "github_repository"
+          - path: "unigraph-dev/unigraph-dev"
+            kind: "github_repository"
           # Images not working for now.
           # - path: "DeviaVir/zenbot"
           #   kind: "github_repository"
@@ -65,7 +67,7 @@ jobs:
           set_output() {
               for v in "$@"; do
                   echo "::set-output name=$v::${!v}"
-              done 
+              done
           }
 
           case "${{ matrix.kind }}" in
@@ -89,6 +91,10 @@ jobs:
               ;;
             "karlicoss/promnesia")
               dockerfile="$directory/docker/docker_files/Dockerfile"
+              ;;
+            "unigraph-dev/unigraph-dev")
+              name=unigraph
+              platforms="linux/amd64"
               ;;
           esac
 
