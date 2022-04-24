@@ -849,14 +849,6 @@ in
 
   system = {
     activationScripts =
-      let
-        jdks = builtins.filter (x: pkgs ? x) prefs.linkedJdks;
-        addjdk = jdk:
-          if pkgs ? jdk then
-            let p = pkgs.${jdk}.home; in "ln -sfn ${p} /local/jdks/${jdk}"
-          else
-            "";
-      in
       {
         mkCcacheDirs = {
           text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
@@ -924,15 +916,22 @@ in
         };
       } // (mergeOptionalConfigs [
         {
-          enable = (prefs.enableJava && jdks != [ ]);
-          config = {
-            jdks = {
-              text = lib.concatMapStringsSep "\n" addjdk jdks;
-              deps = [ "local" ];
+          enable = prefs.enableJava;
+          config =
+            let
+              addjdk = jdk:
+                if pkgs ? jdk then
+                  let p = pkgs.${jdk}.home; in "ln -sfn ${p} /local/jdks/${jdk}"
+                else
+                  lib.warn "jdk ${jdk} does not exists" "";
+            in
+            {
+              jdks = {
+                text = lib.concatMapStringsSep "\n" addjdk prefs.linkedJdks;
+                deps = [ "local" ];
+              };
             };
-          };
         }
-
         {
           enable = !prefs.enableNixLd;
           config = {

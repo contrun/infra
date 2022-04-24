@@ -451,8 +451,7 @@ let
       if self.isMinimalSystem then
         [ "openjdk8" ]
       else [
-        "openjdk15"
-        "openjdk14"
+        "openjdk17"
         "openjdk11"
         "openjdk8"
       ];
