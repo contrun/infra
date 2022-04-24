@@ -528,7 +528,7 @@ let
       enableXwiki = false;
       enableHuginn = self.enableAllOciContainers;
       enableTiddlyWiki = self.enableAllOciContainers;
-      enableUnigraph = self.enableAllOciContainers;
+      enableUnigraph = false;
       enableGrocy = self.enableAllOciContainers;
       enableCalibreWeb = self.enableAllOciContainers;
       enableDokuwiki = self.enableAllOciContainers;
