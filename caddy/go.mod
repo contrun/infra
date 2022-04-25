@@ -3,9 +3,8 @@ module github.com/contrun/infra/caddy
 go 1.16
 
 require (
-	github.com/caddyserver/caddy/v2 v2.4.5
-	github.com/greenpau/caddy-auth-jwt v1.3.16
-	github.com/greenpau/caddy-auth-portal v1.4.24
-	github.com/mastercactapus/caddy2-proxyprotocol v0.0.2
-	github.com/mholt/caddy-l4 v0.0.0-20210604203514-3cfcafe70883
+	github.com/caddyserver/caddy/v2 v2.5.0-rc.1
+	github.com/greenpau/caddy-security v1.1.5
+	github.com/lucaslorentz/caddy-docker-proxy/plugin v0.0.0-20220421165608-dd2847a8ab71
+	github.com/mholt/caddy-l4 v0.0.0-20220420174601-aec6535658b1
 )
