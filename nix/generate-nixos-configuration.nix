@@ -131,6 +131,7 @@ let
           wikijs-env = { };
           xwiki-env = { };
           huginn-env = { };
+          wakapi-env = { };
           gitea-env = { };
           rss-bridge-whitelist = { mode = "0444"; };
           wallabag-env = { };

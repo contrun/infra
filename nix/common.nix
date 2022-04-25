@@ -3185,6 +3185,11 @@ in
                     "x86_64-linux" = "docker.io/huginn/huginn:latest";
                     "aarch64-linux" = "docker.io/zhorvath83/huginn:latest";
                   };
+                  "wakapi" = let image = "ghcr.io/muety/wakapi:latest"; in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "tiddlywiki" =
                     let image = "docker.io/contrun/tiddlywiki:latest";
                     in
@@ -3773,6 +3778,21 @@ prefs.getFullDomainName "authelia"
                 };
             }
             {
+              name = "wakapi";
+              enable = prefs.ociContainers.enableWakapi;
+              config =
+                {
+                  dependsOn = [ "postgresql" ];
+                  traefikForwardingPort = 3000;
+                  environmentFiles = [ "/run/secrets/wakapi-env" ];
+                  environment = {
+                    "ENVIRONMENT" = "production";
+                    "WAKAPI_PUBLIC_URL" = "https://${prefs.getFullDomainName "wakapi"}";
+                    "WAKAPI_EXPOSE_METRICS" = "true";
+                  };
+                };
+            }
+            {
               name = "tiddlywiki";
               enable = prefs.ociContainers.enableTiddlyWiki;
               config = {
@@ -4262,6 +4282,13 @@ getTraefikRuleByDomainPrefix "webdav"
                                 subtitle = "automation agents";
                                 tag = "automation";
                                 url = "https://${prefs.getFullDomainName "huginn"}";
+                              }
+                              {
+                                enable = prefs.ociContainers.enableWakapi;
+                                name = "wakapi";
+                                subtitle = "coding time tracking";
+                                tag = "productivity";
+                                url = "https://${prefs.getFullDomainName "wakapi"}";
                               }
                               {
                                 enable = prefs.ociContainers.enableTiddlyWiki;

@@ -526,6 +526,7 @@ let
       enableWikijs = false;
       enableXwiki = false;
       enableHuginn = self.enableAllOciContainers;
+      enableWakapi = self.enableAllOciContainers;
       enableTiddlyWiki = self.enableAllOciContainers;
       enableUnigraph = false;
       enableGrocy = self.enableAllOciContainers;
