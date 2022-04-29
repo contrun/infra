@@ -745,6 +745,7 @@ let
       enableZerotierone = false;
       autoStartClashRedir = false;
       dnsServers = [ "10.10.61.128" "10.10.61.129" ];
+      enableTraefik = true;
       ociContainers = super.ociContainers // { };
     } else if hostname == "shl" then {
       enableXserver = false;
