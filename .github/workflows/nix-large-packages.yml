@@ -12,6 +12,18 @@ on:
       - "x86_64-linux"
       - "aarch64-linux"
   workflow_dispatch:
+    inputs:
+      update-flake:
+        description: "whether to update nix flake inputs"
+        required: false
+        default: "no"
+  workflow_call:
+    inputs:
+      update-flake:
+        description: "whether to update nix flake inputs"
+        required: false
+        type: string
+        default: "no"
 
 jobs:
   build:
@@ -96,6 +108,11 @@ jobs:
           setup-qemu: true
           free-disk-space: false
           nix-systems: "${{ steps.variables.outputs.system }}"
+
+      - name: Update nix flake inputs
+        if: github.event.inputs.update-nix-inputs != 'no'
+        run: |
+          nix flake update
 
       - name: Build the package
         if: steps.variables.outputs.shouldSkip != 'true'
