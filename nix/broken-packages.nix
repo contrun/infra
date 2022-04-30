@@ -1,1 +1,19 @@
-[ "aqemu" "haskellPackages.patat" "impressive" "pdf2djvu" "radiotray-ng" "llvmPackages_latest.lldb" ]
+[
+  "aqemu"
+  "haskellPackages.patat"
+  "impressive"
+  "pdf2djvu"
+  "radiotray-ng"
+  "llvmPackages_latest.lldb"
+  "rr"
+  "byzanz"
+  "mitscheme"
+  "netcoredbg"
+  "subtitleeditor"
+  "gdbgui"
+  "codeblocks"
+  "xmind"
+  "workrave"
+  "hashdeep"
+]
+

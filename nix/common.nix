@@ -832,7 +832,6 @@ in
       package = pkgs.pulseaudioFull;
       support32Bit = true;
       systemWide = true;
-      extraModules = [ pkgs.pulseaudio-modules-bt ];
     };
     bluetooth = {
       enable = prefs.enableBluetooth;
@@ -2892,7 +2891,7 @@ in
               xmonad-extras
               xmonad-utils
               # xmonad-windownames
-              xmonad-entryhelper
+              # xmonad-entryhelper
               yeganesh
               libmpd
               dbus

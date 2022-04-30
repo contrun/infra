@@ -19,7 +19,6 @@ let
       "adbfs-rootless"
       "mitscheme"
       "simplescreenrecorder"
-      "palemoon"
       "syslinux"
       "gitAndTools.git-annex"
       "myPackages.python"
@@ -320,7 +319,6 @@ let
         "libmysqlclient"
         "myPackages.idris"
         # "myPackages.elba"
-        "pydb"
         "protobuf"
         "capnproto"
         "gflags"
@@ -563,6 +561,7 @@ let
         "libcap"
         "libcgroup"
         "libuuid"
+        "gbenchmark"
         "libxml2"
         "expat"
         "libpng"
@@ -620,7 +619,7 @@ let
     {
       name = "network tools (preferred)";
       priority = 24;
-      packages = getPackages [ "myPackages.firefox" ];
+      packages = getPackages [ ];
     }
     {
       name = "network tools";
@@ -700,7 +699,6 @@ let
         "meli"
         "mu"
         "midori"
-        "palemoon"
         "luakit"
         "nyxt"
         "vivaldi"
@@ -749,7 +747,6 @@ let
         "gitRepo"
         "exercism"
         "kaggle"
-        "coreutils"
         "coreutils-prefixed"
         "notify-osd"
         "sxhkd"
@@ -1031,7 +1028,6 @@ let
         "rclone"
         "seaweedfs"
         "fuse-overlayfs"
-        "yandex-disk"
         "nextcloud-client"
         "gnutar"
         "zstd"
@@ -1042,7 +1038,6 @@ let
         "gawk"
         "dos2unix"
         "subdl"
-        "subtitleeditor"
         "espeak"
         "surf"
         "synapse"
@@ -1079,15 +1074,6 @@ let
   ];
 in
 {
-  # Let Home Manager install and manage itself.
-  # programs.home-manager.enable = true;
-  # programs = {
-  #   firefox = {
-  #     enable = true;
-  #     package = pkgs.firefox-devedition-bin;
-  #   };
-  # };
-
   programs = lib.optionalAttrs (prefs.enableSmos) {
     smos = {
       enable = true;
