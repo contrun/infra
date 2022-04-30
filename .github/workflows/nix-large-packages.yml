@@ -7,10 +7,6 @@ on:
       - "Build nixos profiles"
     types:
       - "completed"
-  push:
-    branches:
-      - "x86_64-linux"
-      - "aarch64-linux"
   workflow_dispatch:
     inputs:
       update-flake:
@@ -31,6 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        system:
+          - "x86_64-linux"
         include:
           - type: "expression"
             # TODO: any better way to build overrided virtualbox derivation?
@@ -41,16 +39,20 @@ jobs:
                 packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
                 package = builtins.elemAt packages 0;
               in package
-            system: "x86_64-linux"
           - type: "package"
             data: "config.boot.kernelPackages.kernel"
-            system: "x86_64-linux"
           - type: "package"
             data: "pkgs.clojure-lsp"
-            system: "x86_64-linux"
+          - type: "package"
+            data: "pkgs.keepassxc"
+          - type: "package"
+            data: "pkgs.texlab"
           - type: "package"
             data: "pkgs.llvmPackages_latest.llvm"
-            system: "x86_64-linux"
+          - type: "package"
+            data: "pkgs.myPackages.emacs"
+          - type: "package"
+            data: "pkgs.myPackages.texLive"
 
     steps:
       - name: Set up common variables
