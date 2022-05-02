@@ -112,7 +112,7 @@ jobs:
           nix-systems: "${{ steps.variables.outputs.system }}"
 
       - name: Update nix flake inputs
-        if: github.event.inputs.update-nix-inputs != 'no'
+        if: github.event.inputs.update-flake != 'no' && github.event.inputs.update-flake != ''
         run: |
           nix flake update
 
