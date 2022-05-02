@@ -20,18 +20,23 @@ on:
         required: false
         type: string
         default: "no"
+  push:
+    branches:
+      - "x86_64-linux"
+      - "aarch64-linux"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        system:
-          - "x86_64-linux"
         include:
           - type: "expression"
             # TODO: any better way to build overrided virtualbox derivation?
+            system: x86_64-linux
+            experimental: false
             data: |
               with (builtins.getFlake (builtins.toString ./.));
               let
@@ -39,24 +44,42 @@ jobs:
                 packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
                 package = builtins.elemAt packages 0;
               in package
+          - type: "expression"
+            system: x86_64-linux
+            experimental: true
+            data: |
+              with (builtins.getFlake (builtins.toString ./.)); packages.x86_64-linux.dvm
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "config.boot.kernelPackages.kernel"
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "pkgs.clojure-lsp"
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "pkgs.keepassxc"
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "pkgs.texlab"
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "pkgs.llvmPackages_latest.llvm"
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "pkgs.myPackages.emacs"
           - type: "package"
+            system: x86_64-linux
+            experimental: false
             data: "pkgs.myPackages.texLive"
 
     steps:
       - name: Set up common variables
-        if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
         id: variables
         env:
           DATA: ${{ matrix.data }}
