@@ -101,15 +101,6 @@ jobs:
           fi
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-      # Some packages are so large that it takes quite a while to build them.
-      # When we're updating flake inputs, we build these packages separately
-      # in hope of building nixos profiles being finished within github actions runner time limit.
-      - name: Build large nix packages
-        if: steps.update-nix-inputs.outputs.shouldAbort != 'yes' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes'))
-        uses: ./.github/workflows/nix-large-packages
-        with:
-          update-flake: 'yes'
-
       - name: Set up common variables
         if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
         id: variables
