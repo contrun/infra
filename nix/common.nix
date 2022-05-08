@@ -763,6 +763,7 @@ in
       wqy_zenhei
       source-han-sans-simplified-chinese
       source-han-serif-simplified-chinese
+      nerdfonts
       arphic-ukai
       arphic-uming
       noto-fonts-cjk

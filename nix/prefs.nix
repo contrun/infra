@@ -135,7 +135,7 @@ let
     enableRaspberryPiBoot = self.bootloader == "raspberrypi";
     efiCanTouchEfiVariables = true;
     isRaspberryPi = false;
-    networkController = "connman";
+    networkController = if self.enableMicrovmGuest then "wpa_supplicant" else "connman";
     enableSupplicant = self.networkController == "wpa_supplicant";
     enableWireless = self.enableSupplicant;
     enableIwd = self.networkController == "iwd";
