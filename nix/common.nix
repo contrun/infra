@@ -3156,6 +3156,12 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "lldap" =
+                    let image = "docker.io/nitnelave/lldap:stable";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                    };
                   "calibre-web" =
                     let image = "docker.io/linuxserver/calibre-web:latest";
                     in
@@ -3706,6 +3712,22 @@ prefs.getFullDomainName "authelia"
                   "GROCY_MODE" = "production";
                 };
                 traefikForwardingPort = 80;
+              };
+            }
+            {
+              name = "lldap";
+              enable = prefs.ociContainers.enableLldap;
+              config = {
+                volumes = [
+                  "/var/data/lldap:/data"
+                ];
+                environment = {
+                  "PUID" = "33";
+                  "PGID" = "33";
+                };
+                environmentFiles = [ "/run/secrets/lldap-env" ];
+                ports = [ "3890:3890" "17170:17170" ];
+                traefikForwardingPort = 17170;
               };
             }
             {
@@ -4312,6 +4334,13 @@ getTraefikRuleByDomainPrefix "webdav"
                                 url = "https://${prefs.getFullDomainName "grocy"}";
                               }
                               {
+                                enable = prefs.ociContainers.enableLldap;
+                                name = "lldap";
+                                subtitle = "ldap server";
+                                tag = "account-management";
+                                url = "https://${prefs.getFullDomainName "lldap"}";
+                              }
+                              {
                                 enable = prefs.ociContainers.enableCalibreWeb;
                                 name = "calibre";
                                 subtitle = "digital books";
@@ -4592,6 +4621,12 @@ builtins.toString prefs.ownerGroupGid
               enable = prefs.ociContainers.enablePerkeep;
               list = [
                 "d /var/data/perkeep - 1000 1000 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableLldap;
+              list = [
+                "d /var/data/lldap - 33 33 -"
               ];
             }
             {

@@ -530,6 +530,7 @@ let
       enableTiddlyWiki = self.enableAllOciContainers;
       enableUnigraph = false;
       enableGrocy = self.enableAllOciContainers;
+      enableLldap = self.enableAllOciContainers;
       enableCalibreWeb = self.enableAllOciContainers;
       enableDokuwiki = self.enableAllOciContainers;
       enableTrilium = self.enableAllOciContainers;

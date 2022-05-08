@@ -105,6 +105,7 @@ let
           postgresql-backup-env = { };
           postgresql-initdb-script = { mode = "0500"; };
           redis-conf = { mode = "0444"; };
+          lldap-env = { };
           authelia-conf = { };
           authelia-users = { };
           authelia-local-users-conf = { };
