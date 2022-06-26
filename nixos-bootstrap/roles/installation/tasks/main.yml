@@ -132,12 +132,19 @@
 - name: Copy common files
   delegate_to: localhost
   become: yes
+  become_user: root
   shell: |
-    set -xuo pipefail
+    set -euo pipefail
+    try() {
+      if ! "$@"; then
+        >&2 echo "running command failed"
+        >&2 echo "$@"
+      fi
+    }
     # "$(dirname "{{ config }}xxx")/"
-    # xxx to ensure the obtained directory is correct 
+    # xxx to ensure the obtained directory is correct
     # / to ensure correct behavior for rsync
-    sudo rsync -avz --progress -h {{ config }} root@{{ nixos_host }}:"{{ tmp_mount_path }}$(dirname "{{ config }}a")/"
+    try rsync -avz --progress -h {{ config }} {{ ansible_user }}@{{ nixos_host }}:"{{ tmp_mount_path }}$(dirname "{{ config }}xxx")/"
   loop:
     - "/etc/ssh/ssh_host_*"
     - "/etc/wpa_supplicant.conf"

@@ -21,6 +21,6 @@ export nixos_hostname=shl nixos_host_ip=192.168.0.102 zfs_pool_name=rspool zfs_p
 ```shell
 echo "[$nixos_hostname]\n${nixos_host_ip} ansible_user=nixos" | tee -a inventory
 ssh-copy-id nixos@$nixos_host_ip
-ssh nixos@$nixos_host_ip 'nix-env -iA nixos.python3 && sudo ln -sf $(command -v bash) /bin/bash'
-ansible-playbook -i inventory --become --become-user=root --extra-vars host=localhost --extra-vars nixos_hostname="$nixos_hostname" --extra-vars zfs_pool_name="$zfs_pool_name" --extra-vars '{"zfs_pool_disks": ["/dev/sda"]}' --extra-vars "zfs_passphrase=$zfs_passphrase" --extra-vars "root_password=$root_password" --extra-vars "user=$user" --extra-vars "user_password=$user_password" --extra-vars "tmp_mount_path=$tmp_mount_path" site.yml
+ssh nixos@$nixos_host_ip 'nix-env -iA nixos.python3 && sudo ln -sf $(command -v bash) /bin/bash && sudo ln -sf $(command -v python3) /usr/bin/python'
+ansible-playbook -i inventory --become-user=root --extra-vars host=myhost --extra-vars nixos_hostname="$nixos_hostname" --extra-vars zfs_pool_name="$zfs_pool_name" --extra-vars '{"zfs_pool_disks": ["/dev/sda"]}' --extra-vars "zfs_passphrase=$zfs_passphrase" --extra-vars "root_password=$root_password" --extra-vars "user=$user" --extra-vars "user_password=$user_password" --extra-vars "tmp_mount_path=$tmp_mount_path" site.yml
 ```
