@@ -52,7 +52,7 @@ let
     (builtins.hashString "sha512" "hostname: ${hostname}");
 
   default = self: {
-    normalNodes = [ "ssg" "jxt" "shl" "mdq" "dbx" "dvm" ];
+    normalNodes = [ "ssg" "jxt" "shl" "mdq" "dbx" "dvm" "aol" ];
     hostAliases =
       builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
         self.normalNodes // {
@@ -877,6 +877,12 @@ let
               ''
             ];
         });
+    } else if hostname == "aol" then {
+      isMinimalSystem = false;
+      hostId = "85d4bfd4";
+      systemStateVersion = "22.05";
+      homeManagerStateVersion = "22.05";
+      enableBumblebee = true;
     } else {
       isMinimalSystem = true;
     });

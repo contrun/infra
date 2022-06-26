@@ -179,7 +179,7 @@
         };
     in
     let
-      deployNodes = [ "ssg" "jxt" "shl" "mdq" ];
+      deployNodes = [ "ssg" "jxt" "shl" "mdq" "aol" ];
       vmNodes = [ "dbx" "dvm" "bigvm" ];
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames

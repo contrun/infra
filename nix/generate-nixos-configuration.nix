@@ -34,6 +34,11 @@ let
         [ "/dev/disk/by-id/nvme-eui.002538a401b81628" ];
     } else if hostname == "shl" then
       { }
+    else if hostname == "aol" then
+      {
+        boot.loader.grub.devices =
+          [ "/dev/disk/by-id/nvme-eui.e8238fa6bf530001001b444a49fc6399" "/dev/disk/by-id/nvme-eui.e8238fa6bf530001001b448b4b8ff5da" ];
+      }
     else if hostname == "dbx" then
       {
         virtualbox.memorySize = 2 * 1024;
