@@ -24,14 +24,11 @@ let
   };
 
   hostConfiguration = { config, pkgs, ... }:
-    {
-      system.stateVersion = "20.09";
-    } // (if hostname == "ssg" then {
+    (if hostname == "ssg" then {
       boot.loader.grub.devices =
         [ "/dev/disk/by-id/nvme-eui.00000000000000018ce38e03000f2dbe" ];
       services.xserver.videoDrivers = [ "amdgpu" ];
       hardware.cpu.amd.updateMicrocode = true;
-      system.stateVersion = "21.05";
     } else if hostname == "jxt" then {
       boot.loader.grub.devices =
         [ "/dev/disk/by-id/nvme-eui.002538a401b81628" ];

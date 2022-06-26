@@ -848,6 +848,7 @@ in
   };
 
   system = {
+    stateVersion = prefs.systemStateVersion;
     activationScripts =
       {
         mkCcacheDirs = {

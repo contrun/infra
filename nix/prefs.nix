@@ -74,6 +74,7 @@ let
     isMinimalSystem = true;
     isMaximalSystem = false;
     homeManagerStateVersion = "21.05";
+    systemStateVersion = "20.09";
     useLargePackages = !self.isMinimalSystem;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;
@@ -711,6 +712,7 @@ let
     } else if hostname == "ssg" then {
       isMinimalSystem = false;
       hostId = "b6653e48";
+      systemStateVersion = "21.05";
       dpi = 128;
       enableJupyter = true;
       enableX2goServer = true;
