@@ -299,6 +299,7 @@ let
           "OTM73BH-NPIJTKJ-3F57TCL-VNX26RO-VKW6S3M-2XTXNJC-AGPCWWQ-VO5V4AM";
       };
       mmms = { id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL"; };
+      aol = { id = "FSTAIDE-E6OUWEK-BAWARYB-T4MAXIU-RML2GS2-YLYAHJO-UBKWKBD-KQ3VLQO"; };
     };
     yandexConfig = {
       directory = "${self.home}/Sync";
