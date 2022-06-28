@@ -664,6 +664,7 @@ let
         "spectral"
         "tdesktop"
         "telegram-cli"
+        "discord"
         "teams"
         "jitsi-meet"
         "jitsi-meet-electron"
@@ -700,6 +701,7 @@ let
         "socat"
         "websocat"
         "neomutt"
+        "thunderbird"
         "meli"
         "mu"
         "midori"
@@ -1163,6 +1165,7 @@ in
   home = {
     extraOutputsToInstall = prefs.extraOutputsToInstall;
     packages = allPackages;
+    stateVersion = prefs.homeManagerStateVersion;
   };
 
   xdg.dataFile = {
