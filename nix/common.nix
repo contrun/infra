@@ -5468,11 +5468,13 @@ builtins.toString prefs.ownerGroupGid
                 CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
 
                 downloadConfigFile() {
+                    local url="$1"
+                    local file="$2"
                     # We first try to download the config file on behave of "$CLASH_USER",
                     # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-                    if ! curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                        if ! sudo -u "$CLASH_USER" curl -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
-                            if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$CLASH_URL" -o "$CLASH_TEMP_CONFIG"; then
+                    if ! curl -sS "$url" -o "$file"; then
+                        if ! sudo -u "$CLASH_USER" curl -sS "$url" -o "$file"; then
+                            if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$url" -o "$file"; then
                                 >&2 echo "Failed to download clash config"
                                 exit 1
                             fi
@@ -5481,15 +5483,19 @@ builtins.toString prefs.ownerGroupGid
                 }
 
                 fixupConfig() {
-                    jq -s '.[0] * .[1]' <(yj -yj < "$1") <(yj -yj < "${base}") | yj -jy | grep -v PROCESS-NAME
+                    local file="$1"
+                    jq -s '.[0] * .[1]' <(yj -yj < "$file") <(yj -yj < "${base}") | yj -jy | grep -v PROCESS-NAME
                 }
 
                 maybeSaveConfigFile() {
-                    if diff "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"; then
-                        rm "$CLASH_TEMP_CONFIG"
-                        exit 0
+                    local tempFile="$1"
+                    local file="$2"
+                    if diff "$tempFile" "$file"; then
+                        rm "$tempFile"
+                        return 0
                     fi
-                    mv -f --backup=numbered "$CLASH_TEMP_CONFIG" "$CLASH_CONFIG"
+                    mv -f --backup=numbered "$tempFile" "$file"
+                    return 1
                 }
 
                 maybeReloadService() {
@@ -5501,10 +5507,28 @@ builtins.toString prefs.ownerGroupGid
                     fi
                 }
 
-                downloadConfigFile
-                fixupConfig "$CLASH_TEMP_CONFIG" | sponge "$CLASH_TEMP_CONFIG"
-                maybeSaveConfigFile
-                maybeReloadService
+                tryToSaveConfig() {
+                    local url="$1"
+                    local file="$2"
+                    tempFile="''${TMPDIR:-/tmp}/clash-config-$(basename "$url")-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
+                    downloadConfigFile "$url" "$tempFile"
+                    fixupConfig "$tempFile" | sponge "$tempFile"
+                    maybeSaveConfigFile "$tempFile" "$file"
+                }
+
+                if ! tryToSaveConfig "$CLASH_URL" "$CLASH_CONFIG"; then
+                    maybeReloadService
+                fi
+
+                prefix="CLASH_URL_"
+                env | grep "^$prefix" | while read -r line; do
+                    variable="$(sed -E "s#=.*##g" <<< "$line")"
+                    file="$CLASH_FOLDER/$(sed -E "s#^$prefix##g" <<< "$variable" | tr '[:upper:]' '[:lower:]').yaml"
+                    url="''${!variable}"
+                    if ! tryToSaveConfig "$url" "$file"; then
+                        :
+                    fi
+                done
               '';
             serviceConfig = {
               Type = "oneshot";
