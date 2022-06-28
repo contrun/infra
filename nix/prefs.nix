@@ -884,6 +884,7 @@ let
       systemStateVersion = "22.05";
       homeManagerStateVersion = "22.05";
       enableBumblebee = true;
+      enableTraefik = true;
     } else {
       isMinimalSystem = true;
     });

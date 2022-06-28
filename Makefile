@@ -14,8 +14,10 @@ NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platf
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
 HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix run ".$(POUND)home-manager" --)
+NOROLLBACK ?=
+NOFASTCONNECTION ?=
 EXTRADEPLOYFLAGS ?=
-DEPLOYFLAGS ?= $(strip --skip-checks --debug-logs $(EXTRADEPLOYFLAGS))
+DEPLOYFLAGS ?= $(strip $(strip $(strip --skip-checks --debug-logs $(if $(NOROLLBACK),--auto-rollback=false --magic-rollback=false,)) $(if $(NOFASTCONNECTION),,--fast-connection=true)) $(EXTRADEPLOYFLAGS))
 
 NIXOSREBUILD.build = nix build ".$(POUND)nixosConfigurations.$(HOST).config.system.build.toplevel"
 NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"

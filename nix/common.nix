@@ -2539,8 +2539,6 @@ in
           myArgs
           "--container-runtime-endpoint=/run/containerd/containerd.sock"
         ];
-      } else if prefs.enableDocker then {
-        docker = true;
       } else
         { });
 

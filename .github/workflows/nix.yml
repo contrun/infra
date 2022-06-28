@@ -166,7 +166,7 @@ jobs:
           find ~ -wholename '*/dist/main/push-paths.sh'
           find ~ -wholename '*/dist/main/push-paths.sh' -exec {} "$HOME/.nix-profile/bin/cachix" "${{ github.repository_owner }}" "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$" \;
 
-          make EXTRADEPLOYFLAGS="--ssh-user="$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" --fast-connection=false --auto-rollback=true --magic-rollback=true" HOST="${{ matrix.host }}" nixos-deploy
+          make NOFASTCONNECTION=y EXTRADEPLOYFLAGS="--ssh-user=$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" HOST="${{ matrix.host }}" nixos-deploy
 
       - name: Push commit with updated inputs
         if: steps.variables.outputs.shouldPushUpdates == 'yes'
