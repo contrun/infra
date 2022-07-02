@@ -512,11 +512,11 @@ in
             slurp
             # kanshi
             wayvnc
-            waypipe
+            # waypipe
             (pkgs.waylandPkgs.wlvncc or null)
             brightnessctl
             wl-clipboard
-            wlsunset
+            # wlsunset
             wlroots
             wayland
             wayland-protocols
@@ -2566,7 +2566,7 @@ in
       # TODO: the following will not produce the required binary like jupyterhub-singleuser
       # jupyterlabEnv = prefs.helpers.mkIfAttrExists pkgs "myPackages.jupyterlab";
       jupyterlabEnv = python3.withPackages
-        (p: with p; [ jupyterhub jupyterlab jupyterlab_server ]);
+        (p: with p; [ jupyterhub ]);
       port = 8899;
       kernels = {
         python3Kernel =
@@ -2942,7 +2942,8 @@ in
 
   users =
     let
-      privilegedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all" ]; in
+      privilegedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all" ];
+    in
     builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       (lib.optionalAttrs (!prefs.isVagrantBox)
         {
@@ -5503,7 +5504,8 @@ builtins.toString prefs.ownerGroupGid
                         - +.googleapis.cn
                         - +.googleapis.com
                         - +.gvt1.com
-                ''; in
+                '';
+              in
               ''
                 set -euo pipefail
 

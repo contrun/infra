@@ -53,7 +53,6 @@ let
     "teams"
     "nheko"
     "jitsi-meet-electron"
-    "feedreader"
     "inkscape"
     "ccls"
     "llvmPackages_latest.clang"
@@ -930,7 +929,6 @@ let
         "fbida"
         "fbv"
         "fdupes"
-        "feedreader"
         "ffcast"
         "figlet"
         # finch

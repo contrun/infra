@@ -284,8 +284,8 @@
             pkgs = import nixpkgs {
               inherit system;
               overlays = [
-                gomod2nix.overlay
-                rust-overlay.overlay
+                (import "${gomod2nix}/overlay.nix")
+                rust-overlay.overlays.default
                 (self: super: {
                   # Because rust-overlay bundles multiple rust packages into one
                   # derivation, specify that mega-bundle here, so that crate2nix
