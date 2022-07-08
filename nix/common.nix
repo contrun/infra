@@ -1933,7 +1933,7 @@ in
     autossh = {
       sessions = lib.optionals (prefs.enableAutossh) (
         let
-          go = server:
+          go = nth: server:
             let
               sshPort = if prefs.enableAioproxy then prefs.aioproxyPort else 22;
               autosshPorts = prefs.helpers.autossh {
@@ -1949,7 +1949,7 @@ in
                   reversePorts = builtins.concatStringsSep " "
                     (builtins.map (x: getReverseArgument x) autosshPorts);
                 in
-                "-o ServerAliveInterval=15 -o ServerAliveCountMax=4 -N ${reversePorts} ${server}";
+                "-o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o ControlMaster=no -N -D ${builtins.toString (prefs.autosshDynamicPortOffset + nth)} ${reversePorts} ${server}";
             in
             {
               extraArguments = extraArguments;
@@ -1957,7 +1957,7 @@ in
               user = prefs.owner;
             };
         in
-        map go prefs.autosshServers
+        lib.imap0 go prefs.autosshServers
       );
     };
     eternal-terminal = { enable = prefs.enableEternalTerminal; };
