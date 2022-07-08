@@ -526,6 +526,7 @@ let
         && (self.nixosSystem == "x86_64-linux");
       enableN8n = self.enableAllOciContainers;
       enableGitea = self.enableAllOciContainers;
+      enableYacd = self.enableClashRedir;
       enableWikijs = false;
       enableXwiki = false;
       enableHuginn = self.enableAllOciContainers;

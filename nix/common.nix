@@ -2015,12 +2015,6 @@ in
               service = "etesync-notes";
               tls = { };
             };
-            clash = {
-              rule = getTraefikRuleByDomainPrefix "clash";
-              middlewares = [ "authelia@docker" ];
-              service = "clash";
-              tls = { };
-            };
             aria2rpc = {
               rule = "(${
                   getTraefikRuleByDomainPrefix "aria2"
@@ -2221,12 +2215,6 @@ in
               loadBalancer = {
                 passHostHeader = false;
                 servers = [{ url = "https://notes.etesync.com/"; }];
-              };
-            };
-            clash = {
-              loadBalancer = {
-                passHostHeader = false;
-                servers = [{ url = "https://clash.razord.top"; }];
               };
             };
             aria2rpc = {
@@ -3148,6 +3136,13 @@ in
                       "x86_64-linux" = image;
                       "aarch64-linux" = image;
                     };
+                  "yacd" =
+                    let image = "ghcr.io/haishanh/yacd:master";
+                    in
+                    {
+                      "x86_64-linux" = image;
+                      "aarch64-linux" = image;
+                    };
                   "grocy" =
                     let image = "docker.io/linuxserver/grocy:latest";
                     in
@@ -3695,6 +3690,15 @@ prefs.getFullDomainName "authelia"
                   autoStart = false;
                   environmentFiles = [ "/run/secrets/wikijs-env" ];
                   traefikForwardingPort = 3000;
+                };
+            }
+            {
+              name = "yacd";
+              enable = prefs.ociContainers.enableYacd;
+              config =
+                {
+                  traefikForwardingPort = 80;
+                  middlewares = [ "authelia" ];
                 };
             }
             {
@@ -4291,6 +4295,13 @@ getTraefikRuleByDomainPrefix "webdav"
                                 url = "https://${prefs.getFullDomainName "wikijs"}";
                               }
                               {
+                                enable = prefs.ociContainers.enableYacd;
+                                name = "yacd";
+                                subtitle = "clash instance management";
+                                tag = "network";
+                                url = "https://${prefs.getFullDomainName "yacd"}";
+                              }
+                              {
                                 enable = prefs.ociContainers.enableXwiki;
                                 name = "xwiki";
                                 subtitle = "personal wiki";
@@ -4458,12 +4469,6 @@ prefs.getFullDomainName "traefik"
                                 subtitle = "password management";
                                 tag = "security";
                                 url = "https://${prefs.getFullDomainName "keeweb"}";
-                              }
-                              {
-                                name = "clash";
-                                subtitle = "clash instance management";
-                                tag = "network";
-                                url = "https://${prefs.getFullDomainName "clash"}";
                               }
                               {
                                 name = "aria2";
@@ -5310,8 +5315,17 @@ builtins.toString prefs.ownerGroupGid
                     fi
                     ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
                 fi
+                if [[ -f "/tmp/stop-bother-${name}" ]];
+                   then exit 1;
+                fi
               ''}";
-              ExecStart = "${script} start";
+              ExecStart = "${pkgs.writeShellScript "clash-redir" ''
+                set -euo pipefail
+                if [[ -f "/tmp/stop-bother-${name}" ]];
+                   then exit 0;
+                fi
+                exec "${script}" start
+              ''}";
               ExecStop = "${script} stop";
               ExecReload = "${script} reload";
               Environment = "CLASH_NOPROXY_GROUP=${prefs.noproxyGroup}";
