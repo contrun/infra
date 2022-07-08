@@ -550,7 +550,7 @@ let
         && (self.nixosSystem == "x86_64-linux");
     };
     emulatedSystems =
-      if (self.nixosSystem == "x86_64-linux") then [ "aarch64-linux" ] else [ ];
+      if (self.nixosSystem == "x86_64-linux") then [ "aarch64-linux" "riscv64-linux" ] else [ ];
     extraModulePackages = [ ];
     kernelPatches = [ ];
     kernelParams = [ "boot.shell_on_fail" ];
