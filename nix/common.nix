@@ -4623,6 +4623,12 @@ builtins.toString prefs.ownerGroupGid
               ];
             }
             {
+              enable = prefs.ociContainers.enableHomer;
+              list = [
+                "d /var/data/homer - 1000 1000 -"
+              ];
+            }
+            {
               enable = prefs.ociContainers.enableLldap;
               list = [
                 "d /var/data/lldap - 33 33 -"
