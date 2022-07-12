@@ -2821,7 +2821,7 @@ in
     } // lib.optionalAttrs prefs.enableSwayForGreeted {
       settings = {
         default_session = {
-          command = "${pkgs.greetd.greetd}/bin/agreety --cmd sway";
+          command = "${pkgs.greetd.greetd}/bin/agreety --cmd 'systemd-cat -t sway sway'";
         };
       };
     };

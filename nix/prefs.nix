@@ -887,6 +887,8 @@ let
       homeManagerStateVersion = "22.05";
       enableBumblebee = true;
       enableTraefik = true;
+      enablePrometheus = true;
+      enablePromtail = true;
     } else {
       isMinimalSystem = true;
     });
