@@ -90,6 +90,11 @@ let
     getNixConfig = path: ./. + "/${path}";
     getDotfile = args.inputs.dotfiles.getDotfile;
     helpersPath = self.getNixConfig "lib/mkHelpers.nix";
+    videoDrivers = null;
+    enableNvidiaPrimeConfig = false;
+    enableNvidiaModesetting = false;
+    enableNvidiaPowerManagement = true;
+    enableNvidiaPowerManagementFinegrained = true;
     consoleFont = null;
     hostname = "hostname";
     hostId = "346b7a87";
@@ -885,10 +890,17 @@ let
       hostId = "85d4bfd4";
       systemStateVersion = "22.05";
       homeManagerStateVersion = "22.05";
-      enableBumblebee = true;
       enableTraefik = true;
       enablePrometheus = true;
       enablePromtail = true;
+      videoDrivers = [ "nvidia" "modesetting" ];
+      enableNvidiaPrimeConfig = true;
+      enableNvidiaModesetting = true;
+      nvidiaPrimeConfig = {
+        offload = { enable = true; };
+        nvidiaBusId = "PCI:1:0:0";
+        intelBusId = "PCI:0:2:0";
+      };
     } else {
       isMinimalSystem = true;
     });

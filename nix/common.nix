@@ -604,6 +604,20 @@ in
         { enable = prefs.enableWstunnel; list = [ wstunnel ]; }
         { enable = prefs.enableXmonad; list = [ xmobar ]; }
         { enable = prefs.enableEmacs; list = [ emacs ]; }
+        {
+          enable = config.hardware.nvidia.prime.offload.enable;
+          list =
+            let
+              nvidia-offload = pkgs.writeShellScriptBin "nvidia-offload" ''
+                export __NV_PRIME_RENDER_OFFLOAD=1
+                export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
+                export __GLX_VENDOR_LIBRARY_NAME=nvidia
+                export __VK_LAYER_NV_optimus=NVIDIA_only
+                exec "$@"
+              '';
+            in
+            [ nvidia-offload ];
+        }
         { enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux"); list = [ wine ]; }
         {
           enable = prefs.nixosSystem == "x86_64-linux";
@@ -730,7 +744,7 @@ in
     # light.enable = true;
     sway = {
       enable = prefs.enableSway;
-      extraOptions = [ "--verbose" "--debug" ];
+      extraOptions = [ "--verbose" "--debug" "--unsupported-gpu" ];
       extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu sway-contrib.grimshot ];
       extraSessionCommands = ''
         export TERMINAL="alacritty"
@@ -747,6 +761,12 @@ in
         export GTK_IM_MODULE=fcitx
         export QT_IM_MODULE=fcitx
         export XMODIFIERS=@im=fcitx
+
+        # https://github.com/swaywm/sway/issues/5008
+        # export WLR_DRM_NO_MODIFIERS=1
+        # https://wiki.archlinux.org/title/Wayland#Requirements
+        # export GBM_BACKEND=nvidia-drm
+        # export __GLX_VENDOR_LIBRARY_NAME=nvidia
       '';
     };
     tmux = { enable = true; };
@@ -827,6 +847,13 @@ in
       enable = prefs.enableBumblebee;
       connectDisplay = true;
     };
+    nvidia = {
+      modesetting.enable = prefs.enableNvidiaModesetting;
+      powerManagement.enable = prefs.enableNvidiaPowerManagement;
+      powerManagement.finegrained = prefs.enableNvidiaPowerManagementFinegrained;
+    } // (lib.optionalAttrs prefs.enableNvidiaPrimeConfig {
+      prime = prefs.nvidiaPrimeConfig;
+    });
     pulseaudio = {
       # Allow VM to override this
       enable = lib.mkDefault (!prefs.enablePipewire);
@@ -2905,7 +2932,9 @@ in
           gdm = { enable = prefs.enableGdm; };
           lightdm = { enable = prefs.enableLightdm; };
         };
-    };
+    } // (lib.optionalAttrs (prefs.videoDrivers != null) {
+      inherit (prefs) videoDrivers;
+    });
   };
 
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
