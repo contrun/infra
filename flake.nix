@@ -432,13 +432,13 @@
               };
 
               # Todo: gomod2nix failed
-              # caddy = pkgs.buildGoApplication {
-              #   pname = "caddy";
-              #   version = "latest";
-              #   goPackagePath = "github.com/contrun/infra/caddy";
-              #   src = ./caddy;
-              #   modules = ./caddy/gomod2nix.toml;
-              # };
+              caddy = pkgs.buildGoApplication {
+                pname = "caddy";
+                version = "latest";
+                goPackagePath = "github.com/contrun/infra/caddy";
+                src = ./caddy;
+                modules = ./caddy/gomod2nix.toml;
+              };
             };
           }))
     ]);
