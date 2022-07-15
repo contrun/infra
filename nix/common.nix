@@ -856,10 +856,9 @@ in
     });
     pulseaudio = {
       # Allow VM to override this
-      enable = lib.mkDefault (!prefs.enablePipewire);
+      enable = lib.mkDefault (!config.services.pipewire.enable);
       package = pkgs.pulseaudioFull;
       support32Bit = true;
-      systemWide = true;
     };
     bluetooth = {
       enable = prefs.enableBluetooth;
@@ -5344,9 +5343,6 @@ builtins.toString prefs.ownerGroupGid
                         systemctl restart ${updaterName}
                     fi
                     ln -sfn /etc/clash-redir/default.yaml /etc/clash-redir/config.yaml
-                fi
-                if [[ -f "/tmp/stop-bother-${name}" ]];
-                   then exit 1;
                 fi
               ''}";
               ExecStart = "${pkgs.writeShellScript "clash-redir" ''
