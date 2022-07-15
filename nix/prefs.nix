@@ -66,10 +66,62 @@ let
       rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage
         ./hardware/rtl8188gu.nix
         { });
-      extraUdevRules = ''
-        SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
-        KERNEL=="uinput", GROUP="${self.ownerGroup}", MODE="0660", OPTIONS+="static_node=uinput"
-      '';
+      extraUdevRules =
+        let
+          getOptionalRules = x: if (x.enable or true) then x.rules else [ ];
+          fixedRules = [{
+            rules = [
+              ''
+                SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+              ''
+              ''
+                KERNEL=="uinput", GROUP="${self.ownerGroup}", MODE="0660", OPTIONS+="static_node=uinput"
+              ''
+            ];
+          }];
+          powerSavingRules = [{
+            rules = [
+              ''
+                SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-50]", RUN+="${pkgs.bash}/bin/bash -c 'echo balance_power > /sys/devices/system/cpu/cpufreq/policy?/energy_performance_preference'"
+              ''
+            ];
+          }];
+          systemdPowerSavingRules = builtins.map
+            (x: with x; {
+              inherit enable;
+              rules = [
+                ''
+                  SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-95]", RUN+="${if (x.userUnit or false) then "${pkgs.su}/bin/su ${self.owner} -c '" else ""}${pkgs.systemd}/bin/systemctl stop ${unit}${if (x.userUnit or false) then " --user'" else ""}"
+                  SUBSYSTEM=="power_supply", ATTR{status}=="Not charging", RUN+="${if (x.userUnit or false) then "${pkgs.su}/bin/su ${self.owner} -c '" else ""}${pkgs.systemd}/bin/systemctl start ${unit}${if (x.userUnit or false) then " --user'" else ""}"
+                ''
+              ];
+            }) [
+            {
+              enable = self.enablePromtail;
+              unit = "promtail";
+            }
+            {
+              enable = self.enablePrometheus;
+              unit = "prometheus";
+            }
+            {
+              enable = self.enableCadvisor;
+              unit = "cadvisor";
+            }
+            {
+              enable = self.enableSyncthing;
+              unit = "syncthing";
+            }
+            {
+              enable = self.enableOfflineimap;
+              userUnit = true;
+              unit = "syncthing";
+            }
+          ];
+          rules = fixedRules ++ (if self.enablePowerSavingMode then (powerSavingRules ++ systemdPowerSavingRules) else [ ]);
+          rulesList = builtins.foldl' (acc: current: acc ++ (getOptionalRules current)) [ ] rules;
+        in
+        builtins.concatStringsSep "\n" rulesList;
     };
     isMinimalSystem = true;
     isMaximalSystem = false;
@@ -84,6 +136,7 @@ let
     ownerGroup = "users";
     ownerGroupGid = 100;
     noproxyGroup = "noproxy";
+    enablePowerSavingMode = true;
     home = "/home/${self.owner}";
     syncFolder = "${self.home}/Sync";
     nixosSystem = "x86_64-linux";
@@ -601,7 +654,12 @@ let
       "kernel.perf_event_paranoid" = 1;
       "net.ipv4.conf.all.route_localnet" = 1;
       "net.ipv4.conf.default.route_localnet" = 1;
-    };
+    } // (if self.enablePowerSavingMode then {
+      # See https://wiki.archlinux.org/title/Power_management
+      "kernel.nmi_watchdog" = 0;
+      "vm.laptop_mode" = 5;
+      "vm.dirty_writeback_centisecs" = 6000;
+    } else { });
     networkingInterfaces = { };
     nixosStableVersion = "20.09";
     enableUnstableNixosChannel = false;
