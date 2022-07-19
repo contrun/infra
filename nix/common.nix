@@ -2937,7 +2937,41 @@ in
   };
 
   # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
-  xdg.portal.wlr.enable = prefs.enableXdgPortalWlr;
+  xdg = {
+    mime = {
+      enable = true;
+      addedAssociations = {
+        "application/pdf" = "firefox.desktop";
+        "text/xml" = [ "nvim.desktop" "codium.desktop" ];
+      };
+      defaultApplications = {
+        "application/pdf" = [ "org.pwmt.zathura.desktop" "qpdfview.desktop" "koreader.desktop" "sioyek.desktop" ];
+        "image/vnd.djvu" = [ "org.pwmt.zathura.desktop" "koreader.desktop" ];
+        "image/vnd.djvu+multipage" = [ "org.pwmt.zathura.desktop" "koreader.desktop" ];
+        "application/oxps" = [ "org.pwmt.zathura.desktop" "koreader.desktop" ];
+        "application/epub+zip" = [ "org.pwmt.zathura.desktop" "koreader.desktop" ];
+        "application/x-fictionbook" = [ "org.pwmt.zathura.desktop" "koreader.desktop" ];
+        "image/bmp" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/gif" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/jpeg" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/jpg" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/pjpeg" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/png" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/tiff" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-bmp" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-pcx" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-png" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-portable-anymap" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-portable-bitmap" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-portable-graymap" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-portable-pixmap" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-tga" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/x-xbitmap" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+        "image/heif" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
+      };
+    };
+    portal.wlr.enable = prefs.enableXdgPortalWlr;
+  };
 
   users =
     let

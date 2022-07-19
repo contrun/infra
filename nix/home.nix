@@ -854,6 +854,7 @@ let
         "zotero"
         "stable.papis"
         # "k2pdfopt"
+        "beamerpresenter"
         "pdftk"
         # "jfbview"
         # "jfbpdf"
@@ -950,6 +951,8 @@ let
         "icdiff"
         "iftop"
         "flamegraph"
+        "inferno"
+        "pprof"
         "ifuse"
         "inetutils"
         "inkscape"
@@ -1104,19 +1107,21 @@ in
       # set-environment is needed for some environment variables.
       # We use /etc/set-environment as the config config.system.build.setEnvironment is nixos config, not home-manager config.
       importEnvironmentForCommand = command:
-        let script = pkgs.writeShellApplication
-          {
-            name = "import-environment";
-            text = ''
-              if [[ -f /etc/set-environment ]]; then
-                  # shellcheck disable=SC1091
-                  source /etc/set-environment;
-              fi
-              exec "$@"
-            '';
-          };
+        let
+          script = pkgs.writeShellApplication
+            {
+              name = "import-environment";
+              text = ''
+                if [[ -f /etc/set-environment ]]; then
+                    # shellcheck disable=SC1091
+                    source /etc/set-environment;
+                fi
+                exec "$@"
+              '';
+            };
         in
-        "${script} ${command}"; in
+        "${script} ${command}";
+    in
     builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       (
         let name = "smos-sync";
