@@ -1131,6 +1131,8 @@ in
       webUi = prefs.enableConsulWebUi;
       dropPrivileges = true;
     };
+    chrony = { enable = prefs.enableChrony; };
+    ntp = { enable = !config.services.chrony.enable; };
     pipewire = {
       enable = prefs.enablePipewire;
       pulse = { enable = true; };

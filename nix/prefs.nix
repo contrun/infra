@@ -504,6 +504,7 @@ let
     enableCcache = true;
     enableFirewall = false;
     enableCompton = false;
+    enableChrony = true;
     enableFcron = false;
     enableRedshift = false;
     enablePostfix = false;
