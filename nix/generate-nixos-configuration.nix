@@ -96,6 +96,16 @@ let
             owner = prefs.owner;
             group = prefs.ownerGroup;
           };
+          "id_ed25519.pub" = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          id_ed25519 = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
           keeweb-env = {
             mode = "0400";
             owner = prefs.owner;
