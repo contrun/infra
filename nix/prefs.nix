@@ -408,7 +408,7 @@ let
     enableGrafana = false;
     grafanaPort = 2342;
     enablePrometheus = false;
-    enablePrometheusAgent = true;
+    enablePrometheusAgent = false;
     enablePrometheusExporters = !self.isMinimalSystem;
     enableSmartctlExporter = self.enablePrometheusExporters;
     smartctlExporterDevices = [ ];
