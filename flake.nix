@@ -193,9 +193,6 @@
         apps = inputs.deploy-rs.apps;
       }
       {
-        apps = inputs.home-manager.apps;
-      }
-      {
         nixosConfigurations = builtins.foldl'
           (acc: hostname: acc // generateHostConfigurations hostname inputs)
           { }
