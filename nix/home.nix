@@ -1023,6 +1023,7 @@ let
         "perkeep"
         "s3ql"
         "ssh-to-pgp"
+        "cryptomator"
         "sftpman"
         "x11vnc"
         "tigervnc"

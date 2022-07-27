@@ -494,6 +494,10 @@ let
         path = "${self.home}/Storage/Upload";
         type = "sendonly";
       };
+      camera = {
+        path = "${self.home}/Storage/Camera";
+        type = "receiveonly";
+      };
     };
     enablePipewire = !self.isMinimalSystem;
     enableSlock = true;
@@ -863,6 +867,10 @@ let
       syncFolders = super.syncFolders // {
         upload = {
           path = "${self.home}/Storage/Upload";
+          type = "sendreceive";
+        };
+        camera = {
+          path = "${self.home}/Storage/Camera";
           type = "sendreceive";
         };
       };
