@@ -1189,8 +1189,7 @@ in
             };
             go = name: conf: rcloneBackend: backendName: {
               "${name}-${backendName}" = {
-                # This takes time, disable after initialized.
-                initialize = true;
+                initialize = false;
                 passwordFile = "/run/secrets/restic-password";
                 repository = "rclone:${rcloneBackend}:restic";
                 rcloneConfigFile = "/run/secrets/rclone-config";
@@ -1219,9 +1218,42 @@ in
                 dynamicFilesFrom = ''
                   #! ${pkgs.stdenv.shell}
                   set -euo pipefail
-                  # Try to unlock before prune. This may fail on a racing.
-                  ${pkgs.restic}/bin/restic unlock >& "$CACHE_DIRECTORY/unlock.log"
                   file="$CACHE_DIRECTORY/pruneTime";
+                  date -R > $file;
+                  echo "$file"
+                '';
+                timerConfig = {
+                  OnCalendar = "monthly";
+                  RandomizedDelaySec = 3600 * 24 * 7;
+                };
+                pruneOpts = [
+                  "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
+                ];
+                extraBackupArgs = commonFlags;
+              };
+            }
+            {
+              # Fake restic unit to do some maintenance work for repo.
+              name = "maintenance";
+              config = {
+                backupPrepareCommand = ''
+                  export PATH="${pkgs.restic}/bin:$PATH"
+                  # Try to unlock the repo restic frequently exits with the repo remains locked.
+                  # This may fail on a racing or before restic is initialized
+                  if ! restic unlock >& "$CACHE_DIRECTORY/unlock.log"; then
+                      :
+                  fi
+                  # Simple hack to ensure restic is initialized,
+                  # The command take quite a while, so we only run this on file not existing.
+                  if ! [[ -f "$CACHE_DIRECTORY/initialized" ]]; then
+                      restic snapshots || restic init
+                      touch "$CACHE_DIRECTORY/initialized"
+                  fi
+                '';
+                dynamicFilesFrom = ''
+                  #! ${pkgs.stdenv.shell}
+                  set -euo pipefail
+                  file="$CACHE_DIRECTORY/maintainTime";
                   date -R > $file;
                   echo "$file"
                 '';
@@ -1229,9 +1261,6 @@ in
                   OnCalendar = "weekly";
                   RandomizedDelaySec = 3600 * 24 * 7;
                 };
-                pruneOpts = [
-                  "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75"
-                ];
                 extraBackupArgs = commonFlags;
               };
             }
