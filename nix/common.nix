@@ -234,6 +234,7 @@ in
   };
 
   networking = {
+    resolvconf = { dnsExtensionMechanism = false; };
     hostName = prefs.hostname;
     hostId = prefs.hostId;
     firewall.enable = prefs.enableFirewall;
@@ -1330,6 +1331,7 @@ in
     urxvtd = { enable = prefs.enableUrxvtd; };
     resolved = {
       enable = prefs.enableResolved;
+      dnssec = "false";
       extraConfig = builtins.concatStringsSep "\n" [
         (if prefs.enableCorednsForResolved then ''
           DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
