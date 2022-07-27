@@ -2087,6 +2087,11 @@ in
               service = "aria2";
               tls = { };
             };
+            rclone = {
+              rule = getTraefikRuleByDomainPrefix "rclone";
+              service = "rclone";
+              tls = { };
+            };
             organice = {
               rule = getTraefikRuleByDomainPrefix "organice";
               service = "organice";
@@ -2287,6 +2292,13 @@ in
                 passHostHeader = false;
                 servers =
                   [{ url = "https://ziahamza.github.io/webui-aria2/"; }];
+              };
+            };
+            rclone = {
+              loadBalancer = {
+                passHostHeader = true;
+                servers =
+                  [{ url = "http://localhost:5572/"; }];
               };
             };
             organice = {
@@ -4573,6 +4585,12 @@ prefs.getFullDomainName "traefik"
                                 url = "https://${prefs.getFullDomainName "aria2"}";
                               }
                               {
+                                name = "rclone";
+                                subtitle = "cloud storage management";
+                                tag = "file manager";
+                                url = "https://${prefs.getFullDomainName "rclone"}";
+                              }
+                              {
                                 name = "activitywatch";
                                 enable = prefs.enableActivityWatch;
                                 subtitle = "device usage monitor";
@@ -5731,6 +5749,51 @@ builtins.toString prefs.ownerGroupGid
           };
         };
       })
+
+      (
+        let name = "rclone-webui";
+        in
+        {
+          services.${name} = {
+            description = "rclone web ui";
+            enable = prefs.enableRcloneWebUI;
+            onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
+            serviceConfig = {
+              Restart = "always";
+              # User
+              LoadCredential = [ "config:${config.sops.secrets.rclone-config.path}" "htpasswd:${config.sops.secrets.rclone-webui-htpasswd.path}" ];
+              DynamicUser = true;
+              # Capabilities
+              AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+              CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
+              # Security
+              NoNewPrivileges = true;
+              # Sandboxing
+              ProtectSystem = "strict";
+              ProtectHome = lib.mkDefault true;
+              PrivateTmp = true;
+              PrivateDevices = true;
+              ProtectHostname = true;
+              ProtectKernelTunables = true;
+              ProtectKernelModules = true;
+              ProtectControlGroups = true;
+              RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+              RestrictNamespaces = true;
+              LockPersonality = true;
+              MemoryDenyWriteExecute = true;
+              RestrictRealtime = true;
+              RestrictSUIDSGID = true;
+              RemoveIPC = true;
+              PrivateMounts = true;
+              # System Call Filtering
+              SystemCallArchitectures = "native";
+              ExecStart = ''
+                ${pkgs.rclone}/bin/rclone --config ''${CREDENTIALS_DIRECTORY}/config rcd --rc-web-gui --rc-web-gui-no-open-browser --rc-htpasswd ''${CREDENTIALS_DIRECTORY}/htpasswd
+              '';
+            };
+          };
+        }
+      )
 
       # TODO: figure out why zerotier always goes offline
       (

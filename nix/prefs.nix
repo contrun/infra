@@ -427,6 +427,7 @@ let
     enableRedis = false;
     enableVsftpd = !self.isMinimalSystem;
     enableRsyncd = false;
+    enableRcloneWebUI = !self.isMinimalSystem;
     enableMpd = false;
     enableAccountsDaemon = !self.isMinimalSystem;
     enableFlatpak = false;

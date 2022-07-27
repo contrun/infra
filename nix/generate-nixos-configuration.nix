@@ -157,6 +157,7 @@ let
           };
           restic-password = { };
           rclone-config = { };
+          rclone-webui-htpasswd = { };
           yandex-passwd = {
             mode = "0400";
             owner = prefs.owner;
