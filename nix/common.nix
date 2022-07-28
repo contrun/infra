@@ -10,10 +10,6 @@ let
       "${prefs.home}/.config/wpa_supplicant/wpa_supplicant.conf";
     sslhConfigFile = "${prefs.home}/.config/sslh/sslh.conf";
     sshAuthorizedKeys = "${prefs.home}/.ssh/authorized_keys";
-    sshHostKeys = [
-      "${prefs.home}/.local/secrets/initrd/ssh_host_rsa_key"
-      "${prefs.home}/.local/secrets/initrd/ssh_host_ed25519_key"
-    ];
   };
   # YAML is a superset of JSON.
   toYAML = name: attrs: builtins.toFile "${name}.json" (builtins.toJSON attrs);
@@ -6251,22 +6247,25 @@ prefs.yandexExcludedDirs
     supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
     zfs = { enableUnstable = prefs.enableZfsUnstable; };
     crashDump = { enable = prefs.enableCrashDump; };
-    initrd.network = {
-      enable = true;
-      ssh =
-        let
-          f = impure.sshAuthorizedKeys;
-          authorizedKeys = lib.optionals (builtins.pathExists f)
-            (builtins.filter (x: x != "")
-              (pkgs.lib.splitString "\n" (builtins.readFile f)));
-          hostKeys =
-            builtins.filter (x: builtins.pathExists x) impure.sshHostKeys;
-        in
-        {
-          inherit (prefs) authorizedKeys hostKeys;
-          enable = false && prefs.enableBootSSH && prefs.authorizedKeys != [ ]
-            && prefs.hostKeys != [ ];
-        };
+    initrd = {
+      inherit (prefs) availableKernelModules;
+      network = {
+        enable = true;
+        ssh =
+          let
+            f = impure.sshAuthorizedKeys;
+            authorizedKeys = prefs.authorizedKeys ++ (lib.optionals (builtins.pathExists f)
+              (builtins.filter (x: x != "")
+                (pkgs.lib.splitString "\n" (builtins.readFile f))));
+            hostKeys =
+              builtins.filter (x: builtins.pathExists x) [ /run/secrets/initrd_ssh_host_ed25519_key ];
+          in
+          {
+            inherit authorizedKeys hostKeys;
+            enable = prefs.enableBootSSH && authorizedKeys != [ ]
+              && hostKeys != [ ];
+          };
+      };
     };
   }
   # microvm use its own kernel config.

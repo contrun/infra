@@ -158,6 +158,8 @@ let
           restic-password = { };
           rclone-config = { };
           rclone-webui-htpasswd = { };
+          initrd_ssh_host_ed25519_key = { };
+          "initrd_ssh_host_ed25519_key.pub" = { };
           yandex-passwd = {
             mode = "0400";
             owner = prefs.owner;

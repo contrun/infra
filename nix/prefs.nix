@@ -555,6 +555,9 @@ let
     enableLibInput = true;
     enableFprintd = !self.isMinimalSystem;
     enableBootSSH = true;
+    authorizedKeys = [
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkLov3pXODoOtXhJqilCqD66wR9y38LgWm8bCwCrZPJQzsjhZ0IsyoTf5Ph6UJ73BWuyzN6KWz58cbsK1MWlAT0UA7CBtISfv+KU2k2MWMk4u+ylE0l+1eThkLE0DfvJRh4TXHrTM0aDWBzgZvtYgcydy9e1FMrIXmKp+DoTPy2WC8NS0gmOSiDwgZAjJy67Ic0uJHqvr1qPSkXqtiXywhVTC6wt/EJJOTv+g6LucpelfC3wXgtADb6p/Wxa5Et6QU3UgpeSoMke3yk6vNEIxtPiatXDMDURmmkFdxdVh6ts9Jh5aC04lZE1A/gTUTNBKdFapxgglzqDg3cg/utNlx"
+    ];
     enableOpenldap = false;
     enableGnome = false;
     enableGnomeKeyring = false;
@@ -621,6 +624,7 @@ let
     kernelPatches = [ ];
     kernelParams = [ "boot.shell_on_fail" ];
     blacklistedKernelModules = [ ];
+    availableKernelModules = [ ];
     kernelModules = [
       # For the sysctl net.bridge.bridge-nf-call-* options to work
       "br_netfilter"
@@ -917,6 +921,7 @@ let
       enablePromtail = true;
       enableAcme = true;
       enableSmosServer = true;
+      availableKernelModules = super.availableKernelModules ++ [ "r8169" ];
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // (with super.pkgsRelatedPrefs;
         {
           extraModulePackages = extraModulePackages ++ [
