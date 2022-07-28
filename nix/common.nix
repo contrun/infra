@@ -5328,6 +5328,38 @@ builtins.toString prefs.ownerGroupGid
         }
       ])
 
+      (
+        let name = "syncoid-cleanup";
+        in
+        {
+          services."${name}" = {
+            enable = prefs.enableSyncoid;
+            description = "Clean up syncoid snapshots";
+            path = [ pkgs.zfs pkgs.gawk pkgs.findutils ];
+            requires = [ "local-fs.target" ];
+
+            script = ''
+              set -euo pipefail
+              zfs list -t snapshot -s creation | awk '/@syncoid_${prefs.hostname}/ {print $1}' | head -n -20 | xargs --no-run-if-empty --verbose -n 1 zfs destroy
+            '';
+            serviceConfig = {
+              Type = "oneshot";
+            };
+          };
+
+          timers."${name}" = {
+            enable = prefs.enableSyncoid;
+            wantedBy = [ "default.target" ];
+            after = [ "local-fs.target" ];
+            timerConfig = {
+              OnCalendar = "weekly";
+              RandomizedDelaySec = 3600 * 12;
+              Unit = "${name}.service";
+            };
+          };
+        }
+      )
+
       # For some currently unfathomable reason, wireless network periodically fails.
       (
         let name = "network-watchdog";
