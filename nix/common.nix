@@ -629,6 +629,7 @@ in
             prefs.kernelPackages.perf
             prefs.kernelPackages.bpftrace
             prefs.kernelPackages.bcc
+            prefs.kernelPackages.systemtap
           ];
         }
         { enable = prefs.enableActivityWatch; list = with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [ aw-server-rust aw-watcher-afk aw-watcher-window ]; }
@@ -1574,6 +1575,7 @@ in
           listenAddress = "127.0.0.1";
         };
         wireguard = { enable = prefs.enablePrometheusExporters && prefs.enableWireguard; };
+        postfix = { enable = prefs.enablePrometheusExporters && prefs.enablePostfix; };
         blackbox = {
           enable = prefs.enablePrometheusExporters;
           configFile = toYAML "blackbox-config" {
@@ -1716,7 +1718,7 @@ in
           simpleScrape = name: with config.services.prometheus.exporters."${name}";
             scrape { inherit name enable port; };
         in
-        builtins.concatMap simpleScrape [ "node" "wireguard" "postgres" "systemd" "smartctl" ]
+        builtins.concatMap simpleScrape [ "node" "wireguard" "postfix" "postgres" "systemd" "smartctl" ]
         ++ builtins.concatMap scrape [
           {
             name = "docker";
@@ -2045,6 +2047,7 @@ in
         mydomain = localdomain
         mydestination = $myhostname, localhost.$mydomain, localhost
         mynetworks_style = host
+        default_transport = error: outside mail is not deliverable
       '';
     };
     traefik = {

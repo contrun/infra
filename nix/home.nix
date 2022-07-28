@@ -757,6 +757,7 @@ let
         "sxhkd"
         "mimeo"
         "libsecret"
+        "libsystemtap"
         "gnome3.gnome-keyring"
         "gnome3.libgnome-keyring"
         "gnome3.seahorse"

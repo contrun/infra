@@ -512,7 +512,7 @@ let
     enableChrony = true;
     enableFcron = false;
     enableRedshift = false;
-    enablePostfix = false;
+    enablePostfix = !self.isMinimalSystem;
     enableNfs = !self.isMinimalSystem;
     linkedJdks =
       if self.isMinimalSystem then
@@ -816,7 +816,6 @@ let
       enableAutossh = false;
       enablePrinting = false;
       enableEternalTerminal = false;
-      enablePostfix = false;
       enableZerotierone = false;
       autoStartClashRedir = false;
       dnsServers = [ "10.10.61.128" "10.10.61.129" ];
