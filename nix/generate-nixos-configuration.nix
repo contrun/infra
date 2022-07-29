@@ -158,6 +158,8 @@ let
           restic-password = { };
           rclone-config = { };
           rclone-webui-htpasswd = { };
+          "port-forwarding-id_ed25519.pub" = { };
+          port-forwarding-id_ed25519 = { };
           initrd_ssh_host_ed25519_key = { };
           "initrd_ssh_host_ed25519_key.pub" = { };
           yandex-passwd = {
