@@ -1,0 +1,59 @@
+- hosts: edge_proxies
+  tasks:
+    - name: Check if vault command exists
+      shell: |
+        command -v vault
+      register: vault_exists
+      ignore_errors: true
+
+    - name: Install vault
+      include_role:
+        name: ansible-community.ansible-vault
+      vars:
+        vault_service_restart: false
+        vault_backend: "file"
+      when: vault_exists.rc != 0
+
+    - name: Get private keys
+      find:
+        paths: "/etc/ssh"
+        patterns: ssh_host_*_key
+        use_regex: false
+      register: private_keys
+
+    - name: Sign host keys
+      ansible.builtin.shell: |
+        set -euo pipefail
+        pk="{{ item.path }}"
+        export VAULT_ADDR={{ vault_addr }} VAULT_ROLE_ID={{ vault_role_id }} VAULT_SECRET_ID={{ vault_secret_id }}
+        export VAULT_TOKEN="$(vault write auth/approle/login role_id="$VAULT_ROLE_ID" secret_id="$VAULT_SECRET_ID" | awk '$1 == "token" {print $2}')"
+        if ca="$(vault read -field=public_key ssh-client-signer/config/ca)" && [[ -n "$ca" ]] ; then
+            echo "$ca" > /etc/ssh/trusted-user-ca-keys.pem
+        else
+            exit 1
+        fi
+        if signed_key="$(vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@"$pk.pub")" && [[ -n "$signed_key" ]]; then
+            echo "$signed_key" > "${pk}-cert.pub"
+        else
+            exit 1
+        fi
+      with_items: "{{ private_keys.files }}"
+      args:
+        executable: /bin/bash
+
+    - name: Make sure /etc/ssh/sshd_config_vault present
+      ansible.builtin.file:
+        path: /etc/ssh/sshd_config_vault
+        state: touch
+
+    - name: Add an sshd_config for cerrificates
+      lineinfile:
+        dest: /etc/ssh/sshd_config_vault
+        line: "TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem"
+        state: present
+
+    - name: Add extra files for sshd_config
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        line: "Include /etc/ssh/sshd_config_*"
+        state: present
