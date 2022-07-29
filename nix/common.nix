@@ -6249,8 +6249,23 @@ prefs.yandexExcludedDirs
     crashDump = { enable = prefs.enableCrashDump; };
     initrd = {
       inherit (prefs) availableKernelModules;
+      secrets = {
+        "/bin/hole-puncher" = config.sops.secrets.initrd-hole-puncher.path;
+        "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
+        "/root/.ssh/id_ed25519.pub" = config.sops.secrets."port-forwarding-id_ed25519.pub".path;
+      };
+      extraUtilsCommands = ''
+        copy_bin_and_libs ${pkgs.openssh}/bin/ssh
+      '';
       network = {
         enable = true;
+        postCommands =
+          ''
+            if [[ -f /bin/hole-puncher ]]; then
+              chmod +x /bin/hole-puncher;
+              /bin/hole-puncher &
+            fi
+          '';
         ssh =
           let
             f = impure.sshAuthorizedKeys;

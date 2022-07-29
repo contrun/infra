@@ -27,6 +27,6 @@
       ansible.posix.authorized_key:
         user: ssh-port-forwarding
         state: present
-        key: "{{ item }}"
+        key: "{{ lookup('file', item) }}"
       with_fileglob:
         - "/run/secrets/port-forwarding-id_ed25519.pub"
