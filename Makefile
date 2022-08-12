@@ -17,7 +17,7 @@ HOMEMANAGER ?= $(if $(shell command -v home-manager || true),home-manager,nix ru
 NOROLLBACK ?=
 NOFASTCONNECTION ?=
 EXTRADEPLOYFLAGS ?=
-DEPLOYFLAGS ?= $(strip $(strip $(strip --skip-checks --debug-logs $(if $(NOROLLBACK),--auto-rollback=false --magic-rollback=false,)) $(if $(NOFASTCONNECTION),,--fast-connection=true)) $(EXTRADEPLOYFLAGS))
+DEPLOYFLAGS ?= $(strip $(strip $(strip --skip-checks --debug-logs $(if $(NOROLLBACK),--auto-rollback=false --magic-rollback=false,)) $(if $(NOFASTCONNECTION),--fast-connection=false,)) $(EXTRADEPLOYFLAGS))
 # To build a vm with command `make nixos-build BUILDTYPE=vmWithBootLoader`
 BUILDTYPE ?= toplevel
 
