@@ -5477,7 +5477,6 @@ builtins.toString prefs.ownerGroupGid
           services."${updaterName}" = {
             description = "update clash config";
             enable = prefs.enableClashRedir;
-            wantedBy = [ "default.target" ];
             after = [ "network-online.target" ];
             onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
             path = [
