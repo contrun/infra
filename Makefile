@@ -18,8 +18,10 @@ NOROLLBACK ?=
 NOFASTCONNECTION ?=
 EXTRADEPLOYFLAGS ?=
 DEPLOYFLAGS ?= $(strip $(strip $(strip --skip-checks --debug-logs $(if $(NOROLLBACK),--auto-rollback=false --magic-rollback=false,)) $(if $(NOFASTCONNECTION),,--fast-connection=true)) $(EXTRADEPLOYFLAGS))
+# To build a vm with command `make nixos-build BUILDTYPE=vmWithBootLoader`
+BUILDTYPE ?= toplevel
 
-NIXOSREBUILD.build = nix build ".$(POUND)nixosConfigurations.$(HOST).config.system.build.toplevel"
+NIXOSREBUILD.build = nix build ".$(POUND)nixosConfigurations.$(HOST).config.system.build.$(BUILDTYPE)"
 NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
