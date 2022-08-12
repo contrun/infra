@@ -15,5 +15,7 @@
   "xmind"
   "workrave"
   "hashdeep"
+  "arrow-cpp"
+  "python-language-server"
 ]
 
