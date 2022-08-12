@@ -624,7 +624,12 @@ let
     kernelPatches = [ ];
     kernelParams = [ "boot.shell_on_fail" ];
     blacklistedKernelModules = [ ];
-    availableKernelModules = [ ];
+    initrdAvailableKernelModules = [ ];
+    initrdKernelModules = [
+      "usbnet"
+      "cdc_ether"
+      "rndis_host"
+    ];
     kernelModules = [
       # For the sysctl net.bridge.bridge-nf-call-* options to work
       "br_netfilter"
@@ -668,7 +673,7 @@ let
       # See https://wiki.archlinux.org/title/Power_management
       "kernel.nmi_watchdog" = 0;
       "vm.laptop_mode" = 5;
-      "vm.dirty_writeback_centisecs" = 6000;
+      "vm.dirty_writeback_centisecs" = 1500;
     } else { });
     networkingInterfaces = { };
     nixosStableVersion = "20.09";
@@ -921,7 +926,7 @@ let
       enablePromtail = true;
       enableAcme = true;
       enableSmosServer = true;
-      availableKernelModules = super.availableKernelModules ++ [ "r8169" ];
+      initrdKernelModules = super.initrdKernelModules ++ [ "r8169" ];
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // (with super.pkgsRelatedPrefs;
         {
           extraModulePackages = extraModulePackages ++ [

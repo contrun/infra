@@ -6247,7 +6247,8 @@ prefs.yandexExcludedDirs
     zfs = { enableUnstable = prefs.enableZfsUnstable; };
     crashDump = { enable = prefs.enableCrashDump; };
     initrd = {
-      inherit (prefs) availableKernelModules;
+      kernelModules = prefs.initrdKernelModules;
+      availableKernelModules = prefs.initrdAvailableKernelModules;
       secrets = {
         "/bin/hole-puncher" = config.sops.secrets.initrd-hole-puncher.path;
         "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
@@ -6261,8 +6262,7 @@ prefs.yandexExcludedDirs
         postCommands =
           ''
             if [[ -f /bin/hole-puncher ]]; then
-              chmod +x /bin/hole-puncher;
-              /bin/hole-puncher &
+              sh -x /bin/hole-puncher &
             fi
           '';
         ssh =

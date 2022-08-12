@@ -548,6 +548,7 @@ let
         "elixir_ls"
         "pkgconfig"
         # "gcc.cc.lib"
+        "readline"
         "zlib"
         # "cryptopp"
         "gsasl"
