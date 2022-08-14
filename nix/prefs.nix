@@ -348,6 +348,7 @@ let
       mdq = {
         id =
           "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+        introducer = true;
       };
       gcv = {
         id =
@@ -359,6 +360,7 @@ let
       };
       mmms = { id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL"; };
       aol = { id = "FSTAIDE-E6OUWEK-BAWARYB-T4MAXIU-RML2GS2-YLYAHJO-UBKWKBD-KQ3VLQO"; };
+      npo = { id = "NRV7EXF-JGP4GYO-2MRVGTS-CYWGISC-XBGRHYR-FCJ66UI-EGKILML-KAS2VAK"; };
     };
     yandexConfig = {
       directory = "${self.home}/Sync";
@@ -494,10 +496,6 @@ let
       upload = {
         path = "${self.home}/Storage/Upload";
         type = "sendonly";
-      };
-      camera = {
-        path = "${self.home}/Storage/Camera";
-        type = "receiveonly";
       };
     };
     enablePipewire = !self.isMinimalSystem;

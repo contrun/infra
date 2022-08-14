@@ -2831,7 +2831,7 @@ in
               mkDevice =
                 { name
                 , id
-                , introducer ? true
+                , introducer ? false
                 , allowedNetworks ? [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]
                 , ...
                 }: {
