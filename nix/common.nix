@@ -473,7 +473,7 @@ in
         mimeo
         xdg-utils
         xdg-launch
-        libsecret
+        # libsecret
         mlocate
         htop
         iotop
@@ -854,7 +854,7 @@ in
     });
     pulseaudio = {
       # Allow VM to override this
-      enable = lib.mkDefault (!config.services.pipewire.enable);
+      enable = prefs.enablePulseaudio;
       package = pkgs.pulseaudioFull;
       support32Bit = true;
     };
@@ -1112,7 +1112,7 @@ in
     };
     offlineimap = {
       enable = prefs.enableOfflineimap;
-      install = true;
+      install = prefs.enableOfflineimap;
       path = [ pkgs.libsecret pkgs.dbus ];
     };
     nomad = {

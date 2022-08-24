@@ -499,6 +499,7 @@ let
       };
     };
     enablePipewire = !self.isMinimalSystem;
+    enablePulseaudio = !self.enablePipewire;
     enableSlock = true;
     enableZSH = true;
     enableFish = true;
@@ -765,6 +766,8 @@ let
     } else if hostname == "dvm" then {
       isMinimalSystem = true;
       enableMicrovmGuest = true;
+      enableOfflineimap = false;
+      enablePulseaudio = false;
       microvmGuestConfig = {
         volumes = [
           {
