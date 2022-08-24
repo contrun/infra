@@ -339,104 +339,142 @@
 
             defaultApp = apps.run;
 
-            packages = {
-              containers = {
-                texlive = with nixpkgsWithOverlays; dockerTools.buildImage
-                  rec {
-                    name = "texlive-full";
-                    tag = "latest";
-                    created = "now";
-                    contents = buildEnv {
-                      inherit name;
-                      paths = [
-                        (texlive.combine { inherit (texlive) scheme-full; })
-                        adoptopenjdk-bin
-                        font-awesome_4
-                        font-awesome_5
-                        nerdfonts
-                        pdftk
-                        bash
-                        gnugrep
-                        gnused
-                        coreutils
-                        gnumake
-                      ];
+            packages = let start-agent-script = ''
+              set +o errexit
+              start_agent() {
+                ssh-agent -a "$1" > /dev/null
+                ssh-add
+              }
+
+              export SSH_AUTH_SOCK="''${SSH_AUTH_SOCK:-''${HOME}/.ssh/ssh_auth_sock}"
+
+              MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
+              if [[ "$MESSAGE" = 'Could not open a connection to your authentication agent.' ]] || \
+                [[ "$MESSAGE" = 'Error connecting to agent: Connection refused' ]] || \
+                [[ "$MESSAGE" = 'Error connecting to agent: No such file or directory' ]]; then
+                rm -f "$SSH_AUTH_SOCK"
+                start_agent "$SSH_AUTH_SOCK"
+              elif [ "$MESSAGE" = "The agent has no identities." ]; then
+                ssh-add
+              fi
+              set -o errexit
+            ''; in
+              {
+                containers = {
+                  texlive = with nixpkgsWithOverlays; dockerTools.buildImage
+                    rec {
+                      name = "texlive-full";
+                      tag = "latest";
+                      created = "now";
+                      contents = buildEnv {
+                        inherit name;
+                        paths = [
+                          (texlive.combine { inherit (texlive) scheme-full; })
+                          adoptopenjdk-bin
+                          font-awesome_4
+                          font-awesome_5
+                          nerdfonts
+                          pdftk
+                          bash
+                          gnugrep
+                          gnused
+                          coreutils
+                          gnumake
+                        ];
+                      };
+                      config.Cmd = [ "/bin/bash" ];
                     };
-                    config.Cmd = [ "/bin/bash" ];
-                  };
+                };
+
+                run = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "run";
+                  text = ''
+                    make -C "${lib.cleanSource ./.}" "$@"
+                  '';
+                  runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
+                };
+
+                ssha = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "ssha";
+                  text = ''
+                    ${start-agent-script}
+                    ssh "$@"
+                  '';
+                  runtimeInputs = [ coreutils openssh ];
+                };
+
+                mosha = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "mosha";
+                  text = ''
+                    ${start-agent-script}
+                    mosh "$@"
+                  '';
+                  runtimeInputs = [ coreutils openssh mosh ];
+                };
+
+                dvm =
+                  let
+                    inherit (self.nixosConfigurations.dvm) config;
+                    # quickly build with another hypervisor if this MicroVM is built as a package
+                    hypervisor = "qemu";
+                  in
+                  config.microvm.runner.${hypervisor};
+
+                magit = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "magit";
+                  text = ''
+                    function usage() {
+                        cat <<EOF
+                    magit [EMACS_OPTIONS] [PATH]
+                    If the last arguments is a valid directory, then run magit within it,
+                    else all arguments are passed to emacs.
+                    Run emacs --help to see emacs options.
+                    EOF
+                    }
+
+                    for i in "$@" ; do
+                        if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
+                            usage
+                            exit
+                        fi
+                    done
+
+                    emacs_arguments=( "''${@}" )
+
+                    if [[ $# -gt 0 ]]; then
+                        path="''${*: -1}"
+                        if [[ -d "$path" ]]; then
+                            cd "$path"
+                            emacs_arguments=( "''${@:1: (( $# -1 )) }" )
+                        fi
+                    fi
+
+                    emacs -q -l magit -f magit --eval "(local-set-key \"q\" #'kill-emacs)" -f delete-other-windows "''${emacs_arguments[@]}"
+                  '';
+                  runtimeInputs = [
+                    git
+                    (emacsWithPackages (epkgs: [ epkgs.magit ]))
+                  ];
+                };
+
+
+                coredns = pkgs.buildGoApplication {
+                  pname = "coredns";
+                  version = "latest";
+                  goPackagePath = "github.com/contrun/infra/coredns";
+                  src = ./coredns;
+                  modules = ./coredns/gomod2nix.toml;
+                };
+
+                # Todo: gomod2nix failed
+                caddy = pkgs.buildGoApplication {
+                  pname = "caddy";
+                  version = "latest";
+                  goPackagePath = "github.com/contrun/infra/caddy";
+                  src = ./caddy;
+                  modules = ./caddy/gomod2nix.toml;
+                };
               };
-
-              run = with nixpkgsWithOverlays; writeShellApplication {
-                name = "run";
-                text = ''
-                  make -C "${lib.cleanSource ./.}" "$@"
-                '';
-                runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
-              };
-
-              dvm =
-                let
-                  inherit (self.nixosConfigurations.dvm) config;
-                  # quickly build with another hypervisor if this MicroVM is built as a package
-                  hypervisor = "qemu";
-                in
-                config.microvm.runner.${hypervisor};
-
-              magit = with nixpkgsWithOverlays; writeShellApplication {
-                name = "magit";
-                text = ''
-                  function usage() {
-                      cat <<EOF
-                  magit [EMACS_OPTIONS] [PATH]
-                  If the last arguments is a valid directory, then run magit within it,
-                  else all arguments are passed to emacs.
-                  Run emacs --help to see emacs options.
-                  EOF
-                  }
-
-                  for i in "$@" ; do
-                      if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
-                          usage
-                          exit
-                      fi
-                  done
-
-                  emacs_arguments=( "''${@}" )
-
-                  if [[ $# -gt 0 ]]; then
-                      path="''${*: -1}"
-                      if [[ -d "$path" ]]; then
-                          cd "$path"
-                          emacs_arguments=( "''${@:1: (( $# -1 )) }" )
-                      fi
-                  fi
-
-                  emacs -q -l magit -f magit --eval "(local-set-key \"q\" #'kill-emacs)" -f delete-other-windows "''${emacs_arguments[@]}"
-                '';
-                runtimeInputs = [
-                  git
-                  (emacsWithPackages (epkgs: [ epkgs.magit ]))
-                ];
-              };
-
-
-              coredns = pkgs.buildGoApplication {
-                pname = "coredns";
-                version = "latest";
-                goPackagePath = "github.com/contrun/infra/coredns";
-                src = ./coredns;
-                modules = ./coredns/gomod2nix.toml;
-              };
-
-              # Todo: gomod2nix failed
-              caddy = pkgs.buildGoApplication {
-                pname = "caddy";
-                version = "latest";
-                goPackagePath = "github.com/contrun/infra/caddy";
-                src = ./caddy;
-                modules = ./caddy/gomod2nix.toml;
-              };
-            };
           }))
     ]);
 }
