@@ -60,6 +60,11 @@
     microvm.inputs.nixpkgs.follows = "nixpkgs";
     microvm.inputs.flake-utils.follows = "flake-utils";
 
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nur-no-pkgs.url = "github:nix-community/NUR";
 
     wallabag-client = {
@@ -360,6 +365,17 @@
               set -o errexit
             ''; in
               {
+                nixos-generators = {
+                  vbox = inputs.nixos-generators.nixosGenerate {
+                    system = "x86_64-linux";
+                    format = "virtualbox";
+                  };
+                  vagrant = inputs.nixos-generators.nixosGenerate {
+                    system = "x86_64-linux";
+                    format = "vagrant-virtualbox";
+                  };
+                };
+
                 containers = {
                   texlive = with nixpkgsWithOverlays; dockerTools.buildImage
                     rec {
