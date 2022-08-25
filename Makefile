@@ -18,6 +18,8 @@ NOROLLBACK ?=
 NOFASTCONNECTION ?=
 EXTRADEPLOYFLAGS ?=
 DEPLOYFLAGS ?= $(strip $(strip $(strip --skip-checks --debug-logs $(if $(NOROLLBACK),--auto-rollback=false --magic-rollback=false,)) $(if $(NOFASTCONNECTION),--fast-connection=false,)) $(EXTRADEPLOYFLAGS))
+GENERATE ?= $(if $(shell command -v nixos-generate || true),nixos-generate,nix run ".$(POUND)nixos-generate" --)
+GENERATEFORMAT ?= iso
 # To build a vm with command `make nixos-build BUILDTYPE=vmWithBootLoader`
 BUILDTYPE ?= toplevel
 
@@ -78,6 +80,9 @@ nixos-profile-path-info: create-dirs
 
 nixos-build nixos-switch nixos-bootloader:
 	$(call nixos-rebuild,$@) $(NIXFLAGS)
+
+nixos-generate:
+	$(GENERATE) -f $(GENERATEFORMAT) --flake ".#$(HOST)"
 
 # Filters do not work yet, as cachix will upload the closure.
 cachix-push:
