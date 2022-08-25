@@ -1,0 +1,38 @@
+name: Run vagrant box
+
+on:
+  # TODO: This does not need to run everytime "Build nixos profiles" runs
+  workflow_run:
+    workflows:
+      - "Generate nixos images"
+    types:
+      - "completed"
+
+jobs:
+  run:
+    runs-on: macos-12
+    steps:
+      - name: Cache Vagrant boxes
+        uses: actions/cache@v2
+        with:
+          path: ~/.vagrant.d/boxes
+          key: vagrant-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            vagrant-
+
+      - name: Init Vagrantfile 
+        run: |
+          vagrant init nixos
+
+      - name: Bring up the VM
+        run: |
+          vagrant up --provision
+
+      - name: Show vagrant status
+        run: vagrant status
+
+      - name: Create the package.box file
+        run: vagrant package
+
+      - name: Destroy the VM
+        run: vagrant destroy -f
