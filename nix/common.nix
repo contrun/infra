@@ -237,17 +237,18 @@ in
     wg-quick =
       let
         peers = with builtins; fromJSON (readFile (./.. + "/fixtures/wireguard.json"));
-        generateConfig = index:
+        generateConfig = wireguardInstanceIndex: wireguardHostIndex:
           {
             inherit peers;
-            address = [ "10.233.0.${index}/16" ];
+            address = [ "10.233.0.${builtins.toString wireguardHostIndex}/16" ];
+            listenPort = 51820 + wireguardInstanceIndex;
             privateKeyFile = "/run/wireguard-private-key";
             postUp = [ "/run/secrets/wireguard-post-up" ];
           };
       in
       {
         interfaces = lib.optionalAttrs prefs.enableWireguard {
-          wg0 = generateConfig (builtins.toString prefs.wireguardHostIndex);
+          wg0 = generateConfig 0 prefs.wireguardHostIndex;
         };
       };
     proxy.default = prefs.proxy;
