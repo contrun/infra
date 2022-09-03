@@ -263,7 +263,7 @@
                       inherit name;
                       pkg = inputs.self.packages.${super.system}.${name} or null;
                     })
-                    [ "magit" "coredns" ]);
+                    [ "magit" "coredns" "ssha" "mosha" ]);
                 function = acc: elem: acc //
                   (if (elem.pkg != null) then {
                     ${elem.name} = elem.pkg;
@@ -344,26 +344,29 @@
 
             defaultApp = apps.run;
 
-            packages = let start-agent-script = ''
-              set +o errexit
-              start_agent() {
-                ssh-agent -a "$1" > /dev/null
-                ssh-add
-              }
+            packages =
+              let
+                start-agent-script = ''
+                  set +o errexit
+                  start_agent() {
+                    ssh-agent -a "$1" > /dev/null
+                    ssh-add
+                  }
 
-              export SSH_AUTH_SOCK="''${SSH_AUTH_SOCK:-''${HOME}/.ssh/ssh_auth_sock}"
+                  export SSH_AUTH_SOCK="''${SSH_AUTH_SOCK:-''${HOME}/.ssh/ssh_auth_sock}"
 
-              MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
-              if [[ "$MESSAGE" = 'Could not open a connection to your authentication agent.' ]] || \
-                [[ "$MESSAGE" = 'Error connecting to agent: Connection refused' ]] || \
-                [[ "$MESSAGE" = 'Error connecting to agent: No such file or directory' ]]; then
-                rm -f "$SSH_AUTH_SOCK"
-                start_agent "$SSH_AUTH_SOCK"
-              elif [ "$MESSAGE" = "The agent has no identities." ]; then
-                ssh-add
-              fi
-              set -o errexit
-            ''; in
+                  MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
+                  if [[ "$MESSAGE" = 'Could not open a connection to your authentication agent.' ]] || \
+                    [[ "$MESSAGE" = 'Error connecting to agent: Connection refused' ]] || \
+                    [[ "$MESSAGE" = 'Error connecting to agent: No such file or directory' ]]; then
+                    rm -f "$SSH_AUTH_SOCK"
+                    start_agent "$SSH_AUTH_SOCK"
+                  elif [ "$MESSAGE" = "The agent has no identities." ]; then
+                    ssh-add
+                  fi
+                  set -o errexit
+                '';
+              in
               {
                 nixos-generators = {
                   vbox = inputs.nixos-generators.nixosGenerate {
