@@ -681,6 +681,32 @@
         "type": "github"
       }
     },
+    "nix-on-droid": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1658777837,
+        "narHash": "sha256-12rIm639nXldGgyc1uPbF/oz2jTrpgl8zvqxrIq+Jek=",
+        "owner": "t184256",
+        "repo": "nix-on-droid",
+        "rev": "d49fd3a0c874d34a3c3f33fa73cd7a364a1332e3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "t184256",
+        "repo": "nix-on-droid",
+        "type": "github"
+      }
+    },
     "nixCargoIntegration": {
       "inputs": {
         "devshell": "devshell",
@@ -1036,6 +1062,7 @@
         "microvm": "microvm",
         "nix-autobahn": "nix-autobahn",
         "nix-ld": "nix-ld",
+        "nix-on-droid": "nix-on-droid",
         "nixos-generators": "nixos-generators",
         "nixos-vscode-server": "nixos-vscode-server",
         "nixpkgs": "nixpkgs_4",
