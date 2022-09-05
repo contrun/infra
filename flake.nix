@@ -204,11 +204,48 @@
       }
       {
         nixOnDroidConfigurations = {
-          npo = inputs.nix-on-droid.lib.nixOnDroidConfiguration {
-            config = { pkgs, config, ... }: {
-              environment.packages = with pkgs; [ neovim chezmoi gnumake ];
-              system.stateVersion = "22.05";
-            };
+          nod = inputs.nix-on-droid.lib.nixOnDroidConfiguration {
+            config = { pkgs, config, ... }:
+              let
+                sshdTmpDirectory = "${config.user.home}/sshd-tmp";
+                sshdDirectory = "${config.user.home}/sshd";
+                githubUser = "contrun";
+                port = 8822;
+              in
+              {
+                build.activation.sshd = ''
+                  $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents "${config.user.home}/.ssh"
+                  if [[ ! -f "${config.user.home}/.ssh/authorized_keys" ]]; then
+                    $DRY_RUN_CMD ${pkgs.ssh-import-id}/bin/ssh-import-id -o "${config.user.home}/.ssh/authorized_keys" "gh:${githubUser}"
+                  fi
+
+                  if [[ ! -d "${sshdDirectory}" ]]; then
+                    $DRY_RUN_CMD rm $VERBOSE_ARG --recursive --force "${sshdTmpDirectory}"
+                    $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents "${sshdTmpDirectory}"
+
+                    $VERBOSE_ECHO "Generating host keys..."
+                    $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t rsa -b 4096 -f "${sshdTmpDirectory}/ssh_host_rsa_key" -N ""
+
+                    $VERBOSE_ECHO "Writing sshd_config..."
+                    $DRY_RUN_CMD echo -e "HostKey ${sshdDirectory}/ssh_host_rsa_key\nPort ${toString port}\n" > "${sshdTmpDirectory}/sshd_config"
+
+                    $DRY_RUN_CMD mv $VERBOSE_ARG "${sshdTmpDirectory}" "${sshdDirectory}"
+                  fi
+                '';
+
+                environment.packages = with pkgs; [
+                  neovim
+                  chezmoi
+                  gnumake
+                  (pkgs.writeScriptBin "sshd-start" ''
+                    #!${pkgs.runtimeShell}
+
+                    echo "Starting sshd in non-daemonized way on port ${toString port}"
+                    exec ${pkgs.openssh}/bin/sshd -f "${sshdDirectory}/sshd_config" -D
+                  '')
+                ];
+                system.stateVersion = "22.05";
+              };
             system = "aarch64-linux";
             extraModules = [
               # import source out-of-tree modules like:
