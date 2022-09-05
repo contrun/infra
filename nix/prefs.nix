@@ -971,6 +971,13 @@ let
       enableTraefik = true;
       enablePrometheus = true;
       enablePromtail = true;
+      enableJupyter = true;
+      enableAcme = true;
+      enableSmosServer = true;
+      ociContainers = super.ociContainers // {
+        enableCalibreWeb = true;
+        enableKeeweb = true;
+      };
       videoDrivers = [ "nvidia" "modesetting" ];
       enableNvidiaPrimeConfig = true;
       enableNvidiaModesetting = true;
