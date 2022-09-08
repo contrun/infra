@@ -523,7 +523,8 @@
                   name = "mosha";
                   text = ''
                     ${start-agent-script}
-                    mosh "$@"
+                    # See https://github.com/termux/termux-packages/issues/288
+                    LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
                   '';
                   runtimeInputs = [ coreutils openssh mosh ];
                 };
