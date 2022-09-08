@@ -209,6 +209,8 @@
               let
                 sshdTmpDirectory = "${config.user.home}/.sshd-tmp";
                 sshdDirectory = "${config.user.home}/.sshd";
+                dotfilesDirectory = "${config.user.home}/.local/share/chezmoi";
+                dotfilesRepo = "https://github.com/contrun/dotfiles";
                 githubUser = "contrun";
                 port = 8822;
               in
@@ -236,7 +238,31 @@
                   fi
                 '';
 
+                build.activation.dotfiles = ''
+                  if [[ ! -d "${dotfilesDirectory}" ]]; then
+                    $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents "${dotfilesDirectory}"
+                    if ! $DRY_RUN_CMD ${pkgs.git}/bin/git clone "${dotfilesRepo}" "${dotfilesDirectory}"; then
+                      $VERBOSE_ECHO "Cloning repo ${dotfilesRepo} into ${dotfilesDirectory} failed"
+                    fi
+                    if ! PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.diffutils pkgs.gnupg pkgs.gnugrep pkgs.gnused pkgs.curl pkgs.chezmoi pkgs.git ]}:$PATH" $DRY_RUN_CMD ${pkgs.gnumake}/bin/make -C "${dotfilesDirectory}" home-install; then
+                      $VERBOSE_ECHO "Installing dotfiles failed"
+                    fi
+                  fi
+                '';
+
                 environment.packages = with pkgs; [
+                  git
+                  man
+                  openssh
+                  gnupg
+                  mosh
+                  coreutils
+                  rsync
+                  diffutils
+                  gnugrep
+                  gnused
+                  gawk
+                  curl
                   neovim
                   chezmoi
                   gnumake
@@ -250,6 +276,8 @@
                     '';
                     runtimeInputs = with pkgs; [ iproute2 openssh ];
                   })
+                  self.packages."aarch64-linux".mosha
+                  self.packages."aarch64-linux".ssha
                 ];
                 system.stateVersion = "22.05";
               };
