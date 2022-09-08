@@ -205,10 +205,10 @@
       {
         nixOnDroidConfigurations = {
           nod = inputs.nix-on-droid.lib.nixOnDroidConfiguration {
-            config = { pkgs, config, ... }:
+            config = { pkgs, lib, config, ... }:
               let
-                sshdTmpDirectory = "${config.user.home}/sshd-tmp";
-                sshdDirectory = "${config.user.home}/sshd";
+                sshdTmpDirectory = "${config.user.home}/.sshd-tmp";
+                sshdDirectory = "${config.user.home}/.sshd";
                 githubUser = "contrun";
                 port = 8822;
               in
@@ -216,7 +216,10 @@
                 build.activation.sshd = ''
                   $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents "${config.user.home}/.ssh"
                   if [[ ! -f "${config.user.home}/.ssh/authorized_keys" ]]; then
-                    $DRY_RUN_CMD ${pkgs.ssh-import-id}/bin/ssh-import-id -o "${config.user.home}/.ssh/authorized_keys" "gh:${githubUser}"
+                    # ssh-import-id requires ssh-keygen
+                    if ! PATH="${lib.makeBinPath [ pkgs.openssh ]}:$PATH" $DRY_RUN_CMD ${pkgs.ssh-import-id}/bin/ssh-import-id -o "${config.user.home}/.ssh/authorized_keys" "gh:${githubUser}"; then
+                      $VERBOSE_ECHO "Importing ssh key from ${githubUser} failed"
+                    fi
                   fi
 
                   if [[ ! -d "${sshdDirectory}" ]]; then
@@ -227,7 +230,7 @@
                     $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen -t rsa -b 4096 -f "${sshdTmpDirectory}/ssh_host_rsa_key" -N ""
 
                     $VERBOSE_ECHO "Writing sshd_config..."
-                    $DRY_RUN_CMD echo -e "HostKey ${sshdDirectory}/ssh_host_rsa_key\nPort ${toString port}\n" > "${sshdTmpDirectory}/sshd_config"
+                    $DRY_RUN_CMD ${pkgs.python3}/bin/python -c 'with open("${sshdTmpDirectory}/sshd_config", "w") as f: f.write("HostKey ${sshdDirectory}/ssh_host_rsa_key\nPort ${toString port}\n")'
 
                     $DRY_RUN_CMD mv $VERBOSE_ARG "${sshdTmpDirectory}" "${sshdDirectory}"
                   fi
@@ -237,12 +240,16 @@
                   neovim
                   chezmoi
                   gnumake
-                  (pkgs.writeScriptBin "sshd-start" ''
-                    #!${pkgs.runtimeShell}
-
-                    echo "Starting sshd in non-daemonized way on port ${toString port}"
-                    exec ${pkgs.openssh}/bin/sshd -f "${sshdDirectory}/sshd_config" -D
-                  '')
+                  (writeShellApplication {
+                    name = "sshd-start";
+                    text = ''
+                      ip -brief addr show scope global up
+                      echo "Starting sshd on port ${toString port}"
+                      # sshd re-exec requires execution with an absolute path
+                      exec ${pkgs.openssh}/bin/sshd -f "${sshdDirectory}/sshd_config" -D "$@"
+                    '';
+                    runtimeInputs = with pkgs; [ iproute2 openssh ];
+                  })
                 ];
                 system.stateVersion = "22.05";
               };
