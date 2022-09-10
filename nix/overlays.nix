@@ -413,10 +413,10 @@ let
             };
           };
 
-        ruby = super.ruby_2_7.withPackages (ps:
+        ruby = super.ruby.withPackages (ps:
           with ps; [
             rake
-            rails
+            # rails
             rspec
             pry
             pry-byebug
