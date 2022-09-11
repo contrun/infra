@@ -116,7 +116,8 @@ let
               # echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
               # echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
             '';
-          }; in
+          };
+        in
         packages: super.runCommandCC "shell" { buildInputs = [ my-build-env ] ++ packages; } "";
 
       # TODO: refactor or remove this.
@@ -386,33 +387,6 @@ let
         jupyterlab =
           (super.python3.withPackages (p: with p; [ jupyterhub jupyterlab ]));
 
-        keyd = with super;
-          let
-            pname = "keyd";
-            version = "1.1.2";
-          in
-          stdenv.mkDerivation rec {
-            inherit version pname;
-            src = fetchFromGitHub {
-              owner = "rvaiya";
-              repo = pname;
-              rev = "v${version}";
-              sha256 = "sha256-E9WHCJxTGwvkrwm4zXFye53nJU9GFtovIxRrpoL/VtM=";
-            };
-
-            buildInputs = [ git udev ];
-
-            installPhase = ''
-              make install DESTDIR=$out PREFIX=
-            '';
-
-            meta = {
-              description = "A key remapping daemon for linux.";
-              license = lib.licenses.mit;
-              platforms = lib.platforms.linux;
-            };
-          };
-
         ruby = super.ruby.withPackages (ps:
           with ps; [
             rake
@@ -539,7 +513,8 @@ let
                 license = licenses.mit;
                 maintainers = with maintainers; [ milahu ];
               };
-            }; in
+            };
+          in
 
           python3Packages.buildPythonApplication rec {
             pname = "wallabag-client";

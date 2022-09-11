@@ -348,15 +348,22 @@ in
           mode = "0600";
           source = prefs.davfs2Secrets;
         };
-        "keyd/default.cfg" = {
+        "keyd/keyd.conf" = {
           text = ''
-            capslock = layer(C)
-            rightalt = layer(A)
-            leftmeta = layer(M-A)
-            rightmeta = oneshot(G)
-            rightcontrol = layer(M)
+            [ids]
+            *
+
+            [main]
+            capslock = layer(control)
+            rightalt = layer(alt)
+            leftmeta = layer(metaalt)
+            rightmeta = oneshot(altgr)
+            rightcontrol = layer(meta)
 
             space = overload(myspace, space)
+
+            [metaalt:M-A]
+
             [myspace]
             n = pagedown
             p = pageup
@@ -534,8 +541,7 @@ in
             xsel
             xvkbd
 
-            (pkgs.myPackages.keyd or null)
-
+            keyd
             xorg.xev
             xorg.libX11
             xorg.libXft
@@ -3090,6 +3096,9 @@ in
           };
         };
       }
+      (lib.optionalAttrs prefs.enableKeyd {
+        groups = { keyd = { }; };
+      })
       (lib.optionalAttrs prefs.enableFallbackAccount {
         users = {
           # Fallback user when "${prefs.owner}" encounters problems
@@ -5754,8 +5763,7 @@ builtins.toString prefs.ownerGroupGid
 
       {
         services =
-          lib.optionalAttrs
-            (prefs.enableKeyd && pkgs ? myPackages && pkgs.myPackages ? keyd)
+          lib.optionalAttrs prefs.enableKeyd
             {
               keyd = {
                 description = "key remapping daemon";
@@ -5764,7 +5772,7 @@ builtins.toString prefs.ownerGroupGid
                 after = [ "local-fs.target" ];
                 serviceConfig = {
                   Type = "simple";
-                  ExecStart = "${pkgs.myPackages.keyd}/bin/keyd";
+                  ExecStart = "${pkgs.keyd}/bin/keyd";
                 };
               };
             };
