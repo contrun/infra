@@ -20,6 +20,12 @@
     nix-ld.inputs.nixpkgs.follows = "nixpkgs";
     nix-ld.inputs.utils.follows = "flake-utils";
 
+    nix-alien = {
+      url = "github:thiagokokada/nix-alien";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
+
     nix-autobahn.url = "github:Lassulus/nix-autobahn";
     nix-autobahn.inputs.nixpkgs.follows = "nixpkgs";
     nix-autobahn.inputs.flake-utils.follows = "flake-utils";
@@ -121,7 +127,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, rust-overlay, crate2nix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, rust-overlay, crate2nix, nix-alien, ... }@inputs:
     let
       lib = nixpkgs.lib;
 
@@ -355,6 +361,20 @@
                       pkg = inputs.${name}.defaultPackage.${super.system} or null;
                     })
                     [ "aioproxy" "deploy-rs" "home-manager" "nix-autobahn" "helix" ])
+                  ++
+                  (builtins.concatLists (builtins.attrValues
+                    (builtins.mapAttrs
+                      (repo: packages: builtins.map
+                        (name: {
+                          inherit name;
+                          pkg = inputs.${repo}.packages.${super.system}.${name} or null;
+                        })
+                        packages)
+                      {
+                        "nix-alien" = [ "nix-alien" "nix-index-update" ];
+                      }
+                    )
+                  ))
                   ++
                   (builtins.map
                     (name: {

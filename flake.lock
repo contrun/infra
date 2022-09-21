@@ -657,6 +657,30 @@
         "type": "github"
       }
     },
+    "nix-alien": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "poetry2nix": "poetry2nix"
+      },
+      "locked": {
+        "lastModified": 1663228762,
+        "narHash": "sha256-bWDz4dsjP90hDmf+7v8qeYzGbdLdzvCCjCt0kVW6HaE=",
+        "owner": "thiagokokada",
+        "repo": "nix-alien",
+        "rev": "c70016ff920795f84115bf3774fb55355e0be2b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "thiagokokada",
+        "repo": "nix-alien",
+        "type": "github"
+      }
+    },
     "nix-autobahn": {
       "inputs": {
         "flake-utils": [
@@ -1022,6 +1046,31 @@
         "type": "github"
       }
     },
+    "poetry2nix": {
+      "inputs": {
+        "flake-utils": [
+          "nix-alien",
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nix-alien",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1662879385,
+        "narHash": "sha256-ZmiyHn0uPH4xHYcOhY0e0sPtfyM6jCF/shmVq2aTOLc=",
+        "owner": "nix-community",
+        "repo": "poetry2nix",
+        "rev": "4f8d61cd936f853242a4ce1fd476f5488c288c26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "poetry2nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "aioproxy": "aioproxy",
@@ -1039,6 +1088,7 @@
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
         "microvm": "microvm",
+        "nix-alien": "nix-alien",
         "nix-autobahn": "nix-autobahn",
         "nix-ld": "nix-ld",
         "nix-on-droid": "nix-on-droid",
