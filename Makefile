@@ -97,7 +97,7 @@ nixos-update-channels:
 	sudo nix-channel --update
 
 nixos-vagrant-box:
-	nix run github:nix-community/nixos-generators -- --flake ".#dbx" -f vagrant-virtualbox
+	$(GENERATE) -f vagrant-virtualbox --flake ".#dbx"
 
 ansible-requirements:
 	cd ansible && ansible-galaxy install -r requirements.yml

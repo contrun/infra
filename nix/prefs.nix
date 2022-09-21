@@ -763,6 +763,9 @@ let
     } else if hostname == "dbx" then {
       isMinimalSystem = true;
       isVagrantBox = true;
+      pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
+        kernelPackages = pkgs.linuxPackages;
+      };
     } else if hostname == "dvm" then {
       isMinimalSystem = true;
       enableMicrovmGuest = true;
@@ -791,6 +794,8 @@ let
         vcpu = 4;
         mem = 4 * 1024;
       };
+    } else if hostname == "dqe" then {
+      isMinimalSystem = true;
     } else if hostname == "ssg" then {
       isMinimalSystem = false;
       hostId = "b6653e48";

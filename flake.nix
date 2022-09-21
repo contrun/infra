@@ -190,7 +190,8 @@
     in
     let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" "aol" ];
-      vmNodes = [ "dbx" "dvm" "bigvm" ];
+      # "dbx" for vagrant, "dvm" for microvm, "dqe" for qemu
+      vmNodes = [ "dbx" "dvm" "bigvm" "dqe" ];
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
@@ -469,6 +470,10 @@
                   vbox = inputs.nixos-generators.nixosGenerate {
                     system = "x86_64-linux";
                     format = "virtualbox";
+                  };
+                  qcow = inputs.nixos-generators.nixosGenerate {
+                    system = "x86_64-linux";
+                    format = "vagrant-virtualbox";
                   };
                   vagrant = inputs.nixos-generators.nixosGenerate {
                     system = "x86_64-linux";
