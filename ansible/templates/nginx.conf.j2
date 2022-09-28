@@ -17,6 +17,9 @@ stream {
     access_log  /var/log/nginx/access.log format;
 
     map $ssl_preread_server_name $ssl_backend {
+{% if default_local_port is defined %}
+        ~^([^.]+\.)*(self)(\.[^.]+)*\.[^.]+\.[^.]+$   127.0.0.1:{{ default_local_port }};
+{% endif %}
 {% if backend_servers is defined %}
 {% for h in backend_servers %}
 {% if 'backends' in h %}
@@ -37,7 +40,11 @@ stream {
 {% endif %}
     }
 
+    # TODO: this does not seem to work
     map $hostname $backend {
+{% if default_local_port is defined %}
+        ~^([^.]+\.)*(self)(\.[^.]+)*\.[^.]+\.[^.]+$   127.0.0.1:{{ default_local_port }};
+{% endif %}
 {% if backend_servers is defined %}
 {% for h in backend_servers %}
 {% if 'backends' in h %}
@@ -66,7 +73,7 @@ stream {
         listen 0.0.0.0:{{ port }} udp reuseport;
 {% endfor %}
         proxy_pass $backend;
-       	proxy_protocol on;
+        proxy_protocol on;
         ssl_preread on;
     }
 }
