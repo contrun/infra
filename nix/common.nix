@@ -6273,7 +6273,7 @@ prefs.yandexExcludedDirs
         postCommands =
           ''
             if [[ -f /bin/hole-puncher ]]; then
-              sh -x /bin/hole-puncher &
+              sh /bin/hole-puncher &
             fi
           '';
         ssh =
