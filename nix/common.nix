@@ -2027,7 +2027,9 @@ in
                   builtins.toString sshPort
                 }";
                   reversePorts = builtins.concatStringsSep " "
-                    ([ "-R /tmp/autossh-${prefs.hostname}-ssh.sock:localhost:${builtins.toString sshPort}" ] ++ (builtins.map (x: getReverseArgument x) autosshPorts));
+                    ([ "-R /tmp/autossh-${prefs.hostname}-ssh.sock:localhost:${builtins.toString sshPort}" ] ++
+                      (builtins.map (x: let port = builtins.toString x; in "-R /tmp/autossh-${prefs.hostname}-${port}.sock:localhost:${port}") [ 22 80 443 ]) ++
+                      (builtins.map (x: getReverseArgument x) autosshPorts));
                 in
                 "-i ${config.sops.secrets."port-forwarding-id_ed25519".path} -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o ControlMaster=no -N -D ${builtins.toString (prefs.autosshDynamicPortOffset + nth)} ${reversePorts} ${server}";
             in
