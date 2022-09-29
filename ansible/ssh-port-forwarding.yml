@@ -30,3 +30,5 @@
         key: "{{ lookup('file', item) }}"
       with_fileglob:
         - "/run/secrets/port-forwarding-id_ed25519.pub"
+        - "/run/secrets/id_ed25519.pub"
+        - "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh/id_*.pub"
