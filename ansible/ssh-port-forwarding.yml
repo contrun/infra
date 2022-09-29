@@ -4,7 +4,7 @@
       ansible.builtin.user:
         name: ssh-port-forwarding
         comment: For ssh port forwarding
-        shell: /bin/sh
+        shell: /bin/false
 
     - name: Add sshd config
       ansible.builtin.blockinfile:
@@ -20,7 +20,7 @@
             AllowAgentForwarding no
             StreamLocalBindMask 0110
             StreamLocalBindUnlink yes
-            ForceCommand /bin/false
+      register: sshd_config
 
     - name: Set authorized keys taken from url
       ansible.posix.authorized_key:
@@ -37,3 +37,17 @@
         - "/run/secrets/port-forwarding-id_ed25519.pub"
         - "/run/secrets/id_ed25519.pub"
         - "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh/id_*.pub"
+
+    - name: Start/reload ssh
+      when: sshd_config.changed
+      block:
+        - name: Check sshd config
+          shell: sshd -T
+          register: current_version
+          failed_when: current_version.rc != 0
+
+        - name: Start/reload ssh
+          service:
+            name: ssh
+            state: restarted
+            enabled: yes
