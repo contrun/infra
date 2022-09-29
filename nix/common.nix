@@ -1385,7 +1385,21 @@ in
       gatewayPorts = "yes";
       permitRootLogin = "yes";
       startWhenNeeded = true;
-      extraConfig = "Include /etc/ssh/sshd_config_*";
+      extraConfig = builtins.concatStringsSep "\n" (
+        [ "Include /etc/ssh/sshd_config_*" ] ++ (lib.optionals prefs.enableSshPortForwarding [
+          ''
+            Match User ssh-port-forwarding
+              # PermitTunnel no
+              # GatewayPorts no
+              AllowTcpForwarding yes
+              AllowStreamLocalForwarding yes
+              X11Forwarding no
+              AllowAgentForwarding no
+              StreamLocalBindMask 0110
+              StreamLocalBindUnlink yes
+          ''
+        ])
+      );
     };
     ttyd = {
       enable = prefs.enableTtyd;
@@ -3115,6 +3129,17 @@ in
           };
         };
         groups = { fallback = { name = "fallback"; }; };
+      })
+      (lib.optionalAttrs prefs.enableSshPortForwarding {
+        users = {
+          ssh-port-forwarding = {
+            group = prefs.ownerGroup;
+            createHome = true;
+            isNormalUser = true;
+            shell = "${pkgs.coreutils}/bin/echo";
+            openssh.authorizedKeys.keys = privilegedKeys;
+          };
+        };
       })
     ];
 

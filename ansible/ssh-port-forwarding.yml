@@ -12,9 +12,14 @@
         backup: yes
         block: |
           Match User ssh-port-forwarding
+            # PermitTunnel no
+            # GatewayPorts no
             AllowTcpForwarding yes
+            AllowStreamLocalForwarding yes
             X11Forwarding no
             AllowAgentForwarding no
+            StreamLocalBindMask 0110
+            StreamLocalBindUnlink yes
             ForceCommand /bin/false
 
     - name: Set authorized keys taken from url
