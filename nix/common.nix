@@ -3056,9 +3056,6 @@ in
   };
 
   users =
-    let
-      privilegedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all" ];
-    in
     builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       (lib.optionalAttrs (!prefs.isVagrantBox)
         {
@@ -3100,7 +3097,7 @@ in
                 shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
                 initialHashedPassword =
                   "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
-                openssh.authorizedKeys.keys = privilegedKeys;
+                openssh.authorizedKeys.keys = prefs.privilegedKeys;
               };
             };
           groups = {
@@ -3123,7 +3120,7 @@ in
       {
         users = {
           root = {
-            openssh.authorizedKeys.keys = privilegedKeys;
+            openssh.authorizedKeys.keys = prefs.privilegedKeys;
           };
         };
       }
@@ -3140,7 +3137,7 @@ in
             useDefaultShell = true;
             initialHashedPassword =
               "$6$nstJFDdZZ$uENeWO2lup09Je7UzVlJpwPlU1SvLwzTrbm/Gr.4PUpkKUuGcNEFmUrfgotWF3HoofVrGg1ENW.uzTGT6kX3v1";
-            openssh.authorizedKeys.keys = privilegedKeys;
+            openssh.authorizedKeys.keys = prefs.privilegedKeys;
           };
         };
         groups = { fallback = { name = "fallback"; }; };
@@ -3152,7 +3149,7 @@ in
             createHome = true;
             isNormalUser = true;
             shell = "${pkgs.coreutils}/bin/echo";
-            openssh.authorizedKeys.keys = privilegedKeys;
+            openssh.authorizedKeys.keys = prefs.privilegedKeys;
           };
         };
       })
