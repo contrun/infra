@@ -189,6 +189,9 @@ in
     };
     pam = {
       enableSSHAgentAuth = true;
+      u2f = {
+        enable = prefs.enablePamU2f;
+      };
       mount = {
         enable = prefs.enablePamMount;
         extraVolumes = [
@@ -464,6 +467,9 @@ in
         utillinux
         ntfs3g
         gnupg
+        pinentry-curses
+        pinentry-qt
+        paperkey
         atool
         atop
         bash
@@ -471,6 +477,7 @@ in
         ranger
         gptfdisk
         curl
+        wget
         at
         git
         chezmoi
@@ -734,7 +741,11 @@ in
   programs = {
     ccache = { enable = prefs.enableCcache; };
     java = { enable = prefs.enableJava; };
-    gnupg.agent = { enable = prefs.enableGPGAgent; };
+    gnupg.agent = {
+      enable = prefs.enableGPGAgent;
+      pinentryFlavor = "qt";
+      # enableSSHSupport = true;
+    };
     sysdig = { enable = prefs.enableSysdig; };
     ssh = { startAgent = true; };
     # vim.defaultEditor = true;
@@ -1000,7 +1011,9 @@ in
   services = {
     udev = {
       extraRules = prefs.extraUdevRules;
+      packages = lib.optionals prefs.enableYubico [ pkgs.yubikey-personalization ];
     };
+    pcscd.enable = prefs.enablePcscd;
     arbtt = { enable = prefs.enableArbtt; };
     compton = { enable = prefs.enableCompton; };
     connman = {
