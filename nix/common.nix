@@ -5703,6 +5703,11 @@ builtins.toString prefs.ownerGroupGid
                         rm "$tempFile"
                         return 0
                     fi
+
+                    if [[ -s "$tempFile" ]]; then
+                        echo "Skip copying empty file $tempFile to $file."
+                        return 0
+                    fi
                     mv -f --backup=numbered "$tempFile" "$file"
                     return 1
                 }
