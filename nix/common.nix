@@ -442,6 +442,7 @@ in
         gdb
         gcc
         gnumake
+        openssh
         trash-cli
         podman
         podman-compose
@@ -6036,6 +6037,7 @@ builtins.toString prefs.ownerGroupGid
         {
           sockets.gpg-agent-ssh = lib.mkIf config.programs.gnupg.agent.enable {
             wantedBy = [ "sockets.target" ];
+            socketConfig = { RemoveOnStop = true; };
           };
         }
         { services = notify-systemd-unit-failures; }

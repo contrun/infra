@@ -381,7 +381,7 @@
                       inherit name;
                       pkg = inputs.self.packages.${super.system}.${name} or null;
                     })
-                    [ "magit" "coredns" "ssha" "mosha" "sshg" "moshg" ]);
+                    [ "magit" "coredns" "ssh" "mosh" "ssho" "mosho" ]);
                 function = acc: elem: acc //
                   (if (elem.pkg != null) then {
                     ${elem.name} = elem.pkg;
@@ -465,28 +465,41 @@
             packages =
               let
                 start-agent-script = ''
-                  set +o errexit
-                  start_agent() {
-                    ssh-agent -a "$1" > /dev/null
-                    ssh-add
+                  GPG_SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+
+                  try_use_gpg_ssh_agent() {
+                    MESSAGE=$(LC_ALL=en_US.UTF-8 SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK" ssh-add -L 2>&1)
+                    if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
+                      [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
+                      [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]] || \
+                      [[ "$MESSAGE" == 'The agent has no identities.' ]]; then
+                      return 1
+                    fi
+                    GPG_TTY="$(tty)"
+                    export GPG_TTY="$GPG_TTY" SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK"
                   }
 
-                  export SSH_AUTH_SOCK="''${SSH_AUTH_SOCK:-''${HOME}/.ssh/ssh_auth_sock}"
+                  try_start_ssh_agent() {
+                    : "''${SSH_AUTH_SOCK:=''${HOME}/.ssh/ssh_auth_sock}"
+                    # We will not be able to add identities to gpg ssh agent.
+                    if [[ "$SSH_AUTH_SOCK" == "$GPG_SSH_AUTH_SOCK" ]]; then
+                       SSH_AUTH_SOCK="''${HOME}/.ssh/ssh_auth_sock"
+                    fi
+                    export SSH_AUTH_SOCK
 
-                  MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
-                  if [[ "$MESSAGE" = 'Could not open a connection to your authentication agent.' ]] || \
-                    [[ "$MESSAGE" = 'Error connecting to agent: Connection refused' ]] || \
-                    [[ "$MESSAGE" = 'Error connecting to agent: No such file or directory' ]]; then
-                    rm -f "$SSH_AUTH_SOCK"
-                    start_agent "$SSH_AUTH_SOCK"
-                  elif [ "$MESSAGE" = "The agent has no identities." ]; then
-                    ssh-add
-                  fi
-                  set -o errexit
-                '';
-                config-gpg-agent = ''
-                  GPG_TTY="$(tty)" SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
-                  export GPG_TTY SSH_AUTH_SOCK
+                    MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
+                    if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
+                      [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
+                      [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]]; then
+                      rm -f "$SSH_AUTH_SOCK"
+                      ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+                      ssh-add
+                    elif [[ "$MESSAGE" == 'The agent has no identities.' ]]; then
+                      ssh-add
+                    fi
+                  }
+
+                  try_use_gpg_ssh_agent || try_start_ssh_agent || true
                 '';
               in
               {
@@ -539,42 +552,46 @@
                   runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
                 };
 
-                ssha = with nixpkgsWithOverlays; writeShellApplication {
-                  name = "ssha";
+                ssh = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "ssh";
                   text = ''
                     ${start-agent-script}
+                    if [[ "$TERM" == foot ]]; then
+                      export TERM=xterm-256color
+                    fi
                     ssh "$@"
                   '';
-                  runtimeInputs = [ coreutils openssh ];
+                  runtimeInputs = [ coreutils gnupg openssh ];
                 };
 
-                mosha = with nixpkgsWithOverlays; writeShellApplication {
-                  name = "mosha";
+                mosh = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "mosh";
                   text = ''
                     ${start-agent-script}
                     # See https://github.com/termux/termux-packages/issues/288
                     LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
                   '';
-                  runtimeInputs = [ coreutils openssh mosh ];
+                  runtimeInputs = [ coreutils gnupg openssh mosh ];
                 };
 
-                sshg = with nixpkgsWithOverlays; writeShellApplication {
-                  name = "sshg";
+                ssho = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "ssho";
                   text = ''
-                    ${config-gpg-agent}
+                    if [[ "$TERM" == foot ]]; then
+                      export TERM=xterm-256color
+                    fi
                     ssh "$@"
                   '';
-                  runtimeInputs = [ coreutils openssh gnupg ];
+                  runtimeInputs = [ coreutils gnupg openssh ];
                 };
 
-                moshg = with nixpkgsWithOverlays; writeShellApplication {
-                  name = "moshg";
+                mosho = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "mosho";
                   text = ''
-                    ${config-gpg-agent}
                     # See https://github.com/termux/termux-packages/issues/288
                     LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
                   '';
-                  runtimeInputs = [ coreutils openssh mosh gnupg ];
+                  runtimeInputs = [ coreutils gnupg openssh mosh ];
                 };
 
                 dvm =
