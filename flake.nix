@@ -381,7 +381,7 @@
                       inherit name;
                       pkg = inputs.self.packages.${super.system}.${name} or null;
                     })
-                    [ "magit" "coredns" "ssha" "mosha" ]);
+                    [ "magit" "coredns" "ssha" "mosha" "sshg" "moshg" ]);
                 function = acc: elem: acc //
                   (if (elem.pkg != null) then {
                     ${elem.name} = elem.pkg;
@@ -484,6 +484,10 @@
                   fi
                   set -o errexit
                 '';
+                config-gpg-agent = ''
+                  GPG_TTY="$(tty)" SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+                  export GPG_TTY SSH_AUTH_SOCK
+                '';
               in
               {
                 nixos-generators = {
@@ -552,6 +556,25 @@
                     LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
                   '';
                   runtimeInputs = [ coreutils openssh mosh ];
+                };
+
+                sshg = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "sshg";
+                  text = ''
+                    ${config-gpg-agent}
+                    ssh "$@"
+                  '';
+                  runtimeInputs = [ coreutils openssh gnupg ];
+                };
+
+                moshg = with nixpkgsWithOverlays; writeShellApplication {
+                  name = "moshg";
+                  text = ''
+                    ${config-gpg-agent}
+                    # See https://github.com/termux/termux-packages/issues/288
+                    LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
+                  '';
+                  runtimeInputs = [ coreutils openssh mosh gnupg ];
                 };
 
                 dvm =

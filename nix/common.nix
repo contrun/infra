@@ -744,7 +744,8 @@ in
     gnupg.agent = {
       enable = prefs.enableGPGAgent;
       pinentryFlavor = "qt";
-      # enableSSHSupport = true;
+      enableExtraSocket = true;
+      enableBrowserSocket = true;
     };
     sysdig = { enable = prefs.enableSysdig; };
     ssh = { startAgent = true; };
@@ -6032,6 +6033,11 @@ builtins.toString prefs.ownerGroupGid
       )
     ]) // {
       user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+        {
+          sockets.gpg-agent-ssh = lib.mkIf config.programs.gnupg.agent.enable {
+            wantedBy = [ "sockets.target" ];
+          };
+        }
         { services = notify-systemd-unit-failures; }
         (
           let
