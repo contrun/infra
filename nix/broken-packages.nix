@@ -17,5 +17,7 @@
   "hashdeep"
   "arrow-cpp"
   "python-language-server"
+  "jwt-cli"
+  "goldendict"
 ]
 

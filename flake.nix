@@ -35,10 +35,6 @@
     deploy-rs.inputs.utils.follows = "flake-utils";
     deploy-rs.inputs.flake-compat.follows = "flake-compat";
 
-    helix.url = "github:helix-editor/helix";
-    helix.inputs.rust-overlay.follows = "rust-overlay";
-    helix.inputs.flakeCompat.follows = "flake-compat";
-
     crate2nix.url = "github:kolloch/crate2nix";
     crate2nix.flake = false;
 
@@ -65,7 +61,6 @@
     nix-on-droid.url = "github:t184256/nix-on-droid";
     nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";
     nix-on-droid.inputs.home-manager.follows = "home-manager";
-    nix-on-droid.inputs.flake-utils.follows = "flake-utils";
 
     microvm.url = "github:astro/microvm.nix";
     microvm.inputs.nixpkgs.follows = "nixpkgs";
@@ -103,7 +98,6 @@
 
     smos = {
       url = "github:NorfairKing/smos";
-      flake = false;
     };
 
     old-ghc-nix = {

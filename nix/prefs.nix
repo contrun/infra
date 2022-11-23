@@ -506,7 +506,8 @@ let
     enableGreetd = true;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
-    enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
+    # enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
+    enableSmos = false;
     enableSmosSync = self.enableSmos;
     enableFoot = !self.isMinimalSystem;
     enableSmosServer = false;

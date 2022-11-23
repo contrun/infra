@@ -123,38 +123,38 @@ in
   imports =
     let
       smosConfiguration = { config, pkgs, lib, inputs, ... }: {
-        imports = [
-          (import (inputs.smos + "/nix/nixos-module.nix") {
-            envname = "production";
-          })
-        ];
+        # imports = [
+        #   (import (inputs.smos + "/nix/nixos-module.nix") {
+        #     envname = "production";
+        #   })
+        # ];
 
-        config = {
-          services.smos = {
-            production = {
-              enable = true;
-              web-server = {
-                enable = true;
-                log-level = "Info";
-                hosts = prefs.getFullDomainNames "smos";
-                port = 8403;
-                api-url = "https://${
-                  builtins.head config.services.smos.production.api-server.hosts
-                }";
-                web-url = "https://${prefs.getFullDomainName "smos"}";
-                # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
-                # data-dir = "${prefs.syncFolder}/workflow";
-              };
-              api-server = {
-                enable = true;
-                log-level = "Info";
-                hosts = prefs.getFullDomainNames "smos-api";
-                port = 8402;
-                local-backup = { enable = true; };
-              };
-            };
-          };
-        };
+        # config = {
+        #   services.smos = {
+        #     production = {
+        #       enable = true;
+        #       web-server = {
+        #         enable = true;
+        #         log-level = "Info";
+        #         hosts = prefs.getFullDomainNames "smos";
+        #         port = 8403;
+        #         api-url = "https://${
+        #           builtins.head config.services.smos.production.api-server.hosts
+        #         }";
+        #         web-url = "https://${prefs.getFullDomainName "smos"}";
+        #         # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
+        #         # data-dir = "${prefs.syncFolder}/workflow";
+        #       };
+        #       api-server = {
+        #         enable = true;
+        #         log-level = "Info";
+        #         hosts = prefs.getFullDomainNames "smos-api";
+        #         port = 8402;
+        #         local-backup = { enable = true; };
+        #       };
+        #     };
+        #   };
+        # };
       };
     in
     (builtins.filter (x: builtins.pathExists x) [ ./machine.nix ./cachix.nix ])
@@ -1534,9 +1534,13 @@ in
 
     grafana = {
       enable = prefs.enableGrafana;
-      rootUrl = "https://${prefs.getFullDomainName "grafana"}";
-      port = prefs.grafanaPort;
-      addr = "127.0.0.1";
+      settings = {
+        server = {
+          root_url = "https://${prefs.getFullDomainName "grafana"}";
+          http_port = prefs.grafanaPort;
+          http_addr = "127.0.0.1";
+        };
+      };
       provision = {
         enable = true;
         datasources = [{
@@ -2226,21 +2230,21 @@ in
                 };
               };
             }
-            {
-              enable = prefs.enableSmosServer;
-              config = {
-                smos = {
-                  rule = getTraefikRuleByDomainPrefix "smos";
-                  service = "smos";
-                  tls = { };
-                };
-                smos-api = {
-                  rule = getTraefikRuleByDomainPrefix "smos-api";
-                  service = "smos-api";
-                  tls = { };
-                };
-              };
-            }
+            # {
+            #   enable = prefs.enableSmosServer;
+            #   config = {
+            #     smos = {
+            #       rule = getTraefikRuleByDomainPrefix "smos";
+            #       service = "smos";
+            #       tls = { };
+            #     };
+            #     smos-api = {
+            #       rule = getTraefikRuleByDomainPrefix "smos-api";
+            #       service = "smos-api";
+            #       tls = { };
+            #     };
+            #   };
+            # }
             {
               enable = prefs.enableActivityWatch;
               config = {
@@ -2417,31 +2421,31 @@ in
                 };
               };
             }
-            {
-              enable = prefs.enableSmosServer;
-              config = {
-                smos = {
-                  loadBalancer = {
-                    servers = [{
-                      url = "http://localhost:${
-                      builtins.toString
-                      config.services.smos.production.web-server.port
-                    }/";
-                    }];
-                  };
-                };
-                smos-api = {
-                  loadBalancer = {
-                    servers = [{
-                      url = "http://localhost:${
-                      builtins.toString
-                      config.services.smos.production.api-server.port
-                    }/";
-                    }];
-                  };
-                };
-              };
-            }
+            # {
+            #   enable = prefs.enableSmosServer;
+            #   config = {
+            #     smos = {
+            #       loadBalancer = {
+            #         servers = [{
+            #           url = "http://localhost:${
+            #           builtins.toString
+            #           config.services.smos.production.web-server.port
+            #         }/";
+            #         }];
+            #       };
+            #     };
+            #     smos-api = {
+            #       loadBalancer = {
+            #         servers = [{
+            #           url = "http://localhost:${
+            #           builtins.toString
+            #           config.services.smos.production.api-server.port
+            #         }/";
+            #         }];
+            #       };
+            #     };
+            #   };
+            # }
             {
               enable = prefs.enableActivityWatch;
               config = {
@@ -4317,13 +4321,13 @@ getTraefikRuleByDomainPrefix "webdav"
                                 tag = "house-keeping";
                                 url = "https://${prefs.getFullDomainName "hledger"}";
                               }
-                              {
-                                enable = prefs.enableSmosServer;
-                                name = "smos";
-                                subtitle = "self-management";
-                                tag = "productivity";
-                                url = "https://${prefs.getFullDomainName "smos"}";
-                              }
+                              # {
+                              #   enable = prefs.enableSmosServer;
+                              #   name = "smos";
+                              #   subtitle = "self-management";
+                              #   tag = "productivity";
+                              #   url = "https://${prefs.getFullDomainName "smos"}";
+                              # }
                               {
                                 enable = prefs.enableWstunnel;
                                 name = "wstunnel";

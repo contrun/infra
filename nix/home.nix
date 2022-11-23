@@ -71,7 +71,7 @@ let
     "haskellPackages.haskell-language-server"
     "myPackages.idris"
     "llvmPackages_latest.llvm"
-    "termonad-with-packages"
+    "termonad"
     "steam"
     "espeak"
     "vagrant"
@@ -684,7 +684,7 @@ let
         "syncthing"
         # "myPackages.wallabag-client"
         "sslh"
-        "miniupnpc_2"
+        "miniupnpc"
         "miniupnpd"
         "gupnp-tools"
         "strongswan"
@@ -718,6 +718,13 @@ let
         "sshuttle"
         "youtube-dl"
         "offlineimap"
+      ];
+    }
+    {
+      name = "system (preferred)";
+      priority = 18;
+      packages = getPackages [
+        "e2fsprogs"
       ];
     }
     {
@@ -796,7 +803,6 @@ let
         # doublecmd-gtk2
         "dstat"
         "dunst"
-        "e2fsprogs"
         "f2fs-tools"
         "eclipses.eclipse-java"
         "codeblocks"
@@ -1042,7 +1048,6 @@ let
         "remmina"
         "freerdp"
         "rdesktop"
-        "teamviewer"
         "rsync"
         "filezilla"
         "rclone"
@@ -1080,7 +1085,7 @@ let
         "foot"
         "wezterm"
         "xfce.xfce4-terminal"
-        "termonad-with-packages"
+        "termonad"
         "tesseract"
         "texinfo"
         "thefuck"
@@ -1098,22 +1103,22 @@ let
   ];
 in
 {
-  programs = lib.optionalAttrs (prefs.enableSmos) {
-    smos = {
-      enable = true;
-      config = { workflow-dir = "${prefs.syncFolder}/workflow"; };
-      # TODO: I use a custom systemd unit instead of this, as it is more secure.
-      sync = {
-        enable = false;
-        # Note we must change the password here.
-        username = "YOURUSERNAMEHERE";
-        password = "YOURPASSWORDHERE";
-        server-url = "https://smos.hub.${prefs.mainDomain}";
-      };
-      backup = { enable = true; };
-      notify = { enable = true; };
-    };
-  };
+  # programs = lib.optionalAttrs (prefs.enableSmos) {
+  #   smos = {
+  #     enable = true;
+  #     config = { workflow-dir = "${prefs.syncFolder}/workflow"; };
+  #     # TODO: I use a custom systemd unit instead of this, as it is more secure.
+  #     sync = {
+  #       enable = false;
+  #       # Note we must change the password here.
+  #       username = "YOURUSERNAMEHERE";
+  #       password = "YOURPASSWORDHERE";
+  #       server-url = "https://smos.hub.${prefs.mainDomain}";
+  #     };
+  #     backup = { enable = true; };
+  #     notify = { enable = true; };
+  #   };
+  # };
 
   services = { kdeconnect = { enable = prefs.enableKdeConnect; }; };
 
@@ -1139,30 +1144,30 @@ in
         "${script} ${command}";
     in
     builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-      (
-        let name = "smos-sync";
-        in
-        lib.optionalAttrs prefs.enableSmosSync {
-          services.${name} = {
-            Unit = { Description = "sync smos"; };
-            Service = {
-              Type = "oneshot";
-              ExecStart =
-                "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
-              EnvironmentFile = "/run/secrets/smos-sync-env";
-            };
-          };
-          timers.${name} = {
-            Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
-            Install = { WantedBy = [ "default.target" ]; };
-            Timer = {
-              OnCalendar = "*-*-* *:1/3:00";
-              Unit = "${name}.service";
-              Persistent = true;
-            };
-          };
-        }
-      )
+      # (
+      #   let name = "smos-sync";
+      #   in
+      #   lib.optionalAttrs prefs.enableSmosSync {
+      #     services.${name} = {
+      #       Unit = { Description = "sync smos"; };
+      #       Service = {
+      #         Type = "oneshot";
+      #         ExecStart =
+      #           "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
+      #         EnvironmentFile = "/run/secrets/smos-sync-env";
+      #       };
+      #     };
+      #     timers.${name} = {
+      #       Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
+      #       Install = { WantedBy = [ "default.target" ]; };
+      #       Timer = {
+      #         OnCalendar = "*-*-* *:1/3:00";
+      #         Unit = "${name}.service";
+      #         Persistent = true;
+      #       };
+      #     };
+      #   }
+      # )
 
       (
         let name = "foot";
