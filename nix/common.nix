@@ -764,7 +764,7 @@ in
     # light.enable = true;
     sway = {
       enable = prefs.enableSway;
-      extraOptions = [ "--verbose" "--debug" "--unsupported-gpu" ];
+      extraOptions = [ "--unsupported-gpu" ];
       extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu sway-contrib.grimshot ];
       extraSessionCommands = ''
         export TERMINAL="alacritty"
@@ -1323,7 +1323,6 @@ in
       enable = prefs.enableCadvisor;
       port = prefs.cadvisorPort;
       extraOptions = prefs.cadvisorExtraOptions;
-      storageDriver = "stdout";
     };
     davfs2 = { enable = prefs.enableDavfs2; };
     coredns = {
@@ -1339,8 +1338,6 @@ in
         in
         ''
           ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
-              log
-              debug
               # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
               # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
               ${rewriteAliases}
@@ -1362,8 +1359,6 @@ in
           }
 
           .:${builtins.toString prefs.corednsPort} {
-              log
-              debug
               forward . ${dnsServers}
           }
         '';
@@ -5685,7 +5680,7 @@ builtins.toString prefs.ownerGroupGid
                 downloadConfigFile() {
                     local url="$1"
                     local file="$2"
-                    # We first try to download the config file on behave of "$CLASH_USER",
+                    # We try to download the config file on behave of "$CLASH_USER",
                     # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
                     if ! curl -sS "$url" -o "$file"; then
                         if ! sudo -u "$CLASH_USER" curl -sS "$url" -o "$file"; then
@@ -5705,7 +5700,7 @@ builtins.toString prefs.ownerGroupGid
                 maybeSaveConfigFile() {
                     local tempFile="$1"
                     local file="$2"
-                    if diff "$tempFile" "$file"; then
+                    if cmp -s "$tempFile" "$file"; then
                         rm "$tempFile"
                         return 0
                     fi
@@ -5904,11 +5899,9 @@ builtins.toString prefs.ownerGroupGid
                 if ! systemctl is-active zerotierone; then
                     exit 0
                 fi
-                if zerotier-cli -p${builtins.toString config.services.zerotierone.port} info | grep -i offline; then
+                if zerotier-cli -p${builtins.toString config.services.zerotierone.port} info | grep -q -i offline; then
                     systemctl restart zerotierone
                 fi
-                zerotier-cli -p${builtins.toString config.services.zerotierone.port} info
-                zerotier-cli -p${builtins.toString config.services.zerotierone.port} peers
               '';
               serviceConfig = { Type = "oneshot"; };
             };
