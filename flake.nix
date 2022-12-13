@@ -144,8 +144,13 @@
           inherit prefs inputs;
         };
 
-      generateHomeConfigurations = hostname: inputs:
+      generateHomeConfigurations = name: inputs:
         let
+          # The name may be of the format username@hostname or just hostname.
+          matchResult = builtins.match "([^@]+)@([^@]+)" name;
+          username = if (matchResult == null) then prefs.owner else (builtins.elemAt matchResult 0);
+          hostname = if (matchResult == null) then name else (builtins.elemAt matchResult 1);
+          configName = if (matchResult == null) then "${username}@${hostname}" else name;
           prefs = getHostPreference hostname;
           moduleArgs = {
             inherit inputs hostname prefs;
@@ -153,22 +158,24 @@
           };
         in
         {
-          "${prefs.owner}@${hostname}" = inputs.home-manager.lib.homeManagerConfiguration {
-            inherit (prefs) system;
-            homeDirectory = prefs.home;
-            username = prefs.owner;
-            stateVersion = prefs.homeManagerStateVersion;
+          "${configName}" = inputs.home-manager.lib.homeManagerConfiguration {
             pkgs = self.nixpkgs."${prefs.system}";
-
-            configuration = {
-              _module.args = moduleArgs;
-
-              imports = [
-                (getNixConfig "/home.nix")
-              ] ++ (if prefs.enableSmos then
-                [ (inputs.smos + "/nix/home-manager-module.nix") ] else [ ])
-              ;
-            };
+            modules = [
+              ({ ... }: {
+                config = {
+                  _module.args = moduleArgs;
+                };
+              })
+              (getNixConfig "/home.nix")
+              {
+                home =
+                  {
+                    inherit username;
+                    homeDirectory = prefs.home;
+                    stateVersion = prefs.homeManagerStateVersion;
+                  };
+              }
+            ];
           };
         };
 
@@ -195,7 +202,8 @@
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
-      homeManagerHosts = darwinNodes ++ allHosts;
+      homeManagerHosts = [ ];
+      homeManagerConfigs = darwinNodes ++ allHosts ++ homeManagerHosts;
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       {
@@ -302,9 +310,9 @@
           allHosts;
 
         homeConfigurations = builtins.foldl'
-          (acc: hostname: acc // generateHomeConfigurations hostname inputs)
+          (acc: name: acc // generateHomeConfigurations name inputs)
           { }
-          homeManagerHosts;
+          homeManagerConfigs;
 
         deploy.nodes =
           builtins.foldl' (acc: hostname: acc // (generateDeployNode hostname))
