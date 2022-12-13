@@ -202,7 +202,7 @@
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
-      homeManagerHosts = [ ];
+      homeManagerHosts = [ "madbox" ];
       homeManagerConfigs = darwinNodes ++ allHosts ++ homeManagerHosts;
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [

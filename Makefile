@@ -64,6 +64,9 @@ create-dirs:
 home-manager:
 	$(HOMEMANAGER) switch --flake ".#$(USER)@$(HOST)" $(NIXFLAGS)
 
+home-manager-build:
+	$(HOMEMANAGER) build --flake ".#$(USER)@$(HOST)" $(NIXFLAGS)
+
 home-manager-bootstrap:
 	$(HOMEMANAGER) switch --flake ".#$(USER)@cicd-$(shell nix eval --raw --impure --expr 'builtins.currentSystem')" $(NIXFLAGS)
 
