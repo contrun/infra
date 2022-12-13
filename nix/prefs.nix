@@ -147,6 +147,7 @@ let
     };
     isMinimalSystem = true;
     isMaximalSystem = false;
+    isHomeManagerOnly = false;
     homeManagerStateVersion = "21.05";
     systemStateVersion = "20.09";
     useLargePackages = !self.isMinimalSystem;
@@ -357,6 +358,9 @@ let
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = !self.isMinimalSystem;
     enableSyncthing = !self.isMinimalSystem;
+    # home-manager also manages syncthing, but has less options provided,
+    # We use nixpkgs to manage syncthing when possible, home-manager otherwise.
+    enableHomeManagerSyncthing = false;
     syncthingIgnores = [ "roam/.emacs.d/straight" "roam/public" ];
     syncthingDevices = {
       ssg = {
@@ -1021,6 +1025,10 @@ let
         nvidiaBusId = "PCI:1:0:0";
         intelBusId = "PCI:0:2:0";
       };
+    } else if hostname == "madbox" then {
+      isMinimalSystem = true;
+      isHomeManagerOnly = true;
+      enableHomeManagerSyncthing = true;
     } else {
       isMinimalSystem = true;
     });

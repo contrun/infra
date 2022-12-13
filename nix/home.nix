@@ -1120,7 +1120,10 @@ in
   #   };
   # };
 
-  services = { kdeconnect = { enable = prefs.enableKdeConnect; }; };
+  services = {
+    kdeconnect = { enable = prefs.enableKdeConnect; };
+    syncthing = { enable = prefs.enableHomeManagerSyncthing; };
+  };
 
   systemd.user =
     let
