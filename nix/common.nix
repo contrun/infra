@@ -2842,6 +2842,8 @@ in
         enable = prefs.enableSyncthing;
         user = prefs.owner;
         dataDir = prefs.home;
+        overrideDevices = false;
+        overrideFolders = false;
         extraOptions = {
           defaults = {
             ignores =
