@@ -19,5 +19,6 @@
   "python-language-server"
   "jwt-cli"
   "goldendict"
+  "khal"
 ]
 

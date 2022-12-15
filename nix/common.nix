@@ -1366,8 +1366,10 @@ in
     dnsmasq = {
       enable = prefs.enableDnsmasq;
       resolveLocalQueries = prefs.dnsmasqResolveLocalQueries;
-      servers = prefs.dnsmasqServers;
       extraConfig = prefs.dnsmasqExtraConfig;
+      settings = {
+        servers = prefs.dnsmasqServers;
+      };
     };
     smartdns = {
       enable = prefs.enableSmartdns;

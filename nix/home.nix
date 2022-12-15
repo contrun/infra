@@ -1076,7 +1076,6 @@ let
         "todoman"
         "vdirsyncer"
         "khard"
-        "khal"
         "vit"
         "dstask"
         "tcl"
