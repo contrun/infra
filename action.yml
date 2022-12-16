@@ -46,8 +46,6 @@ runs:
     - name: Install nix
       uses: cachix/install-nix-action@v18
       with:
-        nix_path: nixpkgs=channel:nixos-unstable
-        install_url: https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.7.0pre20220203_bd383d1/install
         extra_nix_config: |
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ github.token }}
