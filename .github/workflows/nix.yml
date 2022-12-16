@@ -132,7 +132,7 @@ jobs:
         run: |
           if ! make HOST=${{ matrix.host }} nixos-build nixos-profile-path-info; then
               df -h
-              du -h --max-depth=3 / | sort -k1 -h
+              sudo du -h -x --exclude=/tmp --threshold=10M --max-depth=3 / | sort -k1 -h
               exit 1
           fi
 
