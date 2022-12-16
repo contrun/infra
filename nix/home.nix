@@ -316,6 +316,7 @@ let
         "flyway"
         "libmysqlclient"
         "myPackages.idris"
+        "myPackages.agda"
         # "myPackages.elba"
         "protobuf"
         "capnproto"

@@ -371,6 +371,9 @@ let
 
         ghc = super.haskellPackages.ghcWithPackages getHaskellPackages;
 
+        agda = super.agda.withPackages
+          (p: with p; [ standard-library ]);
+
         idris = super.idrisPackages.with-packages (with super.idrisPackages; [
           base
           effects
