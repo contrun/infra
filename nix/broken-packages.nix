@@ -20,5 +20,7 @@
   "jwt-cli"
   "goldendict"
   "khal"
+  "freerdp"
+  "remmina"
 ]
 
