@@ -3023,7 +3023,6 @@ in
     });
   };
 
-  # xdg.portal.enable = prefs.enableXdgPortal || prefs.enableFlatpak;
   xdg = {
     mime = {
       enable = true;
@@ -3057,7 +3056,12 @@ in
         "image/heif" = [ "imv.desktop" "sxiv.desktop" "gimp.desktop" ];
       };
     };
-    portal.wlr.enable = prefs.enableXdgPortalWlr;
+    portal = {
+      enable = prefs.enableXdgPortal;
+      wlr.enable = prefs.enableXdgPortalWlr;
+      # gtk portal needed to make gtk apps happy
+      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    };
   };
 
   users =

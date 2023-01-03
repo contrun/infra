@@ -465,7 +465,7 @@ let
     enableMpd = false;
     enableAccountsDaemon = !self.isMinimalSystem;
     enableFlatpak = false;
-    enableXdgPortal = false;
+    enableXdgPortal = self.enableSway;
     enableXdgPortalWlr = self.enableSway;
     enableJupyter = false;
     enableEmacs = !self.isMinimalSystem;
