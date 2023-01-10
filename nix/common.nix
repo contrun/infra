@@ -5548,6 +5548,7 @@ builtins.toString prefs.ownerGroupGid
               pkgs.yj
               pkgs.libcap
               pkgs.utillinux
+              pkgs.clash
             ];
             script =
               let
@@ -5683,18 +5684,17 @@ builtins.toString prefs.ownerGroupGid
                 : "''${CLASH_FILE:=default.yaml}"
                 : "''${DOWNLOAD_ONLY:=}"
                 CLASH_CONFIG="$CLASH_FOLDER/$CLASH_FILE"
-                CLASH_TEMP_CONFIG="''${TMPDIR:-/tmp}/clash-config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
 
                 downloadConfigFile() {
                     local url="$1"
                     local file="$2"
                     # We try to download the config file on behave of "$CLASH_USER",
                     # so that we can bypass the transparent proxy, which does nothing when programs are ran by "$CLASH_USER".
-                    if ! curl -sS "$url" -o "$file"; then
-                        if ! sudo -u "$CLASH_USER" curl -sS "$url" -o "$file"; then
-                            if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query -sS "$url" -o "$file"; then
+                    if ! curl --connect-timeout 5 -sS "$url" -o "$file"; then
+                        if ! sudo -u "$CLASH_USER" curl --connect-timeout 5 -sS "$url" -o "$file"; then
+                            if ! sudo -u "$CLASH_USER" curl --doh-url https://223.5.5.5/dns-query --connect-timeout 5 -sS "$url" -o "$file"; then
                                 >&2 echo "Failed to download clash config"
-                                exit 1
+                                return 1
                             fi
                         fi
                     fi
@@ -5709,16 +5709,18 @@ builtins.toString prefs.ownerGroupGid
                     local tempFile="$1"
                     local file="$2"
                     if cmp -s "$tempFile" "$file"; then
+                        echo "File content not changed from $tempFile to $file."
                         rm "$tempFile"
-                        return 0
+                        return 1
                     fi
 
-                    if [[ -s "$tempFile" ]]; then
-                        echo "Skip copying empty file $tempFile to $file."
-                        return 0
+                    if ! clash -t -f "$tempFile"; then
+                        echo "Skipping copying bad file $tempFile to $file."
+                        return 1
                     fi
+
+                    echo "Moving new file from $tempFile to $file."
                     mv -f --backup=numbered "$tempFile" "$file"
-                    return 1
                 }
 
                 maybeReloadService() {
@@ -5733,22 +5735,27 @@ builtins.toString prefs.ownerGroupGid
                 tryToSaveConfig() {
                     local url="$1"
                     local file="$2"
-                    tempFile="''${TMPDIR:-/tmp}/clash-config-$(basename "$url")-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
-                    downloadConfigFile "$url" "$tempFile"
+                    local config="''${3:-$(basename "$url")}"
+                    tempFile="''${TMPDIR:-/tmp}/clash-config-$config-$(date -u +"%Y-%m-%dT%H:%M:%SZ").yaml"
+                    if ! downloadConfigFile "$url" "$tempFile" || ! clash -t -f "$tempFile"; then
+                        echo "Downloading $url to $tempFile failed."
+                        return 1
+                    fi
                     fixupConfig "$tempFile" | sponge "$tempFile"
                     maybeSaveConfigFile "$tempFile" "$file"
                 }
 
-                if ! tryToSaveConfig "$CLASH_URL" "$CLASH_CONFIG"; then
+                if tryToSaveConfig "$CLASH_URL" "$CLASH_CONFIG" default; then
                     maybeReloadService
                 fi
 
                 prefix="CLASH_URL_"
                 env | grep "^$prefix" | while read -r line; do
                     variable="$(sed -E "s#=.*##g" <<< "$line")"
-                    file="$CLASH_FOLDER/$(sed -E "s#^$prefix##g" <<< "$variable" | tr '[:upper:]' '[:lower:]').yaml"
+                    config="$(sed -E "s#^$prefix##g" <<< "$variable" | tr '[:upper:]' '[:lower:]')"
+                    file="$CLASH_FOLDER/$config.yaml"
                     url="''${!variable}"
-                    if ! tryToSaveConfig "$url" "$file"; then
+                    if ! tryToSaveConfig "$url" "$file" "$config"; then
                         :
                     fi
                 done
@@ -5756,7 +5763,7 @@ builtins.toString prefs.ownerGroupGid
             serviceConfig = {
               Type = "oneshot";
               EnvironmentFile = "/run/secrets/clash-env";
-              Restart = "on-failure";
+              Restart = "no";
             };
           };
           timers."${updaterName}" = {
