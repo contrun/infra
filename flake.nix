@@ -279,10 +279,13 @@
                     (writeShellApplication {
                       name = "sshd-start";
                       text = ''
-                        ip -brief addr show scope global up
+                        # May fail with `Cannot bind netlink socket: Permission denied`
+                        if ! ip -brief addr show scope global up; then
+                          :
+                        fi
                         echo "Starting sshd on port ${toString port}"
                         # sshd re-exec requires execution with an absolute path
-                        exec ${pkgs.openssh}/bin/sshd -f "${sshdDirectory}/sshd_config" -D "$@"
+                        exec "$(command -v sshd)" -f "${sshdDirectory}/sshd_config" -D "$@"
                       '';
                       runtimeInputs = with pkgs; [ iproute2 openssh ];
                     })
