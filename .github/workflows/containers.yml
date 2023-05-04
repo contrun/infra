@@ -24,6 +24,8 @@ jobs:
         include:
           - path: "containers/superset"
             kind: "local_directory"
+          - path: "containers/archvnc"
+            kind: "local_directory"
           - path: "contrun/kosyncsrv"
             kind: "github_repository"
           - path: "contrun/eudyptula"
@@ -94,6 +96,12 @@ jobs:
               ;;
             "unigraph-dev/unigraph-dev")
               name=unigraph
+              platforms="linux/amd64"
+              ;;
+          esac
+
+          case "$directory" in
+            "containers/archvnc")
               platforms="linux/amd64"
               ;;
           esac

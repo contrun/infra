@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+function _init_vnc_dir {
+  #    if [[ ! -s "$HOME/.vnc/xstartup" ]]; then
+  #        cat <<EOF > $HOME/.vnc/xstartup
+  ##!/bin/sh
+  #
+  ## unset SESSION_MANAGER
+  ## unset DBUS_SESSION_BUS_ADDRESS
+  #exec dbus-launch startxfce4
+  #EOF
+  #    fi
+  #    chmod +x "$HOME/.vnc/xstartup"
+
+  local conffile="$HOME/.vnc/config"
+  if [[ ! -s "$conffile" ]]; then
+    cat <<EOF >"$conffile"
+## Supported server options to pass to vncserver upon invocation can be listed
+## in this file. See the following manpages for more: vncserver(1) Xvnc(1).
+## Several common ones are shown below. Uncomment and modify to your liking.
+##
+securitytypes=vncauth,tlsvnc,vencrypt
+depth=24+32
+rfbport=5901
+session=xfce4vnc
+EOF
+  fi
+}
+
+# Add a custom xrandr resolution.
+function addxrandr {
+  local horiz
+  local vert
+  local pixel_density
+  horiz="$(cut -dx -f1 <<<"$1")"
+  vert="$(cut -dx -f2 <<<"$1")"
+  pixel_density="$(echo "scale=10; ($horiz * $vert * 60) / 1000000" | bc)"
+
+  set -x
+  xrandr --newmode "$1" "$pixel_density" "$horiz" 0 0 "$horiz" "$vert" 0 0 "$vert"
+  xrandr --addmode VNC-0 "$1"
+}
+
+# Read all the xrandr args (if they exist) from the environment and add them.
+function _process_xrandr_env {
+  while ! xhost >&/dev/null; do sleep .1s; done
+
+  for res in $(echo "$VNC_RESOLUTIONS" | tr ',' '\n'); do
+    echo "Adding $res resolution..."
+    (addxrandr "$res")
+  done
+}
+
+function _set_vnc_password {
+  local pwdfile="$HOME/.vnc/passwd"
+
+  echo "$VNC_PASSWORD" | vncpasswd -f >"$pwdfile"
+  chmod 600 "$pwdfile"
+}
+
+# Start up the vnc server and do setup.
+function _start_vnc {
+  _init_vnc_dir
+  _set_vnc_password
+
+  _process_xrandr_env &
+
+  vncserver "$DISPLAY"
+}
+
+_start_vnc
