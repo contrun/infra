@@ -475,10 +475,10 @@
             packages =
               let
                 start-agent-script = ''
-                  GPG_SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+                  GPG_SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket || true)"
 
                   try_use_gpg_ssh_agent() {
-                    MESSAGE=$(LC_ALL=en_US.UTF-8 SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK" ssh-add -L 2>&1)
+                    MESSAGE="$(LC_ALL=en_US.UTF-8 SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK" ssh-add -L 2>&1)"
                     if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
                       [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
                       [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]] || \

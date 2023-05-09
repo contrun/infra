@@ -320,12 +320,11 @@ in
             table-chinese
             table-others
           ];
-          fcitx.engines = with pkgs.fcitx-engines; [
-            libpinyin
-            cloudpinyin
-            rime
-            table-extra
-            table-other
+          fcitx5.addons = with pkgs; [
+            fcitx5-chinese-addons
+            fcitx5-rime
+            fcitx5-table-extra
+            fcitx5-table-other
           ];
         };
       };
@@ -457,7 +456,7 @@ in
         nix-prefetch-scripts
         # python3
         (pkgs.myPackages.pythonStable or python3)
-        nvimpager
+        # nvimpager
         (pkgs.myPackages.nvimdiff or null)
         ruby
         perl
@@ -1391,11 +1390,13 @@ in
     x2goserver = { enable = prefs.enableX2goServer; };
     openssh = {
       enable = true;
-      useDns = true;
       allowSFTP = true;
-      forwardX11 = prefs.enableSshX11Forwarding;
-      gatewayPorts = "yes";
-      permitRootLogin = "yes";
+      settings = {
+        X11Forwarding = prefs.enableSshX11Forwarding;
+        GatewayPorts = "yes";
+        PermitRootLogin = "yes";
+        UseDns = true;
+      };
       startWhenNeeded = true;
       extraConfig = builtins.concatStringsSep "\n" (
         [ "Include /etc/ssh/sshd_config_*" ] ++ (lib.optionals prefs.enableSshPortForwarding [
