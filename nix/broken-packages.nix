@@ -22,5 +22,7 @@
   "khal"
   "freerdp"
   "remmina"
+  "nyxt"
+  "nvimpager"
 ]
 

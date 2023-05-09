@@ -59,7 +59,7 @@ let
         hub = "mdq";
       };
     pkgsRelatedPrefs = rec {
-      kernelPackages = pkgs.linuxPackages_latest;
+      kernelPackages = pkgs.linuxPackages_6_2;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
       ];
@@ -537,7 +537,7 @@ let
     enableZSH = true;
     enableFish = false;
     enableJava = !self.isMinimalSystem;
-    enableSysdig = !self.isMinimalSystem;
+    enableSysdig = false;
     enableCcache = true;
     enableFirewall = false;
     enableCompton = false;
@@ -561,7 +561,7 @@ let
     enableDdns = !self.isMinimalSystem;
     enableWireshark = !self.isMinimalSystem;
     enableInputMethods = !self.isMinimalSystem;
-    enabledInputMethod = "fcitx";
+    enabledInputMethod = "fcitx5";
     enableVirtualboxHost = !self.isMinimalSystem;
     enableDocker = !self.isMinimalSystem;
     enableDockerMetrics = self.enablePrometheusExporters && self.enableDocker;
@@ -761,7 +761,6 @@ let
           isMaximalSystem = true;
           isMinimalSystem = false;
           enableAllOciContainers = true;
-          enableJupyter = true;
           enableTraefik = true;
           enablePrometheus = true;
           enablePromtail = true;
@@ -835,7 +834,6 @@ let
       hostId = "b6653e48";
       systemStateVersion = "21.05";
       dpi = 128;
-      enableJupyter = true;
       enableX2goServer = true;
       enableHidpi = false;
       maxJobs = 6;
@@ -960,7 +958,6 @@ let
           extraArgs = [ "--verbose" "--readonly" "--debug" ];
         };
       };
-      enableJupyter = true;
       enableTraefik = true;
       enablePrometheus = true;
       enablePromtail = true;
@@ -1010,7 +1007,6 @@ let
       enableTraefik = true;
       enablePrometheus = true;
       enablePromtail = true;
-      enableJupyter = true;
       enableAcme = true;
       enableSmosServer = true;
       ociContainers = super.ociContainers // {
