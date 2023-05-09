@@ -761,6 +761,12 @@ in
       shellInit = "zsh-newuser-install() { :; }";
     };
     # light.enable = true;
+    clash-verge = let enable = prefs.enableClashVerge; in
+      {
+        enable = enable;
+        autoStart = enable;
+        tunMode = enable;
+      };
     sway = {
       enable = prefs.enableSway;
       extraOptions = [ "--unsupported-gpu" ];
@@ -5572,7 +5578,6 @@ builtins.toString prefs.ownerGroupGid
                     enable: true
                     listen: :8853
                     ipv6: false
-                    enhanced-mode: redir-host
                     fake-ip-filter:
                       - "*.lan"
                       - stun.*.*.*
