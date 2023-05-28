@@ -1,0 +1,154 @@
+---
+# tasks file for installation
+- name: Fail if tmp_mount_path is not a mounted path
+  shell: |
+    set -xeu
+    awk '{if ($2 == "{{ tmp_mount_path }}") print}' /proc/mounts | grep {{ tmp_mount_path }}
+
+- name: Save facts for later use
+  set_fact:
+    nixos_host: "{{ ansible_ssh_host }}"
+
+- name: Create target directories
+  file:
+    path: "{{ tmp_mount_path }}{{ directory }}"
+    state: directory
+    mode: 0755
+  loop:
+    - /run/binfmt/
+    - /etc/binfmt.d/
+    - /bootstrap
+  loop_control:
+    loop_var: directory
+
+- name: Copy some configurations to remote host
+  copy:
+    src: "{{ item }}"
+    dest: "{{ tmp_mount_path }}{{ item }}"
+    force: yes
+  with_fileglob:
+    - "/run/binfmt/*"
+    - "/etc/binfmt.d/*"
+
+- name: Generate hardware configuration
+  shell: |
+    nixos-generate-config --root {{ tmp_mount_path }}
+
+- name: Fetch the generated hardware configuration
+  ansible.builtin.fetch:
+    src: "{{ tmp_mount_path }}/etc/nixos/hardware-configuration.nix"
+    dest: "{{ playbook_dir }}/../nix/hardware/hardware-configuration.{{ nixos_hostname }}.nix"
+    flat: yes
+  register: hardware_configruation_file
+
+- name: Check that the configuration exists
+  delegate_to: localhost
+  become: no
+  stat:
+    path: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+  register: stat_result
+
+- name: Fetch the generated nixos configuration
+  ansible.builtin.fetch:
+    src: "{{ tmp_mount_path }}/etc/nixos/configuration.nix"
+    dest: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+    flat: yes
+  when: not stat_result.stat.exists
+
+- name: "Add generated staza to {{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+  when: not stat_result.stat.exists
+  delegate_to: localhost
+  become: no
+  ansible.builtin.blockinfile:
+    path: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+    backup: yes
+    insertbefore: '^\s*\}\s*$'
+    block: |
+      networking.hostName = "{{ nixos_hostname }}";
+      # printf "%s" "hostname: {{ nixos_hostname }}" | sha512sum | head -c 8
+      networking.hostId = "{{ (("hostname: " + nixos_hostname) | hash('sha512'))[0:8] }}";
+
+      nix.trustedUsers = [ "root" "{{ user }}" "@wheel" ];
+      services.openssh = {
+        enable = true;
+        useDns = true;
+        allowSFTP = true;
+        forwardX11 = true;
+        gatewayPorts = "yes";
+        permitRootLogin = "yes";
+        startWhenNeeded = true;
+      };
+      users.users = {
+        {{ user }} = {
+          createHome = true;
+          extraGroups = [
+            "wheel"
+            "cups"
+            "video"
+            "kvm"
+            "libvirtd"
+            "qemu-libvirtd"
+            "audio"
+            "disk"
+            "keys"
+            "networkmanager"
+            "adbusers"
+            "docker"
+            "davfs2"
+            "wireshark"
+            "vboxusers"
+            "lp"
+            "input"
+            "mlocate"
+            "postfix"
+          ];
+          group = "users";
+          home = "/home/{{ user }}";
+          isNormalUser = true;
+          uid = 1000;
+          initialHashedPassword =
+            "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
+        };
+      };
+
+- name: Copy nixos configuration to remote host
+  copy:
+    src: "{{ playbook_dir }}/artifacts/configuration.{{ nixos_hostname }}.nix"
+    dest: "{{ tmp_mount_path }}/etc/nixos/configuration.nix"
+    force: yes
+
+- name: Install nixos
+  shell: |
+    (echo "{{ root_password }}"; echo "{{ root_password }}") | nixos-install --root {{ tmp_mount_path }} --show-trace
+
+- name: Change root password
+  shell: |
+    nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ root_password }}"; echo "{{ root_password }}") | passwd'
+
+- name: Change user password
+  shell: |
+    nixos-enter --root {{ tmp_mount_path }} -c '(echo "{{ user_password }}"; echo "{{ user_password }}") | passwd {{ user }}'
+
+- name: Copy common files
+  delegate_to: localhost
+  become: yes
+  become_user: root
+  shell: |
+    set -euo pipefail
+    try() {
+      if ! "$@"; then
+        >&2 echo "running command failed"
+        >&2 echo "$@"
+      fi
+    }
+    # "$(dirname "{{ config }}xxx")/"
+    # xxx to ensure the obtained directory is correct
+    # / to ensure correct behavior for rsync
+    try rsync -avz --progress -h {{ config }} {{ ansible_user }}@{{ nixos_host }}:"{{ tmp_mount_path }}$(dirname "{{ config }}xxx")/"
+  loop:
+    - "/etc/ssh/ssh_host_*"
+    - "/etc/wpa_supplicant.conf"
+    - "/var/lib/iwd/"
+    - "/etc/NetworkManager/system-connections/"
+  loop_control:
+    loop_var: config

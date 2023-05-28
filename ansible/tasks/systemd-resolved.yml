@@ -1,0 +1,14 @@
+# For reverse proxies to figure out which backend server to forward
+- name: Configure systemd-resolved
+  block:
+    - name: Configure systemd-resolved
+      include_role:
+        name: aisbergg.systemd-resolved
+      vars:
+        systemd_resolved_config:
+          LLMNR: yes
+          MulticastDNS: yes
+          DNS:
+            - 1.1.1.1
+            - 8.8.8.8
+            - 9.9.9.9

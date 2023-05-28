@@ -1,0 +1,40 @@
+- hosts: all,localhost
+  gather_facts: no
+  run_once: True
+  vars:
+    service_groups:
+      server: servers
+      tailscale: overlay_nodes
+      zerotier: overlay_nodes
+      wireguard: overlay_nodes
+      gost: edge_proxies
+      envoy: edge_proxies
+      nginx: edge_proxies
+      promtail: servers
+      jupyterhub: localhost
+      cockroachdb: localhost
+      vault-ssh-host: servers
+      systemd-resolved: overlay_nodes
+      ssh-port-forwarding: servers
+      rclone: servers
+  tasks:
+   - set_fact:
+        group: "{{ service_groups[services] }}"
+        service_and_group_dict: "{{ dict((services | split(',')) | zip(services | split(',') | map('extract', service_groups))) }}"
+     delegate_to: localhost
+     delegate_facts: yes
+   - debug:
+        msg: "Installing service {{ item.key }} to {{ item.value }}"
+     with_dict: "{{ hostvars.localhost.service_and_group_dict }}"
+
+- name: deploy new services
+  # TODO: ideally we should do the following to run multiple service tasks
+  # with_dict: "{{ hostvars.localhost.service_and_group_dict }}"
+  # hosts: "{{ item.value }}"
+  # tasks:
+  #   - ansible.builtin.include_tasks: "tasks/{{ item.key }}.yml"
+  # But ansible doesn't support with_dict in playbook. It failed with
+  # ERROR! 'with_dict' is not a valid attribute for a Play
+  hosts: "{{ hostvars.localhost.group }}"
+  tasks:
+    - ansible.builtin.include_tasks: "tasks/{{ services }}.yml"

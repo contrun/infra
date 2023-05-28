@@ -1,0 +1,41 @@
+- name: Get latest release
+  # Don't quote the command like "$("$my_var")" here. Ansible fails with
+  # ERROR! failed at splitting arguments, either an unbalanced jinja2 block or quotes:
+  ansible.builtin.shell: |
+    set -xeuo pipefail
+
+    latest_version="$(curl -s https://api.github.com/repos/go-gost/gost/releases | grep -oP '"tag_name": "\K(.*)(?=")' | sed 's/^v//' | head -n1)"
+    if [[ -n "$latest_version" ]] && command -v gost && gost -V | grep "$latest_version"; then
+        exit 0
+    fi
+    download_url=$(curl https://api.github.com/repos/go-gost/gost/releases | awk -F'"' '/browser_download_url.*linux-amd64.*gz/ {print $4}' | head -n1)
+    if [[ -z "$download_url" ]]; then
+        echo "Download url not found. Please Check out the output."
+    fi
+    filename="$(basename $download_url)"
+    curl -L "$download_url" > "$filename" 
+    gunzip -f "$filename"
+    rm -f "$filename"
+    chmod +x gost*
+    mv gost* /usr/local/bin/gost
+    gost -V
+  args:
+    executable: /bin/bash
+
+- name: Copy systemd unit
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - src: gost.service.j2
+      dest: /etc/systemd/system/gost.service
+  register: gost_unit
+
+- name: Start/reload gost
+  ansible.builtin.systemd:
+    name: gost
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  when: gost_unit.changed

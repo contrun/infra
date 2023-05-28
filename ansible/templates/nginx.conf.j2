@@ -1,0 +1,79 @@
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log notice;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+stream {
+    log_format format '$remote_addr [$time_iso8601] '
+                     '$protocol $status $bytes_sent $bytes_received '
+                     '$session_time "$upstream_addr" '
+                     '"$upstream_bytes_sent" "$upstream_bytes_received" "$upstream_connect_time"';
+    access_log  /var/log/nginx/access.log format;
+
+    map $ssl_preread_server_name $ssl_backend {
+{% if default_local_port is defined %}
+        ~^([^.]+\.)*(self)(\.[^.]+)*\.[^.]+\.[^.]+$   127.0.0.1:{{ default_local_port }};
+{% endif %}
+{% if backend_servers is defined %}
+{% for h in backend_servers %}
+{% if 'backends' in h %}
+{% for b in h.backends %}
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }}:$server_port;
+{% endfor %}
+{% endif %}
+{% if 'full_backends' in h %}
+{% for b in h.full_backends %}
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }};
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+        ~^([^.]+\.)*(?P<my_hostname>[^.]+)\.[^.]+\.[^.]+$   $my_hostname:$server_port;
+{% if default_backend_server is defined %}
+        default {{ default_backend_server }}:$server_port;
+{% endif %}
+    }
+
+    # TODO: this does not seem to work
+    map $hostname $backend {
+{% if default_local_port is defined %}
+        ~^([^.]+\.)*(self)(\.[^.]+)*\.[^.]+\.[^.]+$   127.0.0.1:{{ default_local_port }};
+{% endif %}
+{% if backend_servers is defined %}
+{% for h in backend_servers %}
+{% if 'backends' in h %}
+{% for b in h.backends %}
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }}:$server_port;
+{% endfor %}
+{% endif %}
+{% if 'full_backends' in h %}
+{% for b in h.full_backends %}
+        {% if 'full_host' in h %}{{ h.full_host }}{% else %}~^([^.]+\.)*(?P<my_hostname>{{ h.host }})\.[^.]+\.[^.]+${% endif %}  {{ b }};
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+        ~^([^.]+\.)*(?P<my_hostname>[^.]+)\.[^.]+\.[^.]+$   $my_hostname:$server_port;
+        default $ssl_backend;
+    }
+
+    resolver {{ resolvers | join(' ') }} ipv6=off;
+
+    server {
+{% for port in tcp_forwarding_ports %}
+        listen 0.0.0.0:{{ port }} reuseport;
+{% endfor %}
+{% for port in udp_forwarding_ports %}
+        listen 0.0.0.0:{{ port }} udp reuseport;
+{% endfor %}
+        proxy_pass $backend;
+        proxy_protocol on;
+        ssl_preread on;
+    }
+}

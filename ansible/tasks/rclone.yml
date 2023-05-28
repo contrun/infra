@@ -1,0 +1,56 @@
+- name: Install rclone
+  include_role:
+    role: stefangweichinger.ansible_rclone
+
+- name: Check rclone installed
+  shell: |
+    command -v rclone
+  ignore_errors: yes
+  register: check_rclone_installed
+
+- name: Fail fast on rclone installation failure
+  ansible.builtin.fail:
+    msg: The system may not be provisioned according to the CMDB status.
+  when: check_rclone_installed.rc != 0
+
+- name: Get rclone executable path
+  set_fact:
+    rclone_executable: "{{ check_rclone_installed.stdout_lines[0] }}"
+    rclone_config_base_path: ".config/rclone/rclone.conf"
+
+- name: Copy rclone config to remote
+  copy:
+    src: "{{ item }}"
+    dest: "{{ ansible_env.HOME }}/{{ rclone_config_base_path }}"
+    force: yes
+  with_fileglob:
+    - "{{ lookup('ansible.builtin.env', 'HOME') }}/{{ rclone_config_base_path }}"
+  register: rclone_config
+
+- name: Check that the rclone config file exists
+  stat:
+    path: "{{ ansible_env.HOME }}/{{ rclone_config_base_path }}"
+  register: config_stat_result
+
+- name: Set rclone_config_path
+  set_fact:
+    rclone_config_path: "{{ config_stat_result.stat.path }}"
+  when: config_stat_result.stat.exists
+
+- name: Copy systemd unit
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - src: rclone.service.j2
+      dest: /etc/systemd/system/rclone.service
+  register: rclone_unit
+
+- name: Start/reload rclone
+  ansible.builtin.systemd:
+    name: rclone
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  when: rclone_unit.changed or rclone_config.changed

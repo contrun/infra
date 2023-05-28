@@ -1,0 +1,22 @@
+---
+# This is a list of variables whose definitions are required.
+# I define those variable in inventory hosts file.
+# I commented below out because, the variables defined in the inventory hosts
+# have lower priority than playbook groups_vas
+
+# use_tailscale: true
+# use_zerotier: true
+# zerotier_register_short_hostname: true
+# configure_systemd_resolved: true
+# edge_proxy_tcp_forwarding_ports: [80, 2022, 2122, 2222, 443, 4443, 4000, 5678, 8080]
+# edge_proxy_udp_forwarding_ports: [80, 2022, 2122, 2222, 443, 4443, 4000, 5678, 8080]
+# edge_proxy_resolvers: ["127.0.0.53"]
+# edge_proxy_port_mappings: {}
+# use_nginx: true
+# use_envoy: false
+# enable_promtail: true
+# use_cockroachdb: true
+# edge_proxy_backend_ip_addresses: ""
+# gost_arguments: "-L=http2://:3443 -L=socks5://:3080 -L=ss://aes-128-cfb:123456@:3338"
+# configure_etc_hosts_for_wireguard: true
+use_rclone_config: false

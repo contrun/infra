@@ -1,0 +1,56 @@
+- name: Enable ip forwarding
+  become: true
+  block:
+    - ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+        sysctl_file: /etc/sysctl.conf
+
+    - ansible.posix.sysctl:
+        name: net.ipv6.conf.all.forwarding
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+        sysctl_file: /etc/sysctl.conf
+
+- name: Enable iptables masquerade
+  become: true
+  block:
+    - name: Masquerade ipv4 packets
+      when: ansible_default_ipv4.interface is defined
+      ansible.builtin.iptables:
+        table: nat
+        chain: POSTROUTING
+        out_interface: "{{ ansible_default_ipv4.interface }}"
+        jump: MASQUERADE
+        ip_version: "ipv4"
+
+    - name: Masquerade ipv6 packets
+      when: ansible_default_ipv6.interface is defined
+      ansible.builtin.iptables:
+        table: nat
+        chain: POSTROUTING
+        out_interface: "{{ ansible_default_ipv6.interface }}"
+        jump: MASQUERADE
+        ip_version: "ipv6"
+
+- name: Setup bbr
+  become: true
+  block:
+    - ansible.posix.sysctl:
+        name: net.core.default_qdisc
+        value: fq
+        sysctl_set: true
+        state: present
+        reload: true
+
+    - ansible.posix.sysctl:
+        name: net.ipv4.tcp_congestion_control
+        value: bbr
+        sysctl_set: true
+        state: present
+        reload: true

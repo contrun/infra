@@ -1,0 +1,35 @@
+- set_fact:
+    tcp_forwarding_ports: "{{ edge_proxy_tcp_forwarding_ports }}"
+    udp_forwarding_ports: "{{ edge_proxy_udp_forwarding_ports }}"
+    resolvers: "{{ edge_proxy_resolvers }}"
+    backend_ips: "{{ edge_proxy_backend_ip_addresses.split(',') }}"
+    port_mappings: "{{ edge_proxy_port_mappings }}"
+
+- name: Install and configure nginx
+  when:
+    - use_nginx
+  block:
+    - name: Install nginx
+      include_role:
+        name: nginxinc.nginx_core.nginx
+      vars:
+        nginx_debug_output: true
+        nginx_install_source_pcre: true
+        nginx_logrotate_conf_enable: true
+
+    - name: Copy templates to default directory
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "0644"
+      loop:
+        - src: nginx.conf.j2
+          dest: /etc/nginx/nginx.conf
+      register: nginx_config
+
+    - name: Start/reload Nginx Proxy
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
+      when: nginx_config.changed

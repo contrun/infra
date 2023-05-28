@@ -1,0 +1,8 @@
+[pi]
+192.168.43.112 ansible_user=pi
+
+[tmp]
+10.112.75.45 ansible_user=root
+
+[myhost]
+192.168.43.253 ansible_user=root

@@ -1,0 +1,9 @@
+---
+# defaults file for installation
+zfs_pool_name: "default"
+tmp_mount_path: "/tmpmount"
+root_password: "123"
+user_password: "456"
+user: "e"
+nixos_hostname: "cicd-x86_64-linux"
+nixos_system: "x86_64-linux"

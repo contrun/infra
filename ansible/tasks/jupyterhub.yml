@@ -1,0 +1,20 @@
+- name: Install jupyterhub
+  block:
+    - name: Decrypt secrets
+      template:
+        src: "{{ item }}"
+        dest: "{{ artifacts_dir }}"
+        decrypt: true
+      with_fileglob:
+        - "files/jupyterhub.yaml*"
+    - name: Install
+      community.kubernetes.helm:
+        name: jupyterhub
+        kubeconfig: "{{ kubeconfig }}"
+        atomic: false
+        chart_repo_url: "https://jupyterhub.github.io/helm-chart/"
+        chart_version: "0.9.1"
+        chart_ref: jupyterhub
+        release_namespace: "{{ default_namespace }}"
+        create_namespace: true
+        values_files: "{{ lookup('fileglob', '{{ artifacts_dir }}/jupyterhub.yaml*') }}"

@@ -1,0 +1,204 @@
+name: Build container images
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 16 * * 5"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - ".github/workflows/containers.yml"
+      - "containers/**/Dockerfile"
+      - "nix/containers.nix"
+
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - path: "containers/superset"
+            kind: "local_directory"
+          - path: "containers/archvnc"
+            kind: "local_directory"
+          - path: "contrun/kosyncsrv"
+            kind: "github_repository"
+          - path: "contrun/eudyptula"
+            kind: "github_repository"
+          - path: "bookwyrm-social/bookwyrm"
+            kind: "github_repository"
+          # TODO: add this back when https://github.com/200ok-ch/organice/issues/909 closed
+          # - path: "200ok-ch/organice"
+          #   kind: "github_repository"
+          - path: "elasticdog/tiddlywiki-docker"
+            kind: "github_repository"
+          - path: "logseq/logseq"
+            kind: "github_repository"
+          - path: "karlicoss/promnesia"
+            kind: "github_repository"
+          # TODO: repo moved to https://gitlab.com/banderovets/docker-perkeep
+          # - path: "mkorenkov/docker-perkeep"
+          #   kind: "github_repository"
+          # TODO: add this back when https://github.com/unigraph-dev/unigraph-dev/issues/461 closed
+          # - path: "unigraph-dev/unigraph-dev"
+          #   kind: "github_repository"
+          - path: "texlive"
+            kind: "flake_container"
+          - path: "tailscale"
+            kind: "flake_container"
+          # Images not working for now.
+          # - path: "DeviaVir/zenbot"
+          #   kind: "github_repository"
+
+    steps:
+      - name: Checkout ${{ matrix.path }}
+        if: matrix.kind == 'github_repository'
+        uses: actions/checkout@v3
+        with:
+          repository: "${{ matrix.path }}"
+          path: "${{ matrix.path }}"
+
+      - name: Checkout
+        if: matrix.kind != 'github_repository'
+        uses: actions/checkout@v3
+
+      - name: Setup nix
+        if: matrix.kind == 'flake_container'
+        uses: ./
+        with:
+          setup-cachix: true
+          setup-qemu: true
+
+      - name: Get docker environment
+        id: variables
+        run: |
+          set -xeuo pipefail
+
+          if [[ "${{ matrix.kind }}" != "flake_container" ]]; then
+              cd "${{ matrix.path }}"
+          fi
+
+          set_output() {
+              for v in "$@"; do
+                  echo "${v}=${!v}" >> $GITHUB_OUTPUT
+              done
+          }
+
+          case "${{ matrix.kind }}" in
+            "github_repository")
+              repository="${{ matrix.path }}"
+              ;;
+          esac
+          : "${repository:=}"
+          directory="${{ matrix.path }}"
+          name="$(basename "$directory")"
+          dockerfile="$directory/Dockerfile"
+          context="$directory"
+          platforms="linux/amd64,linux/arm64"
+
+          case "$repository" in
+            "elasticdog/tiddlywiki-docker")
+              name=tiddlywiki
+              ;;
+            "mkorenkov/docker-perkeep")
+              name=perkeep
+              ;;
+            "karlicoss/promnesia")
+              dockerfile="$directory/docker/docker_files/Dockerfile"
+              ;;
+            "unigraph-dev/unigraph-dev")
+              name=unigraph
+              platforms="linux/amd64"
+              ;;
+          esac
+
+          case "$directory" in
+            "containers/archvnc")
+              platforms="linux/amd64"
+              ;;
+          esac
+
+          set_output name repository platforms directory dockerfile context
+
+          github_username="${{ github.repository_owner }}"
+          : "${docker_hub_username:=$github_username}"
+          docker_hub_url="docker.io/$docker_hub_username/$name"
+          github_container_registry_url="ghcr.io/$github_username/$name"
+          git_commit_id="$(git log --format="%H" -n 1)"
+          docker_tags="$(echo {$docker_hub_url,$github_container_registry_url}:{latest,$git_commit_id} | tr ' ' ',' | xargs)"
+          docker_image_cache="$github_container_registry_url:cache"
+          set_output github_username docker_hub_username docker_image_cache docker_tags
+
+      - name: Patch source files
+        if: matrix.kind != 'flake_container'
+        working-directory: ${{ steps.variables.outputs.directory }}
+        run: |
+          case "${{ steps.variables.outputs.repository }}" in
+            "DeviaVir/zenbot")
+              sed -i 's/npm install/env LIBSASS_EXT=no npm install/g' Dockerfile
+              ;;
+            "mkorenkov/docker-perkeep")
+              sed -i '/git reset --hard "$PERKEEP_VERSION" && \\/d; s/ --sqlite=false//g' Dockerfile
+              ;;
+            "bookwyrm-social/bookwyrm")
+              # In the official Dockerfile, the code is not added to the container image.
+              # See https://github.com/bookwyrm-social/bookwyrm/blob/de0c50196ee74e062d9d023c536a7f8af458b2d2/Dockerfile
+              sed -i '/RUN pip install -r requirements.txt --no-cache-dir/a COPY . /app' Dockerfile
+              echo >> bookwyrm/settings.py
+              echo 'INSTALLED_APPS.append("django.contrib.sites")' >> bookwyrm/settings.py
+              echo 'SITE_ID = int(env("SITE_ID", 1))' >> bookwyrm/settings.py
+              ;;
+          esac
+
+      - name: Set up docker buildx
+        if: matrix.kind != 'flake_container'
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ steps.variables.outputs.docker_hub_username }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ steps.variables.outputs.github_username }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Build and push
+        if: matrix.kind != 'flake_container'
+        id: docker_build
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ steps.variables.outputs.context }}
+          file: ${{ steps.variables.outputs.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: ${{ steps.variables.outputs.platforms }}
+          tags: ${{ steps.variables.outputs.docker_tags }}
+          cache-from: ${{ steps.variables.outputs.docker_image_cache }}
+          cache-to: ${{ steps.variables.outputs.docker_image_cache }}
+
+      - name: Push container built by nix
+        if: matrix.kind == 'flake_container'
+        run: |
+          set -xeuo pipefail
+          nix profile install .#skopeo
+
+          tar="$(nix build --print-out-paths .#containers.${{ matrix.path }})"
+          
+          echo "${{ steps.variables.outputs.docker_tags }}" | tr ',' '\n' | while read tag; do
+            skopeo copy "docker-archive:$tar" "docker://$tag"
+          done
+

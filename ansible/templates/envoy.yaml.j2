@@ -1,0 +1,51 @@
+static_resources:
+  listeners:
+{% for port in edge_proxy_tcp_forwarding_ports %}
+    - name: "{{ "tcp_" ~ port }}"
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: {{ port }}
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.tcp_proxy
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
+                stat_prefix: "{{ "tcp_" ~ port }}"
+                cluster: "{{ "tcp_" ~ port }}"
+{% endfor %}
+  clusters:
+{% for port in edge_proxy_tcp_forwarding_ports %}
+    - name: "{{ "tcp_" ~ port }}"
+      connect_timeout: 5s
+      type: STATIC
+      lb_policy: ROUND_ROBIN
+      health_checks:
+        - tcp_health_check: {}
+          timeout: 1s
+          interval: 60s
+          unhealthy_threshold: 3
+          healthy_threshold: 3
+      load_assignment:
+        cluster_name: "{{ "tcp_" ~ port }}"
+        endpoints:
+{% for ip in backend_ips %}
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: {{ ip }}
+                      port_value: {{ edge_proxy_port_mappings["tcp_" ~ port] | default(port) }}
+{% endfor %}
+      transport_socket_matches:
+        - name: "defaultToPlaintext"
+          match: {}
+          transport_socket:
+            name: envoy.transport_sockets.upstream_proxy_protocol
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.proxy_protocol.v3.ProxyProtocolUpstreamTransport
+              config:
+                version: V2
+              transport_socket:
+                name: envoy.transport_sockets.raw_buffer
+{% endfor %}

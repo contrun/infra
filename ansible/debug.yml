@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: no
+  run_once: yes
+  tasks:
+    - ansible.builtin.debug:
+        var:
+          hostvars
+    - ansible.builtin.debug:
+        msg: "Dumping {{ hostvars }}"

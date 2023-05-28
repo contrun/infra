@@ -1,0 +1,146 @@
+name: Build large nix packages
+
+on:
+  # TODO: This does not need to run everytime "Build nixos profiles" runs
+  workflow_run:
+    workflows:
+      - "Build nixos profiles"
+    types:
+      - "completed"
+  workflow_dispatch:
+    inputs:
+      update-flake:
+        description: "whether to update nix flake inputs"
+        required: false
+        default: "no"
+  workflow_call:
+    inputs:
+      update-flake:
+        description: "whether to update nix flake inputs"
+        required: false
+        type: string
+        default: "no"
+  push:
+    branches:
+      - "x86_64-linux"
+      - "aarch64-linux"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - type: "expression"
+            # TODO: any better way to build overrided virtualbox derivation?
+            system: x86_64-linux
+            experimental: false
+            data: |
+              with (builtins.getFlake (builtins.toString ./.));
+              let
+                systemPackages = nixosConfigurations.maximal-x86_64-linux.config.environment.systemPackages;
+                packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
+                package = builtins.elemAt packages 0;
+              in package
+          - type: "expression"
+            system: x86_64-linux
+            experimental: true
+            data: |
+              with (builtins.getFlake (builtins.toString ./.)); packages.x86_64-linux.dvm
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "config.boot.kernelPackages.kernel"
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "pkgs.clojure-lsp"
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "pkgs.keepassxc"
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "pkgs.texlab"
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "pkgs.llvmPackages_latest.llvm"
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "pkgs.myPackages.emacs"
+          - type: "package"
+            system: x86_64-linux
+            experimental: false
+            data: "pkgs.myPackages.texLive"
+
+    steps:
+      - name: Set up common variables
+        id: variables
+        env:
+          DATA: ${{ matrix.data }}
+        run: |
+          set_output() {
+              for v in "$@"; do
+                  echo "::set-output name=$v::${!v}"
+              done
+          }
+
+          system=${{ matrix.system }}
+          freeDiskSpace=${{ matrix.free-disk-space }}
+          shouldSkip=false
+          case '${{ github.event_name }}' in
+              'push')
+                  if [[ "${{ github.ref_name }}" != "${{ matrix.system }}" ]]; then
+                      shouldSkip=true
+                  fi
+                  ;;
+              *)
+                  :
+                  ;;
+          esac
+
+          case '${{ matrix.type }}' in
+              'expression')
+                  nixExpressionBase64="$(base64 -w 0 <<< "$DATA")"
+                  ;;
+              'package')
+                  nixExpressionBase64="$(base64 -w 0 <<< 'with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.maximal-${{ matrix.system }}.${{ matrix.data }}')"
+                  ;;
+              *)
+                  exit 1
+                  ;;
+          esac
+
+          set_output system freeDiskSpace shouldSkip nixExpressionBase64
+
+      - name: Checkout repository
+        if: steps.variables.outputs.shouldSkip != 'true'
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup nix
+        if: steps.variables.outputs.shouldSkip != 'true'
+        uses: ./
+        with:
+          setup-cachix: true
+          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          setup-qemu: true
+          free-disk-space: false
+          nix-systems: "${{ steps.variables.outputs.system }}"
+
+      - name: Update nix flake inputs
+        if: github.event.inputs.update-flake != 'no' && github.event.inputs.update-flake != ''
+        run: |
+          nix flake update
+
+      - name: Build the package
+        if: steps.variables.outputs.shouldSkip != 'true'
+        run: |
+          base64 -d <<< "${{ steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
+          nix build -f temp.nix

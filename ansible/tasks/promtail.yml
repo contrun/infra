@@ -1,0 +1,81 @@
+- name: Install and configure promtail
+  when:
+    - enable_promtail
+  block:
+    - assert:
+        that:
+          - loki_url is defined
+    - name: Install promtail
+      include_role:
+        name: patrickjahns.promtail
+      vars:
+        promtail_user_additional_groups: "adm,utmp,root,syslog,systemd-journal"
+        promtail_config_server:
+          http_listen_port: 9080
+          grpc_listen_port: 9081
+        promtail_config_clients:
+          - url: "{{ loki_url }}"
+            external_labels:
+              host: "{{ ansible_hostname }}"
+              nodename: "{{ ansible_hostname }}"
+        promtail_config_positions:
+          filename: "{{ promtail_positions_directory }}/positions.yaml"
+          sync_period: "60s"
+
+        promtail_config_scrape_configs:
+          - job_name: system
+            static_configs:
+              - targets:
+                  - localhost
+                labels:
+                  job: varlogs
+                  __path__: /var/log/**/*log
+
+          - job_name: journal
+            journal:
+              labels:
+                job: journald
+              max_age: 12h
+            relabel_configs:
+              - source_labels:
+                  - __journal__boot_id
+                target_label: boot_id
+              - source_labels:
+                  - __journal__comm
+                target_label: command
+              - source_labels:
+                  - __journal__cmdline
+                target_label: command_line
+              - source_labels:
+                  - __journal__exe
+                target_label: executable
+              - source_labels:
+                  - __journal__hostname
+                target_label: nodename
+              - source_labels:
+                  - __journal__systemd_unit
+                target_label: systemd_unit
+              - source_labels:
+                  - __journal__systemd_user_unit
+                target_label: systemd_user_unit
+              - source_labels:
+                  - __journal__syslog_identifier
+                target_label: syslog_identifier
+              - source_labels:
+                  - __journal_priority
+                target_label: journal_priority
+              - source_labels:
+                  - __journal__transport
+                target_label: journal_transport
+              - source_labels:
+                  - __journal_image_name
+                target_label: container_image_name
+              - source_labels:
+                  - __journal_container_name
+                target_label: container_name
+              - source_labels:
+                  - __journal_container_id
+                target_label: container_id
+              - source_labels:
+                  - __journal_container_tag
+                target_label: container_tag

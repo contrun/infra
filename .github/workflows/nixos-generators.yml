@@ -1,0 +1,93 @@
+---
+name: Generate nixos images
+
+on:
+  workflow_dispatch:
+    inputs:
+      update-nix-inputs:
+        description: "whether to update nix flake inputs"
+        required: false
+        default: "yes"
+      deploy-to-nodes:
+        description: "whether to deploy to nodes"
+        required: false
+        default: "yes"
+  pull_request:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - ".github/workflows/nixos-generators.yml"
+      - "*.nix"
+      - "**/*.nix"
+      - "nix/**"
+      - "flake.lock"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - ".github/workflows/nixos-generators.yml"
+      - "*.nix"
+      - "**/*.nix"
+      - "nix/**"
+      - "flake.lock"
+  schedule:
+    - cron: "0 16 * * 1"
+    - cron: "0 16 * * 3"
+    - cron: "0 16 * * 5"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache Vagrant boxes
+        uses: actions/cache@v3
+        with:
+          path: ~/.vagrant.d/boxes
+          key: vagrant-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            vagrant-
+
+      - name: Setup nix
+        uses: ./
+        with:
+          setup-cachix: false
+          setup-qemu: true
+          system-features: "kvm"
+          free-disk-space: false
+
+      - name: Build vagrant box
+        run: |
+          nix build .#nixos-generators.vagrant
+
+      - name: Import the vm
+        run: |
+          vagrant box add --force --provider virtualbox nixos result
+          vagrant init nixos
+
+      - name: Bring up the VM
+        run: |
+          # Ubuntu frunner from github actions does not support vagrant
+          # vagrant up --provision
+          :
+
+      - name: Login to Vagrant Cloud
+        run: vagrant cloud auth login --token "${{ secrets.VAGRANTCLOUD_TOKEN }}"
+
+      - name: Publish the box to Vagrant Cloud
+        run: >
+          vagrant cloud publish
+          -s "Nixos Vagrant box (github.com/contrun/infra)"
+          --version-description "This version has been released automatically with GitHub Actions, commit ${{ github.sha }}"
+          --no-private --release --force
+          contrun/nixos "$(date +%Y.%m.%d.%H%M)" virtualbox ./result

@@ -1,0 +1,10 @@
+- name: Install zerotier one
+  when:
+    - use_zerotier
+  become: true
+  block:
+    - assert:
+        that:
+          - zerotier_network_id is defined
+    - include_role:
+        role: ajaykumar4.zerotier

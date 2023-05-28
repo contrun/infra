@@ -1,0 +1,10 @@
+- name: Install tailscale
+  when:
+    - use_tailscale
+  become: true
+  block:
+    - set_fact:
+        tailscale_up_skip: true
+      when: tailscale_authkey is not defined and tailscale_up_skip is not defined
+    - include_role:
+        role: artis3n.tailscale

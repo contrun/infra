@@ -1,0 +1,11 @@
+[Unit]
+Description=rclone
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart={{ rclone_executable }} {%- if rclone_config_path is defined and use_rclone_config %} --config {{ rclone_config_path | quote }}{% endif %} {{ rclone_arguments | default("rcd --rc-web-gui --rc-web-gui-no-open-browser") }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

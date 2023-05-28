@@ -1,0 +1,51 @@
+- name: Add the user ssh-port-forwarding
+  ansible.builtin.user:
+    name: ssh-port-forwarding
+    comment: For ssh port forwarding
+    shell: /bin/false
+
+- name: Add sshd config
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    backup: yes
+    block: |
+      Match User ssh-port-forwarding
+        # PermitTunnel no
+        # GatewayPorts no
+        AllowTcpForwarding yes
+        AllowStreamLocalForwarding yes
+        X11Forwarding no
+        AllowAgentForwarding no
+        StreamLocalBindMask 0110
+        StreamLocalBindUnlink yes
+  register: sshd_config
+
+- name: Set authorized keys taken from url
+  ansible.posix.authorized_key:
+    user: ssh-port-forwarding
+    state: present
+    key: https://github.com/contrun.keys
+
+- name: Set authorized keys from local file
+  ansible.posix.authorized_key:
+    user: ssh-port-forwarding
+    state: present
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - "/run/secrets/port-forwarding-id_ed25519.pub"
+    - "/run/secrets/id_ed25519.pub"
+    - "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh/id_*.pub"
+
+- name: Start/reload ssh
+  when: sshd_config.changed
+  block:
+    - name: Check sshd config
+      shell: sshd -T
+      register: current_version
+      failed_when: current_version.rc != 0
+
+    - name: Start/reload ssh
+      service:
+        name: ssh
+        state: restarted
+        enabled: yes

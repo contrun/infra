@@ -1,0 +1,183 @@
+# Taken liberally from https://github.com/malob/nixpkgs/blob/master/.github/workflows/ci.yml
+name: Build nixos profiles
+
+on:
+  workflow_dispatch:
+    inputs:
+      update-nix-inputs:
+        description: "whether to update nix flake inputs"
+        required: false
+        default: "yes"
+      deploy-to-nodes:
+        description: "whether to deploy to nodes"
+        required: false
+        default: "yes"
+  pull_request:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - "*.nix"
+      - "**/*.nix"
+      - "nix/**"
+      - "flake.lock"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - ".github/workflows/nix.yml"
+      - "*.nix"
+      - "**/*.nix"
+      - "nix/**"
+      - "flake.lock"
+  schedule:
+    - cron: "0 16 * * 1"
+    - cron: "0 16 * * 3"
+    - cron: "0 16 * * 5"
+
+jobs:
+  nixos:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: "cicd-x86_64-linux"
+            nix-system: "x86_64-linux"
+            deploy: false
+            push-updates: false
+          - host: "mdq"
+            nix-system: "x86_64-linux"
+            deploy: true
+            push-updates: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup nix
+        uses: ./
+        with:
+          setup-cachix: true
+          cachix-push-filter: "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$"
+          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          setup-qemu: true
+          free-disk-space: true
+          nix-systems: "${{ matrix.nix-system }}"
+
+      - name: Configure git
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Update nix flake inputs
+        id: update-nix-inputs
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')
+        run: |
+          set -xeuo pipefail
+          echo '::set-output name=didTryToUpdateNixInputs::yes'
+          nix flake update
+
+          # Remove broken packages in ./nix/broken-packages.nix when the package can now be built.
+          # TODO: x86 and arm may have different set of broken packages.
+          list="$(nix eval --impure --raw --expr 'builtins.toJSON (import ./nix/broken-packages.nix)' | jq --raw-output '.[]')"
+          xargs -I '{}' bash -c 'if ! nix build ".#{}"; then echo {} >> ./nix/broken-packages; fi' <<< "$list"
+          jq --raw-input . < ./nix/broken-packages | jq --slurp . | jq 'sort_by(.) | unique' > ./nix/broken-packages.json
+          nix eval --impure --expr 'builtins.fromJSON (builtins.readFile ./nix/broken-packages.json)' > ./nix/broken-packages.nix
+
+          git status
+          if ! git diff; then
+              echo "Abort now. No updates available."
+              echo '::set-output name=shouldAbort::yes'
+          fi
+          git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+      - name: Set up common variables
+        if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
+        id: variables
+        run: |
+          echo '::set-output name=shouldBuildNixos::yes'
+
+          if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
+              echo '::set-output name=shouldPushUpdates::yes'
+          fi
+
+          if [[ "${{ matrix.deploy }}" == "true" ]]; then
+              case '${{ github.event_name }}' in
+                  'push')
+                      echo '::set-output name=shouldDeployToNode::yes'
+                      ;;
+                  'workflow_dispatch')
+                      if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
+                          echo '::set-output name=shouldDeployToNode::yes'
+                      fi
+                      ;;
+                  *)
+                      :
+                      ;;
+              esac
+          fi
+
+      - name: Build profile for ${{ matrix.host }}
+        if: steps.variables.outputs.shouldBuildNixos == 'yes'
+        run: |
+          if ! make HOST=${{ matrix.host }} nixos-build nixos-profile-path-info; then
+              df -h
+              sudo du -h -x --exclude=/tmp --threshold=10M --max-depth=3 / | sort -k1 -h
+              exit 1
+          fi
+
+      - name: Import vault token
+        if: steps.variables.outputs.shouldDeployToNode == 'yes'
+        uses: hashicorp/vault-action@v2.5.0
+        with:
+          method: "approle"
+          url: "${{ secrets.VAULT_ADDR }}"
+          roleId: "${{ secrets.VAULT_ROLE_ID }}"
+          secretId: "${{ secrets.VAULT_SECRET_ID }}"
+          exportToken: true
+          exportEnv: true
+          secrets: |
+            ssh-host-signer/config/ca public_key | SSH_CA_PUBLIC_KEY ;
+
+      - name: Deploy to node
+        if: steps.variables.outputs.shouldDeployToNode == 'yes'
+        env:
+          VAULT_ADDR: "${{ secrets.VAULT_ADDR }}"
+          SSH_CONFIG: "${{ secrets.SSH_CONFIG }}"
+        run: |
+          set -euo pipefail
+          nix profile install -f . vault wstunnel openssh
+          echo y | ssh-keygen -f $HOME/.ssh/id_ed25519 -t ed25519 -P ""
+          vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
+          echo "$SSH_CONFIG" >> ~/.ssh/config
+          echo "@cert-authority * $SSH_CA_PUBLIC_KEY" >> ~/.ssh/known_hosts
+
+          # Following step require this.
+          find ~ -wholename '*/dist/main/push-paths.sh'
+          find ~ -wholename '*/dist/main/push-paths.sh' -exec {} "$HOME/.nix-profile/bin/cachix" "${{ github.repository_owner }}" "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$" \;
+
+          make NOFASTCONNECTION=y EXTRADEPLOYFLAGS="--ssh-user=$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" HOST="${{ matrix.host }}" nixos-deploy
+
+      - name: Push commit with updated inputs
+        if: steps.variables.outputs.shouldPushUpdates == 'yes'
+        run: |
+          # Flake upstreams may update dependencies. In that case, `flake.lock` may have been changed.
+          if git --no-pager diff; then
+              git commit --all --amend --no-edit
+          fi
+          # Tackle a race case that master branch has been updated while running this workflow.
+          git pull --rebase
+          # Only push to master branch when we are building x86_64-linux
+          if [[ '${{ matrix.push-updates }}' == 'x86_64-linux' ]]; then git push; fi
+          git switch -C ${{ matrix.nix-system }}
+          git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}
