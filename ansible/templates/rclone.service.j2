@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart={{ rclone_executable }} {%- if rclone_config_path is defined and use_rclone_config %} --config {{ rclone_config_path | quote }}{% endif %} {{ rclone_arguments | default("rcd --rc-web-gui --rc-web-gui-no-open-browser") }}
+ExecStart={{ rclone_executable }} {%- if rclone_config_path is defined and use_rclone_config %} --config {{ rclone_config_path | quote }}{% endif %} {{ rclone_arguments | default("rcd --rc-web-gui --rc-web-gui-no-open-browser") -}} {%- if rclone_htpasswd_path is defined and use_rclone_htpasswd %} --rc-htpasswd {{ rclone_htpasswd_path | quote }}{% endif %} 
 Restart=always
 
 [Install]

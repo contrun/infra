@@ -37,6 +37,19 @@
     rclone_config_path: "{{ config_stat_result.stat.path }}"
   when: config_stat_result.stat.exists
 
+- name: Write rclone htpasswd file
+  ansible.builtin.copy:
+    content: "{{ rclone_htpasswd }}"
+    dest: "{{ ansible_env.HOME }}/{{ rclone_config_base_path | dirname }}/rclone.htpasswd"
+    mode: 0600
+  when: rclone_htpasswd is defined
+  register: rclone_htpasswd_result
+
+- name: Set rclone_htpasswd_path
+  set_fact:
+    rclone_htpasswd_path: "{{ rclone_htpasswd_result.dest }}"
+  when: rclone_htpasswd is defined
+
 - name: Copy systemd unit
   template:
     src: "{{ item.src }}"

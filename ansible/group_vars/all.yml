@@ -2,7 +2,7 @@
 # This is a list of variables whose definitions are required.
 # I define those variable in inventory hosts file.
 # I commented below out because, the variables defined in the inventory hosts
-# have lower priority than playbook groups_vas
+# have lower priority than playbook groups_vars
 
 # use_tailscale: true
 # use_zerotier: true
@@ -19,4 +19,5 @@
 # edge_proxy_backend_ip_addresses: ""
 # gost_arguments: "-L=http2://:3443 -L=socks5://:3080 -L=ss://aes-128-cfb:123456@:3338"
 # configure_etc_hosts_for_wireguard: true
-use_rclone_config: false
+# use_rclone_config: false
+# use_rclone_htpasswd: false
