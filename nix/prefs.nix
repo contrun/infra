@@ -535,7 +535,7 @@ let
     enablePulseaudio = !self.enablePipewire;
     enableSlock = true;
     enableZSH = true;
-    enableFish = true;
+    enableFish = false;
     enableJava = !self.isMinimalSystem;
     enableSysdig = !self.isMinimalSystem;
     enableCcache = true;
