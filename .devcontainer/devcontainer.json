@@ -12,7 +12,7 @@
     // Set up global gitignore for direnv.
     "init-git": "mkdir -p ~/.config/git && printf '.direnv/\\n.envrc\\n' > ~/.config/git/ignore && git config --global core.excludesfile ~/.config/git/ignore",
     // Install, set up and allow direnv in workspace.
-    "install-direnv": "set -xeuo pipefail; nix profile install nixpkgs#direnv nixpkgs#nix-direnv && mkdir -p ~/.config/direnv && echo 'source $HOME/.nix-profile/share/nix-direnv/direnvrc' >> ~/.config/direnv/direnvrc && cp .envrc.recommended .envrc && direnv allow && echo 'eval \"$(direnv hook bash)\"' >> ~/.bashrc",
+    "install-direnv": "set -xeuo pipefail; nix profile install nixpkgs#direnv nixpkgs#nix-direnv && mkdir -p ~/.config/direnv && echo 'source $HOME/.nix-profile/share/nix-direnv/direnvrc' >> ~/.config/direnv/direnvrc && echo 'use flake' >> .envrc && direnv allow && echo 'eval \"$(direnv hook bash)\"' >> ~/.bashrc && echo 'eval \"$(direnv hook zsh)\"' >> ~/.zshrc",
     // Run `print-dev-env` to build `devShells.${system}.default`.
     "build-dev-env": "nix print-dev-env > /dev/null"
   },
