@@ -13,6 +13,9 @@
     "init-git": "mkdir -p ~/.config/git && printf '.direnv/\\n.envrc\\n' > ~/.config/git/ignore && git config --global core.excludesfile ~/.config/git/ignore",
     // Install, set up and allow direnv in workspace.
     "install-direnv": "set -xeuo pipefail; nix profile install nixpkgs#direnv nixpkgs#nix-direnv && mkdir -p ~/.config/direnv && echo 'source $HOME/.nix-profile/share/nix-direnv/direnvrc' >> ~/.config/direnv/direnvrc && echo 'use flake' >> .envrc && direnv allow && echo 'eval \"$(direnv hook bash)\"' >> ~/.bashrc && echo 'eval \"$(direnv hook zsh)\"' >> ~/.zshrc",
+    // Fix error like error: suspicious ownership or permission on '/nix/store/ywzcczbp6n4c944jrk99vi7wjws0kx2n-a.drv.chroot/nix/store/5jz2jpipwd0y7iixvi3kax0ydr9zp6cq-a' for output 'out'; rejecting this build output
+    // See [Nix doesn't work in Github Codespaces · Issue #6680 · NixOS/nix · GitHub](https://github.com/NixOS/nix/issues/6680#issuecomment-1230902525)
+    "fix-tmp-facl": "nix shell nixpkgs#acl --command sudo setfacl -k /tmp",
     // Run `print-dev-env` to build `devShells.${system}.default`.
     "build-dev-env": "nix print-dev-env > /dev/null"
   },
