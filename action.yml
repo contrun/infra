@@ -1,5 +1,10 @@
 name: "Setup nix"
 inputs:
+  setup-magic-nix-cache:
+    description: "whether to set up magic-nix-cache"
+    default: true
+    required: false
+    type: boolean
   setup-cachix:
     description: "whether to set up cachix"
     default: true
@@ -51,6 +56,12 @@ runs:
           access-tokens = github.com=${{ github.token }}
           substituters = https://cache.nixos.org
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+    - name: Setup magic-nix-cache
+      if: format('{0}', inputs.setup-cachix) == 'true'
+      uses: DeterminateSystems/magic-nix-cache-action@v1
+      with:
+        diagnostic-endpoint: ""
 
     - name: Setup cachix
       # What the fuck is this shit? See https://github.com/actions/runner/issues/1483
