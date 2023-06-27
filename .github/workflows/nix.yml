@@ -3,6 +3,8 @@ name: Build nixos profiles
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  # Try to only run one job when workflow is triggered by workflow dispatch
+  # TODO: Does not work.
   cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
 
 on:
@@ -94,7 +96,7 @@ jobs:
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.update-nix-inputs == 'yes')
         run: |
           set -xeuo pipefail
-          echo '::set-output name=didTryToUpdateNixInputs::yes'
+          echo "didTryToUpdateNixInputs=yes" >> $GITHUB_OUTPUT
           nix flake update
 
           # Remove broken packages in ./nix/broken-packages.nix when the package can now be built.
@@ -107,7 +109,7 @@ jobs:
           git status
           if ! git diff; then
               echo "Abort now. No updates available."
-              echo '::set-output name=shouldAbort::yes'
+              echo "shouldAbort=yes" >> $GITHUB_OUTPUT
           fi
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -119,22 +121,22 @@ jobs:
           if [[ "${{ github.event_name }}" == 'workflow_dispatch' && -n "${{ github.event.inputs.profile-to-build }}" ]]; then
               host="${{ github.event.inputs.profile-to-build }}"
           fi
-          echo "::set-output name=host::$host"
+          echo "host=$host" >> $GITHUB_OUTPUT
 
-          echo '::set-output name=shouldBuildNixos::yes'
+          echo "shouldBuildNixos=yes" >> $GITHUB_OUTPUT
 
           if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
-              echo '::set-output name=shouldPushUpdates::yes'
+              echo "shouldPushUpdates=yes" >> $GITHUB_OUTPUT
           fi
 
           if [[ "${{ matrix.deploy }}" == "true" ]]; then
               case '${{ github.event_name }}' in
                   'push')
-                      echo '::set-output name=shouldDeployToNode::yes'
+                      echo "shouldDeployToNode=yes" >> $GITHUB_OUTPUT
                       ;;
                   'workflow_dispatch')
                       if [[ '${{ github.event.inputs.deploy-to-nodes }}' == 'yes' ]]; then
-                          echo '::set-output name=shouldDeployToNode::yes'
+                          echo "shouldDeployToNode=yes" >> $GITHUB_OUTPUT
                       fi
                       ;;
                   *)
