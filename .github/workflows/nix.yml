@@ -1,6 +1,10 @@
 # Taken liberally from https://github.com/malob/nixpkgs/blob/master/.github/workflows/ci.yml
 name: Build nixos profiles
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -109,6 +113,12 @@ jobs:
         if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
         id: variables
         run: |
+          host="${{ matrix.host }}"
+          if [[ "${{ github.event_name }}" == 'workflow_dispatch' && -n "${{ github.event.inputs.profile-to-build }}" ]]; then
+              host="${{ github.event.inputs.profile-to-build }}"
+          fi
+          echo "::set-output name=host::$host"
+
           echo '::set-output name=shouldBuildNixos::yes'
 
           if [[ '${{ steps.update-nix-inputs.outputs.didTryToUpdateNixInputs }}' == 'yes' ]]; then
@@ -131,19 +141,10 @@ jobs:
               esac
           fi
 
-      - name: Build profile for ${{ github.event.inputs.profile-to-build }}
-        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.profile-to-build != '')
-        run: |
-          if ! make HOST=${{ github.event.inputs.profile-to-build }} nixos-build nixos-profile-path-info; then
-              df -h
-              sudo du -h -x --exclude=/tmp --threshold=10M --max-depth=3 / | sort -k1 -h
-              exit 1
-          fi
-
-      - name: Build profile for ${{ matrix.host }}
+      - name: Build profile for ${{ steps.variables.outputs.host }}
         if: steps.variables.outputs.shouldBuildNixos == 'yes'
         run: |
-          if ! make HOST=${{ matrix.host }} nixos-build nixos-profile-path-info; then
+          if ! make HOST=${{ steps.variables.outputs.host }} nixos-build nixos-profile-path-info; then
               df -h
               sudo du -h -x --exclude=/tmp --threshold=10M --max-depth=3 / | sort -k1 -h
               exit 1
