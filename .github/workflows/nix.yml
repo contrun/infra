@@ -64,11 +64,6 @@ jobs:
             deploy: false
             free-disk-space: false
             push-updates: false
-          - host: "mdq"
-            nix-system: "x86_64-linux"
-            deploy: true
-            free-disk-space: true
-            push-updates: true
 
     steps:
       - name: Checkout repository

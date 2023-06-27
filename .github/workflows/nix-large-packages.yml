@@ -22,6 +22,10 @@ on:
         default: "no"
   push:
     branches:
+      - master
+      - main
+      - actions
+      - ci
       - "x86_64-linux"
       - "aarch64-linux"
 
@@ -35,8 +39,6 @@ jobs:
         include:
           - type: "expression"
             # TODO: any better way to build overrided virtualbox derivation?
-            system: x86_64-linux
-            experimental: false
             data: |
               with (builtins.getFlake (builtins.toString ./.));
               let
@@ -44,39 +46,36 @@ jobs:
                 packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
                 package = builtins.elemAt packages 0;
               in package
+            experimental: false
           - type: "expression"
-            system: x86_64-linux
-            experimental: true
             data: |
               with (builtins.getFlake (builtins.toString ./.)); packages.x86_64-linux.dvm
+            experimental: true
+          - type: "nixosConfiguration"
+            data: "mdq"
+            experimental: true
+            free-disk-space: true
           - type: "package"
-            system: x86_64-linux
-            experimental: false
             data: "config.boot.kernelPackages.kernel"
-          - type: "package"
-            system: x86_64-linux
             experimental: false
+          - type: "package"
             data: "pkgs.clojure-lsp"
-          - type: "package"
-            system: x86_64-linux
             experimental: false
+          - type: "package"
             data: "pkgs.keepassxc"
-          - type: "package"
-            system: x86_64-linux
             experimental: false
+          - type: "package"
             data: "pkgs.texlab"
-          - type: "package"
-            system: x86_64-linux
             experimental: false
+          - type: "package"
             data: "pkgs.llvmPackages_latest.llvm"
-          - type: "package"
-            system: x86_64-linux
             experimental: false
+          - type: "package"
             data: "pkgs.myPackages.emacs"
-          - type: "package"
-            system: x86_64-linux
             experimental: false
+          - type: "package"
             data: "pkgs.myPackages.texLive"
+            experimental: false
 
     steps:
       - name: Set up common variables
@@ -84,18 +83,22 @@ jobs:
         env:
           DATA: ${{ matrix.data }}
         run: |
+          set -xeuo pipefail
+
           set_output() {
               for v in "$@"; do
-                  echo "::set-output name=$v::${!v}"
+                  echo "$v=${!v}" >> $GITHUB_OUTPUT
               done
           }
 
           system=${{ matrix.system }}
+          system="${system:-x86_64-linux}"
           freeDiskSpace=${{ matrix.free-disk-space }}
+          freeDiskSpace="${freeDiskSpace:-false}"
           shouldSkip=false
           case '${{ github.event_name }}' in
               'push')
-                  if [[ "${{ github.ref_name }}" != "${{ matrix.system }}" ]]; then
+                  if printf '%s\0' "x86_64-linux" "aarch64-linux" | grep -Fxz -- "${{ github.ref_name }}" && [[ "${{ github.ref_name }}" != "${system}" ]]; then
                       shouldSkip=true
                   fi
                   ;;
@@ -109,7 +112,10 @@ jobs:
                   nixExpressionBase64="$(base64 -w 0 <<< "$DATA")"
                   ;;
               'package')
-                  nixExpressionBase64="$(base64 -w 0 <<< 'with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.maximal-${{ matrix.system }}.${{ matrix.data }}')"
+                  nixExpressionBase64="$(base64 -w 0 <<< "with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.maximal-${system}.${{ matrix.data }}")"
+                  ;;
+              'nixosConfiguration')
+                  nixExpressionBase64="$(base64 -w 0 <<< 'with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.${{ matrix.data }}.config.system.build.toplevel')"
                   ;;
               *)
                   exit 1
@@ -131,7 +137,7 @@ jobs:
           setup-cachix: true
           cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           setup-qemu: true
-          free-disk-space: false
+          free-disk-space:  ${{ steps.variables.outputs.freeDiskSpace }}
           nix-systems: "${{ steps.variables.outputs.system }}"
 
       - name: Update nix flake inputs
