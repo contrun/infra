@@ -12,6 +12,10 @@ on:
         description: "whether to deploy to nodes"
         required: false
         default: "yes"
+      profile-to-build:
+        description: "which profile to build"
+        required: false
+        default: ""
   pull_request:
     branches:
       - master
@@ -125,6 +129,15 @@ jobs:
                       :
                       ;;
               esac
+          fi
+
+      - name: Build profile for ${{ github.event.inputs.profile-to-build }}
+        if: (github.event_name == 'workflow_dispatch' && github.event.inputs.profile-to-build != '')
+        run: |
+          if ! make HOST=${{ github.event.inputs.profile-to-build }} nixos-build nixos-profile-path-info; then
+              df -h
+              sudo du -h -x --exclude=/tmp --threshold=10M --max-depth=3 / | sort -k1 -h
+              exit 1
           fi
 
       - name: Build profile for ${{ matrix.host }}
