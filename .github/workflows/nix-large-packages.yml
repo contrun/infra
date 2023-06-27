@@ -1,20 +1,22 @@
 name: Build large nix packages
 
 on:
-  # TODO: This does not need to run everytime "Build nixos profiles" runs
-  workflow_run:
-    workflows:
-      - "Build nixos profiles"
-    types:
-      - "completed"
   workflow_dispatch:
     inputs:
+      branch:
+        description: "which branch to checkout"
+        required: false
+        type: string
       update-flake:
         description: "whether to update nix flake inputs"
         required: false
         default: "no"
   workflow_call:
     inputs:
+      branch:
+        description: "which branch to checkout"
+        required: false
+        type: string
       update-flake:
         description: "whether to update nix flake inputs"
         required: false
@@ -128,6 +130,7 @@ jobs:
         if: steps.variables.outputs.shouldSkip != 'true'
         uses: actions/checkout@v3
         with:
+          ref: "${{ github.event.inputs.branch || '' }}"
           submodules: true
 
       - name: Setup nix

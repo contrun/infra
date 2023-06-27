@@ -1,12 +1,6 @@
 # Taken liberally from https://github.com/malob/nixpkgs/blob/master/.github/workflows/ci.yml
 name: Build nixos profiles
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
-  # Try to only run one job when workflow is triggered by workflow dispatch
-  # TODO: Does not work.
-  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
-
 on:
   workflow_dispatch:
     inputs:
@@ -21,7 +15,7 @@ on:
       profile-to-build:
         description: "which profile to build"
         required: false
-        default: ""
+        default: "cicd-x86_64-linux"
   pull_request:
     branches:
       - master
@@ -53,7 +47,7 @@ on:
     - cron: "0 16 * * 5"
 
 jobs:
-  nixos:
+  build-nixos:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -106,7 +100,10 @@ jobs:
               echo "Abort now. No updates available."
               echo "shouldAbort=yes" >> $GITHUB_OUTPUT
           fi
+          branch="$(date -u +"auto-%Y-%m-%dT%H-%M-%SZ")"
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+          git switch -C "$branch"
 
       - name: Set up common variables
         if: steps.update-nix-inputs.outputs.shouldAbort != 'yes'
@@ -190,7 +187,26 @@ jobs:
           fi
           # Tackle a race case that master branch has been updated while running this workflow.
           git pull --rebase
-          # Only push to master branch when we are building x86_64-linux
-          if [[ '${{ matrix.push-updates }}' == 'x86_64-linux' ]]; then git push; fi
+          git push --force-with-lease origin ${{ steps.variables.outputs.branch }}:${{ steps.variables.outputs.branch }}
           git switch -C ${{ matrix.nix-system }}
           git push --force-with-lease origin ${{ matrix.nix-system }}:${{ matrix.nix-system }}
+
+  build-large-packages:
+    needs:
+      - build-nixos
+    if: needs.build-nixos.outputs.shouldPushUpdates == 'yes'
+    uses: ./.github/workflows/nix-large-packages.yml
+    with:
+      branch: ${{ needs.build-nixos.outputs.branch }}
+
+  create-pr:
+    runs-on: ubuntu-latest
+    needs:
+      - build-nixos
+      - build-large-packages
+    if: needs.build-nixos.outputs.shouldPushUpdates == 'yes'
+    steps:
+      - name: create pull request
+        run: gh pr create -B master -H ${{ needs.build-nixos.outputs.branch }} --title 'automatically updated nix flake inputs' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
