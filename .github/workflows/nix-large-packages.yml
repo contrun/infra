@@ -22,14 +22,6 @@ on:
         required: false
         type: string
         default: "no"
-  push:
-    branches:
-      - master
-      - main
-      - actions
-      - ci
-      - "x86_64-linux"
-      - "aarch64-linux"
 
 jobs:
   build:

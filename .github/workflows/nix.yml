@@ -11,7 +11,7 @@ on:
       deploy-to-nodes:
         description: "whether to deploy to nodes"
         required: false
-        default: "yes"
+        default: "no"
       profile-to-build:
         description: "which profile to build"
         required: false
@@ -43,12 +43,15 @@ on:
       - "flake.lock"
   schedule:
     - cron: "0 16 * * 1"
-    - cron: "0 16 * * 3"
     - cron: "0 16 * * 5"
 
 jobs:
+  always-build-large-packages:
+    uses: ./.github/workflows/nix-large-packages.yml
+
   build-nixos:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +60,7 @@ jobs:
             nix-system: "x86_64-linux"
             deploy: false
             free-disk-space: false
-            push-updates: false
+            experimental: false
 
     steps:
       - name: Checkout repository
@@ -100,7 +103,8 @@ jobs:
               echo "Abort now. No updates available."
               echo "shouldAbort=yes" >> $GITHUB_OUTPUT
           fi
-          branch="$(date -u +"auto-%Y-%m-%dT%H-%M-%SZ")"
+          # Use the same branch to avoid garbage collection
+          branch="created-by-github-actions"
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           echo "branch=$branch" >> $GITHUB_OUTPUT
           git switch -C "$branch"
@@ -199,7 +203,7 @@ jobs:
     with:
       branch: ${{ needs.build-nixos.outputs.branch }}
 
-  create-pr:
+  create-pull-request:
     runs-on: ubuntu-latest
     needs:
       - build-nixos
@@ -207,6 +211,6 @@ jobs:
     if: needs.build-nixos.outputs.shouldPushUpdates == 'yes'
     steps:
       - name: create pull request
-        run: gh pr create -B master -H ${{ needs.build-nixos.outputs.branch }} --title 'automatically updated nix flake inputs' --body 'Created by Github action'
+        run: gh pr create -B ${{ github.event.repository.default_branch }} -H ${{ needs.build-nixos.outputs.branch }} --title 'update nix flake inputs' --body 'Created by Github action'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
