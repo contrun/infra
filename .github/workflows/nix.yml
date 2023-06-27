@@ -60,10 +60,12 @@ jobs:
           - host: "cicd-x86_64-linux"
             nix-system: "x86_64-linux"
             deploy: false
+            free-disk-space: false
             push-updates: false
           - host: "mdq"
             nix-system: "x86_64-linux"
             deploy: true
+            free-disk-space: true
             push-updates: true
 
     steps:
@@ -79,7 +81,7 @@ jobs:
           cachix-push-filter: "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$"
           cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           setup-qemu: true
-          free-disk-space: true
+          free-disk-space: "${{ matrix.free-disk-space }}"
           nix-systems: "${{ matrix.nix-system }}"
 
       - name: Configure git
