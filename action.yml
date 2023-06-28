@@ -59,7 +59,7 @@ runs:
 
     - name: Setup magic-nix-cache
       if: format('{0}', inputs.setup-cachix) == 'true'
-      uses: DeterminateSystems/magic-nix-cache-action@v1
+      uses: DeterminateSystems/magic-nix-cache-action@v2
       with:
         diagnostic-endpoint: ""
 
