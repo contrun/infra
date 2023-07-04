@@ -86,7 +86,6 @@ jobs:
           # Use the same branch to avoid garbage collection
           branch="created-by-github-actions"
           git commit --all --message "automatically update flake inputs at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          echo "branch=$branch" >> $GITHUB_OUTPUT
           git switch -C "$branch"
 
       - name: Set up common variables
@@ -95,6 +94,7 @@ jobs:
         run: |
           host="${{ inputs.host }}"
           echo "host=$host" >> $GITHUB_OUTPUT
+          echo "branch=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
           echo "nixSystem=${{ inputs.nix-system }}" >> $GITHUB_OUTPUT
 
           echo "shouldBuildNixos=yes" >> $GITHUB_OUTPUT
@@ -155,8 +155,6 @@ jobs:
           if git --no-pager diff; then
               git commit --all --amend --no-edit
           fi
-          # Tackle a race case that master branch has been updated while running this workflow.
-          git pull --rebase
-          git push --force-with-lease origin ${{ steps.variables.outputs.branch }}:${{ steps.variables.outputs.branch }}
+          git push --force origin ${{ steps.variables.outputs.branch }}:${{ steps.variables.outputs.branch }}
           git switch -C ${{ steps.variables.outputs.nixSystem }}
-          git push --force-with-lease origin ${{ steps.variables.outputs.nixSystem }}:${{ steps.variables.outputs.nixSystem }}
+          git push --force origin ${{ steps.variables.outputs.nixSystem }}:${{ steps.variables.outputs.nixSystem }}
