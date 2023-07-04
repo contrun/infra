@@ -81,7 +81,7 @@ jobs:
       host: "${{ matrix.host || 'cicd-x86_64-linux' }}"
       nix-system: "${{ matrix.nix-system || 'x86_64-linux' }}"
       deploy-to-node: "${{ matrix.deploy-to-node || false }}"
-      free-disk-space: "${{ (github.event.inputs.deploy-to-node || 'no') != 'no' }}"
+      free-disk-space: "${{ (inputs.deploy-to-node || 'no') != 'no' }}"
       ignore-errors: "${{ matrix.ignore-errors || false }}"
       update-nix-inputs: "${{ matrix.update-nix-inputs || false }}"
     secrets: inherit
@@ -90,12 +90,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' 
     uses: ./.github/workflows/nixos.yml
     with:
-      host: "${{ github.event.inputs.host || 'cicd-x86_64-linux' }}"
-      nix-system: "${{ github.event.inputs.nix-system || 'x86_64-linux' }}"
-      deploy-to-node: "${{ (github.event.inputs.deploy-to-node || 'no') != 'no' }}"
-      free-disk-space: "${{ github.event_name == 'schedule' || (github.event.inputs.deploy-to-node || 'yes') != 'no' }}"
-      ignore-errors: "${{ (github.event.inputs.ignore-errors || 'no') != 'no' }}"
-      update-nix-inputs: "${{ (github.event.inputs.update-nix-inputs || 'yes') != 'no' }}"
+      host: "${{ inputs.host || 'cicd-x86_64-linux' }}"
+      nix-system: "${{ inputs.nix-system || 'x86_64-linux' }}"
+      deploy-to-node: "${{ (inputs.deploy-to-node || 'no') != 'no' }}"
+      free-disk-space: "${{ github.event_name == 'schedule' || (inputs.deploy-to-node || 'yes') != 'no' }}"
+      ignore-errors: "${{ (inputs.ignore-errors || 'no') != 'no' }}"
+      update-nix-inputs: "${{ (inputs.update-nix-inputs || 'yes') != 'no' }}"
     secrets: inherit
 
   build-packages-when-needed:

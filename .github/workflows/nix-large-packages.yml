@@ -122,7 +122,7 @@ jobs:
         if: steps.variables.outputs.shouldSkip != 'true'
         uses: actions/checkout@v3
         with:
-          ref: "${{ github.event.inputs.branch || '' }}"
+          ref: "${{ inputs.branch || '' }}"
           submodules: true
 
       - name: Setup nix
@@ -136,7 +136,7 @@ jobs:
           nix-systems: "${{ steps.variables.outputs.system }}"
 
       - name: Update nix flake inputs
-        if: github.event.inputs.update-flake != 'no' && github.event.inputs.update-flake != ''
+        if: inputs.update-flake != 'no' && inputs.update-flake != ''
         run: |
           nix flake update
 
