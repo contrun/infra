@@ -14,25 +14,25 @@ on:
         required: true
         default: "x86_64-linux"
       deploy-to-node:
-        description: "whether to deploy to nodes"
-        type: string
+        description: "deploy to nodes"
+        type: boolean
+        default: false
         required: false
-        default: "no"
       free-disk-space:
-        description: "whether to free disk space"
-        type: string
+        description: "free disk space"
+        type: boolean
+        default: true
         required: false
-        default: "yes"
       ignore-errors:
-        description: "whether to ignore errors"
-        type: string
+        description: "ignore errors"
+        type: boolean
+        default: false
         required: false
-        default: "no"
       update-nix-inputs:
-        description: "whether to update nix inputs"
-        type: string
+        description: "update nix inputs"
+        type: boolean
+        default: false
         required: false
-        default: "no"
   pull_request:
     branches:
       - master
@@ -81,7 +81,7 @@ jobs:
       host: "${{ matrix.host || 'cicd-x86_64-linux' }}"
       nix-system: "${{ matrix.nix-system || 'x86_64-linux' }}"
       deploy-to-node: "${{ matrix.deploy-to-node || false }}"
-      free-disk-space: "${{ (inputs.deploy-to-node || 'no') != 'no' }}"
+      free-disk-space: "${{ matrix.free-disk-space || false }}"
       ignore-errors: "${{ matrix.ignore-errors || false }}"
       update-nix-inputs: "${{ matrix.update-nix-inputs || false }}"
     secrets: inherit
@@ -92,10 +92,10 @@ jobs:
     with:
       host: "${{ inputs.host || 'cicd-x86_64-linux' }}"
       nix-system: "${{ inputs.nix-system || 'x86_64-linux' }}"
-      deploy-to-node: "${{ (inputs.deploy-to-node || 'no') != 'no' }}"
-      free-disk-space: "${{ github.event_name == 'schedule' || (inputs.deploy-to-node || 'yes') != 'no' }}"
-      ignore-errors: "${{ (inputs.ignore-errors || 'no') != 'no' }}"
-      update-nix-inputs: "${{ (inputs.update-nix-inputs || 'yes') != 'no' }}"
+      deploy-to-node: "${{ inputs.deploy-to-node || false }}"
+      free-disk-space: "${{ inputs.free-disk-space || github.event_name == 'schedule' }}"
+      ignore-errors: "${{ inputs.ignore-errors || false }}"
+      update-nix-inputs: "${{ inputs.update-nix-inputs || false }}"
     secrets: inherit
 
   build-packages-when-needed:
@@ -104,7 +104,7 @@ jobs:
     if: needs.build-nixos-when-needed.outputs.shouldPushUpdates == 'yes'
     uses: ./.github/workflows/nix-large-packages.yml
     with:
-      branch: ${{ needs.build-nixos-when-needed.outputs.branch}}
+      branch: ${{ needs.build-nixos-when-needed.outputs.branch }}
 
   create-pull-request-when-needed:
     runs-on: ubuntu-latest

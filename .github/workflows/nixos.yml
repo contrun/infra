@@ -15,22 +15,22 @@ on:
         required: true
         default: "x86_64-linux"
       deploy-to-node:
-        description: "whether to deploy to nodes"
+        description: "deploy to nodes"
         type: boolean
         default: false
         required: false
       free-disk-space:
-        description: "whether to free disk space"
+        description: "free disk space"
         type: boolean
         default: false
         required: false
       ignore-errors:
-        description: "whether to ignore errors"
+        description: "ignore errors"
         type: boolean
         default: false
         required: false
       update-nix-inputs:
-        description: "whether to update nix inputs"
+        description: "update nix inputs"
         type: boolean
         default: false
         required: false

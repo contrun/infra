@@ -7,21 +7,22 @@ on:
         description: "which branch to checkout"
         required: false
         type: string
-      update-flake:
-        description: "whether to update nix flake inputs"
+      update-nix-inputs:
+        description: "update nix inputs"
+        type: boolean
+        default: false
         required: false
-        default: "no"
   workflow_call:
     inputs:
       branch:
         description: "which branch to checkout"
         required: false
         type: string
-      update-flake:
-        description: "whether to update nix flake inputs"
+      update-nix-inputs:
+        description: "update nix inputs"
+        type: boolean
+        default: false
         required: false
-        type: string
-        default: "no"
 
 jobs:
   build:
@@ -136,7 +137,7 @@ jobs:
           nix-systems: "${{ steps.variables.outputs.system }}"
 
       - name: Update nix flake inputs
-        if: inputs.update-flake != 'no' && inputs.update-flake != ''
+        if: format('{0}', inputs.update-nix-inputs) == 'true'
         run: |
           nix flake update
 
