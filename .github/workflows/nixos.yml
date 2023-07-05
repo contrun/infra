@@ -37,6 +37,8 @@ on:
 
 jobs:
   build-nixos:
+    outputs:
+      shouldPushUpdates: ${{ steps.variables.outputs.shouldPushUpdates || 'no' }}
     runs-on: ubuntu-latest
     continue-on-error: "${{ inputs.ignore-errors }}"
     strategy:
