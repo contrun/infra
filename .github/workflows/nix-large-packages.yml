@@ -12,6 +12,11 @@ on:
         type: boolean
         default: false
         required: false
+      build-experimental-packages:
+        description: "build experimental packages"
+        type: boolean
+        default: true
+        required: false
   workflow_call:
     inputs:
       branch:
@@ -23,11 +28,16 @@ on:
         type: boolean
         default: false
         required: false
+      build-experimental-packages:
+        description: "build experimental packages"
+        type: boolean
+        default: true
+        required: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +81,10 @@ jobs:
           - type: "package"
             data: "pkgs.myPackages.texLive"
             experimental: false
+          - type: "arguments"
+            data: |
+              .#caddy
+            experimental: true
 
     steps:
       - name: Set up common variables
@@ -91,6 +105,9 @@ jobs:
           freeDiskSpace=${{ matrix.free-disk-space }}
           freeDiskSpace="${freeDiskSpace:-false}"
           shouldSkip=false
+          if [[ "${{ format('{0}', !inputs.build-experimental-packages && matrix.experimental) }}" == 'true' ]]; then
+              shouldSkip=true
+          fi
           case '${{ github.event_name }}' in
               'push')
                   if printf '%s\0' "x86_64-linux" "aarch64-linux" | grep -Fxz -- "${{ github.ref_name }}" && [[ "${{ github.ref_name }}" != "${system}" ]]; then
@@ -102,6 +119,8 @@ jobs:
                   ;;
           esac
 
+          nixExpressionBase64=
+          nixArguments=
           case '${{ matrix.type }}' in
               'expression')
                   nixExpressionBase64="$(base64 -w 0 <<< "$DATA")"
@@ -112,12 +131,15 @@ jobs:
               'nixosConfiguration')
                   nixExpressionBase64="$(base64 -w 0 <<< 'with (builtins.getFlake (builtins.toString ./.)); nixosConfigurations.${{ matrix.data }}.config.system.build.toplevel')"
                   ;;
+              'arguments')
+                  nixArguments="${{ matrix.data }}"
+                  ;;
               *)
                   exit 1
                   ;;
           esac
 
-          set_output system freeDiskSpace shouldSkip nixExpressionBase64
+          set_output system freeDiskSpace shouldSkip nixExpressionBase64 nixArguments
 
       - name: Checkout repository
         if: steps.variables.outputs.shouldSkip != 'true'
@@ -144,5 +166,10 @@ jobs:
       - name: Build the package
         if: steps.variables.outputs.shouldSkip != 'true'
         run: |
-          base64 -d <<< "${{ steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
-          nix build -f temp.nix
+          if [[ -n "${{ steps.variables.outputs.nixExpressionBase64 }}" ]]; then
+              base64 -d <<< "${{ steps.variables.outputs.nixExpressionBase64 }}" | tee temp.nix
+              nix build -f temp.nix
+          fi
+          if [[ -n "${{ steps.variables.outputs.nixArguments }}" ]]; then
+              nix build ${{ steps.variables.outputs.nixArguments }}
+          fi
