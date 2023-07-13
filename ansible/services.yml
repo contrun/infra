@@ -17,6 +17,7 @@
       systemd-resolved: overlay_nodes
       ssh-port-forwarding: servers
       rclone: servers
+      syncthing: sync_servers
   tasks:
    - set_fact:
         group: "{{ service_groups[services] }}"

@@ -19,6 +19,7 @@ roles:
     scm: git
     version: master
   - name: stefangweichinger.ansible_rclone
+  - name: diademiemi.syncthing
 
 collections:
   - name: community.general
