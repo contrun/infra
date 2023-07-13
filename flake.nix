@@ -641,6 +641,14 @@
                   goPackagePath = "github.com/contrun/infra/caddy";
                   src = ./caddy;
                   modules = ./caddy/gomod2nix.toml;
+                  nativeBuildInputs = [ pkgs.musl ];
+
+                  CGO_ENABLED = 0;
+
+                  ldflags = [
+                    "-linkmode external"
+                    "-extldflags '-static -L${pkgs.musl}/lib'"
+                  ];
                 };
               };
           }))
