@@ -441,7 +441,7 @@
             # nix shell '.#python3Packages.invoke'
             legacyPackages = nixpkgsWithOverlays;
 
-            devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ]; };
+            devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ansible cachix deploy-rs sops nixpkgs-fmt pre-commit ]; };
 
             devShells = {
               # Enroll gpg key with

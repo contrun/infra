@@ -12,3 +12,4 @@ prefs.*.json
 /result
 tmp/
 temp.nix
+.direnv/
