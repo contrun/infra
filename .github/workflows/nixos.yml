@@ -37,6 +37,7 @@ on:
 
 jobs:
   build-nixos:
+    name: build-nixos
     outputs:
       shouldPushUpdates: ${{ steps.variables.outputs.shouldPushUpdates || 'no' }}
     runs-on: ubuntu-latest
