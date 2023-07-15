@@ -34,11 +34,17 @@ on:
         type: boolean
         default: false
         required: false
+    outputs:
+      shouldPushUpdates:
+        value: ${{ jobs.build-nixos.outputs.shouldPushUpdates }}
+      branch:
+        value: ${{ jobs.build-nixos.outputs.branch }}
 
 jobs:
   build-nixos:
     outputs:
       shouldPushUpdates: ${{ steps.variables.outputs.shouldPushUpdates || 'no' }}
+      branch: ${{ steps.variables.outputs.branch }}
     runs-on: ubuntu-latest
     continue-on-error: "${{ inputs.ignore-errors }}"
     strategy:

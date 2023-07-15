@@ -51,7 +51,7 @@ jobs:
                 packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
                 package = builtins.elemAt packages 0;
               in package
-            experimental: false
+            experimental: true
           - type: "expression"
             data: |
               with (builtins.getFlake (builtins.toString ./.)); packages.x86_64-linux.dvm

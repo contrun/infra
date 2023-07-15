@@ -96,7 +96,7 @@ jobs:
       deploy-to-node: "${{ inputs.deploy-to-node || false }}"
       free-disk-space: "${{ inputs.free-disk-space || github.event_name == 'schedule' }}"
       ignore-errors: "${{ inputs.ignore-errors || false }}"
-      update-nix-inputs: "${{ inputs.update-nix-inputs || false }}"
+      update-nix-inputs: "${{ inputs.update-nix-inputs || github.event_name == 'schedule' }}"
     secrets: inherit
 
   build-packages-when-needed:
@@ -114,7 +114,16 @@ jobs:
       - build-packages-when-needed
     if: needs.build-nixos-when-needed.outputs.shouldPushUpdates == 'yes'
     steps:
-      - name: create pull request
-        run: gh pr create -B ${{ github.event.repository.default_branch }} -H ${{ needs.build-nixos-when-needed.outputs.branch }} --title 'update nix flake inputs' --body 'Created by Github action'
+      - name: create or update pull request
+        run: |
+          repo="${{ github.repository }}"
+          base="${{ github.event.repository.default_branch }}"
+          head="${{ needs.build-nixos-when-needed.outputs.branch }}"
+          link="[github action run log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          if id="$(gh pr -R "$repo" list -B "$base" -H "$head" --json number --limit 1 --jq '.[].number')" && [[ -n "$id" ]]; then
+            gh pr -R "$repo" comment "$id" --body "PR updated. See $link."
+          else
+            gh pr -R "$repo" create -B "$base" -H "$head" --title 'update nix flake inputs' --body "Created by Github action. See $link."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
