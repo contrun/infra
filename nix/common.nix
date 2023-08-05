@@ -770,7 +770,7 @@ in
     sway = {
       enable = prefs.enableSway;
       extraOptions = [ "--unsupported-gpu" ];
-      extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu sway-contrib.grimshot ];
+      extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu grim ];
       extraSessionCommands = ''
         export TERMINAL="alacritty"
         export BROWSER="firefox"
@@ -799,10 +799,10 @@ in
   };
 
   fonts = {
-    enableDefaultFonts = true;
+    enableDefaultPackages = true;
     # fontDir.enable = true;
     fontconfig = { enable = prefs.enableFontConfig; };
-    fonts = if prefs.isMinimalSystem then [ ] else
+    packages = if prefs.isMinimalSystem then [ ] else
     (with pkgs; [
       wqy_microhei
       wqy_zenhei
@@ -2853,7 +2853,8 @@ in
         dataDir = prefs.home;
         overrideDevices = false;
         overrideFolders = false;
-        extraOptions = {
+
+        settings = {
           defaults = {
             ignores =
               let
@@ -2869,69 +2870,54 @@ in
                 inherit lines;
               };
           };
+
           gui = {
             user = "e";
             # TODO: didn't find way to hide it, but this password has enough entropy.
             password =
               "$2a$10$20ol/13Gghbqq/tsEkEyGO.kJLgKsz2cJmC4Cccx.0Z1ECSYHO80O";
           };
-          # I need allowedNetwork so I will use extraOptions instead of devices.
-          devices =
+
+          inherit devices;
+
+          folders =
             let
-              mkDevice =
-                { name
-                , id
-                , introducer ? false
-                , allowedNetworks ? [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]
-                , ...
-                }: {
-                  deviceID = id;
-                  inherit name introducer allowedNetworks;
+              allDevices = builtins.attrNames devices;
+              getVersioningPolicy = id: {
+                type = "staggered";
+                # TODO: This does not work. Syncthing seems to be using new schema now.
+                # See https://github.com/syncthing/syncthing/pull/7407
+                # cleanIntervalS = 3600;
+                # fsPath = "${prefs.home}/.cache/syncthing_versioning/${id}";
+                # fsType = "basic";
+                params = {
+                  cleanInterval = "3600";
+                  maxAge = "315360000";
                 };
-              list = lib.mapAttrsToList (name: value: value // { inherit name; })
-                devices;
+              };
+              getFolderConfig = { id, enable, excludedDevices, config }: lib.optionalAttrs enable
+                (
+                  {
+                    inherit id;
+                    devices = lib.subtractLists excludedDevices allDevices;
+                    ignorePerms = false;
+                    versioning = getVersioningPolicy id;
+                  } // config
+                );
             in
-            builtins.map mkDevice list;
+            let
+              c = builtins.mapAttrs
+                (id: config: getFolderConfig {
+                  inherit id;
+                  enable = config.enable or true;
+                  excludedDevices = config.excludedDevices or [ ];
+                  config = builtins.removeAttrs config [ "enable" "excludedDevices" ];
+                })
+                prefs.syncFolders;
+            in
+            lib.filterAttrs (id: config: config != { }) c;
         };
 
-        inherit devices;
-
-        folders =
-          let
-            allDevices = builtins.attrNames devices;
-            getVersioningPolicy = id: {
-              type = "staggered";
-              # TODO: This does not work. Syncthing seems to be using new schema now.
-              # See https://github.com/syncthing/syncthing/pull/7407
-              # cleanIntervalS = 3600;
-              # fsPath = "${prefs.home}/.cache/syncthing_versioning/${id}";
-              # fsType = "basic";
-              params = {
-                cleanInterval = "3600";
-                maxAge = "315360000";
-              };
-            };
-            getFolderConfig = { id, enable, excludedDevices, config }: lib.optionalAttrs enable
-              (
-                {
-                  inherit id;
-                  devices = lib.subtractLists excludedDevices allDevices;
-                  ignorePerms = false;
-                  versioning = getVersioningPolicy id;
-                } // config
-              );
-          in
-          let
-            c = builtins.mapAttrs
-              (id: config: getFolderConfig {
-                inherit id;
-                enable = config.enable or true;
-                excludedDevices = config.excludedDevices or [ ];
-                config = builtins.removeAttrs config [ "enable" "excludedDevices" ];
-              })
-              prefs.syncFolders;
-          in
-          lib.filterAttrs (id: config: config != { }) c;
       };
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;
@@ -5264,7 +5250,7 @@ builtins.toString prefs.ownerGroupGid
                     serviceConfig =
                       {
                         LogsDirectory = "traefik";
-                        EnvironmentFile = "/run/secrets/traefik-env";
+                        EnvironmentFile = [ "/run/secrets/traefik-env" ];
                         SupplementaryGroups = "keys acme";
                       } // (lib.optionalAttrs (prefs.ociContainerBackend == "docker") {
                         SupplementaryGroups = "keys acme docker";

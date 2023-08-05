@@ -59,7 +59,7 @@ let
         hub = "mdq";
       };
     pkgsRelatedPrefs = rec {
-      kernelPackages = pkgs.linuxPackages_6_2;
+      kernelPackages = pkgs.linuxPackages_latest;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
       ];
@@ -363,38 +363,42 @@ let
     # We use nixpkgs to manage syncthing when possible, home-manager otherwise.
     enableHomeManagerSyncthing = false;
     syncthingIgnores = [ "roam/.emacs.d/straight" "roam/public" ];
-    syncthingDevices = {
-      ssg = {
-        id =
-          "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
-      };
-      shl = {
-        id =
-          "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
-      };
-      jxt = {
-        id =
-          "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
-      };
-      mdq = {
-        id =
-          "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
-        introducer = true;
-      };
-      gcv = {
-        id =
-          "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
-      };
-      ngk = {
-        id =
-          "OTM73BH-NPIJTKJ-3F57TCL-VNX26RO-VKW6S3M-2XTXNJC-AGPCWWQ-VO5V4AM";
-      };
-      mmms = { id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL"; };
-      aol = { id = "FSTAIDE-E6OUWEK-BAWARYB-T4MAXIU-RML2GS2-YLYAHJO-UBKWKBD-KQ3VLQO"; };
-      npo = { id = "NRV7EXF-JGP4GYO-2MRVGTS-CYWGISC-XBGRHYR-FCJ66UI-EGKILML-KAS2VAK"; };
-      eik = { id = "R5P4E2X-PQSJH7T-T2ZSKC4-XU2K2PK-WXWKLNZ-GZSXJ6C-IDMGHCZ-6TT7ZQ5"; };
-      wae = { id = "KXOCACZ-26VKKOO-3NRCLSH-EFRSQC2-VMKDJHE-ITD7NZN-POSZEDL-ZRUNRA6"; };
-    };
+    syncthingDevices =
+      let
+        default = { addresses = [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]; introducer = false; }; in
+      builtins.mapAttrs (name: value: default // value)
+        {
+          ssg = {
+            id =
+              "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+          };
+          shl = {
+            id =
+              "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+          };
+          jxt = {
+            id =
+              "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+          };
+          mdq = {
+            id =
+              "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+            introducer = true;
+          };
+          gcv = {
+            id =
+              "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
+          };
+          ngk = {
+            id =
+              "OTM73BH-NPIJTKJ-3F57TCL-VNX26RO-VKW6S3M-2XTXNJC-AGPCWWQ-VO5V4AM";
+          };
+          mmms = { id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL"; };
+          aol = { id = "FSTAIDE-E6OUWEK-BAWARYB-T4MAXIU-RML2GS2-YLYAHJO-UBKWKBD-KQ3VLQO"; };
+          npo = { id = "NRV7EXF-JGP4GYO-2MRVGTS-CYWGISC-XBGRHYR-FCJ66UI-EGKILML-KAS2VAK"; };
+          eik = { id = "R5P4E2X-PQSJH7T-T2ZSKC4-XU2K2PK-WXWKLNZ-GZSXJ6C-IDMGHCZ-6TT7ZQ5"; };
+          wae = { id = "KXOCACZ-26VKKOO-3NRCLSH-EFRSQC2-VMKDJHE-ITD7NZN-POSZEDL-ZRUNRA6"; };
+        };
     yandexConfig = {
       directory = "${self.home}/Sync";
       excludes = "";
@@ -576,7 +580,7 @@ let
     enableAvahi = !self.isMinimalSystem;
     avahiHostname = self.hostname;
     enableGvfs = !self.isMinimalSystem;
-    enableCodeServer = !self.isMinimalSystem;
+    enableCodeServer = false;
     enablePrinting = !self.isMinimalSystem;
     enableBluetooth = true;
     enableAcpilight = true;
@@ -883,7 +887,6 @@ let
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
         kernelPackages = pkgs.linuxPackages_rpi4;
       };
-      enableCodeServer = true;
       enableAcme = true;
       enableZerotierone = true;
       enableTailScale = false;
