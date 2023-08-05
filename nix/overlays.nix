@@ -428,12 +428,12 @@ let
 
         texLive = self.texlive.combine { inherit (self.texlive) scheme-full; };
 
-        emacs = emacsGit;
+        emacs = emacs-git;
 
         emacsStable = makeEmacsPkg super.emacs;
 
         # TODO: emacs overlay does not seem to work
-        emacsGit = makeEmacsPkg (super.emacsGit or super.emacs);
+        emacs-git = makeEmacsPkg (super.emacs-git or super.emacs);
 
         emacsUnstable = makeEmacsPkg (super.emacsUnstable or super.emacs);
 
