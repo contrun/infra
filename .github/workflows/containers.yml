@@ -55,6 +55,8 @@ jobs:
           # Images not working for now.
           # - path: "DeviaVir/zenbot"
           #   kind: "github_repository"
+          - path: "contrun/gitpod-nix"
+            kind: "github_repository"
 
     steps:
       - name: Checkout ${{ matrix.path }}
@@ -115,6 +117,9 @@ jobs:
             "unigraph-dev/unigraph-dev")
               name=unigraph
               platforms="linux/amd64"
+              ;;
+            "contrun/gitpod-nix")
+              dockerfile="$directory/.gitpod.Dockerfile"
               ;;
           esac
 
