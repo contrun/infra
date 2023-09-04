@@ -4756,6 +4756,7 @@ builtins.toString prefs.ownerGroupGid
         };
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+      { network = { enable = prefs.enableSystemdNetworkd; }; }
       {
         extraConfig = ''
           DefaultLimitNOFILE=8192:524288

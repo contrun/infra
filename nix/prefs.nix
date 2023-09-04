@@ -215,6 +215,7 @@ let
       in
         hostnameToIndex."${self.hostname}" or null;
     enableSystemdBoot = self.bootloader == "systemd";
+    enableSystemdNetworkd = true;
     enableRaspberryPiBoot = self.bootloader == "raspberrypi";
     efiCanTouchEfiVariables = true;
     isRaspberryPi = false;
