@@ -281,6 +281,7 @@ let
     enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
+    enableNetbird = !self.isMinimalSystem;
     enableX2goServer = false;
     enableDebugInfo = false;
     enableBtrfs = false;

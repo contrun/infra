@@ -3157,6 +3157,24 @@ in
       })
     ];
 
+  containers = {
+    "wired-${prefs.hostname}" = {
+      privateNetwork = true;
+      autoStart = true;
+      extraFlags = [
+        "--network-zone=wired"
+      ];
+      config = {
+        services = {
+          netbird = { enable = prefs.enableNetbird; };
+        };
+        systemd.network.enable = prefs.enableSystemdNetworkd;
+        networking.useHostResolvConf = false;
+        services.resolved.fallbackDns = [ "223.6.6.6" "119.29.29.29" ];
+      };
+    };
+  };
+
   virtualisation = {
     libvirtd = { enable = prefs.enableLibvirtd; };
     virtualbox.host = {
