@@ -154,4 +154,4 @@ runs:
     # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
     - name: Install qemu
       if: format('{0}', inputs.setup-qemu) == 'true' && runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
