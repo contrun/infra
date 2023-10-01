@@ -4879,6 +4879,9 @@ builtins.toString prefs.ownerGroupGid
         };
       }
 
+      # Failed to build protobuf, nodejs, llvm etc. Disable it for now.
+      { oomd = { enable = false; }; }
+
       {
         services = notify-systemd-unit-failures // {
           init-oci-container-network = {
