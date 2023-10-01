@@ -4870,6 +4870,16 @@ builtins.toString prefs.ownerGroupGid
       }
 
       {
+        user = {
+          extraConfig = ''
+            # Disable memory accounting so that make systemd not to kill all processes in user session/scope.
+            # https://github.com/systemd/systemd/issues/25376#issuecomment-1366931619
+            DefaultMemoryAccounting=no
+          '';
+        };
+      }
+
+      {
         services = notify-systemd-unit-failures // {
           init-oci-container-network = {
             description = "Create oci container networks";
