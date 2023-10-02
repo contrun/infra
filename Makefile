@@ -28,8 +28,7 @@ NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
-ANSIBLEPLAYBOOK ?= ansible-playbook
-ANSIBLEFLAGS ?=
+ANSIBLEPLAYBOOK ?= ansible-playbook -i inventory
 
 pull:
 	git pull --rebase --autostash
@@ -103,17 +102,11 @@ nixos-update-channels:
 nixos-vagrant-box:
 	$(GENERATE) -f vagrant-virtualbox --flake ".#dbx"
 
-ansible-install-requirements:
+ansible-requirements:
 	cd ansible && ansible-galaxy install -r requirements.yml
 
-ansible-edit-inventory:
+ansible-inventory-hosts:
 	cd ansible && ansible-vault edit inventory/hosts.yml
 
-ansible-debug:
-	cd ansible && $(ANSIBLEPLAYBOOK) $(strip $(ANSIBLEFLAGS) debug.yml)
-
-ansible-deploy-services:
-	cd ansible && $(ANSIBLEPLAYBOOK) --extra-vars services=$(SERVICES) $(strip $(ANSIBLEFLAGS) services.yml)
-
-ansible-enroll-hosts:
-	cd ansible && $(ANSIBLEPLAYBOOK) --extra-vars hosts=$(HOSTS) $(strip $(ANSIBLEFLAGS) hosts.yml)
+ansible-deploy:
+	cd ansible && $(ANSIBLEPLAYBOOK) site.yml --extra-vars deployment=$(DEPLOYMENT)
