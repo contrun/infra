@@ -437,7 +437,7 @@ in
         mailutils
         libnotify
         (pkgs.myPackages.lua or lua)
-        nodejs_latest
+        # nodejs
         gdb
         gcc
         gnumake
@@ -584,7 +584,7 @@ in
 
             dunst
             rofi
-            compton
+            picom
             blueman
             virt-manager
             fdm
@@ -887,7 +887,6 @@ in
     };
     bluetooth = {
       enable = prefs.enableBluetooth;
-      package = pkgs.bluezFull;
       powerOnBoot = prefs.enableBluetooth;
     };
     acpilight = { enable = prefs.enableAcpilight; };
@@ -3178,7 +3177,7 @@ in
   virtualisation = {
     libvirtd = { enable = prefs.enableLibvirtd; };
     virtualbox.host = {
-      enable = prefs.enableVirtualboxHost;
+      # enable = prefs.enableVirtualboxHost;
       enableExtensionPack = prefs.enableVirtualboxHost;
       # enableHardening = false;
     };

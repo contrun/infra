@@ -59,7 +59,7 @@ let
         hub = "mdq";
       };
     pkgsRelatedPrefs = rec {
-      kernelPackages = pkgs.linuxPackages_latest;
+      kernelPackages = pkgs.linuxPackages_6_4;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
       ];
