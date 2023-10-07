@@ -633,7 +633,7 @@ in
         }
         { enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux"); list = [ wine ]; }
         {
-          enable = prefs.nixosSystem == "x86_64-linux";
+          enable = !prefs.isMinimalSystem && prefs.nixosSystem == "x86_64-linux";
           list = [
             # steam-run-native
             # aqemu
@@ -854,7 +854,7 @@ in
         config = {
           allowUnfree = true;
           allowBroken = true;
-          pulseaudio = true;
+          pulseaudio = prefs.enablePulseaudio;
           experimental-features = "nix-command flakes";
         };
       };

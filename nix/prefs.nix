@@ -315,7 +315,7 @@ let
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
     enableKeyd = !self.isMinimalSystem;
-    enableXmonad = self.xWindowManager == "xmonad" && !self.isMinimalSystem;
+    enableXmonad = false && self.xWindowManager == "xmonad" && !self.isMinimalSystem;
     enableI3 = !self.isMinimalSystem;
     enableAwesome = !self.isMinimalSystem;
     enableSway = !self.isMinimalSystem;
@@ -546,7 +546,7 @@ let
         type = "sendonly";
       };
     };
-    enablePipewire = !self.isMinimalSystem;
+    enablePipewire = true;
     enablePulseaudio = !self.enablePipewire;
     enableSlock = true;
     enableZSH = true;
@@ -565,8 +565,8 @@ let
       if self.isMinimalSystem then
         [ "openjdk8" ]
       else [
+        "openjdk21"
         "openjdk17"
-        "openjdk11"
         "openjdk8"
       ];
     enableNextcloudClient = false;
@@ -578,11 +578,11 @@ let
     enableInputMethods = !self.isMinimalSystem;
     enabledInputMethod = "fcitx5";
     enableVirtualboxHost = !self.isMinimalSystem;
-    enableDocker = !self.isMinimalSystem;
+    enableDocker = !self.replaceDockerWithPodman;
     enableDockerMetrics = self.enablePrometheusExporters && self.enableDocker;
     dockerMetricsPort = 9323;
     enablePodman = !self.isMinimalSystem;
-    replaceDockerWithPodman = !self.enableDocker;
+    replaceDockerWithPodman = self.isMinimalSystem;
     enableLibvirtd = !self.isMinimalSystem;
     enableAnbox = false;
     enableUnifi = false;
@@ -761,7 +761,6 @@ let
           enableZerotierone = true;
           enableEmacs = true;
           enableAcme = true;
-          enableAllOciContainers = true;
         } // (if nixosSystem == "x86_64-linux" then {
           enableVirtualboxHost = true;
         } else if nixosSystem == "aarch64-linux" then {
