@@ -59,7 +59,7 @@ let
         hub = "mdq";
       };
     pkgsRelatedPrefs = rec {
-      kernelPackages = pkgs.linuxPackages_6_4;
+      kernelPackages = if self.enableZfsUnstable then pkgs.zfsUnstable.latestCompatibleLinuxPackages else if self.enableZfs then pkgs.zfs.latestCompatibleLinuxPackages else pkgs.linuxPackages_latest;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
       ];
@@ -375,7 +375,8 @@ let
     syncthingIgnores = [ "roam/.emacs.d/straight" "roam/public" ];
     syncthingDevices =
       let
-        default = { addresses = [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]; introducer = false; }; in
+        default = { addresses = [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]; introducer = false; };
+      in
       builtins.mapAttrs (name: value: default // value)
         {
           ssg = {
