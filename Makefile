@@ -70,8 +70,9 @@ home-manager-build:
 home-manager-bootstrap:
 	$(HOMEMANAGER) switch --flake ".#$(USER)@cicd-$(shell nix eval --raw --impure --expr 'builtins.currentSystem')" $(NIXFLAGS)
 
+nixos-prefs: JQ = $(or $(shell command -v jq),cat)
 nixos-prefs: create-dirs
-	nix eval --raw --impure --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | tee tmp/prefs.$(HOST).json
+	nix eval --raw --impure --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | $(JQ) | tee tmp/prefs.$(HOST).json
 
 nixos-deploy:
 	$(DEPLOY) $(DEPLOYFLAGS) ".#$(HOST)" -- $(NIXFLAGS)
