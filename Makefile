@@ -78,7 +78,7 @@ nixos-deploy:
 	$(DEPLOY) $(DEPLOYFLAGS) ".#$(HOST)" -- $(NIXFLAGS)
 
 nixos-profile-path-info: create-dirs
-	nix path-info $(NIXFLAGS) -sShr ".#nixosConfigurations.$(HOST).config.system.build.toplevel" | tee tmp/nixos-profile-path-info.$(HOST)
+	nix path-info -sShr "$(shell $(NIXOSREBUILD.build) $(NIXFLAGS) --print-out-paths)" | tee tmp/nixos-profile-path-info.$(HOST)
 	sort -h -k2 < tmp/nixos-profile-path-info.$(HOST)
 	sort -h -k3 < tmp/nixos-profile-path-info.$(HOST)
 
