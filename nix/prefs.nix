@@ -547,7 +547,9 @@ let
         type = "sendonly";
       };
     };
-    enablePipewire = true;
+    enablePipewire = false;
+    # Many packages depends on pulseaudio. If we set this to be false,
+    # then we will have to build a ton of packages.
     enablePulseaudio = !self.enablePipewire;
     enableSlock = true;
     enableZSH = true;

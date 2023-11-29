@@ -759,12 +759,12 @@ in
       shellInit = "zsh-newuser-install() { :; }";
     };
     # light.enable = true;
-    # clash-verge = let enable = prefs.enableClashVerge; in
-    #   {
-    #     enable = enable;
-    #     autoStart = enable;
-    #     tunMode = enable;
-    #   };
+    clash-verge = let enable = prefs.enableClashVerge; in
+      {
+        enable = enable;
+        autoStart = enable;
+        tunMode = enable;
+      };
     sway = {
       enable = prefs.enableSway;
       extraOptions = [ "--unsupported-gpu" ];
