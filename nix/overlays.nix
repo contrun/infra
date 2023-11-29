@@ -1,51 +1,6 @@
 { inputs }:
 
 let
-  # collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
-  # TODO: not actually work.
-  lldbOverlay = final: prev: {
-    # TODO: Ideally I need something like below, but it does not work.
-    lldb = prev.lldb // { out = prev.lib.hiPrio prev.lldb.out; };
-    # lldb = builtins.removeAttrs prev.lldb [ "lib" ];
-  };
-
-  # TODO: don't know why, not working.
-  pythonOverlay = final: prev:
-    let
-      python3 =
-        let
-          packageOverrides = self: super:
-            {
-              # ansible-runner = super.ansible-runner.overrideAttrs (old: { });
-            };
-        in
-        prev.python3.override { inherit packageOverrides; };
-    in
-    { inherit python3; };
-
-  dontCheckOverlay = self: super:
-    let
-      overridePythonPackages =
-        let
-          packagesToIgnoreTest = [
-            # "psutil" "pathpy"
-          ];
-          dontCheckPythonPkg = pp:
-            pp.overridePythonAttrs (old: { doCheck = false; });
-        in
-        pythonPkg:
-        pythonPkg.override {
-          packageOverrides = pythonSelf: pythonSuper:
-            super.lib.genAttrs packagesToIgnoreTest
-              (name: dontCheckPythonPkg pythonSuper.${name});
-        };
-      dontCheckPkg = pkg: pkg.overrideAttrs (old: { doCheck = false; });
-    in
-    {
-      python3Full = overridePythonPackages super.python3Full;
-      python3 = overridePythonPackages super.python3;
-    } // (super.lib.mapAttrs (name: p: dontCheckPkg p) { });
-
   shellsOverlay = self: super: {
     myShells = {
       # Usage: nix-shell -E "with import $HOME/Workspace/infra {}; myShells.buildShellForPackage hello"
@@ -383,7 +338,7 @@ let
         ]);
 
         lua = super.lua.withPackages
-          (ps: with ps; [ busted luafilesystem luarocks lua-lsp nvim-client ]);
+          (ps: with ps; [ busted luafilesystem luarocks lua-lsp ]);
 
         jupyterhub = (super.python3.withPackages
           (p: with p; [ jupyterhub jupyterhub-systemdspawner ]));
@@ -584,9 +539,7 @@ let
 in
 {
   inherit
-    lldbOverlay
-    pythonOverlay
-    dontCheckOverlay
-    myOverlay
+    # myOverlay
     shellsOverlay;
 }
+

@@ -1,6 +1,11 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-23.11";
+    home-manager.url = "github:nix-community/home-manager/release-23.11";
+
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     flake-utils.url = "github:numtide/flake-utils";
 
     flake-compat = {
@@ -34,26 +39,14 @@
     deploy-rs.inputs.utils.follows = "flake-utils";
     deploy-rs.inputs.flake-compat.follows = "flake-compat";
 
-    crate2nix.url = "github:kolloch/crate2nix";
-    crate2nix.flake = false;
-
-    rust-overlay.url = "github:oxalica/rust-overlay";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
-    rust-overlay.inputs.flake-utils.follows = "flake-utils";
-
     gomod2nix.url = "github:tweag/gomod2nix";
     gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
-
-    nixpkgs-nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-20.09";
 
     aioproxy.url = "github:contrun/aioproxy";
     aioproxy.inputs.nixpkgs.follows = "nixpkgs";
     aioproxy.inputs.gomod2nix.follows = "gomod2nix";
     aioproxy.inputs.flake-utils.follows = "flake-utils";
 
-    home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-on-droid.url = "github:t184256/nix-on-droid";
@@ -119,7 +112,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, rust-overlay, crate2nix, nix-alien, nix-on-droid, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, flake-utils, gomod2nix, nix-alien, nix-on-droid, ... }@inputs:
     let
       lib = nixpkgs.lib;
 
@@ -411,45 +404,46 @@
           let
             pkgs = import nixpkgs {
               inherit system;
+            };
+
+            pkgsToBuildLocalPackages = import nixpkgs {
+              inherit system;
               overlays = [
                 (import "${gomod2nix}/overlay.nix")
-                rust-overlay.overlays.default
-                (self: super: {
-                  # Because rust-overlay bundles multiple rust packages into one
-                  # derivation, specify that mega-bundle here, so that crate2nix
-                  # will use them automatically.
-                  rustc = self.rust-bin.stable.latest.default;
-                  cargo = self.rust-bin.stable.latest.default;
-                })
               ];
             };
 
-            inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
-              generatedCargoNix;
-
-            nixpkgsWithOverlays = import nixpkgs {
+            pkgsWithOverlays = import nixpkgs {
               inherit system;
               overlays = self.overlayList;
             };
+
+            pkgsUnstable = import inputs.nixpkgs-unstable {
+              inherit system;
+            };
+
+            pkgsUnstableWithOverlays = import inputs.nixpkgs-unstable {
+              inherit system;
+            };
           in
           rec {
-            nixpkgs = nixpkgsWithOverlays;
+            inherit pkgs pkgsWithOverlays pkgsUnstable pkgsUnstableWithOverlays;
 
             # Make packages from nixpkgs available, we can, for example, run
             # nix shell '.#python3Packages.invoke'
-            legacyPackages = nixpkgsWithOverlays;
+            legacyPackages = pkgs;
 
-            devShell = pkgs.mkShell { buildInputs = with pkgs; [ go ansible cachix deploy-rs sops nixpkgs-fmt pre-commit ]; };
+            devShell = with pkgsToBuildLocalPackages; mkShell { buildInputs = [ go ansible cachix deploy-rs sops nixpkgs-fmt pre-commit ]; };
 
-            devShells = {
+            devShells = with pkgsToBuildLocalPackages;  {
               # Enroll gpg key with
               # nix-shell -p gnupg -p ssh-to-pgp --run "ssh-to-pgp -private-key -i /tmp/id_rsa | gpg --import --quiet"
               # Edit secrets.yaml file with
               # nix develop ".#sops" --command sops ./nix/sops/secrets.yaml
-              sops = pkgs.mkShell {
+              sops = mkShell {
                 sopsPGPKeyDirs = [ ./nix/sops/keys ];
                 nativeBuildInputs = [
-                  (pkgs.callPackage inputs.sops-nix { }).sops-import-keys-hook
+                  (callPackage inputs.sops-nix { }).sops-import-keys-hook
                 ];
                 shellHook = ''
                   alias s="sops"
@@ -526,9 +520,9 @@
                   };
                 };
 
-                containers = let genContainers = import ./nix/containers.nix; in genContainers { pkgs = nixpkgsWithOverlays; };
+                containers = let genContainers = import ./nix/containers.nix; in genContainers { inherit pkgs; };
 
-                run = with nixpkgsWithOverlays; writeShellApplication {
+                run = with pkgs; writeShellApplication {
                   name = "run";
                   text = ''
                     make -C "${lib.cleanSource ./.}" "$@"
@@ -536,7 +530,7 @@
                   runtimeInputs = [ gnumake nixUnstable jq coreutils findutils home-manager ];
                 };
 
-                ssh = with nixpkgsWithOverlays; writeShellApplication {
+                ssh = with pkgs; writeShellApplication {
                   name = "ssh";
                   text = ''
                     ${start-agent-script}
@@ -548,7 +542,7 @@
                   runtimeInputs = [ coreutils gnupg openssh ];
                 };
 
-                mosh = with nixpkgsWithOverlays; writeShellApplication {
+                mosh = with pkgs; writeShellApplication {
                   name = "mosh";
                   text = ''
                     ${start-agent-script}
@@ -558,7 +552,7 @@
                   runtimeInputs = [ coreutils gnupg openssh mosh ];
                 };
 
-                ssho = with nixpkgsWithOverlays; writeShellApplication {
+                ssho = with pkgs; writeShellApplication {
                   name = "ssho";
                   text = ''
                     if [[ "$TERM" == foot ]]; then
@@ -569,7 +563,7 @@
                   runtimeInputs = [ coreutils gnupg openssh ];
                 };
 
-                mosho = with nixpkgsWithOverlays; writeShellApplication {
+                mosho = with pkgs; writeShellApplication {
                   name = "mosho";
                   text = ''
                     # See https://github.com/termux/termux-packages/issues/288
@@ -586,7 +580,7 @@
                   in
                   config.microvm.runner.${hypervisor};
 
-                magit = with nixpkgsWithOverlays; writeShellApplication {
+                magit = with pkgs; writeShellApplication {
                   name = "magit";
                   text = ''
                     function usage() {
@@ -624,7 +618,7 @@
                 };
 
 
-                coredns = pkgs.buildGoApplication {
+                coredns = pkgsToBuildLocalPackages.buildGoApplication {
                   pname = "coredns";
                   version = "latest";
                   goPackagePath = "github.com/contrun/infra/coredns";
@@ -633,7 +627,7 @@
                 };
 
                 # Todo: gomod2nix failed
-                caddy = pkgs.buildGoApplication {
+                caddy = pkgsToBuildLocalPackages.buildGoApplication {
                   pname = "caddy";
                   version = "latest";
                   goPackagePath = "github.com/contrun/infra/caddy";
@@ -652,7 +646,3 @@
           }))
     ]);
 }
-
-
-
-

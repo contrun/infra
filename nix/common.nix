@@ -91,13 +91,6 @@ let
       EOF
     '';
 
-  mypkgs = (generateFlake { config = inputs.self; }
-    "{config,...}: {legacyPackages.${
-      lib.strings.escapeNixIdentifier config.nixpkgs.system
-    }=config.nixosConfigurations.${
-      lib.strings.escapeNixIdentifier config.networking.hostName
-    }.pkgs;}");
-
   getTraefikBareDomainRule = "(${
       lib.concatMapStringsSep " || " (domain: "Host(`${domain}`)") prefs.domains
     })";
@@ -234,6 +227,7 @@ in
 
   networking = {
     resolvconf = { dnsExtensionMechanism = false; };
+    useNetworkd = prefs.enableSystemdNetworkd;
     hostName = prefs.hostname;
     hostId = prefs.hostId;
     firewall.enable = prefs.enableFirewall;
@@ -321,7 +315,7 @@ in
             table-others
           ];
           fcitx5.addons = with pkgs; [
-            fcitx5-chinese-addons
+            # fcitx5-chinese-addons
             fcitx5-rime
             fcitx5-table-extra
             fcitx5-table-other
@@ -343,7 +337,6 @@ in
         "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
         "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
         "nix/path/home-manager".source = inputs.home-manager;
-        "nix/path/pkgs".source = mypkgs;
         "nix/path/activeconfig".source = inputs.self;
         "davfs2/secrets" = {
           enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
@@ -595,7 +588,7 @@ in
             bluez
             dmenu
             alacritty
-            gnome.seahorse
+            # gnome.seahorse
             pinentry
             rxvt-unicode
             bluez-tools
@@ -631,7 +624,12 @@ in
             in
             [ nvidia-offload ];
         }
-        { enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux"); list = [ wine ]; }
+        {
+          enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux");
+          list = [
+            wine
+          ];
+        }
         {
           enable = !prefs.isMinimalSystem && prefs.nixosSystem == "x86_64-linux";
           list = [
@@ -716,7 +714,7 @@ in
         {
           enable = prefs.enableNixLd;
           config = {
-            NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+            # NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
             NIX_LD_LIBRARY_PATH = ldLibraryPath;
           };
         }
@@ -761,12 +759,12 @@ in
       shellInit = "zsh-newuser-install() { :; }";
     };
     # light.enable = true;
-    clash-verge = let enable = prefs.enableClashVerge; in
-      {
-        enable = enable;
-        autoStart = enable;
-        tunMode = enable;
-      };
+    # clash-verge = let enable = prefs.enableClashVerge; in
+    #   {
+    #     enable = enable;
+    #     autoStart = enable;
+    #     tunMode = enable;
+    #   };
     sway = {
       enable = prefs.enableSway;
       extraOptions = [ "--unsupported-gpu" ];
@@ -1330,7 +1328,7 @@ in
     };
     davfs2 = { enable = prefs.enableDavfs2; };
     coredns = {
-      enable = prefs.enableCoredns;
+      enable = prefs.enableCoredns && pkgs ? myPackages;
       package = pkgs.myPackages.coredns;
       config =
         let
@@ -2620,7 +2618,7 @@ in
 
     locate = {
       enable = prefs.enableLocate;
-      locate = pkgs.mlocate;
+      package = pkgs.mlocate;
       localuser = null;
       interval = "hourly";
       pruneBindMounts = true;
@@ -2828,16 +2826,16 @@ in
       let p = impure.sslhConfigFile;
       in
       lib.optionalAttrs (builtins.pathExists p) {
-        appendConfig = (builtins.readFile p);
+        settings = (builtins.readFile p);
       }
     );
 
     unifi.enable = prefs.enableUnifi;
 
-    gvfs.enable = prefs.enableGvfs;
+    # gvfs.enable = prefs.enableGvfs;
 
     emacs = {
-      enable = prefs.enableEmacs;
+      # enable = prefs.enableEmacs;
       install = prefs.enableEmacs;
       package = pkgs.myPackages.emacs or pkgs.emacs;
     };
@@ -4773,7 +4771,6 @@ builtins.toString prefs.ownerGroupGid
         };
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-      { network = { enable = prefs.enableSystemdNetworkd; }; }
       {
         extraConfig = ''
           DefaultLimitNOFILE=8192:524288
@@ -6303,7 +6300,6 @@ prefs.yandexExcludedDirs
     registry.nixpkgs-stable.flake = inputs.nixpkgs-stable;
     registry.nixpkgs-unstable.flake = inputs.nixpkgs-unstable;
     registry.home-manager.flake = inputs.home-manager;
-    registry.pkgs.flake = mypkgs;
     registry.activeconfig.flake = inputs.self;
     registry.config.to = {
       type = "path";
