@@ -81,12 +81,6 @@ let
     if pkg ? overrideAttrs then
       pkg.overrideAttrs (oldAttrs: func oldAttrs)
     else pkg;
-  dontCheckPkg = pkg:
-    overridePkg pkg (oldAttrs: {
-      # Fuck, why every package has broken tests? I just want to trust the devil.
-      # Fuck, this does not seem to work.
-      doCheck = false;
-    });
   changePkgPriority = pkg: priority:
     overridePkg pkg (oldAttrs: { meta = { priority = priority; }; });
   getAttr = attrset: path:
@@ -98,35 +92,51 @@ let
           lib.warn "Package ${path} does not exists" null)
       attrset
       (pkgs.lib.splitString "." path);
-  getMyPkgOrPkg = attrset: path:
-    (
-      let
-        vanillaPackage = getAttr attrset path;
-        tryNewPath = newPath:
-          if (newPath == path) then
-            null
-          else
-            lib.warn "Package ${path} does not exists, trying ${newPath}"
-              (getAttr attrset newPath);
-        nixpkgsPackage =
-          tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
-        unstablePackage = tryNewPath "unstable.${path}";
-      in
-      if vanillaPackage != null then
-        vanillaPackage
-      else if nixpkgsPackage != null then
-        nixpkgsPackage
-      else if unstablePackage != null then
-        unstablePackage
-      else
-        lib.warn "${path} not found" null
-    );
+  getMyPkg = attrset: path:
+    let
+      pkg =
+        let
+          vanillaPackage = getAttr attrset path;
+          tryNewPath = newPath:
+            if (newPath == path) then
+              null
+            else
+              lib.warn "Package ${path} does not exists, trying ${newPath}"
+                (getAttr attrset newPath);
+          nixpkgsPackage =
+            tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
+          unstablePackage = tryNewPath "unstable.${path}";
+        in
+        if vanillaPackage != null then
+          vanillaPackage
+        else if nixpkgsPackage != null then
+          nixpkgsPackage
+        else if unstablePackage != null then
+          unstablePackage
+        else
+          lib.warn "${path} not found" null;
+
+      # Sometimes packages failed to build. We use this to skip running tests.
+      # Don't use this on normal packages, otherwise we won't be able to downlaod caches from binary caches.
+      dontCheck = false;
+    in
+    if dontCheck
+    then
+      overridePkg
+        pkg
+        (oldAttrs: {
+          # Fuck, why every package has broken tests? I just want to trust the devil.
+          # Fuck, this does not seem to work.
+          doCheck = false;
+        })
+    else
+      pkg;
 
   # Emits a warning when package does not exist, instead of quitting immediately
   getPkg = attrset: path:
     if prefs.hostname == "broken-packages" then
       (if !builtins.elem path brokenPackages then
-        dontCheckPkg (getMyPkgOrPkg attrset path)
+        getMyPkg attrset path
       else
         lib.warn
           "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
@@ -147,7 +157,7 @@ let
       lib.info "${path} will not be installed in system ${prefs.nixosSystem}"
         null
     else
-      (dontCheckPkg (getMyPkgOrPkg attrset path));
+      getMyPkg attrset path;
 
   getPackages = list:
     (builtins.filter (x: x != null) (builtins.map (x: getPkg pkgs x) list));
