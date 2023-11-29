@@ -5519,7 +5519,7 @@ builtins.toString prefs.ownerGroupGid
             after = [ "network-online.target" ];
             path = [
               pkgs.coreutils
-              pkgs.clash
+              pkgs.clash-meta
               pkgs.curl
               pkgs.procps
               pkgs.libcap
@@ -5569,7 +5569,7 @@ builtins.toString prefs.ownerGroupGid
               pkgs.yj
               pkgs.libcap
               pkgs.utillinux
-              pkgs.clash
+              pkgs.clash-meta
             ];
             script =
               let
