@@ -449,7 +449,44 @@
                   alias s="sops"
                 '';
               };
+
+              cuda = pkgs.mkShell {
+                buildInputs = with pkgs; [
+                  linuxPackages.nvidia_x11
+                  cudaPackages.cudatoolkit
+                  cudaPackages.cudnn
+                  cudaPackages.libcublas
+                  cudaPackages.cuda_cudart
+                  libGLU
+                  libGL
+                  xorg.libXi
+                  xorg.libXmu
+                  freeglut
+                  xorg.libXext
+                  xorg.libX11
+                  xorg.libXv
+                  xorg.libXrandr
+                  zlib
+                  ncurses5
+                  stdenv.cc
+                  binutils
+                  (pkgs.python3.withPackages (ps: with ps; [
+                    pip
+                    pandas
+                    requests
+                    numpy
+                    pytorchWithCuda
+                    jaxlibWithCuda
+                    jax
+                  ]))
+                ];
+
+                shellHook = ''
+                  export LD_LIBRARY_PATH="${pkgs.linuxPackages.nvidia_x11}/lib"
+                '';
+              };
             };
+
             apps = {
               run = {
                 type = "app";
