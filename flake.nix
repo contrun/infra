@@ -403,28 +403,32 @@
       eachSystem defaultSystems
         (system:
           let
+            config = {
+              android_sdk.accept_license = true;
+              allowUnfree = true;
+            };
             pkgs = import nixpkgs {
-              inherit system;
+              inherit system config;
             };
 
             pkgsToBuildLocalPackages = import nixpkgs {
-              inherit system;
+              inherit system config;
               overlays = [
                 (import "${gomod2nix}/overlay.nix")
               ];
             };
 
             pkgsWithOverlays = import nixpkgs {
-              inherit system;
+              inherit system config;
               overlays = self.overlayList;
             };
 
             pkgsUnstable = import inputs.nixpkgs-unstable {
-              inherit system;
+              inherit system config;
             };
 
             pkgsUnstableWithOverlays = import inputs.nixpkgs-unstable {
-              inherit system;
+              inherit system config;
             };
           in
           rec {
@@ -493,65 +497,39 @@
               };
 
               # https://stackoverflow.com/questions/77174188/nixos-issues-with-flutter-run
+              # Note that the emulator does not work here.
               android =
                 let
-                  # Everything to make Flutter happy
-                  sdk = inputs.android-nixpkgs.sdk.${system} (sdkPkgs: with sdkPkgs; [
-                    build-tools-34-0-0
-                    cmdline-tools-latest
-                    ndk-bundle
-                    emulator
-                    platform-tools
-                    tools
-                    platforms-android-34
-                    sources-android-34
-                    cmake-3-22-1
-                    system-images-android-34-default-x86-64
-                  ]);
+                  latestVersion = "34";
+                  # special version for aapt2 (usually latest available)
+                  buildToolsVersionForAapt2 = "${latestVersion}.0.0";
+                  # Installing android sdk
+                  androidComposition = pkgs.androidenv.composeAndroidPackages {
+                    # Installing both version for aapt2 and version that flutter wants
+                    buildToolsVersions = [ buildToolsVersionForAapt2 "30.0.3" ];
+                    includeSystemImages = true;
+                    platformVersions = [ latestVersion "28" ];
+                    abiVersions = [ "arm64-v8a" ] ++ (if system == "x86_64-linux" then [ "x86_64" ] else [ ]);
+                    includeEmulator = true;
+                    includeNDK = true;
+                    includeSources = true;
+                  };
+                  androidSdk = androidComposition.androidsdk;
                   pinnedJDK = pkgs.jdk17;
                 in
                 pkgs.mkShell {
-                  buildInputs = with pkgs; [
-                    # Android
-                    pinnedJDK
-                    sdk
-
-                    # Flutter
+                  ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+                  # specify gradle the aapt2 executable
+                  GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/${buildToolsVersionForAapt2}/aapt2";
+                  buildInputs = [
                     flutter
-                    dart
+                    android-studio
 
-                    # Code hygiene
-                    gitlint
+                    androidSdk
+                    pinnedJDK
 
-                    # Flutter dependencies for linux desktop
-                    atk
-                    cairo
-                    clang
-                    cmake
-                    epoxy
-                    gdk-pixbuf
-                    glib
-                    gtk3
-                    harfbuzz
-                    ninja
-                    pango
-                    pcre
-                    pkg-config
                     xorg.libX11
-                    xorg.xorgproto
                   ];
-
-                  # Make Flutter build on desktop
-                  CPATH = "${pkgs.xorg.libX11.dev}/include:${pkgs.xorg.xorgproto}/include";
-                  LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [ atk cairo epoxy gdk-pixbuf glib gtk3 harfbuzz pango ];
-
-                  ANDROID_HOME = "${sdk}/share/android-sdk";
-                  ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
-                  JAVA_HOME = pinnedJDK;
-
-                  # Fix an issue with Flutter using an older version of aapt2, which does not know
-                  # an used parameter.
-                  GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
                 };
 
             };

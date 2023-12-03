@@ -844,6 +844,7 @@ in
           { };
       configAttr = {
         config = {
+          android_sdk.accept_license = true;
           allowUnfree = true;
           allowBroken = true;
           pulseaudio = prefs.enablePulseaudio;
