@@ -539,7 +539,7 @@ let
 in
 {
   inherit
-    # myOverlay
+    myOverlay
     shellsOverlay;
 }
 

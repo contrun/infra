@@ -315,7 +315,7 @@ in
             table-others
           ];
           fcitx5.addons = with pkgs; [
-            # fcitx5-chinese-addons
+            fcitx5-chinese-addons
             fcitx5-rime
             fcitx5-table-extra
             fcitx5-table-other
@@ -449,7 +449,7 @@ in
         nix-prefetch-scripts
         # python3
         (pkgs.myPackages.pythonStable or python3)
-        # nvimpager
+        page
         (pkgs.myPackages.nvimdiff or null)
         ruby
         perl
@@ -712,13 +712,6 @@ in
         EDITOR = "nvim";
       } // (mergeOptionalConfigs [
         {
-          enable = prefs.enableNixLd;
-          config = {
-            # NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
-            NIX_LD_LIBRARY_PATH = ldLibraryPath;
-          };
-        }
-        {
           enable = pkgs ? myPackages;
           config = {
             # export PYTHONPATH="$MYPYTHONPATH:$PYTHONPATH"
@@ -752,6 +745,7 @@ in
     slock.enable = prefs.enableSlock;
     bash = { enableCompletion = true; };
     fish = { enable = prefs.enableFish; };
+    nix-ld = { enable = prefs.enableNixLd; };
     zsh = {
       enable = prefs.enableZSH;
       enableCompletion = true;
@@ -2837,7 +2831,7 @@ in
     emacs = {
       # enable = prefs.enableEmacs;
       install = prefs.enableEmacs;
-      package = pkgs.myPackages.emacs or pkgs.emacs;
+      package = pkgs.emacs;
     };
 
     syncthing =

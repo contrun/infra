@@ -7,9 +7,7 @@ HOST ?= $(shell hostname -s)
 USER ?= $(USER)
 
 EXTRANIXFLAGS ?=
-# TODO: Remove impure
-# error: attribute 'currentSystem' missing https://github.com/obsidiansystems/obelisk/issues/854
-NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going) $(EXTRANIXFLAGS))
+NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --show-trace --keep-going) $(EXTRANIXFLAGS))
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
@@ -68,11 +66,11 @@ home-manager-build:
 	$(HOMEMANAGER) build --flake ".#$(USER)@$(HOST)" $(NIXFLAGS)
 
 home-manager-bootstrap:
-	$(HOMEMANAGER) switch --flake ".#$(USER)@cicd-$(shell nix eval --raw --impure --expr 'builtins.currentSystem')" $(NIXFLAGS)
+	$(HOMEMANAGER) switch --flake ".#$(USER)@cicd-$(shell nix eval --raw --expr 'builtins.currentSystem')" $(NIXFLAGS)
 
 nixos-prefs: JQ = $(or $(shell command -v jq),cat)
 nixos-prefs: create-dirs
-	nix eval --raw --impure --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | $(JQ) | tee tmp/prefs.$(HOST).json
+	nix eval --raw --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | $(JQ) | tee tmp/prefs.$(HOST).json
 
 nixos-deploy:
 	$(DEPLOY) $(DEPLOYFLAGS) ".#$(HOST)" -- $(NIXFLAGS)

@@ -21,9 +21,6 @@
     nixpkgs-wayland = { url = "github:nix-community/nixpkgs-wayland"; };
     nixpkgs-wayland.inputs.nixpkgs.follows = "nixpkgs";
 
-    nix-ld.url = "github:Mic92/nix-ld";
-    nix-ld.inputs.nixpkgs.follows = "nixpkgs";
-
     nix-alien = {
       url = "github:thiagokokada/nix-alien";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -472,9 +469,14 @@
                   binutils
                   (pkgs.python3.withPackages (ps: with ps; [
                     pip
+                    jupyterlab
+                    jupyterhub
+                    jupyterhub-systemdspawner
                     pandas
-                    requests
                     numpy
+                    requests
+                    transformers
+                    huggingface-hub
                     pytorchWithCuda
                     jaxlibWithCuda
                     jax
