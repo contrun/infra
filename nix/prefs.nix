@@ -528,6 +528,7 @@ let
     enableGPGAgent = !self.isMinimalSystem;
     # enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
     enableSmos = false;
+    enableAndroidDevEnv = false;
     enableSmosSync = self.enableSmos;
     enableFoot = !self.isMinimalSystem;
     enableSmosServer = false;
@@ -1037,6 +1038,7 @@ let
         nvidiaBusId = "PCI:1:0:0";
         intelBusId = "PCI:0:2:0";
       };
+      enableAndroidDevEnv = true;
     } else if hostname == "madbox" then {
       isMinimalSystem = true;
       isHomeManagerOnly = true;

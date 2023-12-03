@@ -3,6 +3,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-23.11";
     home-manager.url = "github:nix-community/home-manager/release-23.11";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -44,7 +45,10 @@
     aioproxy.inputs.gomod2nix.follows = "gomod2nix";
     aioproxy.inputs.flake-utils.follows = "flake-utils";
 
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    android-nixpkgs = {
+      url = "github:tadfisher/android-nixpkgs/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     nix-on-droid.url = "github:t184256/nix-on-droid";
     nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";

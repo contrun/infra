@@ -23,6 +23,13 @@ let
     nixpkgs.overlays = inputs.self.overlayList;
   };
 
+  # Otherwise error: attribute 'androidSdk' missing
+  # https://github.com/tadfisher/android-nixpkgs/issues/15
+  androidlNixpkgsOverlay = { config, pkgs, system, inputs, ... }:
+    if prefs.enableAndroidDevEnv then {
+      nixpkgs.overlays = [ inputs.android-nixpkgs.overlays.default ];
+    } else { };
+
   hostConfiguration = { config, pkgs, ... }:
     (if hostname == "ssg" then {
       boot.loader.grub.devices =
@@ -329,7 +336,21 @@ let
                 };
               };
             })
-          ] ++ (lib.optionals prefs.enableSmos
+          ] ++ (lib.optionals prefs.enableAndroidDevEnv
+            [
+              inputs.android-nixpkgs.hmModule
+              {
+                home.packages = with pkgs; [ android-studio flutter ];
+                android-sdk.enable = true;
+                android-sdk.packages = sdkPkgs: with sdkPkgs; [
+                  build-tools-34-0-0
+                  cmdline-tools-latest
+                  emulator
+                  platforms-android-34
+                  sources-android-34
+                ];
+              }
+            ]) ++ (lib.optionals prefs.enableSmos
             [ (inputs.smos + "/nix/home-manager-module.nix") ]);
         };
       };
@@ -419,6 +440,7 @@ in
     modules = [
       systemInfo
       nixpkgsOverlay
+      androidlNixpkgsOverlay
       hostConfiguration
       hardwareConfiguration
       commonConfiguration
