@@ -339,17 +339,54 @@ let
           ] ++ (lib.optionals prefs.enableAndroidDevEnv
             [
               inputs.android-nixpkgs.hmModule
-              {
-                home.packages = with pkgs; [ android-studio flutter ];
-                android-sdk.enable = true;
-                android-sdk.packages = sdkPkgs: with sdkPkgs; [
-                  build-tools-34-0-0
-                  cmdline-tools-latest
-                  emulator
-                  platforms-android-34
-                  sources-android-34
-                ];
-              }
+              ({ config, pkgs, lib, options, ... }:
+                {
+                  home.packages = [
+                    # pkgs.android-studio
+                    # pkgs.flutter
+
+                    # Copied from https://github.com/SelfPrivacy/selfprivacy/blob/9663bbf146605eb57680965be62935c9d81f403b/flake.nix#L27
+                    (
+                      pkgs.symlinkJoin
+                        {
+                          name = "spAndroidStudio";
+                          paths = with pkgs; [
+                            android-studio
+                            flutter
+                          ];
+
+                          nativeBuildInputs = [ pkgs.makeWrapper ];
+                          postBuild = ''
+                            wrapProgram $out/bin/flutter \
+                              --prefix ANDROID_SDK_ROOT=${options.android-sdk.path.default} \
+                              --prefix ANDROID_HOME=${options.android-sdk.path.default} \
+                              --prefix ANDROID_JAVA_HOME=${pkgs.jdk.home}
+
+                            wrapProgram $out/bin/android-studio \
+                              --prefix FLUTTER_SDK=${pkgs.flutter.unwrapped} \
+                              --prefix ANDROID_SDK_ROOT=${options.android-sdk.path.default} \
+                              --prefix ANDROID_HOME=${options.android-sdk.path.default} \
+                              --prefix ANDROID_JAVA_HOME=${pkgs.jdk.home}
+                          '';
+                        }
+                    )
+                  ];
+                  # with pkgs; [ android-studio flutter ];
+                  android-sdk.enable = true;
+                  android-sdk.packages = sdkPkgs: with sdkPkgs; [
+                    build-tools-34-0-0
+                    cmdline-tools-latest
+                    ndk-bundle
+                    emulator
+                    platform-tools
+                    tools
+                    platforms-android-34
+                    sources-android-34
+                    cmake-3-22-1
+                  ] ++ (if prefs.nixosSystem == "x86_64-linux" then [
+                    system-images-android-34-default-x86-64
+                  ] else [ ]);
+                })
             ]) ++ (lib.optionals prefs.enableSmos
             [ (inputs.smos + "/nix/home-manager-module.nix") ]);
         };
