@@ -491,6 +491,69 @@
                   export LD_LIBRARY_PATH="${pkgs.linuxPackages.nvidia_x11}/lib"
                 '';
               };
+
+              # https://stackoverflow.com/questions/77174188/nixos-issues-with-flutter-run
+              android =
+                let
+                  # Everything to make Flutter happy
+                  sdk = inputs.android-nixpkgs.sdk.${system} (sdkPkgs: with sdkPkgs; [
+                    build-tools-34-0-0
+                    cmdline-tools-latest
+                    ndk-bundle
+                    emulator
+                    platform-tools
+                    tools
+                    platforms-android-34
+                    sources-android-34
+                    cmake-3-22-1
+                    system-images-android-34-default-x86-64
+                  ]);
+                  pinnedJDK = pkgs.jdk17;
+                in
+                pkgs.mkShell {
+                  buildInputs = with pkgs; [
+                    # Android
+                    pinnedJDK
+                    sdk
+
+                    # Flutter
+                    flutter
+                    dart
+
+                    # Code hygiene
+                    gitlint
+
+                    # Flutter dependencies for linux desktop
+                    atk
+                    cairo
+                    clang
+                    cmake
+                    epoxy
+                    gdk-pixbuf
+                    glib
+                    gtk3
+                    harfbuzz
+                    ninja
+                    pango
+                    pcre
+                    pkg-config
+                    xorg.libX11
+                    xorg.xorgproto
+                  ];
+
+                  # Make Flutter build on desktop
+                  CPATH = "${pkgs.xorg.libX11.dev}/include:${pkgs.xorg.xorgproto}/include";
+                  LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [ atk cairo epoxy gdk-pixbuf glib gtk3 harfbuzz pango ];
+
+                  ANDROID_HOME = "${sdk}/share/android-sdk";
+                  ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
+                  JAVA_HOME = pinnedJDK;
+
+                  # Fix an issue with Flutter using an older version of aapt2, which does not know
+                  # an used parameter.
+                  GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
+                };
+
             };
 
             apps = {
