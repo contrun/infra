@@ -345,10 +345,16 @@ let
                 android-sdk.packages = sdkPkgs: with sdkPkgs; [
                   build-tools-34-0-0
                   cmdline-tools-latest
+                  ndk-bundle
                   emulator
+                  platform-tools
+                  tools
                   platforms-android-34
                   sources-android-34
-                ];
+                  cmake-3-22-1
+                ] ++ (if prefs.nixosSystem == "x86_64-linux" then [
+                  system-images-android-34-default-x86-64
+                ] else [ ]);
               }
             ]) ++ (lib.optionals prefs.enableSmos
             [ (inputs.smos + "/nix/home-manager-module.nix") ]);
