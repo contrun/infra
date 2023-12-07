@@ -532,6 +532,26 @@
                   ];
                 };
 
+              ckb =
+                with pkgs;
+                mkShell {
+                  nativeBuildInputs =
+                    [
+                      llvmPackages.clang
+                      pkg-config
+                      rustup
+                    ];
+                  buildInputs = [
+                    llvmPackages.libclang
+                    llvmPackages.libclang.dev
+                    llvmPackages.libclang.lib
+                    rocksdb
+                    openssl
+                  ];
+                  # run time dependencies
+                  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+                  RUST_BACKTRACE = "full";
+                };
             };
 
             apps = {
