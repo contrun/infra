@@ -553,6 +553,67 @@
                   LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
                   RUST_BACKTRACE = "full";
                 };
+
+              dotnetNativeAOT =
+                pkgs.mkShell rec {
+
+                  dotnetPkg =
+                    (with dotnetCorePackages; combinePackages [
+                      sdk_7_0
+                      sdk_8_0
+                    ]);
+
+                  deps = [
+                    zlib
+                    zlib.dev
+                    openssl
+                    icu
+                    dotnetPkg
+                  ];
+
+                  NIX_LD_LIBRARY_PATH = lib.makeLibraryPath ([
+                    stdenv.cc.cc
+                  ] ++ deps);
+                  NIX_LD = "${pkgs.stdenv.cc.libc_bin}/bin/ld.so";
+                  nativeBuildInputs = [
+                    omnisharp-roslyn
+                    fsautocomplete
+                  ] ++ deps;
+
+                  shellHook = ''
+                    DOTNET_ROOT="${dotnetPkg}";
+                  '';
+                };
+
+              dotnet =
+                pkgs.mkShell rec {
+
+                  dotnetPkg =
+                    (with dotnetCorePackages; combinePackages [
+                      sdk_6_0
+                      sdk_7_0
+                      sdk_8_0
+                    ]);
+
+                  deps = [
+                    zlib
+                    zlib.dev
+                    openssl
+                    icu
+                    dotnetPkg
+                  ];
+
+                  NIX_LD_LIBRARY_PATH = lib.makeLibraryPath ([
+                    stdenv.cc.cc
+                  ] ++ deps);
+                  NIX_LD = "${pkgs.stdenv.cc.libc_bin}/bin/ld.so";
+                  nativeBuildInputs = [
+                    omnisharp-roslyn
+                    fsautocomplete
+                  ] ++ deps;
+
+                };
+
             };
 
             apps = {
