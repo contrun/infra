@@ -817,6 +817,9 @@ let
       pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
         kernelPackages = pkgs.linuxPackages;
       };
+    } else if hostname == "adx" then {
+      isMinimalSystem = false;
+      isVagrantBox = true;
     } else if hostname == "dvm" then {
       isMinimalSystem = true;
       enableMicrovmGuest = true;

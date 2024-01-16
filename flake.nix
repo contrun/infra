@@ -151,7 +151,7 @@
         in
         {
           "${configName}" = inputs.home-manager.lib.homeManagerConfiguration {
-            pkgs = self.nixpkgs."${prefs.system}";
+            pkgs = self.pkgs."${prefs.system}";
             modules = [
               ({ ... }: {
                 config = {
@@ -190,7 +190,8 @@
     let
       deployNodes = [ "ssg" "jxt" "shl" "mdq" "aol" ];
       # "dbx" for vagrant, "dvm" for microvm, "dqe" for qemu
-      vmNodes = [ "dbx" "dvm" "bigvm" "dqe" ];
+      # "adx" is another vagrant box based on arch linux
+      vmNodes = [ "dbx" "dvm" "bigvm" "dqe" "adx" ];
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
