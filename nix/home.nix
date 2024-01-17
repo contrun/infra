@@ -265,6 +265,7 @@ let
         "bear"
         "rustup"
         "gopls"
+        "nil"
         "pyright"
         "cargo-edit"
         "cargo-xbuild"
@@ -845,6 +846,12 @@ let
   ];
 in
 {
+  programs = {
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+  };
   # programs = lib.optionalAttrs (prefs.enableSmos) {
   #   smos = {
   #     enable = true;
