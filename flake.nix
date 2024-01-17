@@ -386,10 +386,10 @@
                     })
                     [ "magit" "coredns" "ssh" "mosh" "ssho" "mosho" ]);
                 function = acc: elem: acc //
-                  (if (elem.pkg != null) then {
-                    ${elem.name} = elem.pkg;
-                  } else
-                    { });
+                (if (elem.pkg != null) then {
+                  ${elem.name} = elem.pkg;
+                } else
+                  { });
               in
               (builtins.foldl' function { } list) // (super.myPackages or { });
           };
@@ -810,5 +810,13 @@
                 };
               };
           }))
-    ]);
+    ]) //
+    {
+      # Templates for use with zig flake init
+      templates.dotnet-ml = {
+        path = ./nix/templates/dotnet-ml;
+        description = "A development environment for machine learning on dotnet.";
+      };
+    }
+  ;
 }
