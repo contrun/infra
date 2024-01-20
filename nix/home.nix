@@ -651,7 +651,7 @@ let
         "texlab"
         # "mupdf"
         "graphviz"
-        "logseq"
+        # "logseq"
         "gnuplot"
         "goldendict"
         "zathura"

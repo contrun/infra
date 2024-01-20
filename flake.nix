@@ -321,7 +321,7 @@
             deployNodes;
 
         overlayList = [
-          inputs.nixpkgs-wayland.overlay
+          # inputs.nixpkgs-wayland.overlay
           inputs.emacs-overlay.overlay
         ] ++ (lib.attrValues self.overlays);
 

@@ -70,6 +70,12 @@ jobs:
             data: "pkgs.keepassxc"
             experimental: false
           - type: "package"
+            data: "pkgs.calibre"
+            experimental: false
+          - type: "package"
+            data: "pkgs.clash-verge"
+            experimental: false
+          - type: "package"
             data: "pkgs.texlab"
             experimental: false
           - type: "package"
