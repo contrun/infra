@@ -235,7 +235,9 @@ let
     {
       name = "development tools (more preferred)";
       priority = 38;
-      packages = getPackages [ "myPackages.python" ];
+      packages = getPackages [
+        # "myPackages.python"
+      ];
     }
     {
       name = "development tools (preferred)";
@@ -640,7 +642,7 @@ let
       packages = getPackages [
         "bibtool"
         "pdf2djvu"
-        "calibre"
+        # "calibre"
         "ebook_tools"
         "coolreader"
         "proselint"
@@ -651,7 +653,7 @@ let
         "texlab"
         # "mupdf"
         "graphviz"
-        "logseq"
+        # "logseq"
         "gnuplot"
         "goldendict"
         "zathura"

@@ -604,7 +604,7 @@ in
         { enable = prefs.enableCodeServer; list = [ code-server ]; }
         { enable = prefs.enableZfs; list = [ zfsbackup ]; }
         { enable = prefs.enableBtrfs; list = [ btrbk btrfs-progs ]; }
-        { enable = prefs.enableClashRedir; list = [ clash ]; }
+        { enable = prefs.enableClashRedir; list = [ clash-meta ]; }
         { enable = prefs.enableK3s; list = [ k3s ]; }
         { enable = prefs.enableDocker; list = [ docker-buildx ]; }
         { enable = prefs.enableWstunnel; list = [ wstunnel ]; }
