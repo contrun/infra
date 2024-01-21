@@ -70,7 +70,7 @@ home-manager-bootstrap:
 
 nixos-prefs: JQ = $(or $(shell command -v jq),cat)
 nixos-prefs: create-dirs
-	nix eval --raw --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | $(JQ) | tee tmp/prefs.$(HOST).json
+	nix eval --impure --raw --expr "(builtins.getFlake (builtins.toString ./.)).nixosConfigurations.$(HOST).config.passthru.prefsJson" | $(JQ) | tee tmp/prefs.$(HOST).json
 
 nixos-deploy:
 	$(DEPLOY) $(DEPLOYFLAGS) ".#$(HOST)" -- $(NIXFLAGS)
@@ -87,9 +87,10 @@ nixos-generate:
 	$(GENERATE) -f $(GENERATEFORMAT) --flake ".#$(HOST)"
 
 # Filters do not work yet, as cachix will upload the closure.
-cachix-push:
+cachix-push: create-dirs
 	if ! make HOST=$(HOST) nixos-build; then :; fi
-	nix show-derivation $(NIXFLAGS) -r ".#nixosConfigurations.$(HOST).config.system.build.toplevel" | jq -r '.[].outputs[].path' | xargs -i sh -c 'test -f "{}" && echo "{}"' | grep -vE 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$$|-source$$' | cachix push contrun
+	nix derivation show $(NIXFLAGS) -r ".#nixosConfigurations.$(HOST).config.system.build.toplevel" | jq -r '.[].outputs[].path' | xargs -i sh -c 'test -f "{}" && echo "{}"' > tmp/cachix-push.paths
+	grep -vE 'clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$$|-source$$|ndk-bundle|vivaldi|sources-android|commandlinetools-linux' tmp/cachix-push.paths | cachix push contrun -m zstd -c 16 -j 1
 
 cachix-push-all:
 	make HOST=cicd-x86_64-linux cachix-push
