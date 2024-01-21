@@ -739,7 +739,12 @@ in
       enableBrowserSocket = true;
     };
     sysdig = { enable = prefs.enableSysdig; };
-    ssh = { startAgent = true; };
+    ssh = {
+      startAgent = true;
+      extraConfig = ''
+        Include ssh_config.d/*
+      '';
+    };
     # vim.defaultEditor = true;
     adb.enable = prefs.enableADB;
     slock.enable = prefs.enableSlock;
@@ -1397,7 +1402,7 @@ in
       };
       startWhenNeeded = true;
       extraConfig = builtins.concatStringsSep "\n" (
-        [ "Include /etc/ssh/sshd_config_*" ] ++ (lib.optionals prefs.enableSshPortForwarding [
+        [ "Include /etc/ssh/sshd_config.d/*" ] ++ (lib.optionals prefs.enableSshPortForwarding [
           ''
             Match User ssh-port-forwarding
               # PermitTunnel no
