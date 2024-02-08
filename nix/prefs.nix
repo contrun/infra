@@ -177,8 +177,8 @@ let
     videoDrivers = null;
     enableNvidiaPrimeConfig = false;
     enableNvidiaModesetting = false;
-    enableNvidiaPowerManagement = true;
-    enableNvidiaPowerManagementFinegrained = true;
+    enableNvidiaPowerManagement = false;
+    enableNvidiaPowerManagementFinegrained = false;
     consoleFont = null;
     hostname = "hostname";
     hostId = "346b7a87";
