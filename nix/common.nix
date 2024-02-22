@@ -903,6 +903,14 @@ in
     stateVersion = prefs.systemStateVersion;
     activationScripts =
       {
+        # Diff system changes on switch. Taken from
+        # https://github.com/luishfonseca/dotfiles/blob/6193dff46ad05eca77dedba9afbc50443a8b3dd1/modules/upgrade-diff.nix
+        diff = {
+          supportsDryActivation = true;
+          text = ''
+            ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
+          '';
+        };
         mkCcacheDirs = {
           text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
           deps = [ ];
