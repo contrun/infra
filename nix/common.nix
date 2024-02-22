@@ -750,7 +750,11 @@ in
     slock.enable = prefs.enableSlock;
     bash = { enableCompletion = true; };
     fish = { enable = prefs.enableFish; };
-    nix-ld = { enable = prefs.enableNixLd; };
+    nix-ld = {
+      enable = prefs.enableNixLd;
+      libraries =
+        options.programs.nix-ld.libraries.default;
+    };
     zsh = {
       enable = prefs.enableZSH;
       enableCompletion = true;
