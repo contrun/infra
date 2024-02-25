@@ -33,34 +33,6 @@ on:
         type: boolean
         default: true
         required: false
-  pull_request:
-    branches:
-      - master
-      - main
-      - actions
-      - ci
-      - x86_64-linux
-      - aarch64-linux
-      - "releases/*"
-    paths:
-      - "*.nix"
-      - "**/*.nix"
-      - "nix/**"
-      - "flake.lock"
-  push:
-    branches:
-      - master
-      - main
-      - actions
-      - ci
-      - x86_64-linux
-      - aarch64-linux
-      - "releases/*"
-    paths:
-      - "*.nix"
-      - "**/*.nix"
-      - "nix/**"
-      - "flake.lock"
 
 jobs:
   build:
