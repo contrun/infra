@@ -33,6 +33,34 @@ on:
         type: boolean
         default: true
         required: false
+  pull_request:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - x86_64-linux
+      - aarch64-linux
+      - "releases/*"
+    paths:
+      - "*.nix"
+      - "**/*.nix"
+      - "nix/**"
+      - "flake.lock"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - x86_64-linux
+      - aarch64-linux
+      - "releases/*"
+    paths:
+      - "*.nix"
+      - "**/*.nix"
+      - "nix/**"
+      - "flake.lock"
 
 jobs:
   build:
@@ -110,18 +138,26 @@ jobs:
           system="${system:-x86_64-linux}"
           freeDiskSpace=${{ matrix.free-disk-space }}
           freeDiskSpace="${freeDiskSpace:-false}"
+          updateFlakeInputs=false
           shouldSkip=false
-          if [[ "${{ format('{0}', !inputs.build-experimental-packages && matrix.experimental) }}" == 'true' ]]; then
-              shouldSkip=true
-          fi
           case '${{ github.event_name }}' in
-              'push')
+              'push'|'pull_request')
+                  # Always free disk space if this workflow is triggered by push or pull request.
+                  # There is no harm in doing this as we don't expect this github actions workflow to finish soon in that case.
+                  # And in some case (e.g. flake inputs is updated recently) freeing disk space is necessary.
+                  freeDiskSpace="${freeDiskSpace:-true}"
                   if printf '%s\0' "x86_64-linux" "aarch64-linux" | grep -Fxz -- "${{ github.ref_name }}" && [[ "${{ github.ref_name }}" != "${system}" ]]; then
                       shouldSkip=true
                   fi
                   ;;
-              *)
-                  :
+              # The shouldSkip and updateFlakeInputs logic below only applies to workflow_call/workflow_dispatch.
+              'workflow_call'|'workflow_dispatch')
+                  if [[ "${{ format('{0}', !inputs.build-experimental-packages && matrix.experimental) }}" == 'true' ]]; then
+                      shouldSkip=true
+                  fi
+                  if [[ "${{ format('{0}', inputs.update-nix-inputs) }} " == 'true' ]]; then
+                      updateFlakeInputs=true
+                  fi
                   ;;
           esac
 
@@ -145,7 +181,7 @@ jobs:
                   ;;
           esac
 
-          set_output system freeDiskSpace shouldSkip nixExpressionBase64 nixArguments
+          set_output system freeDiskSpace shouldSkip updateFlakeInputs nixExpressionBase64 nixArguments
 
       - name: Checkout repository
         if: steps.variables.outputs.shouldSkip != 'true'
@@ -165,7 +201,7 @@ jobs:
           nix-systems: "${{ steps.variables.outputs.system }}"
 
       - name: Update nix flake inputs
-        if: format('{0}', inputs.update-nix-inputs) == 'true'
+        if: steps.variables.outputs.updateFlakeInputs != 'true'
         run: |
           nix flake update
 
