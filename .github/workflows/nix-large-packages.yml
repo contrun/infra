@@ -91,6 +91,7 @@ jobs:
             data: |
               .#caddy
             experimental: true
+            free-disk-space: false
 
     steps:
       - name: Set up common variables
@@ -109,15 +110,14 @@ jobs:
           system=${{ matrix.system }}
           system="${system:-x86_64-linux}"
           freeDiskSpace=${{ matrix.free-disk-space }}
-          freeDiskSpace="${freeDiskSpace:-false}"
+          # Always free disk space if free-disk-space is not set explicitly.
+          # There is no harm in doing this as we don't expect this github actions workflow to finish quickly.
+          # And in some case (e.g. flake inputs is updated recently) freeing disk space is necessary.
+          freeDiskSpace="${freeDiskSpace:-true}"
           updateFlakeInputs=false
           shouldSkip=false
           case '${{ github.event_name }}' in
               'push'|'pull_request')
-                  # Always free disk space if this workflow is triggered by push or pull request.
-                  # There is no harm in doing this as we don't expect this github actions workflow to finish soon in that case.
-                  # And in some case (e.g. flake inputs is updated recently) freeing disk space is necessary.
-                  freeDiskSpace="${freeDiskSpace:-true}"
                   if printf '%s\0' "x86_64-linux" "aarch64-linux" | grep -Fxz -- "${{ github.ref_name }}" && [[ "${{ github.ref_name }}" != "${system}" ]]; then
                       shouldSkip=true
                   fi
@@ -173,7 +173,7 @@ jobs:
           nix-systems: "${{ steps.variables.outputs.system }}"
 
       - name: Update nix flake inputs
-        if: steps.variables.outputs.updateFlakeInputs != 'true'
+        if: steps.variables.outputs.updateFlakeInputs == 'true'
         run: |
           nix flake update
 
