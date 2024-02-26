@@ -53,7 +53,7 @@ on:
       - ci
       - "releases/*"
     paths:
-      - ".github/workflows/nix.yml"
+      - ".github/workflows/nix*.yml"
       - "*.nix"
       - "**/*.nix"
       - "nix/**"
