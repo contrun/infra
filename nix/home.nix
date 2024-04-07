@@ -804,7 +804,7 @@ let
         "helix"
         "neovim"
         "neovide"
-        "rnix-lsp"
+        # "rnix-lsp"
         "ntp"
         "pastebinit"
         # "peek"

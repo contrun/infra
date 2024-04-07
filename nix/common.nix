@@ -762,12 +762,12 @@ in
       shellInit = "zsh-newuser-install() { :; }";
     };
     # light.enable = true;
-    clash-verge = let enable = prefs.enableClashVerge; in
-      {
-        enable = enable;
-        autoStart = enable;
-        tunMode = enable;
-      };
+    # clash-verge = let enable = prefs.enableClashVerge; in
+    #   {
+    #     enable = enable;
+    #     autoStart = enable;
+    #     tunMode = enable;
+    #   };
     sway = {
       enable = prefs.enableSway;
       extraOptions = [ "--unsupported-gpu" ];
@@ -2547,6 +2547,7 @@ in
                 };
               };
             };
+            webnoredirect = getEntrypoint ":8848";
             websecure = getEntrypoint ":443" // { http = { tls = { }; }; };
             metrics = {
               address = "127.0.0.1:${builtins.toString prefs.traefikMetricsPort}";
