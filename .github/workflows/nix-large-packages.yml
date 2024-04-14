@@ -74,10 +74,15 @@ jobs:
             experimental: false
           - type: "package"
             data: "pkgs.clash-verge"
-            experimental: false
           - type: "arguments"
             data: ".#nixosConfigurations.aol.pkgs.clash-verge"
             experimental: false
+          - type: "arguments"
+            data: ".#nixosConfigurations.aol.pkgs.zeal"
+            experimental: true
+          - type: "arguments"
+            data: ".#nixosConfigurations.aol.pkgs.calibre"
+            experimental: true
           - type: "package"
             data: "pkgs.texlab"
             experimental: false
