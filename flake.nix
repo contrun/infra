@@ -412,6 +412,18 @@
               inherit system config;
             };
 
+            pkgsRiscvLinux = import nixpkgs {
+              inherit system config;
+              crossSystem = (import nixpkgs { }).lib.systems.examples.riscv64;
+              useLLVM = true;
+            };
+
+            pkgsRiscvEmbeded = import nixpkgs {
+              inherit system config;
+              crossSystem = (import nixpkgs { }).lib.systems.examples.riscv64-embedded;
+              useLLVM = true;
+            };
+
             pkgsToBuildLocalPackages = import nixpkgs {
               inherit system config;
               overlays = [
@@ -455,6 +467,18 @@
                   alias s="sops"
                 '';
               };
+
+              riscvEmbeded = pkgsRiscvEmbeded.mkShell { };
+
+
+              riscvEmbeddedClang = let mkShell = pkgsRiscvEmbeded.mkShell.override {
+                stdenv = pkgsRiscvEmbeded.clangStdenv;
+              }; in
+                mkShell {
+                  nativeBuildInputs = [ ];
+                };
+
+              riscvLinux = pkgsRiscvLinux.mkShell { };
 
               cuda = pkgs.mkShell {
                 buildInputs = with pkgs; [
@@ -616,17 +640,18 @@
 
             };
 
-            apps = {
-              run = {
-                type = "app";
-                program = "${self.packages."${system}".run}/bin/run";
-              };
+            apps =
+              {
+                run = {
+                  type = "app";
+                  program = "${self.packages."${system}".run}/bin/run";
+                };
 
-              magit = {
-                type = "app";
-                program = "${self.packages."${system}".magit}/bin/magit";
+                magit = {
+                  type = "app";
+                  program = "${self.packages."${system}".magit}/bin/magit";
+                };
               };
-            };
 
             defaultApp = apps.run;
 
@@ -783,6 +808,104 @@
                   ];
                 };
 
+                riscv-gnu-toolchain-shell = with pkgs;
+                  with stdenv;
+                  with stdenv.lib;
+                  pkgs.mkShell {
+                    name = "riscv-shell";
+                    nativeBuildInputs = with pkgs.buildPackages; [ bash gnumake cmake curl git utillinux ];
+                    buildInputs = with pkgs; [
+                      stdenv
+                      binutils
+                      cmake
+                      pkg-config
+                      curl
+                      autoconf
+                      automake
+                      python3
+                      libmpc
+                      mpfr
+                      gmp
+                      gawk
+                      bison
+                      flex
+                      texinfo
+                      gperf
+                      libtool
+                      patchutils
+                      bc
+                      libdeflate
+                      expat
+                      gnumake
+                      pkgs.gnumake
+
+                      utillinux
+                      bash
+                    ];
+
+                    hardeningDisable = [ "all" ];
+                  };
+
+                riscv-gnu-toolchain = with pkgs; stdenv.mkDerivation rec {
+                  pname = "riscv-gnu-toolchain";
+                  version = "2024.03.01";
+
+                  src = fetchFromGitHub {
+                    owner = "riscv-collab";
+                    repo = "riscv-gnu-toolchain";
+                    rev = "${version}";
+                    sha256 = "sha256-X3EkqHyp2NykFbP3fLMrTLFYd+/JgfxomtsHp742ipI=";
+                    leaveDotGit = true;
+                  };
+
+                  postPatch = ''
+                    # hack for unknown issue in fetchgit
+                    git reset --hard
+                    patchShebangs ./scripts
+                  '';
+
+                  nativeBuildInputs = [
+                    python3
+                    util-linux
+                    git
+                    cacert
+                    autoconf
+                    automake
+                    curl
+                    python3
+                    gawk
+                    bison
+                    flex
+                    texinfo
+                    gperf
+                    bc
+                  ];
+
+                  buildInputs = [
+                    libmpc
+                    mpfr
+                    gmp
+                    zlib
+                    expat
+                  ];
+
+                  configureFlags = [
+                    "--enable-llvm"
+                  ];
+
+                  makeFlags = [
+                    "newlib"
+                    "linux"
+                  ];
+
+                  hardeningDisable = [
+                    "format"
+                  ];
+
+                  enableParallelBuilding = true;
+
+                  __noChroot = true;
+                };
 
                 coredns = pkgsToBuildLocalPackages.buildGoApplication {
                   pname = "coredns";
