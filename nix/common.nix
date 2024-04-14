@@ -1171,7 +1171,7 @@ in
     ntp = { enable = !config.services.chrony.enable; };
     pipewire = {
       enable = prefs.enablePipewire;
-      pulse = { enable = true; };
+      pulse = { enable = false; };
     };
     restic = {
       backups = lib.optionalAttrs prefs.enableResticBackup
