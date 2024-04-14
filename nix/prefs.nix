@@ -368,10 +368,10 @@ let
     autoStartClashRedir = self.enableClashRedir;
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = !self.isMinimalSystem;
-    enableSyncthing = !self.isMinimalSystem;
+    enableSyncthing = !self.isMinimalSystem && !self.enableHomeManagerSyncthing;
     # home-manager also manages syncthing, but has less options provided,
     # We use nixpkgs to manage syncthing when possible, home-manager otherwise.
-    enableHomeManagerSyncthing = false;
+    enableHomeManagerSyncthing = true;
     syncthingIgnores = [ "roam/.emacs.d/straight" "roam/public" ];
     syncthingDevices =
       let
@@ -820,6 +820,7 @@ let
     } else if hostname == "adx" then {
       isMinimalSystem = false;
       isVagrantBox = true;
+      enableHomeManagerSyncthing = true;
     } else if hostname == "dvm" then {
       isMinimalSystem = true;
       enableMicrovmGuest = true;
