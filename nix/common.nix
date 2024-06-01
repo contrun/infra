@@ -734,7 +734,6 @@ in
     java = { enable = prefs.enableJava; };
     gnupg.agent = {
       enable = prefs.enableGPGAgent;
-      pinentryFlavor = "qt";
       enableExtraSocket = true;
       enableBrowserSocket = true;
     };
@@ -1040,7 +1039,7 @@ in
     };
     aria2 = {
       enable = prefs.enableAria2;
-      extraArguments = "--rpc-listen-all --rpc-secret $ARIA2_RPC_SECRET";
+      rpcSecretFile = "/run/secrets/aria2-rpc-secret";
     };
     fprintd = { enable = prefs.enableFprintd; };
     openldap =
@@ -1432,6 +1431,7 @@ in
     ttyd = {
       enable = prefs.enableTtyd;
       clientOptions = { fontSize = "16"; };
+      writeable = true;
     };
     samba = {
       enable = prefs.enableSamba;
@@ -6349,7 +6349,7 @@ prefs.yandexExcludedDirs
     };
 
     supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
-    zfs = { enableUnstable = prefs.enableZfsUnstable; };
+    zfs = { package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable; };
     crashDump = { enable = prefs.enableCrashDump; };
     initrd = {
       kernelModules = prefs.initrdKernelModules;

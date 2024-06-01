@@ -212,6 +212,12 @@ let
             };
           }
           {
+            enable = prefs.enableAria2;
+            config = {
+              aria2-rpc-secret = { };
+            };
+          }
+          {
             enable = prefs.ociContainers.enableVault;
             config = { vault-env = { }; };
           }
