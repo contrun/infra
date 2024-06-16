@@ -142,6 +142,9 @@
           matchResult = builtins.match "([^@]+)@([^@]+)" name;
           username = if (matchResult == null) then prefs.owner else (builtins.elemAt matchResult 0);
           hostname = if (matchResult == null) then name else (builtins.elemAt matchResult 1);
+          # If we are using the default home directory (which likely means that we haven't overriden it),
+          # then we are better of using /home/${username} in home-manager.
+          home = if (prefs.home == prefs.defaultHome) then "/home/${username}" else prefs.home;
           configName = if (matchResult == null) then "${username}@${hostname}" else name;
           prefs = getHostPreference hostname;
           moduleArgs = {
@@ -163,7 +166,7 @@
                 home =
                   {
                     inherit username;
-                    homeDirectory = prefs.home;
+                    homeDirectory = home;
                     stateVersion = prefs.homeManagerStateVersion;
                   };
               }
@@ -195,7 +198,7 @@
       darwinNodes = [ "gcv" ];
       allHosts = deployNodes ++ vmNodes ++ [ "default" ] ++ (builtins.attrNames
         (import (getNixConfig "fixed-systems.nix")).systems);
-      homeManagerHosts = [ "madbox" ];
+      homeManagerHosts = [ "madbox" "contrun@zklab-5" ];
       homeManagerConfigs = darwinNodes ++ allHosts ++ homeManagerHosts;
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [

@@ -169,6 +169,7 @@ let
     noproxyGroup = "noproxy";
     enablePowerSavingMode = true;
     home = "/home/${self.owner}";
+    defaultHome = "/home/${self.owner}";
     syncFolder = "${self.home}/Sync";
     nixosSystem = "x86_64-linux";
     getNixConfig = path: ./. + "/${path}";
@@ -1020,6 +1021,9 @@ let
               ''
             ];
         });
+    } else if hostname == "zklab-5" then {
+      home = "/home/contrun";
+      isMinimalSystem = false;
     } else if hostname == "aol" then {
       isMinimalSystem = false;
       hostId = "85d4bfd4";
