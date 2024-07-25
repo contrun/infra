@@ -208,6 +208,7 @@ let
     bootloader = "systemd";
     enableGrub = self.bootloader == "grub";
     enableWireguard = self.wireguardHostIndex != null;
+    enableContainerWired = !self.isMinimalSystem;
     wireguardIPOffsetForNixosHosts = 51;
     wireguardHostIndex =
       let
@@ -1029,15 +1030,27 @@ let
       hostId = "85d4bfd4";
       systemStateVersion = "22.05";
       homeManagerStateVersion = "22.05";
-      enableTraefik = true;
-      enablePrometheus = true;
-      enablePromtail = true;
-      enableAcme = true;
-      enableSmosServer = true;
+      enableGlusterfs = false;
+      enableTraefik = false;
+      enablePrometheus = false;
+      enablePrometheusAgent = false;
+      enablePrometheusExporters = false;
+      enableCadvisor = false;
+      enablePromtail = false;
+      enableWstunnel = false;
+      enableAria2 = false;
+      enableAioproxy = false;
+      enableEternalTerminal = false;
+      enableTtyd = false;
+      enableAcme = false;
+      enableSmosServer = false;
       ociContainers = super.ociContainers // {
-        enableCalibreWeb = true;
-        enableKeeweb = true;
+        enableCalibreWeb = false;
+        enableKeeweb = false;
       };
+      enableAllOciContainers = false;
+      enableWireguard = false;
+      enableContainerWired = false;
       videoDrivers = [ "nvidia" "modesetting" ];
       enableNvidiaPrimeConfig = true;
       enableNvidiaModesetting = true;

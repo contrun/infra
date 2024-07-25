@@ -3170,7 +3170,7 @@ in
   containers = {
     "wired-${prefs.hostname}" = {
       privateNetwork = true;
-      autoStart = true;
+      autoStart = prefs.enableContainerWired;
       extraFlags = [
         "--network-zone=wired"
       ];
