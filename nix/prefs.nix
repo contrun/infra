@@ -621,6 +621,7 @@ let
     ociContainerBackend = "docker";
     ociContainerNetwork = "bus";
     enableAllOciContainers = false;
+    enableVaultSshCa = false;
     ociContainers = {
       enablePostgresql = self.enableAllOciContainers;
       enableRedis = self.enableAllOciContainers;

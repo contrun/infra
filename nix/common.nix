@@ -742,7 +742,6 @@ in
     java = { enable = prefs.enableJava; };
     gnupg.agent = {
       enable = prefs.enableGPGAgent;
-      pinentryFlavor = "qt";
       enableExtraSocket = true;
       enableBrowserSocket = true;
     };
@@ -1051,6 +1050,7 @@ in
     };
     aria2 = {
       enable = prefs.enableAria2;
+      # rpcSecretFile = "/run/secrets/aria2-rpc-secret";
       extraArguments = "--rpc-listen-all --rpc-secret $ARIA2_RPC_SECRET";
     };
     fprintd = { enable = prefs.enableFprintd; };
@@ -4929,94 +4929,6 @@ builtins.toString prefs.ownerGroupGid
               '';
           };
 
-          vault-ssh-ca-setup =
-            let
-              vault-server-init-script =
-                pkgs.writeShellScript "vault-ssh-ca-setup-server" ''
-                  vault secrets enable -path=ssh-host-signer ssh
-                  vault write ssh-host-signer/config/ca generate_signing_key=true
-                  vault secrets enable -path=ssh-client-signer ssh
-                  vault write ssh-client-signer/config/ca generate_signing_key=true
-                '';
-              vault-host-init-script =
-                pkgs.writeShellScript "vault-ssh-ca-setup-host" ''
-                  vault write ssh-host-signer/roles/ssh-host key_type=ca ttl=87600h allow_host_certificates=true allowed_domains="localdomain,example.com" allow_subdomains=true algorithm_signer=rsa-sha2-512
-                  vault secrets tune -max-lease-ttl=87600h ssh-host-signer
-                  vault policy write ssh-host -<<"EOH"
-                  path "ssh-host-signer/sign/ssh-host" {  capabilities = [ "create", "update" ]}
-                  path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
-                  EOH
-                  vault write auth/approle/role/ssh-host policies="ssh-host" token_ttl=1h token_max_ttl=4h
-                  VAULT_HOST_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-host/role-id | jq -r ".data.role_id") VAULT_HOST_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-host/secret-id | jq -r ".data.secret_id")
-                  VAULT_HOST_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_HOST_ROLE_ID secret_id=$VAULT_HOST_SECRET_ID | jq -r ".auth.client_token")"
-                  VAULT_TOKEN=$VAULT_HOST_TOKEN vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub | tee /etc/ssh/ssh_host_ed25519_key-cert.pub
-                '';
-              vault-client-init-script =
-                pkgs.writeShellScript "vault-ssh-ca-setup-client" ''
-                  # Only root user is allowed to connect.
-                  # https://github.com/hashicorp/vault/blob/6da5bce9a0078a2e0856e365cb4dd350b77af6cb/website/content/docs/secrets/ssh/signed-ssh-certificates.mdx#name-is-not-a-listed-principal
-                  vault write ssh-client-signer/roles/ssh-root-user -<<"EOH"
-                  {
-                    "allow_user_certificates": true,
-                    "allowed_users": "*",
-                    "allowed_extensions": "permit-pty,permit-port-forwarding",
-                    "default_extensions": [
-                      {
-                        "permit-pty": ""
-                      }
-                    ],
-                    "key_type": "ca",
-                    "default_user": "root",
-                    "algorithm_signer": "rsa-sha2-512",
-                    "ttl": "6h"
-                  }
-                  EOH
-                  vault policy write ssh-root-user -<<"EOH"
-                  path "ssh-client-signer/sign/ssh-root-user" {  capabilities = ["create", "update"]}
-                  path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
-                  path "ssh-host-signer/config/ca" {  capabilities = [ "read" ]}
-                  EOH
-                  vault write auth/approle/role/ssh-root-user policies="ssh-root-user" token_ttl=6h token_max_ttl=12h
-                  VAULT_ROOT_USER_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-root-user/role-id | jq -r ".data.role_id") VAULT_ROOT_USER_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-root-user/secret-id | jq -r ".data.secret_id")
-                  VAULT_ROOT_USER_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_ROOT_USER_ROLE_ID secret_id=$VAULT_ROOT_USER_SECRET_ID | jq -r ".auth.client_token")"
-                  ssh-keygen -f id_ed25519 -t ed25519 -P ""
-                  VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault write -field=signed_key ssh-client-signer/sign/ssh-root-user public_key=@id_ed25519.pub | tee id_ed25519-cert.pub
-                  echo "@cert-authority * $(VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault read -field=public_key ssh-host-signer/config/ca)" | tee -a ~/.ssh/known_hosts
-                '';
-            in
-            {
-              enable = true;
-              description = "Setup Vault CA Certificate";
-              after = [ "network.target" ];
-              path = [ pkgs.vault pkgs.jq pkgs.file pkgs.glibc ];
-              script = ''
-                set -euo pipefail
-                # see ${vault-server-init-script} for some vault server setup instructions
-                # see ${vault-host-init-script} for some vault host setup instructions
-                # see ${vault-client-init-script} for some vault client setup instructions
-                export VAULT_TOKEN="$(vault write -format json auth/approle/login role_id="$VAULT_ROLE_ID" secret_id="$VAULT_SECRET_ID" | jq -r ".auth.client_token")"
-                if ca="$(vault read -field=public_key ssh-client-signer/config/ca)" && [[ -n "$ca" ]] ; then
-                    echo "$ca" > /etc/ssh/trusted-user-ca-keys.pem
-                else
-                    exit 1
-                fi
-                if signed_key="$(vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub)" && [[ -n "$signed_key" ]]; then
-                    echo "$signed_key" > /etc/ssh/ssh_host_ed25519_key-cert.pub
-                else
-                    exit 1
-                fi
-                cat > /etc/ssh/sshd_config_vault <<EOF
-                TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem
-                HostKey /etc/ssh/ssh_host_ed25519_key
-                HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
-                EOF
-              '';
-              serviceConfig = {
-                Type = "simple";
-                EnvironmentFile = "/run/secrets/vault-ssh-ca-setup-env";
-              };
-            };
-
           local-transparent-proxy-setup = {
             enable = true;
             description =
@@ -5050,6 +4962,98 @@ builtins.toString prefs.ownerGroupGid
             };
           };
         } // (mergeOptionalConfigs [
+          {
+            enable = prefs.enableVaultSshCa;
+            config = {
+              vault-ssh-ca-setup =
+                let
+                  vault-server-init-script =
+                    pkgs.writeShellScript "vault-ssh-ca-setup-server" ''
+                      vault secrets enable -path=ssh-host-signer ssh
+                      vault write ssh-host-signer/config/ca generate_signing_key=true
+                      vault secrets enable -path=ssh-client-signer ssh
+                      vault write ssh-client-signer/config/ca generate_signing_key=true
+                    '';
+                  vault-host-init-script =
+                    pkgs.writeShellScript "vault-ssh-ca-setup-host" ''
+                      vault write ssh-host-signer/roles/ssh-host key_type=ca ttl=87600h allow_host_certificates=true allowed_domains="localdomain,example.com" allow_subdomains=true algorithm_signer=rsa-sha2-512
+                      vault secrets tune -max-lease-ttl=87600h ssh-host-signer
+                      vault policy write ssh-host -<<"EOH"
+                      path "ssh-host-signer/sign/ssh-host" {  capabilities = [ "create", "update" ]}
+                      path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
+                      EOH
+                      vault write auth/approle/role/ssh-host policies="ssh-host" token_ttl=1h token_max_ttl=4h
+                      VAULT_HOST_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-host/role-id | jq -r ".data.role_id") VAULT_HOST_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-host/secret-id | jq -r ".data.secret_id")
+                      VAULT_HOST_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_HOST_ROLE_ID secret_id=$VAULT_HOST_SECRET_ID | jq -r ".auth.client_token")"
+                      VAULT_TOKEN=$VAULT_HOST_TOKEN vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub | tee /etc/ssh/ssh_host_ed25519_key-cert.pub
+                    '';
+                  vault-client-init-script =
+                    pkgs.writeShellScript "vault-ssh-ca-setup-client" ''
+                      # Only root user is allowed to connect.
+                      # https://github.com/hashicorp/vault/blob/6da5bce9a0078a2e0856e365cb4dd350b77af6cb/website/content/docs/secrets/ssh/signed-ssh-certificates.mdx#name-is-not-a-listed-principal
+                      vault write ssh-client-signer/roles/ssh-root-user -<<"EOH"
+                      {
+                        "allow_user_certificates": true,
+                        "allowed_users": "*",
+                        "allowed_extensions": "permit-pty,permit-port-forwarding",
+                        "default_extensions": [
+                          {
+                            "permit-pty": ""
+                          }
+                        ],
+                        "key_type": "ca",
+                        "default_user": "root",
+                        "algorithm_signer": "rsa-sha2-512",
+                        "ttl": "6h"
+                      }
+                      EOH
+                      vault policy write ssh-root-user -<<"EOH"
+                      path "ssh-client-signer/sign/ssh-root-user" {  capabilities = ["create", "update"]}
+                      path "ssh-client-signer/config/ca" {  capabilities = [ "read" ]}
+                      path "ssh-host-signer/config/ca" {  capabilities = [ "read" ]}
+                      EOH
+                      vault write auth/approle/role/ssh-root-user policies="ssh-root-user" token_ttl=6h token_max_ttl=12h
+                      VAULT_ROOT_USER_ROLE_ID=$(vault read -format=json auth/approle/role/ssh-root-user/role-id | jq -r ".data.role_id") VAULT_ROOT_USER_SECRET_ID=$(vault write -f -format=json auth/approle/role/ssh-root-user/secret-id | jq -r ".data.secret_id")
+                      VAULT_ROOT_USER_TOKEN="$(vault write -format json auth/approle/login role_id=$VAULT_ROOT_USER_ROLE_ID secret_id=$VAULT_ROOT_USER_SECRET_ID | jq -r ".auth.client_token")"
+                      ssh-keygen -f id_ed25519 -t ed25519 -P ""
+                      VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault write -field=signed_key ssh-client-signer/sign/ssh-root-user public_key=@id_ed25519.pub | tee id_ed25519-cert.pub
+                      echo "@cert-authority * $(VAULT_TOKEN=$VAULT_ROOT_USER_TOKEN vault read -field=public_key ssh-host-signer/config/ca)" | tee -a ~/.ssh/known_hosts
+                    '';
+                in
+                {
+                  enable = true;
+                  description = "Setup Vault CA Certificate";
+                  after = [ "network.target" ];
+                  path = [ pkgs.vault pkgs.jq pkgs.file pkgs.glibc ];
+                  script = ''
+                    set -euo pipefail
+                    # see ${vault-server-init-script} for some vault server setup instructions
+                    # see ${vault-host-init-script} for some vault host setup instructions
+                    # see ${vault-client-init-script} for some vault client setup instructions
+                    export VAULT_TOKEN="$(vault write -format json auth/approle/login role_id="$VAULT_ROLE_ID" secret_id="$VAULT_SECRET_ID" | jq -r ".auth.client_token")"
+                    if ca="$(vault read -field=public_key ssh-client-signer/config/ca)" && [[ -n "$ca" ]] ; then
+                        echo "$ca" > /etc/ssh/trusted-user-ca-keys.pem
+                    else
+                        exit 1
+                    fi
+                    if signed_key="$(vault write -field=signed_key ssh-host-signer/sign/ssh-host cert_type=host public_key=@/etc/ssh/ssh_host_ed25519_key.pub)" && [[ -n "$signed_key" ]]; then
+                        echo "$signed_key" > /etc/ssh/ssh_host_ed25519_key-cert.pub
+                    else
+                        exit 1
+                    fi
+                    cat > /etc/ssh/sshd_config_vault <<EOF
+                    TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pem
+                    HostKey /etc/ssh/ssh_host_ed25519_key
+                    HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
+                    EOF
+                  '';
+                  serviceConfig = {
+                    Type = "simple";
+                    EnvironmentFile = "/run/secrets/vault-ssh-ca-setup-env";
+                  };
+                };
+            };
+          }
           {
             enable = prefs.enableWstunnel;
             config = {
@@ -6360,7 +6364,7 @@ prefs.yandexExcludedDirs
     };
 
     supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
-    zfs = { enableUnstable = prefs.enableZfsUnstable; };
+    zfs = { package = lib.mkIf prefs.enableZfsUnstable pkgs.zfsUnstable; };
     crashDump = { enable = prefs.enableCrashDump; };
     initrd = {
       kernelModules = prefs.initrdKernelModules;
