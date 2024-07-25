@@ -52,6 +52,7 @@
           socat
           gost
           caddy
+          rclone
 
           (
             writeShellApplication {
