@@ -26,8 +26,6 @@ NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
-ANSIBLEPLAYBOOK ?= ansible-playbook -i inventory
-
 pull:
 	git pull --rebase --autostash
 
@@ -109,4 +107,4 @@ ansible-inventory-hosts:
 	cd ansible && ansible-vault edit inventory/hosts.yml
 
 ansible-deploy:
-	cd ansible && $(ANSIBLEPLAYBOOK) site.yml --extra-vars deployment=$(DEPLOYMENT)
+	cd ansible && ansible-playbook services.yml --extra-vars services=$(SERVICES)
