@@ -108,3 +108,6 @@ ansible-inventory-hosts:
 
 ansible-deploy:
 	cd ansible && ansible-playbook services.yml --extra-vars services=$(SERVICES)
+
+flyctl-deploy:
+	flyctl deploy -c fly/$(SERVICE)/fly.toml 

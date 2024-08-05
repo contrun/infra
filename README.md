@@ -25,3 +25,10 @@ make ansible-inventory-hosts
 ```
 make SERVICES=tailscale ansible-deploy
 ```
+
+# fly tasks
+
+```
+make SERVICE=tailscale flyctl-deploy
+```
+
