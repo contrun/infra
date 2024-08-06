@@ -291,6 +291,7 @@ let
     enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
+    enableHomeManagerTailScale = false;
     enableNetbird = !self.isMinimalSystem;
     enableX2goServer = false;
     enableDebugInfo = false;
@@ -1025,6 +1026,7 @@ let
     } else if hostname == "zklab-5" then {
       home = "/home/contrun";
       isMinimalSystem = false;
+      enableHomeManagerTailScale = true;
     } else if hostname == "aol" then {
       isMinimalSystem = false;
       hostId = "85d4bfd4";

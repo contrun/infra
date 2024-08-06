@@ -946,6 +946,28 @@ in
       # )
 
       (
+        let name = "tailscaled";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerTailScale {
+          services.${name} = {
+            Unit = {
+              Description = "user space tailscale daemon";
+              After = [ "network.target" ];
+            };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service = {
+              RuntimeDirectory = name;
+              StateDirectory = name;
+              NoNewPrivileges = true;
+              ExecStart = ''
+                ${pkgs.tailscale}/bin/tailscaled --statedir=''${STATE_DIRECTORY} --socket=''${RUNTIME_DIRECTORY}/${name}.sock --port=0 --tun=userspace-networking --verbose 5
+              '';
+            };
+          };
+        }
+      )
+
+      (
         let name = "foot";
         in
         lib.optionalAttrs prefs.enableFoot {
@@ -964,7 +986,7 @@ in
 
   home = {
     extraOutputsToInstall = prefs.extraOutputsToInstall;
-    packages = allPackages;
+    packages = allPackages ++ (lib.optionals prefs.enableHomeManagerTailScale [ pkgs.tailscale ]);
     stateVersion = prefs.homeManagerStateVersion;
   };
 
