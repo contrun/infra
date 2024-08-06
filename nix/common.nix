@@ -1029,6 +1029,9 @@ in
       extraRules = prefs.extraUdevRules;
       packages = lib.optionals prefs.enableYubico [ pkgs.yubikey-personalization ];
     };
+    blueman = {
+      enable = prefs.enableBluetooth;
+    };
     pcscd.enable = prefs.enablePcscd;
     arbtt = { enable = prefs.enableArbtt; };
     compton = { enable = prefs.enableCompton; };
