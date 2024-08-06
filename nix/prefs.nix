@@ -267,7 +267,7 @@ let
     enableUrxvtd = !self.isMinimalSystem;
     enablePrivoxy = false;
     enableFallbackAccount = false;
-    buildZerotierone = !self.isMinimalSystem;
+    buildZerotierone = false;
     enableZerotierone = self.buildZerotierone;
     zerotieroneNetworks = [ "9bee8941b5ce6172" ];
     smartdnsSettings = {
@@ -765,7 +765,6 @@ let
         isMinimalSystem = true;
       } // (if isForCiCd then
         {
-          enableZerotierone = true;
           enableEmacs = true;
           enableAcme = true;
         } // (if nixosSystem == "x86_64-linux" then {
@@ -908,7 +907,7 @@ let
         kernelPackages = pkgs.linuxPackages_rpi4;
       };
       enableAcme = true;
-      enableZerotierone = true;
+      enableZerotierone = false;
       enableTailScale = false;
       enableVirtualboxHost = false;
       bootloader = "raspberrypi";
