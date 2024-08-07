@@ -268,8 +268,7 @@ in
               in
               {
                 # TODO: figure out why this does not work.
-                inherit (path)
-                  ;
+                inherit (path);
                 writable = true;
               };
           };
@@ -279,7 +278,16 @@ in
     {
       enable = prefs.enableIwd;
       config = {
-        wireless = { iwd = { enable = true; }; };
+        wireless = {
+          iwd = {
+            enable = true;
+            settings = {
+              Settings = {
+                AutoConnect = true;
+              };
+            };
+          };
+        };
       };
     }
   ]);
