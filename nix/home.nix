@@ -277,7 +277,7 @@ let
           "cargo-generate"
           "racket"
           "myPackages.ruby"
-          "zeal"
+          # "zeal"
           "vagrant"
           "shellcheck"
           # "zig"

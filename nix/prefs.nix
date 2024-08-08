@@ -364,7 +364,7 @@ let
     buildCores = 0;
     maxJobs = "auto";
     proxy = null;
-    enableClashVerge = !self.isMinimalSystem;
+    enableClashVerge = false;
     enableClashRedir = !self.enableClashVerge;
     enableClashRedirWatchdog = false;
     enableNetworkWatchdog = false;
