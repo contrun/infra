@@ -223,6 +223,8 @@ in
         };
       };
     };
+    # rtkit is optional but recommended for pipewire
+    rtkit.enable = true;
   };
 
   networking = {
@@ -845,7 +847,6 @@ in
   };
 
   sound = {
-    enable = lib.mkForce true;
     mediaKeys = { enable = prefs.enableMediaKeys; };
   };
 
@@ -915,6 +916,7 @@ in
         diff = {
           supportsDryActivation = true;
           text = ''
+            echo ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
             ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
           '';
         };
@@ -1182,7 +1184,15 @@ in
     ntp = { enable = !config.services.chrony.enable; };
     pipewire = {
       enable = prefs.enablePipewire;
-      pulse = { enable = false; };
+      audio = { enable = true; };
+      alsa = {
+        enable = true;
+        support32Bit = true;
+      };
+      pulse = { enable = true; };
+      wireplumber = {
+        enable = true;
+      };
     };
     restic = {
       backups = lib.optionalAttrs prefs.enableResticBackup
