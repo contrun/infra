@@ -544,7 +544,7 @@ let
         "gomuks"
         "irssi"
         # "chromium"
-        "ungoogle-chromium"
+        # "ungoogled-chromium"
         "ferdium"
         "brave"
         "aria2"

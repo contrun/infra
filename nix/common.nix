@@ -181,7 +181,9 @@ in
         mitmCA ++ CAs;
     };
     pam = {
-      enableSSHAgentAuth = true;
+      sshAgentAuth = {
+        enable = true;
+      };
       u2f = {
         enable = prefs.enablePamU2f;
       };
@@ -1491,7 +1493,7 @@ in
     avahi = {
       browseDomains = [ prefs.mainDomain ];
       enable = prefs.enableAvahi;
-      nssmdns = true;
+      nssmdns4 = true;
       ipv6 = false;
       hostName = prefs.avahiHostname;
       extraConfig = ''
@@ -1536,11 +1538,15 @@ in
       };
 
     };
-    nfs.server = {
-      enable = prefs.enableNfs;
-      extraNfsdConfig = ''
-        udp=y
-      '';
+    nfs = {
+      settings = {
+        nfsd = {
+          udp = true;
+        };
+      };
+      server = {
+        enable = prefs.enableNfs;
+      };
     };
     zfs = {
       autoScrub.enable = prefs.enableZfs;
@@ -2854,8 +2860,10 @@ in
     sslh = {
       enable = prefs.enableSslh;
       port = prefs.sslhPort;
-      transparent = false;
-      verbose = true;
+      settings = {
+        verbose-connections = true;
+        transparent = false;
+      };
     } // (
       let p = impure.sslhConfigFile;
       in
@@ -2962,20 +2970,37 @@ in
         };
       };
     };
+    libinput = {
+      enable = prefs.enableLibInput;
+      touchpad = {
+        tapping = true;
+        disableWhileTyping = true;
+      };
+    };
+    displayManager =
+      let
+        defaultSession = prefs.xDefaultSession;
+        autoLogin = {
+          enable = prefs.enableAutoLogin;
+          user = prefs.owner;
+        };
+      in
+      {
+        sddm = {
+          enable = prefs.enableSddm;
+          enableHidpi = prefs.enableHidpi;
+          autoNumlock = true;
+        };
+      };
     xserver = {
       enable = prefs.enableXserver;
       verbose = lib.mkForce 7;
       autorun = true;
       exportConfiguration = true;
-      layout = "us";
-      dpi = prefs.dpi;
-      libinput = {
-        enable = prefs.enableLibInput;
-        touchpad = {
-          tapping = true;
-          disableWhileTyping = true;
-        };
+      xkb = {
+        layout = "us";
       };
+      dpi = prefs.dpi;
       # videoDrivers = [ "dummy" ] ++ [ "intel" ];
       virtualScreen = {
         x = 1200;
@@ -3034,11 +3059,6 @@ in
         {
           sessionCommands = prefs.xSessionCommands;
           startx = { enable = prefs.enableStartx; };
-          sddm = {
-            enable = prefs.enableSddm;
-            enableHidpi = prefs.enableHidpi;
-            autoNumlock = true;
-          };
           gdm = { enable = prefs.enableGdm; };
           lightdm = { enable = prefs.enableLightdm; };
         };
@@ -5417,6 +5437,7 @@ builtins.toString prefs.ownerGroupGid
 }";
             wantedBy = [ "remote-fs.target" ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
           }];
         }
         # yandex
@@ -5437,6 +5458,7 @@ builtins.toString prefs.ownerGroupGid
 }";
             wantedBy = [ "remote-fs.target" ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
           }];
         }
       ])
@@ -5483,6 +5505,7 @@ builtins.toString prefs.ownerGroupGid
             enable = prefs.enableNetworkWatchdog;
             wantedBy = [ "default.target" ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
             path = [ pkgs.coreutils pkgs.gawk pkgs.systemd pkgs.iputils pkgs.utillinux ]
             ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
@@ -5507,6 +5530,7 @@ builtins.toString prefs.ownerGroupGid
             enable = prefs.enableNetworkWatchdog;
             wantedBy = [ "default.target" ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             timerConfig = {
               RandomizedDelaySec = 60;
               OnCalendar = "*-*-* *:2/3:00";
@@ -5555,6 +5579,7 @@ builtins.toString prefs.ownerGroupGid
             wantedBy =
               if prefs.autoStartClashRedir then [ "default.target" ] else [ ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             path = [
               pkgs.coreutils
               pkgs.clash-meta
@@ -5595,6 +5620,7 @@ builtins.toString prefs.ownerGroupGid
             description = "update clash config";
             enable = prefs.enableClashRedir;
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             onFailure = [ "notify-systemd-unit-failures@${updaterName}.service" ];
             path = [
               pkgs.coreutils
@@ -5828,6 +5854,7 @@ builtins.toString prefs.ownerGroupGid
             enable = prefs.enableClashRedir;
             wantedBy = [ "default.target" ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             timerConfig = {
               OnCalendar = "hourly";
               Unit = "${updaterName}.service";
@@ -5839,6 +5866,7 @@ builtins.toString prefs.ownerGroupGid
             description = "watch for clash redir running status";
             enable = prefs.enableClashRedir;
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
             path = [ pkgs.coreutils pkgs.systemd pkgs.curl ];
             script = ''
@@ -5870,6 +5898,7 @@ builtins.toString prefs.ownerGroupGid
             wantedBy =
               if prefs.enableClashRedirWatchdog then [ "default.target" ] else [ ];
             after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             timerConfig = {
               RandomizedDelaySec = 2 * 60;
               OnCalendar = "*-*-* *:3/5:00";
@@ -5965,6 +5994,7 @@ builtins.toString prefs.ownerGroupGid
               description = "zerotierone watchdog";
               enable = true;
               after = [ "network-online.target" ];
+              wants = [ "network-online.target" ];
               onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
               path = with pkgs; [ coreutils systemd zerotierone ];
               script = ''
@@ -5983,6 +6013,7 @@ builtins.toString prefs.ownerGroupGid
               wantedBy =
                 if prefs.enableZerotierone then [ "default.target" ] else [ ];
               after = [ "network-online.target" ];
+              wants = [ "network-online.target" ];
               timerConfig = {
                 RandomizedDelaySec = 2 * 60;
                 OnCalendar = "*-*-* *:3/5:00";
@@ -6010,7 +6041,7 @@ builtins.toString prefs.ownerGroupGid
               {
                 description = "Maintain ${prefs.ociContainerBackend} nextcloud";
                 enable = true;
-                wants = [ "${nextcloudUnitName}.service" ];
+                wants = [ "network-online.target" "${nextcloudUnitName}.service" ];
                 after = [ "network-online.target" "${nextcloudUnitName}.service" ];
                 path =
                   [ pkgs.coreutils pkgs.gzip pkgs.systemd pkgs.curl pkgs.utillinux ]
@@ -6069,7 +6100,7 @@ builtins.toString prefs.ownerGroupGid
                 description =
                   "Backup ${prefs.ociContainerBackend} postgresql database";
                 enable = true;
-                wants = [ "${postgresqlUnitName}.service" ];
+                wants = [ "network-online.target" "${postgresqlUnitName}.service" ];
                 after = [ "network-online.target" "${postgresqlUnitName}.service" ];
                 onFailure = [
                   "notify-systemd-unit-failures@${postgresqlBackupUnitName}.service"
@@ -6295,6 +6326,7 @@ builtins.toString prefs.ownerGroupGid
               description = "Yandex-disk server";
               onFailure = [ "notify-systemd-unit-failures@%i.service" ];
               after = [ "network-online.target" ];
+              wants = [ "network-online.target" ];
               wantedBy = [ "default.target" ];
               unitConfig.RequiresMountsFor = prefs.syncFolder;
               serviceConfig = {
