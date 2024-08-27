@@ -944,6 +944,29 @@ in
       # )
 
       (
+        let
+          name = "dufs";
+          path = "%h/.local/mnt/dufs";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerDufs {
+          services.${name} = {
+            Unit = {
+              Description = "Dufs file sharing service";
+              After = [ "network.target" ];
+              RequiresMountsFor = path;
+            };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service = {
+              NoNewPrivileges = true;
+              ExecStart = ''
+                ${pkgs.dufs}/bin/dufs --render-try-index --allow-all --auth @/Public --auth guest:guest@/SemiPublic --auth upload:upload@/Upload:rw --auth user:pass@/:rw ${path}
+              '';
+            };
+          };
+        }
+      )
+
+      (
         let name = "tailscaled";
         in
         lib.optionalAttrs prefs.enableHomeManagerTailScale {
