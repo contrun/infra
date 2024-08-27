@@ -959,7 +959,7 @@ in
         lib.optionalAttrs prefs.enableHomeManagerDufs {
           mounts.${mountName} = {
             Unit = {
-              Description = "Mount dufs directory with rclone";
+              Description = "dufs directory with rclone";
               After = [ "network.target" ];
             };
             Mount = {
@@ -974,7 +974,7 @@ in
           };
           automounts.${mountName} = {
             Unit = {
-              Description = "Automount dufs directory with rclone";
+              Description = "dufs directory with rclone";
               After = [ "network.target" ];
               Before = [ "remote-fs.target" ];
             };
@@ -994,7 +994,7 @@ in
             Service = {
               NoNewPrivileges = true;
               ExecStart = ''
-                ${pkgs.dufs}/bin/dufs --render-try-index --allow-all --auth @/Public --auth guest:guest@/SemiPublic --auth upload:upload@/Upload:rw --auth user:pass@/:rw ${path}
+                ${pkgs.dufs}/bin/dufs --render-try-index --allow-all --auth @/Public --auth guest:guest@/SemiPublic --auth upload:upload@/Upload:rw --auth e:$6$3U28BoQYzEnJM5S8$NwZFhUXiekatIKVNTRFrPJOrR5qPF6rZw3TG80bgxmG4C9ZYsNUURjoudWbk74XVr7eVII3CdHxqLrTe8cGYW0@/:rw ${path}
               '';
             };
           };
