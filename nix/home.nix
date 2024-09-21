@@ -1023,6 +1023,25 @@ in
       )
 
       (
+        let name = "code-tunnel";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
+          services.${name} = {
+            Unit = {
+              Description = "code tunnel";
+              After = [ "network.target" ];
+            };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service = {
+              ExecStart = ''
+                ${pkgs.vscode}/bin/code tunnel
+              '';
+            };
+          };
+        }
+      )
+
+      (
         let name = "foot";
         in
         lib.optionalAttrs prefs.enableFoot {

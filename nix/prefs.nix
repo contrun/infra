@@ -292,6 +292,7 @@ let
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerTailScale = false;
+    enableHomeManagerCodeTunnel = false;
     enableHomeManagerDufs = false;
     enableNetbird = !self.isMinimalSystem;
     enableX2goServer = false;
@@ -1028,6 +1029,7 @@ let
       home = "/home/contrun";
       isMinimalSystem = false;
       enableHomeManagerTailScale = true;
+      enableHomeManagerCodeTunnel = true;
       enableHomeManagerDufs = true;
     } else if hostname == "aol" then {
       isMinimalSystem = false;
