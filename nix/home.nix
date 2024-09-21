@@ -541,7 +541,6 @@ let
         "uget"
         "udptunnel"
         "wireguard-tools"
-        "gomuks"
         "irssi"
         # "chromium"
         # "ungoogled-chromium"

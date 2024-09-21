@@ -745,7 +745,7 @@ let
       nixosRebuildFlags = [ ];
       onCalendar = "04:30";
     };
-    extraOutputsToInstall = [ "dev" "lib" "doc" "info" "devdoc" "out" "man" ];
+    extraOutputsToInstall = [ "dev" "lib" "doc" "info" "out" "man" ];
   };
 
   hostSpecific = self: super:
@@ -1055,6 +1055,12 @@ let
       enableAllOciContainers = false;
       enableWireguard = false;
       enableContainerWired = false;
+      pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
+        # https://discourse.nixos.org/t/unable-to-build-nix-due-to-nvidia-drivers-due-or-kernel-6-10/49266
+        # nvidia driver is frequently broken, use a slightly older kernel version
+        # kernelPackages = pkgs.linuxPackages_xanmod_latest;
+        # kernelPackages = pkgs.linuxPackages_zen;
+      };
       videoDrivers = [ "nvidia" "modesetting" ];
       enableNvidiaPrimeConfig = true;
       enableNvidiaModesetting = true;
