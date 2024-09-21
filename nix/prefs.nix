@@ -1028,6 +1028,7 @@ let
     } else if hostname == "zklab-5" then {
       home = "/home/contrun";
       isMinimalSystem = false;
+      enableFoot = false;
       enableHomeManagerTailScale = true;
       enableHomeManagerCodeTunnel = true;
       enableHomeManagerDufs = true;
