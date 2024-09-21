@@ -103,7 +103,13 @@ nixos-vagrant-box:
 ansible-requirements:
 	cd ansible && ansible-galaxy install -r requirements.yml
 
-ansible-inventory-hosts:
+ansible-diff-inventory-hosts:
+	cd ansible && diff <(git cat-file blob HEAD:ansible/inventory/hosts.yml | ansible-vault view -) <(ansible-vault view inventory/hosts.yml)
+
+ansible-view-inventory-hosts:
+	cd ansible && ansible-vault view inventory/hosts.yml
+
+ansible-edit-inventory-hosts:
 	cd ansible && ansible-vault edit inventory/hosts.yml
 
 ansible-deploy:
