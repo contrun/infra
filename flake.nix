@@ -58,6 +58,11 @@
     microvm.inputs.nixpkgs.follows = "nixpkgs";
     microvm.inputs.flake-utils.follows = "flake-utils";
 
+    mycaddy.url = "github:contrun/mycaddy";
+    mycaddy.inputs.nixpkgs.follows = "nixpkgs";
+    mycaddy.inputs.flake-utils.follows = "flake-utils";
+
+
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -154,7 +159,7 @@
         in
         {
           "${configName}" = inputs.home-manager.lib.homeManagerConfiguration {
-            pkgs = self.pkgs."${prefs.system}";
+            pkgs = self.pkgsWithOverlays."${prefs.system}";
             modules = [
               ({ ... }: {
                 config = {
@@ -364,9 +369,9 @@
                   (builtins.map
                     (name: {
                       inherit name;
-                      pkg = inputs.${name}.defaultPackage.${super.system} or null;
+                      pkg = inputs.${name}.defaultPackage.${super.system};
                     })
-                    [ "aioproxy" "deploy-rs" "home-manager" "nix-autobahn" "helix" ])
+                    [ "aioproxy" "deploy-rs" "home-manager" "nix-autobahn" "mycaddy" ])
                   ++
                   (builtins.concatLists (builtins.attrValues
                     (builtins.mapAttrs

@@ -1042,6 +1042,26 @@ in
       )
 
       (
+        let
+          name = "caddy";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
+          services.${name} = {
+            Unit = {
+              Description = "Caddy server";
+              After = [ "network.target" ];
+            };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service = {
+              ExecStart = ''
+                ${pkgs.myPackages.mycaddy}/bin/caddy run --config ${prefs.home}/.config/caddy/Caddyfile
+              '';
+            };
+          };
+        }
+      )
+
+      (
         let name = "foot";
         in
         lib.optionalAttrs prefs.enableFoot {

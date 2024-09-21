@@ -292,6 +292,7 @@ let
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerTailScale = false;
+    enableHomeManagerCaddy = false;
     enableHomeManagerCodeTunnel = false;
     enableHomeManagerDufs = false;
     enableNetbird = !self.isMinimalSystem;
@@ -1029,6 +1030,7 @@ let
       home = "/home/contrun";
       isMinimalSystem = false;
       enableFoot = false;
+      enableHomeManagerCaddy = true;
       enableHomeManagerTailScale = true;
       enableHomeManagerCodeTunnel = true;
       enableHomeManagerDufs = true;

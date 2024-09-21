@@ -1077,6 +1077,30 @@
         "type": "github"
       }
     },
+    "mycaddy": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1726894881,
+        "narHash": "sha256-C+OmPhFW7GXycM4nVINOt9/t/advN7H66OVbcxn6K5g=",
+        "owner": "contrun",
+        "repo": "mycaddy",
+        "rev": "883f2e12a182defb4740a154dd61eff3a73db914",
+        "type": "github"
+      },
+      "original": {
+        "owner": "contrun",
+        "repo": "mycaddy",
+        "rev": "883f2e12a182defb4740a154dd61eff3a73db914",
+        "type": "github"
+      }
+    },
     "nix-alien": {
       "inputs": {
         "flake-compat": "flake-compat_3",
@@ -1804,6 +1828,7 @@
         "home-manager": "home-manager",
         "jtojnar-nixfiles": "jtojnar-nixfiles",
         "microvm": "microvm",
+        "mycaddy": "mycaddy",
         "nix-alien": "nix-alien",
         "nix-autobahn": "nix-autobahn",
         "nix-on-droid": "nix-on-droid",
