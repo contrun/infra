@@ -1049,13 +1049,19 @@ in
           services.${name} = {
             Unit = {
               Description = "Caddy server";
-              After = [ "network.target" ];
+              After = [ "network-online.target" "network.target" ];
+              Wants = [ "network-online.target" ];
             };
             Install = { WantedBy = [ "default.target" ]; };
             Service = {
+              Type = "notify";
               ExecStart = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy run --config ${prefs.home}/.config/caddy/Caddyfile
+                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/Caddyfile
               '';
+              ExecReload = ''
+                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/Caddyfile
+              '';
+              EnvironmentFile = "%h/.config/caddy/env";
             };
           };
         }
