@@ -1068,6 +1068,35 @@ in
       )
 
       (
+        let
+          name = "unison@";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerUnison {
+          services.${name} = {
+            Unit = {
+              Description = "Unison file sync";
+              After = [ "network-online.target" "network.target" ];
+              Wants = [ "network-online.target" ];
+            };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'"; in
+              {
+                # watch and repeat parameter can't handle non-existent folders.
+                # So we have to run unison without watch and repeat first.
+                ExecStartPre = "-${pkgs.unison}/bin/unison ${commonArgs} %i";
+                ExecStart = "${pkgs.unison}/bin/unison ${commonArgs} -watch=true -repeat=watch %i";
+                Environment = [
+                  "SSH_ASKPASS_REQUIRE=never"
+                  ''
+                    PATH=$PATH:${lib.makeBinPath [ pkgs.rsync pkgs.openssh ]}
+                  ''
+                ];
+              };
+          };
+        }
+      )
+
+      (
         let name = "foot";
         in
         lib.optionalAttrs prefs.enableFoot {

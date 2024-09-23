@@ -291,6 +291,7 @@ let
     enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
+    enableHomeManagerUnison = !self.isMinimalSystem;
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
     enableHomeManagerCodeTunnel = false;
