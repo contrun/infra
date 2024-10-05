@@ -292,6 +292,7 @@ let
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerUnison = !self.isMinimalSystem;
+    enableHomeManagerAutossh = !self.isMinimalSystem;
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
     enableHomeManagerCodeTunnel = false;

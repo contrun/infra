@@ -1097,6 +1097,36 @@ in
       )
 
       (
+        let
+          name = "autossh@";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerAutossh {
+          services.${name} = {
+            Unit = {
+              Description = "autossh";
+              After = [ "network-online.target" "network.target" ];
+              Wants = [ "network-online.target" ];
+            };
+            Install = { WantedBy = [ "default.target" ]; };
+            Service =
+              {
+                # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
+                ExecStart = "${pkgs.autossh}/bin/autossh -i %h/.ssh/id_ed25519_autossh $SSH_OPTIONS %i";
+                Environment = [
+                  "AUTOSSH_PORT=0"
+                  "SSH_ASKPASS_REQUIRE=never"
+                  "SSH_OPTIONS="
+                  ''
+                    PATH=$PATH:${lib.makeBinPath [ pkgs.openssh ]}
+                  ''
+                ];
+                EnvironmentFile = [ "-%h/.config/autossh/env" "-%h/.config/autossh/%i.env" ];
+              };
+          };
+        }
+      )
+
+      (
         let name = "foot";
         in
         lib.optionalAttrs prefs.enableFoot {
