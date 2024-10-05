@@ -1056,10 +1056,10 @@ in
             Service = {
               Type = "notify";
               ExecStart = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/Caddyfile
+                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/config.dhall --adapter dhall
               '';
               ExecReload = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/Caddyfile
+                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/config.dhall --adapter dhall
               '';
               EnvironmentFile = "%h/.config/caddy/env";
             };

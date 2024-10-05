@@ -1128,11 +1128,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1727864132,
-        "narHash": "sha256-/8z730Pc5CPSbydPywL/yIUvGo6aC5u8nbwTAVcKrZc=",
+        "lastModified": 1727939360,
+        "narHash": "sha256-w6NHFQvzHD4vzOBzUowVDcPkN86YX8YlRq9x3v9m3Cg=",
         "owner": "contrun",
         "repo": "mycaddy",
-        "rev": "88e618d35fa365dab2f7afde468a616c772d778e",
+        "rev": "184f076dd86b7304279417789386870b5de36a12",
         "type": "github"
       },
       "original": {
