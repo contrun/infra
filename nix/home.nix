@@ -1078,7 +1078,10 @@ in
               After = [ "network-online.target" "network.target" ];
               Wants = [ "network-online.target" ];
             };
-            Install = { WantedBy = [ "default.target" ]; };
+            Install = {
+              WantedBy = [ "default.target" ];
+              DefaultInstance = "default";
+            };
             Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'"; in
               {
                 # watch and repeat parameter can't handle non-existent folders.
@@ -1107,7 +1110,10 @@ in
               After = [ "network-online.target" "network.target" ];
               Wants = [ "network-online.target" ];
             };
-            Install = { WantedBy = [ "default.target" ]; };
+            Install = {
+              WantedBy = [ "default.target" ];
+              DefaultInstance = "default";
+            };
             Service =
               {
                 # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
