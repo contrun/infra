@@ -1082,6 +1082,9 @@ in
               WantedBy = [ "default.target" ];
               DefaultInstance = "default";
             };
+            Timer = {
+              OnBootSec = "1min";
+            };
             Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'"; in
               {
                 # watch and repeat parameter can't handle non-existent folders.
@@ -1113,6 +1116,9 @@ in
             Install = {
               WantedBy = [ "default.target" ];
               DefaultInstance = "default";
+            };
+            Timer = {
+              OnBootSec = "1min";
             };
             Service =
               {
