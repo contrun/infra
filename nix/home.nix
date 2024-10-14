@@ -1,34 +1,31 @@
 { config, pkgs, lib, options, prefs, inputs, ... }@args:
 let
-  brokenPackages =
-    let p = ./broken-packages.nix;
-    in if builtins.pathExists p then (import p) else [ ];
+  brokenPackages = let p = ./broken-packages.nix;
+  in if builtins.pathExists p then (import p) else [ ];
   linuxOnlyPackages = [ "kdeconnect" ];
-  x86OnlyPackages =
-    let
-      brokenOnArmPackages =
-        [ "eclipses.eclipse-java" "hardinfo" "ltrace" "brave" "mplayer" ];
-    in
-    brokenOnArmPackages ++ [
-      "wine"
-      "workrave"
-      "lens"
-      "android-file-transfer"
-      "androidenv.androidPkgs_9_0.platform-tools"
-      "appimage-run"
-      "adbfs-rootless"
-      "mitscheme"
-      "simplescreenrecorder"
-      "syslinux"
-      "gitAndTools.git-annex"
-      "myPackages.python"
-      "myPackages.ghc"
-      "vivaldi"
-      "libpng"
-      "cachix"
-      "git-annex"
-      "texlab"
-    ];
+  x86OnlyPackages = let
+    brokenOnArmPackages =
+      [ "eclipses.eclipse-java" "hardinfo" "ltrace" "brave" "mplayer" ];
+  in brokenOnArmPackages ++ [
+    "wine"
+    "workrave"
+    "lens"
+    "android-file-transfer"
+    "androidenv.androidPkgs_9_0.platform-tools"
+    "appimage-run"
+    "adbfs-rootless"
+    "mitscheme"
+    "simplescreenrecorder"
+    "syslinux"
+    "gitAndTools.git-annex"
+    "myPackages.python"
+    "myPackages.ghc"
+    "vivaldi"
+    "libpng"
+    "cachix"
+    "git-annex"
+    "texlab"
+  ];
   largePackages = [
     "jetbrains.idea-ultimate"
     "jetbrains.clion"
@@ -80,55 +77,48 @@ let
   overridePkg = pkg: func:
     if pkg ? overrideAttrs then
       pkg.overrideAttrs (oldAttrs: func oldAttrs)
-    else pkg;
+    else
+      pkg;
   changePkgPriority = pkg: priority:
     overridePkg pkg (oldAttrs: { meta = { priority = priority; }; });
   getAttr = attrset: path:
-    builtins.foldl'
-      (acc: x:
-        if acc ? ${x} then
-          acc.${x}
-        else
-          lib.warn "Package ${path} does not exists" null)
-      attrset
-      (pkgs.lib.splitString "." path);
+    builtins.foldl' (acc: x:
+      if acc ? ${x} then
+        acc.${x}
+      else
+        lib.warn "Package ${path} does not exists" null) attrset
+    (pkgs.lib.splitString "." path);
   getMyPkg = attrset: path:
     let
-      pkg =
-        let
-          vanillaPackage = getAttr attrset path;
-          tryNewPath = newPath:
-            if (newPath == path) then
-              null
-            else
-              lib.warn "Package ${path} does not exists, trying ${newPath}"
-                (getAttr attrset newPath);
-          nixpkgsPackage =
-            tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
-          unstablePackage = tryNewPath "unstable.${path}";
-        in
-        if vanillaPackage != null then
-          vanillaPackage
-        else if nixpkgsPackage != null then
-          nixpkgsPackage
-        else if unstablePackage != null then
-          unstablePackage
-        else
-          lib.warn "${path} not found" null;
+      pkg = let
+        vanillaPackage = getAttr attrset path;
+        tryNewPath = newPath:
+          if (newPath == path) then
+            null
+          else
+            lib.warn "Package ${path} does not exists, trying ${newPath}"
+            (getAttr attrset newPath);
+        nixpkgsPackage =
+          tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
+        unstablePackage = tryNewPath "unstable.${path}";
+      in if vanillaPackage != null then
+        vanillaPackage
+      else if nixpkgsPackage != null then
+        nixpkgsPackage
+      else if unstablePackage != null then
+        unstablePackage
+      else
+        lib.warn "${path} not found" null;
 
       # Sometimes packages failed to build. We use this to skip running tests.
       # Don't use this on normal packages, otherwise we won't be able to downlaod caches from binary caches.
       dontCheck = false;
-    in
-    if dontCheck
-    then
-      overridePkg
-        pkg
-        (oldAttrs: {
-          # Fuck, why every package has broken tests? I just want to trust the devil.
-          # Fuck, this does not seem to work.
-          doCheck = false;
-        })
+    in if dontCheck then
+      overridePkg pkg (oldAttrs: {
+        # Fuck, why every package has broken tests? I just want to trust the devil.
+        # Fuck, this does not seem to work.
+        doCheck = false;
+      })
     else
       pkg;
 
@@ -139,32 +129,32 @@ let
         getMyPkg attrset path
       else
         lib.warn
-          "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
-          null)
+        "${path} is will not be installed on a broken packages systems (hostname broken-packages)"
+        null)
     else if builtins.elem path brokenPackages then
       lib.warn "${path} will not be installed as it is marked as broken" null
     else if !prefs.useLargePackages && (builtins.elem path largePackages) then
       lib.info "${path} will not be installed as useLargePackages is ${
         lib.boolToString prefs.useLargePackages
-      }"
-        null
-    else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" "aarch64-linux" ])
-      && (builtins.elem path linuxOnlyPackages) then
+      }" null
+    else if !(builtins.elem prefs.nixosSystem [
+      "x86_64-linux"
+      "aarch64-linux"
+    ]) && (builtins.elem path linuxOnlyPackages) then
       lib.info "${path} will not be installed in system ${prefs.nixosSystem}"
-        null
+      null
     else if !(builtins.elem prefs.nixosSystem [ "x86_64-linux" ])
-      && (builtins.elem path x86OnlyPackages) then
+    && (builtins.elem path x86OnlyPackages) then
       lib.info "${path} will not be installed in system ${prefs.nixosSystem}"
-        null
+      null
     else
       getMyPkg attrset path;
 
   getPackages = list:
     (builtins.filter (x: x != null) (builtins.map (x: getPkg pkgs x) list));
-  allPackages = builtins.foldl'
-    (acc: collection:
-      acc ++ (builtins.map (pkg: changePkgPriority pkg collection.priority)
-        collection.packages)) [ ]
+  allPackages = builtins.foldl' (acc: collection:
+    acc ++ (builtins.map (pkg: changePkgPriority pkg collection.priority)
+      collection.packages)) [ ]
     (if prefs.installHomePackages then packageCollection else [ ]);
   packageCollection = [
     {
@@ -259,218 +249,217 @@ let
     {
       name = "development tools";
       priority = 40;
-      packages = getPackages
-        ([
-          "gnumake"
-          "cmake"
-          "meson"
-          "just"
-          "ninja"
-          "bear"
-          "rustup"
-          "gopls"
-          "nil"
-          "pyright"
-          "cargo-edit"
-          "cargo-xbuild"
-          "cargo-update"
-          "cargo-generate"
-          "racket"
-          "myPackages.ruby"
-          "zeal"
-          "vagrant"
-          "shellcheck"
-          # "zig"
-          "stdmanpages"
-          "astyle"
-          "caddy"
-          "flyway"
-          "insomnia"
-          # "bruno"
-          # "myPackages.idris"
-          # "myPackages.agda"
-          # "myPackages.elba"
-          "protobuf"
-          # "capnproto"
-          "gflags"
-          "chezmoi"
-          "direnv"
-          "bubblewrap"
-          "firejail"
-          "rdbtools"
-          "meld"
-          "ccache"
-          # "llvmPackages_latest.clang"
-          # "llvmPackages_latest.lld"
-          # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/lldb-argdumper' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/lldb-argdumper' -> `../../../../../../../build/lldb-12.0.1.src/build/bin/lldb-argdumper'
-          # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/_lldb.so' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so' -> `../../../liblldb.so'
-          # > error: collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
-          # "llvmPackages_latest.lldb"
-          # "llvmPackages_latest.llvm"
-          "clang-tools"
-          "clang-analyzer"
-          # "xmlstarlet"
-          "nasm"
-          "go"
-          "sqlitebrowser"
-          "sqlite"
-          "mitscheme"
-          "guile"
-          "emacs"
-          "myPackages.magit"
-          "mu"
-          "yq-go"
-          "dhall"
-          "rlwrap"
-          "git-revise"
-          "git-crypt"
-          "gitAndTools.gitFull"
-          "gitAndTools.lfs"
-          "gitAndTools.git-absorb"
-          "gitAndTools.hub"
-          "gitAndTools.gh"
-          "gitAndTools.lab"
-          "gitAndTools.tig"
-          "gitAndTools.pre-commit"
-          "gitAndTools.git-extras"
-          "gitAndTools.git-hub"
-          "gitAndTools.git-annex"
-          "gitAndTools.git-subrepo"
-          "gitAndTools.diff-so-fancy"
-          "b4"
-          "vscode"
-          "wakatime"
-          "ostree"
-          # "postman"
-          # "jetbrains.idea-ultimate"
-          # "jetbrains.clion"
-          # "jetbrains.webstorm"
-          # "jetbrains.datagrip"
-          # "jetbrains.goland"
-          # "jetbrains.pycharm-professional"
-          # "androidStudioPackages.dev"
-          "gnum4"
-          "clinfo"
-          "ocl-icd"
+      packages = getPackages ([
+        "gnumake"
+        "cmake"
+        "meson"
+        "just"
+        "ninja"
+        "bear"
+        "rustup"
+        "gopls"
+        "nil"
+        "pyright"
+        "cargo-edit"
+        "cargo-xbuild"
+        "cargo-update"
+        "cargo-generate"
+        "racket"
+        "myPackages.ruby"
+        "zeal"
+        "vagrant"
+        "shellcheck"
+        # "zig"
+        "stdmanpages"
+        "astyle"
+        "caddy"
+        "flyway"
+        "insomnia"
+        # "bruno"
+        # "myPackages.idris"
+        # "myPackages.agda"
+        # "myPackages.elba"
+        "protobuf"
+        # "capnproto"
+        "gflags"
+        "chezmoi"
+        "direnv"
+        "bubblewrap"
+        "firejail"
+        "rdbtools"
+        "meld"
+        "ccache"
+        # "llvmPackages_latest.clang"
+        # "llvmPackages_latest.lld"
+        # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/lldb-argdumper' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/lldb-argdumper' -> `../../../../../../../build/lldb-12.0.1.src/build/bin/lldb-argdumper'
+        # > warning: creating dangling symlink `/nix/store/mip5hldyn294yn3lbl9ai2wyfjay9mm4-home-manager-path//lib/python3.9/site-packages/lldb/_lldb.so' -> `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so' -> `../../../liblldb.so'
+        # > error: collision between `/nix/store/n1jsmd24bgl1k8d68plmr8zpj8kc7pdq-lldb-12.0.1-lib/lib/python3.9/site-packages/lldb/_lldb.so' and dangling symlink `/nix/store/1s0zx2inw572iz5rh3cyjmg4q64vdrmv-lldb-12.0.1/lib/python3.9/site-packages/lldb/_lldb.so'
+        # "llvmPackages_latest.lldb"
+        # "llvmPackages_latest.llvm"
+        "clang-tools"
+        "clang-analyzer"
+        # "xmlstarlet"
+        "nasm"
+        "go"
+        "sqlitebrowser"
+        "sqlite"
+        "mitscheme"
+        "guile"
+        "emacs"
+        "myPackages.magit"
+        "mu"
+        "yq-go"
+        "dhall"
+        "rlwrap"
+        "git-revise"
+        "git-crypt"
+        "gitAndTools.gitFull"
+        "gitAndTools.lfs"
+        "gitAndTools.git-absorb"
+        "gitAndTools.hub"
+        "gitAndTools.gh"
+        "gitAndTools.lab"
+        "gitAndTools.tig"
+        "gitAndTools.pre-commit"
+        "gitAndTools.git-extras"
+        "gitAndTools.git-hub"
+        "gitAndTools.git-annex"
+        "gitAndTools.git-subrepo"
+        "gitAndTools.diff-so-fancy"
+        "b4"
+        "vscode"
+        "wakatime"
+        "ostree"
+        # "postman"
+        # "jetbrains.idea-ultimate"
+        # "jetbrains.clion"
+        # "jetbrains.webstorm"
+        # "jetbrains.datagrip"
+        # "jetbrains.goland"
+        # "jetbrains.pycharm-professional"
+        # "androidStudioPackages.dev"
+        "gnum4"
+        "clinfo"
+        "ocl-icd"
+        # "cudatoolkit"
+        "syslinux"
+        "rr"
+        "gdbgui"
+        # "pwndbg"
+        "valgrind"
+        "wabt"
+        "hexyl"
+        "fd"
+        "trash-cli"
+        "bat"
+        "delta"
+        "difftastic"
+        "hyperfine"
+        "procs"
+        "pastel"
+        "tokei"
+        "starship"
+        "atuin"
+        # "watchexec"
+        "zoxide"
+        "kmon"
+        "bandwhich"
+        "grex"
+        "bingrep"
+        "xxd"
+        "bless"
+        "dhex"
+        "yj"
+        "eza"
+        "delve"
+        "pkg-config"
+        "autoconf"
+        "libtool"
+        "autogen"
+        "geany"
+        "cdrkit"
+        "gettext"
+        "glances"
+        "distcc"
+        "remake"
+        "cntr"
+        "docker"
+        "docker-compose"
+        "buildkit"
+        "python3Packages.binwalk"
+        "python3Packages.xdot"
+        "binutils"
+        "bison"
+        "tealdeer"
+        "cht-sh"
+        "automake"
+        "assh"
+        "autossh"
+        "ssh-import-id"
+        # "openssh"
+        "myPackages.ssh"
+        "myPackages.mosh"
+        "myPackages.ssho"
+        "myPackages.mosho"
+        "eternal-terminal"
+        "sshpass"
+        # "dfeet"
+        "axel"
+        "neovim-remote"
+        "androidenv.androidPkgs_9_0.platform-tools"
+        "colordiff"
+        "jq"
+        "jless"
+        "rq"
+        "coq"
+        "bundix"
+        "buildah"
+        "ansible"
+        "vite"
+        "solargraph"
+        "tree-sitter"
+        "sumneko-lua-language-server"
+        "luaformatter"
+        "nodePackages.dockerfile-language-server-nodejs"
+        "nodePackages.bash-language-server"
+        "nodePackages.typescript-language-server"
+        "sqlint"
+        "sbt-extras"
+        # "clojure-lsp"
+        # "julia"
+        # "graalvm8"
+        "metals"
+        "omnisharp-roslyn"
+        "so"
+        # "myPackages.almond"
+        # "myPackages.jupyter"
+        "shfmt"
+        "pkg-config"
+        # "gcc.cc.lib"
+        "readline"
+        "zlib"
+        # "cryptopp"
+        "stress-ng"
+        "expat"
+        "mkcert"
+      ] ++ (lib.optionals
+        (prefs.enableNvidiaPrimeConfig || prefs.enableNvidiaModesetting)
+        # This will rebuild a ton of packages, disabling for now
+        (builtins.map (x: "cudaPackages_12.${x}") [
           # "cudatoolkit"
-          "syslinux"
-          "rr"
-          "gdbgui"
-          # "pwndbg"
-          "valgrind"
-          "wabt"
-          "hexyl"
-          "fd"
-          "trash-cli"
-          "bat"
-          "delta"
-          "difftastic"
-          "hyperfine"
-          "procs"
-          "pastel"
-          "tokei"
-          "starship"
-          "atuin"
-          # "watchexec"
-          "zoxide"
-          "kmon"
-          "bandwhich"
-          "grex"
-          "bingrep"
-          "xxd"
-          "bless"
-          "dhex"
-          "yj"
-          "eza"
-          "delve"
-          "pkg-config"
-          "autoconf"
-          "libtool"
-          "autogen"
-          "geany"
-          "cdrkit"
-          "gettext"
-          "glances"
-          "distcc"
-          "remake"
-          "cntr"
-          "docker"
-          "docker-compose"
-          "buildkit"
-          "python3Packages.binwalk"
-          "python3Packages.xdot"
-          "binutils"
-          "bison"
-          "tealdeer"
-          "cht-sh"
-          "automake"
-          "assh"
-          "autossh"
-          "ssh-import-id"
-          # "openssh"
-          "myPackages.ssh"
-          "myPackages.mosh"
-          "myPackages.ssho"
-          "myPackages.mosho"
-          "eternal-terminal"
-          "sshpass"
-          # "dfeet"
-          "axel"
-          "neovim-remote"
-          "androidenv.androidPkgs_9_0.platform-tools"
-          "colordiff"
-          "jq"
-          "jless"
-          "rq"
-          "coq"
-          "bundix"
-          "buildah"
-          "ansible"
-          "vite"
-          "solargraph"
-          "tree-sitter"
-          "sumneko-lua-language-server"
-          "luaformatter"
-          "nodePackages.dockerfile-language-server-nodejs"
-          "nodePackages.bash-language-server"
-          "nodePackages.typescript-language-server"
-          "sqlint"
-          "sbt-extras"
-          # "clojure-lsp"
-          # "julia"
-          # "graalvm8"
-          "metals"
-          "omnisharp-roslyn"
-          "so"
-          # "myPackages.almond"
-          # "myPackages.jupyter"
-          "shfmt"
-          "pkg-config"
-          # "gcc.cc.lib"
-          "readline"
-          "zlib"
-          # "cryptopp"
-          "stress-ng"
-          "expat"
-          "mkcert"
-        ] ++ (lib.optionals (prefs.enableNvidiaPrimeConfig || prefs.enableNvidiaModesetting)
-          # This will rebuild a ton of packages, disabling for now
-          (builtins.map (x: "cudaPackages_12.${x}") [
-            # "cudatoolkit"
-            # nccl
-            # cuda_nvcc
-            # cuda_cccl
-            # cuda_gdb
-            # cuda_cuobjdump
-            # cuda_nvdisasm
-            # cuda_nvprune
+          # nccl
+          # cuda_nvcc
+          # cuda_cccl
+          # cuda_gdb
+          # cuda_cuobjdump
+          # cuda_nvdisasm
+          # cuda_nvprune
 
-            # cuda_cudart
+          # cuda_cudart
 
-            # "cudnn"
-            # "libcublas"
-          ])
-        ));
+          # "cudnn"
+          # "libcublas"
+        ])));
     }
     {
       name = "multimedia";
@@ -580,9 +569,7 @@ let
     {
       name = "system (preferred)";
       priority = 18;
-      packages = getPackages [
-        "e2fsprogs"
-      ];
+      packages = getPackages [ "e2fsprogs" ];
     }
     {
       name = "system";
@@ -865,8 +852,7 @@ let
       ];
     }
   ];
-in
-{
+in {
   programs = {
     direnv = {
       enable = true;
@@ -895,269 +881,279 @@ in
     syncthing = { enable = prefs.enableHomeManagerSyncthing; };
   };
 
-  systemd.user =
-    let
-      # Copied from https://github.com/NixOS/nixpkgs/blob/634141959076a8ab69ca2cca0f266852256d79ee/nixos/modules/services/editors/emacs.nix#L91
-      # set-environment is needed for some environment variables.
-      # We use /etc/set-environment as the config config.system.build.setEnvironment is nixos config, not home-manager config.
-      importEnvironmentForCommand = command:
-        let
-          script = pkgs.writeShellApplication
-            {
-              name = "import-environment";
-              text = ''
-                if [[ -f /etc/set-environment ]]; then
-                    # shellcheck disable=SC1091
-                    source /etc/set-environment;
-                fi
-                exec "$@"
-              '';
-            };
-        in
-        "${script} ${command}";
-    in
-    builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-      # (
-      #   let name = "smos-sync";
-      #   in
-      #   lib.optionalAttrs prefs.enableSmosSync {
-      #     services.${name} = {
-      #       Unit = { Description = "sync smos"; };
-      #       Service = {
-      #         Type = "oneshot";
-      #         ExecStart =
-      #           "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
-      #         EnvironmentFile = "/run/secrets/smos-sync-env";
-      #       };
-      #     };
-      #     timers.${name} = {
-      #       Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
-      #       Install = { WantedBy = [ "default.target" ]; };
-      #       Timer = {
-      #         OnCalendar = "*-*-* *:1/3:00";
-      #         Unit = "${name}.service";
-      #         Persistent = true;
-      #       };
-      #     };
-      #   }
-      # )
+  systemd.user = let
+    # Copied from https://github.com/NixOS/nixpkgs/blob/634141959076a8ab69ca2cca0f266852256d79ee/nixos/modules/services/editors/emacs.nix#L91
+    # set-environment is needed for some environment variables.
+    # We use /etc/set-environment as the config config.system.build.setEnvironment is nixos config, not home-manager config.
+    importEnvironmentForCommand = command:
+      let
+        script = pkgs.writeShellApplication {
+          name = "import-environment";
+          text = ''
+            if [[ -f /etc/set-environment ]]; then
+                # shellcheck disable=SC1091
+                source /etc/set-environment;
+            fi
+            exec "$@"
+          '';
+        };
+      in "${script} ${command}";
+  in builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
+    # (
+    #   let name = "smos-sync";
+    #   in
+    #   lib.optionalAttrs prefs.enableSmosSync {
+    #     services.${name} = {
+    #       Unit = { Description = "sync smos"; };
+    #       Service = {
+    #         Type = "oneshot";
+    #         ExecStart =
+    #           "${(config.programs.smos.smosReleasePackages or config.programs.smos.smosPackages).smos-sync-client}/bin/smos-sync-client sync";
+    #         EnvironmentFile = "/run/secrets/smos-sync-env";
+    #       };
+    #     };
+    #     timers.${name} = {
+    #       Unit = { OnFailure = [ "notify-systemd-unit-failures@%i.service" ]; };
+    #       Install = { WantedBy = [ "default.target" ]; };
+    #       Timer = {
+    #         OnCalendar = "*-*-* *:1/3:00";
+    #         Unit = "${name}.service";
+    #         Persistent = true;
+    #       };
+    #     };
+    #   }
+    # )
 
-      (
-        let
-          name = "dufs";
-          subdir = ".local/mnt/dufs";
-          credentialFile = "${prefs.home}/.local/dufs.cred";
-          # Credentials do not work in mount yet.
-          # Create a temporary file for password. Be sure to shred it after use.
-          # https://github.com/systemd/systemd/issues/23535
-          plaintextFile = "/tmp/dufs.cred";
-          homePrefix = builtins.substring 1 (builtins.sub (builtins.stringLength prefs.home) 1) prefs.home;
-          mountName = builtins.replaceStrings [ "/" ] [ "-" ] "${homePrefix}/${subdir}";
-          path = "${prefs.home}/${subdir}";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerDufs {
-          mounts.${mountName} = {
-            Unit = {
-              Description = "dufs directory with rclone";
-              After = [ "network.target" ];
-            };
-            Mount = {
-              Type = "rclone";
-              What = "dufs:";
-              Where = path;
-              # echo 'password' | sudo systemd-creds --name=pw encrypt - credentialFile 
-              # LoadCredentialEncrypted = "pw:${credentialFile}";
-              # Options = "password-command='${pkgs.coreutils}/bin/cat %d/pw'";
-              Options = "password-command='${pkgs.coreutils}/bin/cat ${plaintextFile}' vfs-cache-mode=full";
-            };
-          };
-          automounts.${mountName} = {
-            Unit = {
-              Description = "dufs directory with rclone";
-              After = [ "network.target" ];
-              Before = [ "remote-fs.target" ];
-            };
-            Automount = {
-              Where = path;
-              TimeoutIdleSec = 600;
-            };
-            Install = { WantedBy = [ "default.target" ]; };
-          };
-          services.${name} = {
-            Unit = {
-              Description = "Dufs file sharing service";
-              After = [ "network.target" ];
-              RequiresMountsFor = path;
-            };
-            Install = { WantedBy = [ "default.target" ]; };
-            Service = {
-              NoNewPrivileges = true;
-              ExecStart = ''
-                ${pkgs.dufs}/bin/dufs --render-try-index --allow-all --auth @/Public --auth guest:guest@/SemiPublic --auth upload:upload@/Upload:rw --auth e:$6$3U28BoQYzEnJM5S8$NwZFhUXiekatIKVNTRFrPJOrR5qPF6rZw3TG80bgxmG4C9ZYsNUURjoudWbk74XVr7eVII3CdHxqLrTe8cGYW0@/:rw ${path}
-              '';
-            };
-          };
-        }
-      )
+    (let
+      name = "dufs";
+      subdir = ".local/mnt/dufs";
+      credentialFile = "${prefs.home}/.local/dufs.cred";
+      # Credentials do not work in mount yet.
+      # Create a temporary file for password. Be sure to shred it after use.
+      # https://github.com/systemd/systemd/issues/23535
+      plaintextFile = "/tmp/dufs.cred";
+      homePrefix =
+        builtins.substring 1 (builtins.sub (builtins.stringLength prefs.home) 1)
+        prefs.home;
+      mountName =
+        builtins.replaceStrings [ "/" ] [ "-" ] "${homePrefix}/${subdir}";
+      path = "${prefs.home}/${subdir}";
+    in lib.optionalAttrs prefs.enableHomeManagerDufs {
+      mounts.${mountName} = {
+        Unit = {
+          Description = "dufs directory with rclone";
+          After = [ "network.target" ];
+        };
+        Mount = {
+          Type = "rclone";
+          What = "dufs:";
+          Where = path;
+          # echo 'password' | sudo systemd-creds --name=pw encrypt - credentialFile 
+          # LoadCredentialEncrypted = "pw:${credentialFile}";
+          # Options = "password-command='${pkgs.coreutils}/bin/cat %d/pw'";
+          Options =
+            "password-command='${pkgs.coreutils}/bin/cat ${plaintextFile}' vfs-cache-mode=full";
+        };
+      };
+      automounts.${mountName} = {
+        Unit = {
+          Description = "dufs directory with rclone";
+          After = [ "network.target" ];
+          Before = [ "remote-fs.target" ];
+        };
+        Automount = {
+          Where = path;
+          TimeoutIdleSec = 600;
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+      };
+      services.${name} = {
+        Unit = {
+          Description = "Dufs file sharing service";
+          After = [ "network.target" ];
+          RequiresMountsFor = path;
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = {
+          NoNewPrivileges = true;
+          ExecStart = ''
+            ${pkgs.dufs}/bin/dufs --render-try-index --allow-all --auth @/Public --auth guest:guest@/SemiPublic --auth upload:upload@/Upload:rw --auth e:$6$3U28BoQYzEnJM5S8$NwZFhUXiekatIKVNTRFrPJOrR5qPF6rZw3TG80bgxmG4C9ZYsNUURjoudWbk74XVr7eVII3CdHxqLrTe8cGYW0@/:rw ${path}
+          '';
+        };
+      };
+    })
 
-      (
-        let name = "tailscaled";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerTailScale {
-          services.${name} = {
-            Unit = {
-              Description = "user space tailscale daemon";
-              After = [ "network.target" ];
-            };
-            Install = { WantedBy = [ "default.target" ]; };
-            Service = {
-              RuntimeDirectory = name;
-              StateDirectory = name;
-              NoNewPrivileges = true;
-              ExecStart = ''
-                ${pkgs.tailscale}/bin/tailscaled --statedir=''${STATE_DIRECTORY} --socket=''${RUNTIME_DIRECTORY}/${name}.sock --port=0 --tun=userspace-networking --verbose 5
-              '';
-            };
-          };
-        }
-      )
+    (let name = "tailscaled";
+    in lib.optionalAttrs prefs.enableHomeManagerTailScale {
+      services.${name} = {
+        Unit = {
+          Description = "user space tailscale daemon";
+          After = [ "network.target" ];
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = {
+          RuntimeDirectory = name;
+          StateDirectory = name;
+          NoNewPrivileges = true;
+          ExecStart = ''
+            ${pkgs.tailscale}/bin/tailscaled --statedir=''${STATE_DIRECTORY} --socket=''${RUNTIME_DIRECTORY}/${name}.sock --port=0 --tun=userspace-networking --verbose 5
+          '';
+        };
+      };
+    })
 
-      (
-        let name = "code-tunnel";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
-          services.${name} = {
-            Unit = {
-              Description = "code tunnel";
-              After = [ "network.target" ];
-            };
-            Install = { WantedBy = [ "default.target" ]; };
-            Service = {
-              ExecStart = ''
-                ${pkgs.vscode}/bin/code tunnel
-              '';
-            };
-          };
-        }
-      )
+    (let name = "code-tunnel";
+    in lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
+      services.${name} = {
+        Unit = {
+          Description = "code tunnel";
+          After = [ "network.target" ];
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = {
+          ExecStart = ''
+            ${pkgs.vscode}/bin/code tunnel
+          '';
+        };
+      };
+    })
 
-      (
-        let
-          name = "caddy";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
-          services.${name} = {
-            Unit = {
-              Description = "Caddy server";
-              After = [ "network-online.target" "network.target" ];
-              Wants = [ "network-online.target" ];
-            };
-            Install = { WantedBy = [ "default.target" ]; };
-            Service = {
-              Type = "notify";
-              ExecStart = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/config.dhall --adapter dhall
-              '';
-              ExecReload = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/config.dhall --adapter dhall
-              '';
-              EnvironmentFile = "%h/.config/caddy/env";
-            };
-          };
-        }
-      )
+    (let name = "caddy";
+    in lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
+      services.${name} = {
+        Unit = {
+          Description = "Caddy server";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = {
+          Type = "notify";
+          ExecStart = ''
+            ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/config.dhall --adapter dhall
+          '';
+          ExecReload = ''
+            ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/config.dhall --adapter dhall
+          '';
+          EnvironmentFile = "%h/.config/caddy/env";
+        };
+      };
+    })
 
-      (
-        let
-          name = "unison@";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerUnison {
-          services.${name} = {
-            Unit = {
-              Description = "Unison file sync";
-              After = [ "network-online.target" "network.target" ];
-              Wants = [ "network-online.target" ];
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-              DefaultInstance = "default";
-            };
-            Timer = {
-              OnBootSec = "1min";
-            };
-            Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'"; in
-              {
-                # watch and repeat parameter can't handle non-existent folders.
-                # So we have to run unison without watch and repeat first.
-                ExecStartPre = "-${pkgs.unison}/bin/unison ${commonArgs} %i";
-                ExecStart = "${pkgs.unison}/bin/unison ${commonArgs} -watch=true -repeat=watch %i";
-                Environment = [
-                  "SSH_ASKPASS_REQUIRE=never"
-                  ''
-                    PATH=$PATH:${lib.makeBinPath [ pkgs.rsync pkgs.openssh ]}
-                  ''
-                ];
-              };
-          };
-        }
-      )
+    (let name = "unison@";
+    in lib.optionalAttrs prefs.enableHomeManagerUnison {
+      services.${name} = {
+        Unit = {
+          Description = "Unison file sync";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+          DefaultInstance = "default";
+        };
+        Timer = { OnBootSec = "3min"; };
+        Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'";
+        in {
+          # watch and repeat parameter can't handle non-existent folders.
+          # So we have to run unison without watch and repeat first.
+          ExecStartPre = "-${pkgs.unison}/bin/unison ${commonArgs} %i";
+          ExecStart =
+            "${pkgs.unison}/bin/unison ${commonArgs} -watch=true -repeat=watch %i";
+          Environment = [
+            "SSH_ASKPASS_REQUIRE=never"
+            ''
+              PATH=$PATH:${lib.makeBinPath [ pkgs.rsync pkgs.openssh ]}
+            ''
+          ];
+        };
+      };
+    })
 
-      (
-        let
-          name = "autossh@";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerAutossh {
-          services.${name} = {
-            Unit = {
-              Description = "autossh";
-              After = [ "network-online.target" "network.target" ];
-              Wants = [ "network-online.target" ];
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-              DefaultInstance = "default";
-            };
-            Timer = {
-              OnBootSec = "1min";
-            };
-            Service =
-              {
-                # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
-                ExecStart = "${pkgs.autossh}/bin/autossh -i %h/.ssh/id_ed25519_autossh $SSH_OPTIONS %i";
-                Environment = [
-                  "AUTOSSH_PORT=0"
-                  "SSH_ASKPASS_REQUIRE=never"
-                  "SSH_OPTIONS="
-                  ''
-                    PATH=$PATH:${lib.makeBinPath [ pkgs.openssh ]}
-                  ''
-                ];
-                EnvironmentFile = [ "-%h/.config/autossh/env" "-%h/.config/autossh/%i.env" ];
-              };
-          };
-        }
-      )
+    (let name = "rclone-bisync@";
+    in lib.optionalAttrs prefs.enableHomeManagerRcloneBisync {
+      services.${name} = let
+        mountPoint = "%h/.local/mnt/dufs";
+        # Convert the gitignore files to a rcloneignore file
+        script = builtins.path {
+          name = "convert-gitignore-to-rcloneignore";
+          path = prefs.getDotfile
+            "dot_bin/executable_convert-gitignore-to-rcloneignore.sh";
+        };
+        defaultIgnore = builtins.path {
+          name = "rcloneignore";
+          path = prefs.getDotfile "dot_config/rclone/dot_rcloneignore";
+        };
+      in {
+        Unit = {
+          Description = "rclone bisync";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+          ConditionPathIsMountPoint = mountPoint;
+        };
+        # Timer = { OnBootSec = "3min"; };
+        Install = {
+          WantedBy = [ "default.target" ];
+          DefaultInstance = "default";
+        };
+        Service = {
+          ExecStartPre = "${script} %I";
+          ExecStart =
+            "${pkgs.rclone}/bin/rclone bisync --config /dev/null --verbose --checksum --metadata --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore %h/%I ${mountPoint}/%I";
+        };
+      };
+    })
 
-      (
-        let name = "foot";
-        in
-        lib.optionalAttrs prefs.enableFoot {
-          services.${name} = {
-            Unit = { Description = "foot server"; };
-            Install = { WantedBy = [ "default.target" ]; };
-            Service = {
-              Type = "simple";
-              Restart = "always";
-              ExecStart = importEnvironmentForCommand "${pkgs.foot}/bin/foot --server";
-            };
-          };
-        }
-      )
-    ];
+    (let name = "autossh@";
+    in lib.optionalAttrs prefs.enableHomeManagerAutossh {
+      services.${name} = {
+        Unit = {
+          Description = "autossh";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+          DefaultInstance = "default";
+        };
+        Timer = { OnBootSec = "3min"; };
+        Service = {
+          # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
+          ExecStart =
+            "${pkgs.autossh}/bin/autossh -i %h/.ssh/id_ed25519_autossh $SSH_OPTIONS %i";
+          Environment = [
+            "AUTOSSH_PORT=0"
+            "SSH_ASKPASS_REQUIRE=never"
+            "SSH_OPTIONS="
+            ''
+              PATH=$PATH:${lib.makeBinPath [ pkgs.openssh ]}
+            ''
+          ];
+          EnvironmentFile =
+            [ "-%h/.config/autossh/env" "-%h/.config/autossh/%i.env" ];
+        };
+      };
+    })
+
+    (let name = "foot";
+    in lib.optionalAttrs prefs.enableFoot {
+      services.${name} = {
+        Unit = { Description = "foot server"; };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = {
+          Type = "simple";
+          Restart = "always";
+          ExecStart =
+            importEnvironmentForCommand "${pkgs.foot}/bin/foot --server";
+        };
+      };
+    })
+  ];
 
   home = {
     extraOutputsToInstall = prefs.extraOutputsToInstall;
-    packages = allPackages ++ (lib.optionals prefs.enableHomeManagerTailScale [ pkgs.tailscale ]);
+    packages = allPackages
+      ++ (lib.optionals prefs.enableHomeManagerTailScale [ pkgs.tailscale ]);
     stateVersion = prefs.homeManagerStateVersion;
   };
 

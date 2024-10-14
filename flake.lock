@@ -321,16 +321,17 @@
     },
     "dotfiles": {
       "locked": {
-        "lastModified": 1724756255,
-        "narHash": "sha256-YphEgy62TaGRt4x/GNRQ7BS7n6ISG/8hlPOyIFvW9+A=",
+        "lastModified": 1728891861,
+        "narHash": "sha256-mnk67f/3tUuEPQc9b+G8k8gCzdJPiw2TLOqL0VewohA=",
         "owner": "contrun",
         "repo": "dotfiles",
-        "rev": "b8a247989e6534f3c06f0b7a366fe6d2c0f06765",
+        "rev": "4ded10d49a9410d5f4c1c98495b29f6a4d149a7c",
         "type": "github"
       },
       "original": {
         "owner": "contrun",
         "repo": "dotfiles",
+        "rev": "4ded10d49a9410d5f4c1c98495b29f6a4d149a7c",
         "type": "github"
       }
     },
