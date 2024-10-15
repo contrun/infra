@@ -1155,6 +1155,17 @@ in {
             "RCLONE_CONFIG=%T/rclone"
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
             "RCLONE_BISYNC_ARGS='--verbose --checksum --metadata'"
+            ''
+              PATH=$PATH:${
+                lib.makeBinPath [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.gawk
+                  pkgs.gnugrep
+                  pkgs.gnused
+                ]
+              }
+            ''
           ];
           EnvironmentFile = [ "-%h/.config/rclone/env" ];
           PrivateTmp = true;
