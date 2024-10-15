@@ -1,8 +1,7 @@
 let
   internalGetSubDomain = prefix: domain:
     if prefix == "" then domain else "${prefix}.${domain}";
-in
-{ ... }@args:
+in { ... }@args:
 let
   fix = f: let x = f x; in x;
   extends = f: rattrs: self: let super = rattrs self; in super // f self super;
@@ -18,35 +17,28 @@ let
   hasPkgs = args ? pkgs;
   hasInputs = args ? inputs;
   hasHostname = args ? hostname;
-  pkgs = (
-    args.pkgs or (builtins.throw
-      "Forcing pkgs in prefs.nix without given in the input parameter")
-  );
+  pkgs = (args.pkgs or (builtins.throw
+    "Forcing pkgs in prefs.nix without given in the input parameter"));
 
-  hostname = args.hostname or (
-    let
-      # LC_CTYPE=C tr -dc 'a-z' < /dev/urandom | head -c3 | tee /tmp/hostname
-      hostNameFiles =
-        if builtins.pathExists "/tmp/nixos_bootstrap" then [
-          /tmp/etc/hostname
-          /mnt/etc/hostname
-          /tmp/hostname
-          /etc/hostname
-        ] else
-          [ /etc/hostname ];
-      fs = builtins.filter
-        (x:
-          let e = builtins.pathExists x;
-          in builtins.trace "hostname file ${x} exists? ${builtins.toString e}" e)
-        hostNameFiles;
-      f = builtins.elemAt fs 0;
-      c = builtins.readFile f;
-      l = builtins.match "([[:alnum:]]+)[[:space:]]*" c;
-      newHostname = builtins.elemAt l 0;
-    in
-    builtins.trace "obtained new hostname ${newHostname} from disk"
-      newHostname
-  );
+  hostname = args.hostname or (let
+    # LC_CTYPE=C tr -dc 'a-z' < /dev/urandom | head -c3 | tee /tmp/hostname
+    hostNameFiles = if builtins.pathExists "/tmp/nixos_bootstrap" then [
+      /tmp/etc/hostname
+      /mnt/etc/hostname
+      /tmp/hostname
+      /etc/hostname
+    ] else
+      [ /etc/hostname ];
+    fs = builtins.filter (x:
+      let e = builtins.pathExists x;
+      in builtins.trace "hostname file ${x} exists? ${builtins.toString e}" e)
+      hostNameFiles;
+    f = builtins.elemAt fs 0;
+    c = builtins.readFile f;
+    l = builtins.match "([[:alnum:]]+)[[:space:]]*" c;
+    newHostname = builtins.elemAt l 0;
+  in builtins.trace "obtained new hostname ${newHostname} from disk"
+  newHostname);
   # printf "%s" "hostname: $HOST" | sha512sum | head -c 10
   hostId = builtins.substring 0 8
     (builtins.hashString "sha512" "hostname: ${hostname}");
@@ -55,77 +47,90 @@ let
     normalNodes = [ "ssg" "jxt" "shl" "mdq" "dbx" "dvm" "aol" ];
     hostAliases =
       builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
-        self.normalNodes // {
+      self.normalNodes // {
         hub = "mdq";
       };
     pkgsRelatedPrefs = rec {
-      kernelPackages = if self.enableZfsUnstable then pkgs.zfsUnstable.latestCompatibleLinuxPackages else if self.enableZfs then pkgs.zfs.latestCompatibleLinuxPackages else pkgs.linuxPackages_latest;
+      kernelPackages = if self.enableZfsUnstable then
+        pkgs.zfsUnstable.latestCompatibleLinuxPackages
+      else if self.enableZfs then
+        pkgs.zfs.latestCompatibleLinuxPackages
+      else
+        pkgs.linuxPackages_latest;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
       ];
       rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage
-        ./hardware/rtl8188gu.nix
-        { });
-      extraUdevRules =
-        let
-          getOptionalRules = x: if (x.enable or true) then x.rules else [ ];
-          fixedRules = [{
-            rules = [
-              # Automatically shutdown on battery low.
-              ''
-                SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
-              ''
+        ./hardware/rtl8188gu.nix { });
+      extraUdevRules = let
+        getOptionalRules = x: if (x.enable or true) then x.rules else [ ];
+        fixedRules = [{
+          rules = [
+            # Automatically shutdown on battery low.
+            ''
+              SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+            ''
 
-              # TPM
-              ''
-                KERNEL=="tpm[0-9]*", MODE="0660", OWNER="wheel"
-                KERNEL=="tpmrm[0-9]*", MODE="0660", GROUP="wheel"
-              ''
+            # TPM
+            ''
+              KERNEL=="tpm[0-9]*", MODE="0660", OWNER="wheel"
+              KERNEL=="tpmrm[0-9]*", MODE="0660", GROUP="wheel"
+            ''
 
-              ''
-                KERNEL=="uinput", GROUP="${self.ownerGroup}", MODE="0660", OPTIONS+="static_node=uinput"
-              ''
+            ''
+              KERNEL=="uinput", GROUP="${self.ownerGroup}", MODE="0660", OPTIONS+="static_node=uinput"
+            ''
 
-              # canokeys
-              ''
-                # GnuPG/pcsclite
-                SUBSYSTEM!="usb", GOTO="canokeys_rules_end"
-                ACTION!="add|change", GOTO="canokeys_rules_end"
-                ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42d4", ENV{ID_SMARTCARD_READER}="1"
-                LABEL="canokeys_rules_end"
+            # canokeys
+            ''
+              # GnuPG/pcsclite
+              SUBSYSTEM!="usb", GOTO="canokeys_rules_end"
+              ACTION!="add|change", GOTO="canokeys_rules_end"
+              ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42d4", ENV{ID_SMARTCARD_READER}="1"
+              LABEL="canokeys_rules_end"
 
-                # FIDO2/U2F
-                # note that if you find this line in 70-u2f.rules, you can ignore it
-                KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42d4", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+              # FIDO2/U2F
+              # note that if you find this line in 70-u2f.rules, you can ignore it
+              KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42d4", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-                # make this usb device accessible for users, used in WebUSB
-                # change the mode so unprivileged users can access it, insecure rule, though
-                SUBSYSTEMS=="usb", ATTR{idVendor}=="20a0", ATTR{idProduct}=="42d4", MODE:="0666"
-                # if the above works for WebUSB (web console), you may change into a more secure way
-                # choose one of the following rules
-                # note if you use "plugdev", make sure you have this group and the wanted user is in that group
-                #SUBSYSTEMS=="usb", ATTR{idVendor}=="20a0", ATTR{idProduct}=="42d4", GROUP="plugdev", MODE="0660"
-                #SUBSYSTEMS=="usb", ATTR{idVendor}=="20a0", ATTR{idProduct}=="42d4", TAG+="uaccess"
-              ''
-            ];
-          }];
-          powerSavingRules = [{
-            rules = [
-              ''
-                SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-50]", RUN+="${pkgs.bash}/bin/bash -c 'echo balance_power > /sys/devices/system/cpu/cpufreq/policy?/energy_performance_preference'"
-              ''
-            ];
-          }];
-          systemdPowerSavingRules = builtins.map
-            (x: with x; {
-              inherit enable;
-              rules = [
-                ''
-                  SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-95]", RUN+="${if (x.userUnit or false) then "${pkgs.su}/bin/su ${self.owner} -c '" else ""}${pkgs.systemd}/bin/systemctl stop ${unit}${if (x.userUnit or false) then " --user'" else ""}"
-                  SUBSYSTEM=="power_supply", ATTR{status}=="Not charging", RUN+="${if (x.userUnit or false) then "${pkgs.su}/bin/su ${self.owner} -c '" else ""}${pkgs.systemd}/bin/systemctl start ${unit}${if (x.userUnit or false) then " --user'" else ""}"
-                ''
-              ];
-            }) [
+              # make this usb device accessible for users, used in WebUSB
+              # change the mode so unprivileged users can access it, insecure rule, though
+              SUBSYSTEMS=="usb", ATTR{idVendor}=="20a0", ATTR{idProduct}=="42d4", MODE:="0666"
+              # if the above works for WebUSB (web console), you may change into a more secure way
+              # choose one of the following rules
+              # note if you use "plugdev", make sure you have this group and the wanted user is in that group
+              #SUBSYSTEMS=="usb", ATTR{idVendor}=="20a0", ATTR{idProduct}=="42d4", GROUP="plugdev", MODE="0660"
+              #SUBSYSTEMS=="usb", ATTR{idVendor}=="20a0", ATTR{idProduct}=="42d4", TAG+="uaccess"
+            ''
+          ];
+        }];
+        powerSavingRules = [{
+          rules = [''
+            SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-50]", RUN+="${pkgs.bash}/bin/bash -c 'echo balance_power > /sys/devices/system/cpu/cpufreq/policy?/energy_performance_preference'"
+          ''];
+        }];
+        systemdPowerSavingRules = builtins.map (x:
+          with x; {
+            inherit enable;
+            rules = [''
+              SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-95]", RUN+="${
+                if (x.userUnit or false) then
+                  "${pkgs.su}/bin/su ${self.owner} -c '"
+                else
+                  ""
+              }${pkgs.systemd}/bin/systemctl stop ${unit}${
+                if (x.userUnit or false) then " --user'" else ""
+              }"
+              SUBSYSTEM=="power_supply", ATTR{status}=="Not charging", RUN+="${
+                if (x.userUnit or false) then
+                  "${pkgs.su}/bin/su ${self.owner} -c '"
+                else
+                  ""
+              }${pkgs.systemd}/bin/systemctl start ${unit}${
+                if (x.userUnit or false) then " --user'" else ""
+              }"
+            ''];
+          }) [
             {
               enable = self.enablePromtail;
               unit = "promtail";
@@ -148,10 +153,14 @@ let
               unit = "syncthing";
             }
           ];
-          rules = fixedRules ++ (if self.enablePowerSavingMode then (powerSavingRules ++ systemdPowerSavingRules) else [ ]);
-          rulesList = builtins.foldl' (acc: current: acc ++ (getOptionalRules current)) [ ] rules;
-        in
-        builtins.concatStringsSep "\n" rulesList;
+        rules = fixedRules ++ (if self.enablePowerSavingMode then
+          (powerSavingRules ++ systemdPowerSavingRules)
+        else
+          [ ]);
+        rulesList =
+          builtins.foldl' (acc: current: acc ++ (getOptionalRules current)) [ ]
+          rules;
+      in builtins.concatStringsSep "\n" rulesList;
     };
     isMinimalSystem = true;
     isMaximalSystem = false;
@@ -195,8 +204,7 @@ let
           goodConfigFiles;
         autosshLines = filter (x: hasPrefix "Host autossh" x) lines;
         servers = map (x: removePrefix "Host " x) autosshLines;
-      in
-      filter (x: x != "autossh") servers;
+      in filter (x: x != "autossh") servers;
     enableSessionVariables = true;
     enableAllFirmware = !self.isMinimalSystem;
     enableRedistributableFirmware = !self.isMinimalSystem;
@@ -210,26 +218,24 @@ let
     enableWireguard = self.wireguardHostIndex != null;
     enableContainerWired = !self.isMinimalSystem;
     wireguardIPOffsetForNixosHosts = 51;
-    wireguardHostIndex =
-      let
-        f = acc: e: acc //
-          (
-            let next = acc."__next__" or self.wireguardIPOffsetForNixosHosts; in
-            {
-              "${e}" = next;
-              "__next__" = next + 1;
-            }
-          );
-        l = builtins.foldl' f { } self.normalNodes;
-        hostnameToIndex = builtins.removeAttrs l [ "__next__" ];
-      in
-        hostnameToIndex."${self.hostname}" or null;
+    wireguardHostIndex = let
+      f = acc: e:
+        acc
+        // (let next = acc."__next__" or self.wireguardIPOffsetForNixosHosts;
+        in {
+          "${e}" = next;
+          "__next__" = next + 1;
+        });
+      l = builtins.foldl' f { } self.normalNodes;
+      hostnameToIndex = builtins.removeAttrs l [ "__next__" ];
+    in hostnameToIndex."${self.hostname}" or null;
     enableSystemdBoot = self.bootloader == "systemd";
     enableSystemdNetworkd = true;
     enableRaspberryPiBoot = self.bootloader == "raspberrypi";
     efiCanTouchEfiVariables = true;
     isRaspberryPi = false;
-    networkController = if self.enableMicrovmGuest then "wpa_supplicant" else "iwd";
+    networkController =
+      if self.enableMicrovmGuest then "wpa_supplicant" else "iwd";
     enableSupplicant = self.networkController == "wpa_supplicant";
     enableWireless = self.enableSupplicant;
     enableIwd = self.networkController == "iwd";
@@ -240,7 +246,18 @@ let
       PersistentTetheringMode=true
     '';
     connmanExtraFlags = [ "--nodnsproxy" ];
-    connmanNetworkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "tailscale" "zt" "wg" "docker" "br-" ];
+    connmanNetworkInterfaceBlacklist = [
+      "vmnet"
+      "vboxnet"
+      "virbr"
+      "ifb"
+      "ve"
+      "tailscale"
+      "zt"
+      "wg"
+      "docker"
+      "br-"
+    ];
     enableBumblebee = false;
     enableMediaKeys = true;
     enableEternalTerminal = !self.isMinimalSystem;
@@ -293,6 +310,7 @@ let
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerUnison = !self.isMinimalSystem;
     enableHomeManagerRcloneBisync = !self.isMinimalSystem;
+    enableHomeManagerRcloneServe = !self.isMinimalSystem;
     enableHomeManagerAutossh = !self.isMinimalSystem;
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
@@ -324,44 +342,41 @@ let
       if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
     enableKeyd = !self.isMinimalSystem;
-    enableXmonad = false && self.xWindowManager == "xmonad" && !self.isMinimalSystem;
+    enableXmonad = false && self.xWindowManager == "xmonad"
+      && !self.isMinimalSystem;
     enableI3 = !self.isMinimalSystem;
     enableAwesome = !self.isMinimalSystem;
     enableSway = !self.isMinimalSystem;
-    enableKdeConnect = !self.isMinimalSystem && (builtins.elem self.nixosSystem [ "x86_64-linux" "aarch64-linux" ]);
+    enableKdeConnect = !self.isMinimalSystem
+      && (builtins.elem self.nixosSystem [ "x86_64-linux" "aarch64-linux" ]);
     enableSwayForGreeted = self.enableSway;
     enablePamMount = !self.isMinimalSystem;
     enableYubico = !self.isMinimalSystem;
     enablePamU2f = !self.isMinimalSystem;
     enablePcscd = !self.isMinimalSystem;
     enableFontConfig = !self.isMinimalSystem;
-    xSessionCommands = builtins.concatStringsSep "\n" ([
-      ''
-        dunst &
-        # alacritty &
-        kdeconnect-indicator &
-        feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
-        # shadowsocksControl.sh restart 4 1 &
-        # systemctl --user start syncthing &
-        # systemctl --user start ddns &
-        # sudo iw dev wlp2s0 set power_save off &
-        # ibus-daemon -drx &
-        copyq &
-        # # libinput-gestures-setup start &
-        # autoMount.sh &
-        # startupHosts.sh &
-      ''
-    ] ++ (if self.enableActivityWatch then [
-      ''
-        aw-server &
-        aw-watcher-afk &
-        aw-watcher-window &
-      ''
-    ] else
+    xSessionCommands = builtins.concatStringsSep "\n" ([''
+      dunst &
+      # alacritty &
+      kdeconnect-indicator &
+      feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
+      # shadowsocksControl.sh restart 4 1 &
+      # systemctl --user start syncthing &
+      # systemctl --user start ddns &
+      # sudo iw dev wlp2s0 set power_save off &
+      # ibus-daemon -drx &
+      copyq &
+      # # libinput-gestures-setup start &
+      # autoMount.sh &
+      # startupHosts.sh &
+    ''] ++ (if self.enableActivityWatch then [''
+      aw-server &
+      aw-watcher-afk &
+      aw-watcher-window &
+    ''] else
       [ ]));
     # xSessionCommands = "";
-    displayManager =
-      if self.enableGreetd then null else "gdm";
+    displayManager = if self.enableGreetd then null else "gdm";
     enableLightdm = self.displayManager == "lightdm";
     enableGdm = self.displayManager == "gdm";
     enableSddm = self.displayManager == "sddm";
@@ -382,59 +397,60 @@ let
     # We use nixpkgs to manage syncthing when possible, home-manager otherwise.
     enableHomeManagerSyncthing = true;
     syncthingIgnores = [ "roam/.emacs.d/straight" "roam/public" ];
-    syncthingDevices =
-      let
-        default = { addresses = [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ]; introducer = false; };
-      in
-      builtins.mapAttrs (name: value: default // value)
-        {
-          ssg = {
-            id =
-              "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
-          };
-          shl = {
-            id =
-              "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
-          };
-          jxt = {
-            id =
-              "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
-          };
-          mdq = {
-            id =
-              "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
-            introducer = true;
-          };
-          gcv = {
-            id =
-              "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
-          };
-          ngk = {
-            id =
-              "OTM73BH-NPIJTKJ-3F57TCL-VNX26RO-VKW6S3M-2XTXNJC-AGPCWWQ-VO5V4AM";
-          };
-          mmms = { id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL"; };
-          aol = { id = "FSTAIDE-E6OUWEK-BAWARYB-T4MAXIU-RML2GS2-YLYAHJO-UBKWKBD-KQ3VLQO"; };
-          npo = { id = "NRV7EXF-JGP4GYO-2MRVGTS-CYWGISC-XBGRHYR-FCJ66UI-EGKILML-KAS2VAK"; };
-          eik = { id = "R5P4E2X-PQSJH7T-T2ZSKC4-XU2K2PK-WXWKLNZ-GZSXJ6C-IDMGHCZ-6TT7ZQ5"; };
-          wae = { id = "KXOCACZ-26VKKOO-3NRCLSH-EFRSQC2-VMKDJHE-ITD7NZN-POSZEDL-ZRUNRA6"; };
-        };
+    syncthingDevices = let
+      default = {
+        addresses = [ "!10.144.0.0/16" "0.0.0.0/0" "::/0" ];
+        introducer = false;
+      };
+    in builtins.mapAttrs (name: value: default // value) {
+      ssg = {
+        id = "B6UODTC-UKUQNJX-4PQBNBV-V4UVGVK-DS6FQB5-CXAQIRV-6RWH4UW-EU5W3QM";
+      };
+      shl = {
+        id = "HOK7XKV-ZPCTMOV-IKROQ4D-CURZET4-XTL4PMB-HBFTJBX-K6YVCM2-YOUDNQN";
+      };
+      jxt = {
+        id = "UYHCZZA-7M7LQS4-SPBWSMI-YRJJADQ-RUSBIB3-KEELCYG-QUYJIW2-R6MZGAQ";
+      };
+      mdq = {
+        id = "MWL5UYZ-H2YT6WE-FK3XO5X-5QX573M-3H4EJVY-T2EJPHQ-GBLAJWD-PTYRLQ3";
+        introducer = true;
+      };
+      gcv = {
+        id = "X7QL3PP-FEKIMHT-BAVJIR5-YX77J26-42XWIJW-S5H2FCF-RIKRKB5-RU3XRAB";
+      };
+      ngk = {
+        id = "OTM73BH-NPIJTKJ-3F57TCL-VNX26RO-VKW6S3M-2XTXNJC-AGPCWWQ-VO5V4AM";
+      };
+      mmms = {
+        id = "K3UZTSW-DVAKHSF-E6Q3LFT-OTWDUDF-C3O7NEC-4A6XGJB-2LZYQFA-PMIRDQL";
+      };
+      aol = {
+        id = "FSTAIDE-E6OUWEK-BAWARYB-T4MAXIU-RML2GS2-YLYAHJO-UBKWKBD-KQ3VLQO";
+      };
+      npo = {
+        id = "NRV7EXF-JGP4GYO-2MRVGTS-CYWGISC-XBGRHYR-FCJ66UI-EGKILML-KAS2VAK";
+      };
+      eik = {
+        id = "R5P4E2X-PQSJH7T-T2ZSKC4-XU2K2PK-WXWKLNZ-GZSXJ6C-IDMGHCZ-6TT7ZQ5";
+      };
+      wae = {
+        id = "KXOCACZ-26VKKOO-3NRCLSH-EFRSQC2-VMKDJHE-ITD7NZN-POSZEDL-ZRUNRA6";
+      };
+    };
     yandexConfig = {
       directory = "${self.home}/Sync";
       excludes = "";
       user = self.owner;
     };
-    acmeEmail =
-      if self.mainDomain == "" then
-        "tobeoverridden@example.com"
-      else
-        "webmaster@${self.mainDomain}";
-    domainPrefixes =
-      let
-        originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
-      in
-      (if originalPrefix == self.hostAliases.hub then [ "hub" ] else [ ])
-      ++ [ originalPrefix "local" ];
+    acmeEmail = if self.mainDomain == "" then
+      "tobeoverridden@example.com"
+    else
+      "webmaster@${self.mainDomain}";
+    domainPrefixes = let
+      originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
+    in (if originalPrefix == self.hostAliases.hub then [ "hub" ] else [ ])
+    ++ [ originalPrefix "local" ];
     domainPrefix = builtins.elemAt self.domainPrefixes 0;
     domains = builtins.map (prefix: internalGetSubDomain prefix self.mainDomain)
       self.domainPrefixes;
@@ -444,21 +460,20 @@ let
       builtins.map (domain: internalGetSubDomain prefix domain) self.domains;
     mainDomain = "cont.run";
     enableAcme = self.enableTraefik;
-    acmeCerts =
-      if self.enableAcme then {
-        "${self.mainDomain}" = {
-          domain = self.mainDomain;
-          extraDomainNames =
-            [ "*.${self.mainDomain}" "*.local.${self.mainDomain}" ]
-            ++ (self.getFullDomainNames "*");
-          # May spurious dns propagation failures.
-          # dnsPropagationCheck = false;
-          dnsProvider = "cloudflare";
-          dnsResolver = "223.6.6.6:53";
-          credentialsFile = "/run/secrets/acme-env";
-        };
-      } else
-        { };
+    acmeCerts = if self.enableAcme then {
+      "${self.mainDomain}" = {
+        domain = self.mainDomain;
+        extraDomainNames =
+          [ "*.${self.mainDomain}" "*.local.${self.mainDomain}" ]
+          ++ (self.getFullDomainNames "*");
+        # May spurious dns propagation failures.
+        # dnsPropagationCheck = false;
+        dnsProvider = "cloudflare";
+        dnsResolver = "223.6.6.6:53";
+        credentialsFile = "/run/secrets/acme-env";
+      };
+    } else
+      { };
     enableYandexDisk = false;
     yandexExcludedDirs =
       [ "docs/org-mode/roam/.emacs.d" "ltximg" ".stversions" ".stfolder" ];
@@ -510,9 +525,7 @@ let
         enabled = true;
         bootstrap_expect = 1; # for demo; no fault tolerance
       };
-      client = {
-        enabled = true;
-      };
+      client = { enabled = true; };
     };
     enableConsul = false;
     consulInterface = "wg0";
@@ -546,12 +559,8 @@ let
     calibreServerLibraries = [ self.syncFolders.calibre.path ];
     calibreServerPort = 8213;
     syncFolders = {
-      calibre = {
-        path = "${self.home}/Storage/Calibre";
-      };
-      sync = {
-        path = "${self.home}/Sync";
-      };
+      calibre = { path = "${self.home}/Storage/Calibre"; };
+      sync = { path = "${self.home}/Sync"; };
       upload = {
         path = "${self.home}/Storage/Upload";
         type = "sendonly";
@@ -574,14 +583,13 @@ let
     enableRedshift = false;
     enablePostfix = !self.isMinimalSystem;
     enableNfs = !self.isMinimalSystem;
-    linkedJdks =
-      if self.isMinimalSystem then
-        [ "openjdk8" ]
-      else [
-        "openjdk21"
-        "openjdk17"
-        "openjdk8"
-      ];
+    linkedJdks = if self.isMinimalSystem then
+      [ "openjdk8" ]
+    else [
+      "openjdk21"
+      "openjdk17"
+      "openjdk8"
+    ];
     enableNextcloudClient = false;
     enableTaskWarriorSync = !self.isMinimalSystem;
     enableVdirsyncer = !self.isMinimalSystem;
@@ -618,7 +626,9 @@ let
     authorizedKeys = [
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkLov3pXODoOtXhJqilCqD66wR9y38LgWm8bCwCrZPJQzsjhZ0IsyoTf5Ph6UJ73BWuyzN6KWz58cbsK1MWlAT0UA7CBtISfv+KU2k2MWMk4u+ylE0l+1eThkLE0DfvJRh4TXHrTM0aDWBzgZvtYgcydy9e1FMrIXmKp+DoTPy2WC8NS0gmOSiDwgZAjJy67Ic0uJHqvr1qPSkXqtiXywhVTC6wt/EJJOTv+g6LucpelfC3wXgtADb6p/Wxa5Et6QU3UgpeSoMke3yk6vNEIxtPiatXDMDURmmkFdxdVh6ts9Jh5aC04lZE1A/gTUTNBKdFapxgglzqDg3cg/utNlx"
     ];
-    privilegedKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all" ];
+    privilegedKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all"
+    ];
     enableOpenldap = false;
     enableGnome = false;
     enableGnomeKeyring = false;
@@ -680,18 +690,17 @@ let
       enableFilestash = self.enableAllOciContainers
         && (self.nixosSystem == "x86_64-linux");
     };
-    emulatedSystems =
-      if (self.nixosSystem == "x86_64-linux") then [ "aarch64-linux" "riscv64-linux" ] else [ ];
+    emulatedSystems = if (self.nixosSystem == "x86_64-linux") then [
+      "aarch64-linux"
+      "riscv64-linux"
+    ] else
+      [ ];
     extraModulePackages = [ ];
     kernelPatches = [ ];
     kernelParams = [ "boot.shell_on_fail" ];
     blacklistedKernelModules = [ ];
     initrdAvailableKernelModules = [ ];
-    initrdKernelModules = [
-      "usbnet"
-      "cdc_ether"
-      "rndis_host"
-    ];
+    initrdKernelModules = [ "usbnet" "cdc_ether" "rndis_host" ];
     kernelModules = [
       # For the sysctl net.bridge.bridge-nf-call-* options to work
       "br_netfilter"
@@ -736,7 +745,8 @@ let
       "kernel.nmi_watchdog" = 0;
       "vm.laptop_mode" = 5;
       "vm.dirty_writeback_centisecs" = 1500;
-    } else { });
+    } else
+      { });
     networkingInterfaces = { };
     nixosStableVersion = "20.09";
     enableUnstableNixosChannel = false;
@@ -766,8 +776,7 @@ let
         isMinimal = builtins.match "minimal-(.*)" hostname != null;
         # Always enable everything to build fairly large packages.
         isMaximal = builtins.match "maximal-(.*)" hostname != null;
-      in
-      ({
+      in ({
         inherit nixosSystem;
         isMinimalSystem = true;
       } // (if isForCiCd then
@@ -782,9 +791,7 @@ let
         } else
           { })
       else
-        { })
-      // (if isMaximal then
-        {
+        { }) // (if isMaximal then {
           isMaximalSystem = true;
           isMinimalSystem = false;
           enableAllOciContainers = true;
@@ -796,9 +803,8 @@ let
           enableVirtualboxHost = true;
           enableZerotierone = true;
           enableEmacs = true;
-        }
-      else
-        { }))
+        } else
+          { }))
     else if hostname == "uzq" then {
       enableHidpi = true;
       # enableAnbox = true;
@@ -836,13 +842,11 @@ let
       enableOfflineimap = false;
       enablePulseaudio = false;
       microvmGuestConfig = {
-        volumes = [
-          {
-            mountPoint = "/var";
-            image = "var.img";
-            size = 10 * 1024;
-          }
-        ];
+        volumes = [{
+          mountPoint = "/var";
+          image = "var.img";
+          size = 10 * 1024;
+        }];
         shares = [{
           # use "virtiofs" for MicroVMs that are started by systemd
           proto = "9p";
@@ -875,8 +879,8 @@ let
       enablePromtail = true;
       enableWireless = true;
       enableAcme = true;
-      pkgsRelatedPrefs = super.pkgsRelatedPrefs // (with super.pkgsRelatedPrefs;
-        {
+      pkgsRelatedPrefs = super.pkgsRelatedPrefs
+        // (with super.pkgsRelatedPrefs; {
           consoleFont =
             "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
         });
@@ -906,7 +910,7 @@ let
       enableAllOciContainers = false;
       installHomePackages = false; # Too slow.
       kernelParams = super.kernelParams
-      ++ [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" ];
+        ++ [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" ];
       nixosSystem = "aarch64-linux";
       isMinimalSystem = true;
       hostId = "6fce2459";
@@ -933,10 +937,7 @@ let
       enableCalibreServer = true;
       linkedJdks = [ "openjdk8" ];
       enableEmacs = false;
-      smartctlExporterDevices = [
-        "/dev/sda"
-        "/dev/sdb"
-      ];
+      smartctlExporterDevices = [ "/dev/sda" "/dev/sdb" ];
       enableAllOciContainers = true;
       enableClashRedirWatchdog = true;
       enableNetworkWatchdog = true;
@@ -951,23 +952,21 @@ let
           type = "sendreceive";
         };
       };
-      syncoidCommands =
-        let
-          sendOptions = "-v";
-          recvOptions = "-v";
-        in
-        {
-          home = {
-            inherit sendOptions recvOptions;
-            source = "tank/HOME/home";
-            target = "bpool/HOME/${self.hostname}";
-          };
-          var = {
-            inherit sendOptions recvOptions;
-            source = "tank/VAR/var";
-            target = "bpool/VAR/${self.hostname}";
-          };
+      syncoidCommands = let
+        sendOptions = "-v";
+        recvOptions = "-v";
+      in {
+        home = {
+          inherit sendOptions recvOptions;
+          source = "tank/HOME/home";
+          target = "bpool/HOME/${self.hostname}";
         };
+        var = {
+          inherit sendOptions recvOptions;
+          source = "tank/VAR/var";
+          target = "bpool/VAR/${self.hostname}";
+        };
+      };
       sanoidDatasets = {
         "tank/HOME/home" = {
           autoprune = true;
@@ -994,17 +993,16 @@ let
       enableAcme = true;
       enableSmosServer = true;
       initrdKernelModules = super.initrdKernelModules ++ [ "r8169" ];
-      pkgsRelatedPrefs = super.pkgsRelatedPrefs // (with super.pkgsRelatedPrefs;
-        {
-          extraModulePackages = extraModulePackages ++ [
-            kernelPackages.rtl88x2bu
-          ];
+      pkgsRelatedPrefs = super.pkgsRelatedPrefs
+        // (with super.pkgsRelatedPrefs; {
+          extraModulePackages = extraModulePackages
+            ++ [ kernelPackages.rtl88x2bu ];
           consoleFont =
             "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
-          extraUdevRules =
-            let
-              name = "rfkill-wrapper";
-              application = with pkgs; writeShellApplication {
+          extraUdevRules = let
+            name = "rfkill-wrapper";
+            application = with pkgs;
+              writeShellApplication {
                 inherit name;
                 text = ''
                   action="$1"
@@ -1012,22 +1010,18 @@ let
                   id="$(rfkill --output-all | grep -Po "([0-9]+)(?=.*$device_name)")"
                   rfkill "$action" "$id"
                 '';
-                runtimeInputs = [
-                  utillinux
-                  coreutils
-                ];
+                runtimeInputs = [ utillinux coreutils ];
               };
-              wrapper = "${application}/bin/${name}";
-              internalWirelessDevice = "acer-wireless";
-            in
-            builtins.concatStringsSep "\n" [
-              extraUdevRules
-              # Internal wireless card "acer-wireless" seems to be defunct
-              ''
-                ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} unblock ${internalWirelessDevice}"
-                ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} block ${internalWirelessDevice}"
-              ''
-            ];
+            wrapper = "${application}/bin/${name}";
+            internalWirelessDevice = "acer-wireless";
+          in builtins.concatStringsSep "\n" [
+            extraUdevRules
+            # Internal wireless card "acer-wireless" seems to be defunct
+            ''
+              ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} unblock ${internalWirelessDevice}"
+              ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} block ${internalWirelessDevice}"
+            ''
+          ];
         });
     } else if hostname == "zklab-5" then {
       home = "/home/contrun";
@@ -1097,8 +1091,7 @@ let
     let p = builtins.removeAttrs unevaluated [ "pkgsRelatedPrefs" ];
     in builtins.deepSeq p p;
   final = notPkgsRelatedPrefs // pkgsRelatedPrefs;
-in
-{
+in {
   pure = notPkgsRelatedPrefs;
   pkgsRelated = pkgsRelatedPrefs;
   all = final;

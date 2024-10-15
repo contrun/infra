@@ -898,6 +898,31 @@ in {
           '';
         };
       in "${script} ${command}";
+    getRclonePassword = with pkgs;
+      let
+        name = "get-rclone-password";
+        p = writeShellApplication {
+          inherit name;
+          text = ''
+            set -euo pipefail
+            bws secret get 3b3ca859-97eb-486b-829b-b20a010a7747 | jq -r '.value'
+          '';
+          runtimeInputs = [ bws jq ];
+        };
+      in "${p}/bin/${name}";
+    # Never leave an unencrypted config file on disk.
+    createRcloneConfig = with pkgs;
+      let
+        name = "create-rclone-config";
+        p = writeShellApplication {
+          inherit name;
+          text = ''
+            set -euo pipefail
+            bws secret get cd2dd09a-285e-4605-92d0-b20a0104fbf4 | jq -r '.value' > "$RCLONE_CONFIG"
+          '';
+          runtimeInputs = [ bws jq ];
+        };
+      in "${p}/bin/${name}";
   in builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
     # (
     #   let name = "smos-sync";
@@ -1071,6 +1096,32 @@ in {
       };
     })
 
+    (let name = "rclone-serve@";
+    in lib.optionalAttrs prefs.enableHomeManagerRcloneServe {
+      services.${name} = {
+        Unit = {
+          Description = "rclone serve";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+          DefaultInstance = "default";
+        };
+        Service = {
+          ExecStart =
+            "${pkgs.rclone}/bin/rclone serve %i %i: $RCLONE_SERVE_ARGS";
+          Environment = [
+            "RCLONE_CONFIG=%T/rclone"
+            "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
+            "RCLONE_BISYNC_ARGS="
+          ];
+          EnvironmentFile = [ "-%h/.config/rclone/env" ];
+          PrivateTmp = true;
+        };
+      };
+    })
+
     (let name = "rclone-bisync@";
     in lib.optionalAttrs prefs.enableHomeManagerRcloneBisync {
       services.${name} = let
@@ -1084,31 +1135,6 @@ in {
           name = "rcloneignore";
           path = prefs.getDotfile "dot_config/rclone/dot_rcloneignore";
         };
-        getRclonePassword = with pkgs;
-          let
-            name = "get-rclone-password";
-            p = writeShellApplication {
-              inherit name;
-              text = ''
-                set -euo pipefail
-                bws secret get 3b3ca859-97eb-486b-829b-b20a010a7747 | jq -r '.value'
-              '';
-              runtimeInputs = [ bws jq ];
-            };
-          in "${p}/bin/${name}";
-        # Never leave an unencrypted config file on disk.
-        createRcloneConfig = with pkgs;
-          let
-            name = "create-rclone-config";
-            p = writeShellApplication {
-              inherit name;
-              text = ''
-                set -euo pipefail
-                bws secret get cd2dd09a-285e-4605-92d0-b20a0104fbf4 | jq -r '.value' > "$RCLONE_CONFIG"
-              '';
-              runtimeInputs = [ bws jq ];
-            };
-          in "${p}/bin/${name}";
       in {
         Unit = {
           Description = "rclone bisync";
@@ -1124,11 +1150,11 @@ in {
           TimeoutStartSec = "infinity";
           ExecStartPre = [ "${createRcloneConfig}" "${script} %I" ];
           ExecStart =
-            "${pkgs.rclone}/bin/rclone bisync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_ARGS %h/%I bisync:/%I";
+            "${pkgs.rclone}/bin/rclone bisync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_BISYNC_ARGS %h/%I bisync:/%I";
           Environment = [
             "RCLONE_CONFIG=%T/rclone"
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
-            "RCLONE_ARGS='--verbose --checksum --metadata'"
+            "RCLONE_BISYNC_ARGS='--verbose --checksum --metadata'"
           ];
           EnvironmentFile = [ "-%h/.config/rclone/env" ];
           PrivateTmp = true;
