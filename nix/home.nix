@@ -1055,6 +1055,7 @@ in {
         Timer = { OnBootSec = "3min"; };
         Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'";
         in {
+          TimeoutStartSec = "infinity";
           # watch and repeat parameter can't handle non-existent folders.
           # So we have to run unison without watch and repeat first.
           ExecStartPre = "-${pkgs.unison}/bin/unison ${commonArgs} %i";
@@ -1073,7 +1074,6 @@ in {
     (let name = "rclone-bisync@";
     in lib.optionalAttrs prefs.enableHomeManagerRcloneBisync {
       services.${name} = let
-        mountPoint = "%h/.local/mnt/dufs";
         # Convert the gitignore files to a rcloneignore file
         script = builtins.path {
           name = "convert-gitignore-to-rcloneignore";
@@ -1084,12 +1084,36 @@ in {
           name = "rcloneignore";
           path = prefs.getDotfile "dot_config/rclone/dot_rcloneignore";
         };
+        getRclonePassword = with pkgs;
+          let
+            name = "get-rclone-password";
+            p = writeShellApplication {
+              inherit name;
+              text = ''
+                set -euo pipefail
+                bws secret get 3b3ca859-97eb-486b-829b-b20a010a7747 | jq -r '.value'
+              '';
+              runtimeInputs = [ bws jq ];
+            };
+          in "${p}/bin/${name}";
+        # Never leave an unencrypted config file on disk.
+        createRcloneConfig = with pkgs;
+          let
+            name = "create-rclone-config";
+            p = writeShellApplication {
+              inherit name;
+              text = ''
+                set -euo pipefail
+                bws secret get cd2dd09a-285e-4605-92d0-b20a0104fbf4 | jq -r '.value' > "$RCLONE_CONFIG"
+              '';
+              runtimeInputs = [ bws jq ];
+            };
+          in "${p}/bin/${name}";
       in {
         Unit = {
           Description = "rclone bisync";
           After = [ "network-online.target" "network.target" ];
           Wants = [ "network-online.target" ];
-          ConditionPathIsMountPoint = mountPoint;
         };
         # Timer = { OnBootSec = "3min"; };
         Install = {
@@ -1097,9 +1121,17 @@ in {
           DefaultInstance = "default";
         };
         Service = {
-          ExecStartPre = "${script} %I";
+          TimeoutStartSec = "infinity";
+          ExecStartPre = [ "${createRcloneConfig}" "${script} %I" ];
           ExecStart =
-            "${pkgs.rclone}/bin/rclone bisync --config /dev/null --verbose --checksum --metadata --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore %h/%I ${mountPoint}/%I";
+            "${pkgs.rclone}/bin/rclone bisync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_ARGS %h/%I bisync:/%I";
+          Environment = [
+            "RCLONE_CONFIG=%T/rclone"
+            "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
+            "RCLONE_ARGS='--verbose --checksum --metadata'"
+          ];
+          EnvironmentFile = [ "-%h/.config/rclone/env" ];
+          PrivateTmp = true;
         };
       };
     })
