@@ -309,6 +309,7 @@ let
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerUnison = !self.isMinimalSystem;
+    enableHomeManagerWayvnc = false;
     enableHomeManagerRcloneBisync = !self.isMinimalSystem;
     enableHomeManagerRcloneServe = !self.isMinimalSystem;
     enableHomeManagerAutossh = !self.isMinimalSystem;
@@ -1031,6 +1032,7 @@ let
       enableHomeManagerTailScale = true;
       enableHomeManagerCodeTunnel = true;
       enableHomeManagerDufs = true;
+      enableHomeManagerWayvnc = true;
     } else if hostname == "aol" then {
       isMinimalSystem = false;
       hostId = "85d4bfd4";

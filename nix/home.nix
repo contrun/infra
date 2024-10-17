@@ -1089,7 +1089,7 @@ in {
           Environment = [
             "SSH_ASKPASS_REQUIRE=never"
             ''
-              PATH=$PATH:${lib.makeBinPath [ pkgs.rsync pkgs.openssh ]}
+              PATH=${lib.makeBinPath [ pkgs.rsync pkgs.openssh ]}
             ''
           ];
         };
@@ -1156,7 +1156,7 @@ in {
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
             "RCLONE_BISYNC_ARGS='--verbose --checksum --metadata'"
             ''
-              PATH=$PATH:${
+              PATH=${
                 lib.makeBinPath [
                   pkgs.bash
                   pkgs.coreutils
@@ -1195,7 +1195,7 @@ in {
             "SSH_ASKPASS_REQUIRE=never"
             "SSH_OPTIONS="
             ''
-              PATH=$PATH:${lib.makeBinPath [ pkgs.openssh ]}
+              PATH=${lib.makeBinPath [ pkgs.openssh ]}
             ''
           ];
           EnvironmentFile =
@@ -1203,6 +1203,67 @@ in {
         };
       };
     })
+
+    (lib.optionalAttrs prefs.enableHomeManagerWayvnc (let
+      env = [
+        "WAYLAND_DISPLAY=wayland-1"
+        "XDG_SESSION_TYPE=wayland"
+        "WLR_BACKENDS=headless"
+        "WLR_RENDERER=pixman"
+        "WLR_NO_HARDWARE_CURSORS=1"
+        "WLR_LIBINPUT_NO_DEVICES=1"
+      ];
+    in {
+      services.wayvnc = {
+        Unit = {
+          Description = "wayvnc";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = {
+          ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
+          ExecStart = "${pkgs.wayvnc}/bin/wayvnc";
+          Environment = env;
+        };
+      };
+
+      services.sway-headless = {
+        Unit = {
+          Description = "headless sway";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = { WantedBy = [ "default.target" ]; };
+        Service = let
+          sway = pkgs.writeShellApplication {
+            name = "sway";
+            text = ''
+              # https://discourse.nixos.org/t/how-to-add-path-into-systemd-user-home-manager-service/31623
+              # No good way to add nix-profie/bin to the PATH
+              export PATH=${
+                lib.makeBinPath [
+                  pkgs.sway
+                  pkgs.foot
+                  pkgs.dunst
+                  pkgs.bemenu
+                  pkgs.swaybg
+                  pkgs.i3status-rust
+                  pkgs.fcitx5
+                ]
+              }:$HOME/.nix-profile/bin:$PATH
+              exec ${pkgs.sway}/bin/sway "$@"
+            '';
+          };
+        in {
+          ExecStart = "${sway}/bin/sway --unsupported-gpu";
+          ExecReload = ''
+            ${pkgs.sway}/bin/swaymsg reload
+          '';
+          Environment = env;
+        };
+      };
+    }))
 
     (let name = "foot";
     in lib.optionalAttrs prefs.enableFoot {
