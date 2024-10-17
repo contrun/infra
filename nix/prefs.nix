@@ -310,6 +310,7 @@ let
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerUnison = !self.isMinimalSystem;
     enableHomeManagerWayvnc = false;
+    enableHomeManagerXdgPortal = false;
     enableHomeManagerRcloneBisync = !self.isMinimalSystem;
     enableHomeManagerRcloneServe = !self.isMinimalSystem;
     enableHomeManagerAutossh = !self.isMinimalSystem;
@@ -1033,6 +1034,7 @@ let
       enableHomeManagerCodeTunnel = true;
       enableHomeManagerDufs = true;
       enableHomeManagerWayvnc = true;
+      enableHomeManagerXdgPortal = true;
     } else if hostname == "aol" then {
       isMinimalSystem = false;
       hostId = "85d4bfd4";

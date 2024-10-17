@@ -1221,6 +1221,7 @@ in {
       env = [
         "WAYLAND_DISPLAY=wayland-1"
         "XDG_SESSION_TYPE=wayland"
+        "XDG_CURRENT_DESKTOP=sway"
         "WLR_BACKENDS=headless"
         "WLR_RENDERER=pixman"
         "WLR_NO_HARDWARE_CURSORS=1"
@@ -1298,16 +1299,42 @@ in {
     packages = allPackages
       ++ (lib.optionals prefs.enableHomeManagerTailScale [ pkgs.tailscale ]);
     stateVersion = prefs.homeManagerStateVersion;
+
+    activation.linkSystemd = let inherit (lib) hm;
+    in hm.dag.entryBefore [ "reloadSystemd" ] ''
+      # https://github.com/nix-community/home-manager/issues/4922
+      # No need to link systemd units on nixos.
+      if [[ -d /etc/nixos ]]; then
+        exit 0
+      fi
+      find $HOME/.config/systemd/user/ \
+        -type l \
+        -exec bash -c "readlink {} | grep -q $HOME/.nix-profile/share/systemd/user/" \; \
+        -delete
+
+      find $HOME/.nix-profile/share/systemd/user/ \
+        -type f -o -type l \
+        -exec ln -s {} $HOME/.config/systemd/user/ \;
+    '';
   };
 
-  xdg.dataFile = {
-    "nix/path/nixpkgs".source = inputs.nixpkgs;
-    "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
-    "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
-    "nix/path/home-manager".source = inputs.home-manager;
-    "nix/path/activeconfig".source = inputs.self;
-  } // lib.optionalAttrs (builtins.pathExists "${prefs.home}/Workspace/infra") {
-    "nix/path/config".source = "${prefs.home}/Workspace/infra";
-    "nix/path/infra".source = "${prefs.home}/Workspace/infra";
+  xdg = {
+    portal = {
+      enable = prefs.enableHomeManagerXdgPortal;
+      config.common.default = "*";
+      configPackages = [ pkgs.xdg-desktop-portal-wlr ];
+      extraPortals = [ pkgs.xdg-desktop-portal-wlr ];
+    };
+    dataFile = {
+      "nix/path/nixpkgs".source = inputs.nixpkgs;
+      "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
+      "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
+      "nix/path/home-manager".source = inputs.home-manager;
+      "nix/path/activeconfig".source = inputs.self;
+    } // lib.optionalAttrs
+      (builtins.pathExists "${prefs.home}/Workspace/infra") {
+        "nix/path/config".source = "${prefs.home}/Workspace/infra";
+        "nix/path/infra".source = "${prefs.home}/Workspace/infra";
+      };
   };
 }
