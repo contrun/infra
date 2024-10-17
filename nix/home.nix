@@ -1081,6 +1081,7 @@ in {
         Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'";
         in {
           TimeoutStartSec = "infinity";
+          Restart = "always";
           # watch and repeat parameter can't handle non-existent folders.
           # So we have to run unison without watch and repeat first.
           ExecStartPre = "-${pkgs.unison}/bin/unison ${commonArgs} %i";
@@ -1110,13 +1111,19 @@ in {
         };
         Service = {
           ExecStart =
-            "${pkgs.rclone}/bin/rclone serve %i %i: $RCLONE_SERVE_ARGS";
+            "${pkgs.rclone}/bin/rclone serve $RCLONE_SERVE_PROTOCOL $RCLONE_SERVE_REMOTE $RCLONE_SERVE_ARGS";
           Environment = [
             "RCLONE_CONFIG=%T/rclone"
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
-            "RCLONE_BISYNC_ARGS="
+            "RCLONE_SERVE_ARGS="
+            "RCLONE_SERVE_PROTOCOL=%i"
+            "RCLONE_SERVE_REMOTE=%i:"
           ];
-          EnvironmentFile = [ "-%h/.config/rclone/env" ];
+          EnvironmentFile = [
+            "-%h/.config/rclone/env"
+            "-%h/.config/rclone/serve.env"
+            "-%h/.config/rclone/serve.%i.env"
+          ];
           PrivateTmp = true;
         };
       };
@@ -1150,10 +1157,12 @@ in {
           TimeoutStartSec = "infinity";
           ExecStartPre = [ "${createRcloneConfig}" "${script} %I" ];
           ExecStart =
-            "${pkgs.rclone}/bin/rclone bisync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_BISYNC_ARGS %h/%I bisync:/%I";
+            "${pkgs.rclone}/bin/rclone bisync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_BISYNC_ARGS $RCLONE_BISYNC_SOURCE $RCLONE_BISYNC_TARGET";
           Environment = [
             "RCLONE_CONFIG=%T/rclone"
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
+            "RCLONE_BISYNC_SOURCE=%I"
+            "RCLONE_BISYNC_TARGET=bisync:/%I"
             "RCLONE_BISYNC_ARGS='--verbose --checksum --metadata'"
             ''
               PATH=${
@@ -1167,7 +1176,11 @@ in {
               }
             ''
           ];
-          EnvironmentFile = [ "-%h/.config/rclone/env" ];
+          EnvironmentFile = [
+            "-%h/.config/rclone/env"
+            "-%h/.config/rclone/bisync.env"
+            "-%h/.config/rclone/bisync.%I.env"
+          ];
           PrivateTmp = true;
         };
       };
