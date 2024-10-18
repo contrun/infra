@@ -6371,9 +6371,21 @@ prefs.yandexExcludedDirs
     };
     gc = {
       automatic = true;
+      # Aoid auto gc on startup.
+      # Sometimes I try to build something unsuccessfully, and
+      # nix gced the partial result. This is undesirable.
+      # Note this effectively means that auto gc will never run,
+      # I keep my machine running in the evening.
+      dates = "2:15";
+      persistent = false;
+      randomizedDelaySec = "1h";
       options = "--delete-older-than 60d";
     };
-    optimise = { automatic = true; };
+    optimise = {
+      automatic = true;
+      # It is better that optimise comes after gc.
+      dates = [ "3:45" ];
+    };
     nixPath = [ "/etc/nix/path" ];
 
     registry.nixpkgs.flake = inputs.nixpkgs;
