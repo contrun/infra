@@ -1120,7 +1120,7 @@ in {
           ExecStart =
             "${pkgs.rclone}/bin/rclone serve $RCLONE_SERVE_PROTOCOL $RCLONE_SERVE_REMOTE $RCLONE_SERVE_ARGS";
           Environment = [
-            "RCLONE_CONFIG=%T/rclone"
+            "RCLONE_CONFIG=%T/%n.config"
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
             "RCLONE_SERVE_ARGS="
             "RCLONE_SERVE_PROTOCOL=%i"
@@ -1130,6 +1130,115 @@ in {
             "-%h/.config/rclone/env"
             "-%h/.config/rclone/serve.env"
             "-%h/.config/rclone/serve.%i.env"
+          ];
+          PrivateTmp = true;
+        };
+      };
+    })
+
+    (let name = "rclone-mount@";
+    in lib.optionalAttrs prefs.enableHomeManagerRcloneMount {
+      services.${name} = let
+      in {
+        Unit = {
+          Description = "rclone mount";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+          DefaultInstance = "default";
+        };
+        Service = {
+          TimeoutStartSec = "infinity";
+          ExecStartPre = [
+            "${createRcloneConfig}"
+            ''${pkgs.coreutils}/bin/mkdir -p "$RCLONE_MOUNT_TARGET"''
+          ];
+          ExecStart =
+            "${pkgs.rclone}/bin/rclone mount $RCLONE_MOUNT_ARGS $RCLONE_MOUNT_SOURCE $RCLONE_MOUNT_TARGET";
+          ExecStop = let
+            umount = pkgs.writeShellScript "umount" ''
+              fusermount3 -u "$RCLONE_MOUNT_TARGET"
+            '';
+          in "${umount}";
+          Environment = [
+            "RCLONE_CONFIG=%T/%n.config"
+            "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
+            "RCLONE_MOUNT_SOURCE=mount:%I"
+            "RCLONE_MOUNT_TARGET=%I"
+            "RCLONE_MOUNT_ARGS="
+            # rclone requires fusemount3, which in turn needs setuid root to work.
+            # On Ubuntu, fusemount3 lies in /usr/bin/fusemount3
+            # On NixOS, fusemount3 lies in /run/wrappers/bin/fusemount3
+            ''
+              PATH=/run/wrappers/bin:/usr/sbin:/usr/bin
+            ''
+          ];
+          EnvironmentFile = [
+            "-%h/.config/rclone/env"
+            "-%h/.config/rclone/mount.env"
+            "-%h/.config/rclone/mount.%I.env"
+          ];
+          # On, Ubuntu, using PrivateTmp will cause rclone mount fail with
+          # mount helper error: fusermount3: mount failed: Permission denied
+          # Fatal error: failed to mount FUSE fs: fusermount: exit status 1
+          # PrivateTmp = true;
+        };
+      };
+    })
+
+    (let name = "rclone-sync@";
+    in lib.optionalAttrs prefs.enableHomeManagerRcloneSync {
+      services.${name} = let
+        # Convert the gitignore files to a rcloneignore file
+        script = builtins.path {
+          name = "convert-gitignore-to-rcloneignore";
+          path = prefs.getDotfile
+            "dot_bin/executable_convert-gitignore-to-rcloneignore.sh";
+        };
+        defaultIgnore = builtins.path {
+          name = "rcloneignore";
+          path = prefs.getDotfile "dot_config/rclone/dot_rcloneignore";
+        };
+      in {
+        Unit = {
+          Description = "rclone sync";
+          After = [ "network-online.target" "network.target" ];
+          Wants = [ "network-online.target" ];
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+          DefaultInstance = "default";
+        };
+        Service = {
+          TimeoutStartSec = "infinity";
+          ExecStartPre = [ "${createRcloneConfig}" "${script} %I" ];
+          ExecStart =
+            "${pkgs.rclone}/bin/rclone sync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_SYNC_ARGS $RCLONE_SYNC_SOURCE $RCLONE_SYNC_TARGET";
+          Environment = [
+            "RCLONE_CONFIG=%T/%n.config"
+            "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
+            "RCLONE_SYNC_SOURCE=%I"
+            "RCLONE_SYNC_TARGET=sync:/%I"
+            "RCLONE_SYNC_ARGS='--verbose --checksum --metadata'"
+            ''
+              PATH=${
+                lib.makeBinPath [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.findutils
+                  pkgs.gawk
+                  pkgs.gnugrep
+                  pkgs.gnused
+                ]
+              }
+            ''
+          ];
+          EnvironmentFile = [
+            "-%h/.config/rclone/env"
+            "-%h/.config/rclone/sync.env"
+            "-%h/.config/rclone/sync.%I.env"
           ];
           PrivateTmp = true;
         };
@@ -1166,7 +1275,7 @@ in {
           ExecStart =
             "${pkgs.rclone}/bin/rclone bisync --filter-from ${defaultIgnore} --filter-from %h/%I/.rcloneignore $RCLONE_BISYNC_ARGS $RCLONE_BISYNC_SOURCE $RCLONE_BISYNC_TARGET";
           Environment = [
-            "RCLONE_CONFIG=%T/rclone"
+            "RCLONE_CONFIG=%T/%n.config"
             "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
             "RCLONE_BISYNC_SOURCE=%I"
             "RCLONE_BISYNC_TARGET=bisync:/%I"
@@ -1176,6 +1285,7 @@ in {
                 lib.makeBinPath [
                   pkgs.bash
                   pkgs.coreutils
+                  pkgs.findutils
                   pkgs.gawk
                   pkgs.gnugrep
                   pkgs.gnused

@@ -312,6 +312,8 @@ let
     enableHomeManagerWayvnc = false;
     enableHomeManagerXdgPortal = false;
     enableHomeManagerRcloneBisync = !self.isMinimalSystem;
+    enableHomeManagerRcloneSync = !self.isMinimalSystem;
+    enableHomeManagerRcloneMount = !self.isMinimalSystem;
     enableHomeManagerRcloneServe = !self.isMinimalSystem;
     enableHomeManagerAutossh = !self.isMinimalSystem;
     enableHomeManagerTailScale = false;
