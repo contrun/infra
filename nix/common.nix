@@ -776,6 +776,7 @@ in
     clash-verge = let enable = prefs.enableClashVerge; in
       {
         enable = enable;
+        package = pkgs.clash-verge-rev;
         autoStart = enable;
         tunMode = enable;
       };
