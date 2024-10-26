@@ -1077,7 +1077,6 @@ let
         nvidiaBusId = "PCI:1:0:0";
         intelBusId = "PCI:0:2:0";
       };
-      enableAndroidDevEnv = true;
     } else if hostname == "madbox" then {
       isMinimalSystem = true;
       isHomeManagerOnly = true;
