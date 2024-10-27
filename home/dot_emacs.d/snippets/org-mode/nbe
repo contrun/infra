@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+# -*- mode: markdown -*-
+# name: new blog entry
+# key: nbe
+# --
+---
+title: $1
+slug: $2
+date: `(let ((system-time-locale "en_US.UTF-8")) (format-time-string "%a, %d %b %Y %H:%M:%S %z"))`
+---
+
+$3

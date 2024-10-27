@@ -1,0 +1,6 @@
+[papers]
+dir = ~/Sync/papers
+
+[settings]
+default-library = papers
+

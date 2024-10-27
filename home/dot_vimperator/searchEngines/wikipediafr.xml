@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>wikipediafr</os:ShortName>
+<os:Description>Wikipedia Francais</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEElEQVQ4T6WTwQ2CQBBF0VCEJB49UIPhLh1gC1gCHqUISpAKDDYgJWgHcjA2gFnzJvkEEi4bSCYyw9+3fz+46n+9C5ZcAJZUsGSxuW/ujcuOmUsPqeOeYX2trS/OhXu+njbjHh09lZ9y681BeSldHMcDgBkAZoi7d2eaqqoMRg+A3gCIok1kQx4y4yEz3LSP1p7puALYETTEDgsQCyoX7A5IWo6qfgAwBIBYQlyE69DOOt4djfKavAV2pBQcv8k+sZkAzAhU/QQAmR1lT4BxwLhSmJMMRESMZYICRHi4UIhsoqBnAQhYgE0AuAhuXytdn+3OUbMAFuGCGpL2AegjGofp5QAAr0jfg9n0deDzB/sDIUEao1TWAboAAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://fr.wikipedia.org/wiki/Special:Search</SearchForm>
+<os:Url type="text/html" method="GET" template="http://fr.wikipedia.org/wiki/Special:Search?search={searchTerms}&amp;sourceid=mozilla-search" resultDomain="fr.wikipedia.org">
+</os:Url>
+</SearchPlugin>

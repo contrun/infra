@@ -1,0 +1,45 @@
+{{ if lookPath "nvim" -}}
+EDITOR   DEFAULT="nvim"
+{{ end }}
+
+{{ if lookPath "less" }}
+PAGER   DEFAULT="less"
+LESS   DEFAULT="-x4RFsX"
+{{ end }}
+
+{{ if lookPath "cabal" }}
+CABALPATH   DEFAULT="@{HOME}/.cabal"
+{{ end }}
+
+{{ if or (joinPath .chezmoi.homeDir ".cargo" | lstat) (lookPath "cargo") }}
+CARGOPATH   DEFAULT="@{HOME}/.cargo"
+{{ end }}
+
+{{ if or (joinPath .chezmoi.homeDir ".go" | lstat) (lookPath "go") }}
+GOPATH   DEFAULT="@{HOME}/.go"
+{{ end }}
+
+{{ if lstat "/etc/nix/path" }}
+NIX_PATH   DEFAULT="/etc/nix/path"
+{{ end }}
+
+{{ if or (joinPath .chezmoi.homeDir ".node" | lstat) (lookPath "node") }}
+NODE_PATH   DEFAULT="@{HOME}/.node"
+{{ end }}
+
+PATH   DEFAULT="{{- if joinPath .chezmoi.homeDir ".bin" | lstat -}}@{HOME}/.bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".local/bin" | lstat -}}@{HOME}/.local/bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".elan/bin" | lstat -}}@{HOME}/.elan/bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".cabal/bin" | lstat -}}@{HOME}/.cabal/bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".cargo/bin" | lstat -}}@{HOME}/.cargo/bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".go/bin" | lstat -}}@{HOME}/.go/bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".nix-profile/bin" | lstat -}}@{HOME}/.nix-profile/bin:{{- end -}}{{- if joinPath .chezmoi.homeDir ".local/state/nix/profiles/home-manager/bin" | lstat -}}@{HOME}/.local/state/nix/profiles/home-manager/bin:{{- end -}}{{- if joinPath "/etc/profiles/per-user" .chezmoi.username "bin" | lstat -}}/etc/profiles/per-user/@{PAM_USER}/bin:{{- end -}}{{- if lstat "/nix/var/nix/profiles/default/bin" -}}/nix/var/nix/profiles/default/bin:{{- end -}}{{- if lstat "/run/wrappers/bin" -}}/run/wrappers/bin:{{- end -}}{{- if lstat "/run/current-system/sw/bin" -}}/run/current-system/sw/bin:{{- end -}}/usr/local/bin:${PATH}"
+
+{{ if and (lstat "/nix") (eq .chezmoi.os "linux") (not (lstat "/etc/nixos")) (lstat "/usr/lib/locale/locale-archive") }}
+# https://wiki.nixos.org/wiki/Locales
+LOCALE_ARCHIVE   DEFAULT="/usr/lib/locale/locale-archive"
+{{ end }}
+
+{{ if and (lstat "/nix") (eq .chezmoi.os "linux") (not (lstat "/etc/nixos")) (joinPath .chezmoi.homeDir ".nix-profile/share" | lstat) }}
+# https://github.com/nix-community/home-manager/issues/4922
+XDG_DATA_DIRS		DEFAULT=@{HOME}/.nix-profile/share:${XDG_DATA_DIRS}
+{{ end }}
+
+{{ if and (lstat "/nix") (eq .chezmoi.os "linux") (not (lstat "/etc/nixos")) (joinPath .chezmoi.homeDir ".nix-profile/share/xdg-desktop-portal/portals" | lstat) }}
+# https://github.com/nix-community/home-manager/issues/4922
+NIX_XDG_DESKTOP_PORTAL_DIR		DEFAULT=@{HOME}/.nix-profile/share/xdg-desktop-portal/portals
+{{ end }}

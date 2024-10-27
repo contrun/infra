@@ -1,0 +1,4 @@
+super + {Next, Prior}
+    xdotool key --window "$(nextWindow.sh)" {Next, Prior}
+hyper + alt + {n, p}
+    xdotool key --window "$(nextWindow.sh)" {Next, Prior}

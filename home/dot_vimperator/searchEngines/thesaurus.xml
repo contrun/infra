@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>thesaurus</os:ShortName>
+<os:Description>Thesaurus - Reference.com bundle</os:Description>
+<os:InputEncoding>ISO-8859-1</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%10%00%00%00%10%08%02%00%00%00%90%91h6%00%00%00%15tEXtCreation%20Time%00%07%D9%06%06%13%0B%1CoZ6%E6%00%00%00%07tIME%07%D9%06%14%0B%06%15%9E%0C~%A3%00%00%00%09pHYs%00%00%0A%F0%00%00%0A%F0%01B%AC4%98%00%00%01FIDATx%DA%BDR!O%C3P%10%BE.K%B8T47%D7G%08I%83z%8E%CD%10%08jr%A0%D8%0F%40%20g%17%0Cv%B8Y~F%1D%01%8B%82%041d%05%A2%82%40%E7h%11%DB%23Y%08w%7D-%B4%A1f%86'%9Aw%EF%BE%EF%BB%EF%EE%EAdw%3B%B0%CEi%AD%85%FE%1F%C2%87%7BX%8DS%1C%40p%F5%1B%F3%5D%0Dk%84%AD%EE%D4%E8%1B%C1%E5%87%20%02%DA%87%EE%0C0(%20%FEE%8D%B0%8A'hb%D2%13%A6%09%C8%C4%10%0D!%7D%00%1D%8AJ%3C*%EA%F0%C1%C0%DD%3Cv%8A%B12T%8DY%DB%9892%88i%0C%E2R%F3%CB%F4%7D%C9rV%DE%F3%3C%A7%B6%07%B6%8B%7D%C1q%85d%9Ab%9F%82%91%DC%CB%17%16r%5E%1EO%BD%AFWA%B3%EA_%9A%B4%25u%20%09m%B2-%1F-%81%981%F7i2%23%C9I%03%A4%8EJ%ED%F0%C7DY%A1%D3%03%D4%06%0F%10%7DK6IH%1D%05t%02O%BD%EA%94%9C%86%7F%C9Z%CA%CDH%D9hPM%B6%1B%96%99%5B%92%25%D2%994mg%DD%40%C0%C0%E4%F3fW%22%8C%3E%D9%DD%83%26h%24%A81o%D0%FD%BC%85%0C%5C%0E3y%5Bl%ECn%EF%9D%AF%9E%5B%8B%B7k%8B%FA%06%CB%85%84U%8A1%03-%00%00%00%00IEND%AEB%60%82</os:Image>
+<SearchForm>http://thesaurus.reference.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://thesaurus.reference.com/browse/{searchTerms}" resultDomain="thesaurus.reference.com">
+</os:Url>
+</SearchPlugin>

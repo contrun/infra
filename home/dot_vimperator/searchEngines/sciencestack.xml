@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>sciencestack</os:ShortName>
+<os:Description>Academic Search Engine for bibliography and research paper management by Mendeley and PloS</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/vnd.microsoft.icon;base64,AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAVVVVAKqqqgD///8AIiIiAHd3dwDMzMwAREREAJmZmQDu7u4AERERAGZmZgC7u7sAMzMzAIiIiADd3d0AADMzMzMzMwADMzMzMzMzMDMzZQAK4zMzMzwAAAAEkzMzmgRjPgCzMzMgDDMzEKMzM52zMzNAQzMzMzMy5ACzMzMzwQAAB5MzMzgAAE5jMzMzOgSDM8gzMzOQCDM/ACMzMzQN850AwzMzMgAAAAEzMwMzywAE4zMwADMzMzMzMwDAAwAAgAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIABAADAAwAA</os:Image>
+<SearchForm>http://science.willpowell.co.uk</SearchForm>
+<os:Url type="text/html" method="GET" template="http://science.willpowell.co.uk/?q={searchTerms}" resultDomain="science.willpowell.co.uk">
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+if [[ $(uname) == 'Linux' ]]; then
+        command -v mimeo >&/dev/null && OPEN=mimeo || OPEN=xdg-open
+elif [[ $(uname) == 'Darwin' ]]; then
+        OPEN=/usr/bin/open
+else
+        OPEN=open
+fi
+"$OPEN" "$@" >&/dev/null &

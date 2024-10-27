@@ -1,0 +1,41 @@
+:set prompt "\ESC[34mλ> \ESC[m"
+:set editor nvim
+:set -package process
+import System.Process (rawSystem)
+:def sh \cmd -> rawSystem "/usr/bin/env" ["myShell", "-c", cmd] >> return ""
+:set +m
+-- Surround a string in single quotes.
+let single_quote s = concat ["'", s, "'"]
+
+-- Escape a single quote in the shell. (This mess actually works.)
+let escape_single_quote c = if c == '\'' then "'\"'\"'" else [c]
+
+-- Simple heuristic to escape shell command arguments.
+let simple_shell_escape = single_quote . (concatMap escape_single_quote)
+
+:def hoogle \x -> return $ ":!hoogle --color " ++ (simple_shell_escape x)
+:def doc \x -> return $ ":!hoogle --info --color " ++ (simple_shell_escape x)
+:def fzf \_ -> pure $ ":!cat $HOME/.ghc/ghci_history | fzf --height 25"
+
+:set -fbreak-on-error
+:seti -XNoMonomorphismRestriction
+:seti -XTypeFamilies
+:seti -XGADTs
+:seti -XDataKinds
+
+:m +Data.Maybe
+:m +Data.List
+:m +Data.Char
+:m +Data.Ord
+:m +Data.Monoid
+:m +Data.Tuple
+-- :m +Data.List.Split
+import Control.Arrow hiding ((|||))
+:m +Control.Applicative
+:m +Control.Monad
+:m +Data.Functor.Compose
+
+import qualified Data.Map as M
+import qualified Data.Set as S
+import qualified Data.Foldable as F
+import qualified Data.Traversable as T

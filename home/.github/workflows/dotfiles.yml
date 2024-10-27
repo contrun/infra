@@ -1,0 +1,26 @@
+name: Create dotfiles
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+
+jobs:
+  create-dotfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./
+        with:
+          destination-directory: "$HOME/artifacts"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dotfiles-${{ github.sha }}
+          path: ~/artifacts

@@ -1,0 +1,3 @@
+Pry.config.editor = 'nvim'
+Pry.config.history_save = true
+Pry.config.history_file = "~/.irb_history"

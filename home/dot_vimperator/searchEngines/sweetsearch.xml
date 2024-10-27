@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>sweetsearch</os:ShortName>
+<os:Description>SweetSearch</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<SearchForm>http://www.sweetsearch.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.sweetsearch.com/search" resultDomain="sweetsearch.com">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

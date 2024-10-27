@@ -1,0 +1,15 @@
+{
+  "workbench.activityBar.visible": false,
+  "window.menuBarVisibility": "toggle",
+  "editor.fontSize": 13,
+  "search.location": "panel",
+  "workbench.statusBar.feedback.visible": false,
+  "languageServerHaskell.enableHIE": true,
+  "languageServerHaskell.hlintOn": true,
+  "languageServerHaskell.maxNumberOfProblems": 100,
+  "languageServerHaskell.formattingProvider": "floskell",
+  "languageServerHaskell.useCustomHieWrapper": true,
+  "languageServerHaskell.useCustomHieWrapperPath": "~/.local/bin/hie-wrapper",
+  "languageServerHaskell.trace.server": true,
+  "window.zoomLevel": 0
+}

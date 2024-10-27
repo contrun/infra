@@ -1,0 +1,9 @@
+set auto-load safe-path /
+set history save on
+set pagination off
+
+# https://stackoverflow.com/questions/9233095/memory-dump-formatted-like-xxd-from-gdb
+define hexyl
+    dump binary memory dump.bin $arg0 $arg0+$arg1
+    shell hexyl dump.bin
+end

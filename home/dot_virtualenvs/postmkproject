@@ -1,0 +1,7 @@
+proj_name="$(basename $VIRTUAL_ENV)"
+if [[ -d "$PROJECT_HOME" ]]; then
+    proj_path="$PROJECT_HOME/$proj_name"
+    mkdir -p "$proj_path"
+    add2virtualenv "$proj_path"
+    cd "$proj_path"
+fi

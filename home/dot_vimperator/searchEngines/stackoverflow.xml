@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>stackoverflow</os:ShortName>
+<os:Description>Searching Stackoverflow.com through Google</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAABMLAAATCwAAAAAAAAAAAAAAAAAAbGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf8AAAAAAAAAAGxsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/AAAAAAAAAABsbG3/bGxt/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABsbG3/bGxt/wAAAAAAAAAAbGxt/2xsbf8AAAAAbGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf8AAAAAbGxt/2xsbf8AAAAAAAAAAGxsbf9sbG3/AAAAAGxsbf9sbG3/bGxt/2xsbf9sbG3/bGxt/2xsbf9sbG3/AAAAAGxsbf9sbG3/AAAAAAAAAABsbG3/bGxt/wAAAAAAAAAAAAAAAAAAAAAAAAAAVHibFE94oDxKeKRkRHiqkUx4ohlsbG3/bGxt/wAAAAAAAAAAAAAAAAAAAABLeKMPPHixUj54sIQ+eLC5Pniw3j54sP8/eK//QXet/0J2q/9Ed6k+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPXiwKkF4rf9BeK3/QXit/0J3q+xFdqnAQ3erhTt7s1Qqg8VSFY3cWQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD94rwlCeKxzRHaqUUR2qis7e7MIAAAAABiM2QwJk+hyA5fv4gKX7v8AmfIbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACZPoGQOX7oIDlu7tBZXs/wSX6+wJkeqCHXjmTiBy6QIAAAAAAAAAAAAAAAAAAAAAAAAAAA+R4QICl+4kA5fuhgWW7PMGlev/BpXr6wSY64MNjOkQJ23lTC9j5PwuZOSBAAAAAAAAAAAAAAAAAAAAAAAAAAAElu0JBpXr1QaV6/8GlevpBpbrfASY6xcAAAAAK2fkNi5k5PgsZuT4LGbkRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaV62wGlet+BZbrFQAAAAAAAAAALWTkIi1l5OUsZuT/LGbkWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALmPkDyxl5MssZuT/LGbkewAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALmPkAixm5K0sZuT/LGbkoQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALmTkAixm5JMsZuT/LGbkwCxm5AcAAAAAAAAAAAAAAAAAAAAAgAEAAIAB8L+f+QAAkAkAAJAJAACfAQAA4AcAAOAHAADggwAA/gEAAPABAADwIQAA+MP///+H////DwAA/g8AAA==</os:Image>
+<SearchForm>http://www.google.com</SearchForm>
+<os:Url type="application/x-suggestions+json" method="GET" template="https://clients1.google.com/complete/search?output=firefox&amp;client=firefox&amp;hl=en-us&amp;q={searchTerms}" resultDomain="clients1.google.com">
+</os:Url>
+<os:Url type="text/html" method="GET" template="http://www.google.com/search" resultDomain="google.com">
+  <os:Param name="q" value="{searchTerms}"/>
+  <os:Param name="ie" value="utf-8"/>
+  <os:Param name="oe" value="utf-8"/>
+  <os:Param name="aq" value="t"/>
+  <os:Param name="as_sitesearch" value="stackoverflow.com"/>
+</os:Url>
+</SearchPlugin>

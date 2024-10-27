@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>slickdeals</os:ShortName>
+<os:Description>Slickdeals</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABiklEQVQ4jY2SvUvDQBjG30GEQkVEBZ0UBwf/BRcHV8cMDi4OIhVLcriUUlxc3PwYXFykdDCCUrQo5iRqRQdpEXXQSgVdqiAVFLT0I4+DJrlLIvSBI9xzuef93d1L5FX0cJom020+vylNGe3EOJyhcZ0UPdR8gGrsSQFyWJIUvRXAIP7kD/hvszCWTp/t/Xce/N0u+6dUroSx9avAgGrdAgBEd+5B6uGEG6AZnBjHbenTroDx5A2IcZgPZQBwvgDQMncEiphhCd8rZeMaT+Vvnw/gl8jFP+gdWryQFxnHwMKZ5OlXL+5cMzbF6tlwzHQWWboAYhzFty8AwNLpM4hxZB/fAQDb168g7Twk4fsqCEcKx0xpPrxyKeCr+/3iLdvqTpz4juTi86RQ3YhX6xaeyt9I5UqBBKNreZlO0VulFrAsy30fAfmjUnM8+z4+KrWADiQiAMuNRmOVZngnqfzIxmbpAkbX8uiIH2P+oIjEfnErMCBQkUwPMZ6VunHEbGk+QNRMpo9UY9Zr/wAgL+53QSG6cQAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>https://slickdeals.net</SearchForm>
+<os:Url type="text/html" method="GET" template="https://slickdeals.net/newsearch.php" resultDomain="slickdeals.net">
+  <os:Param name="src" value="SearchBar"/>
+  <os:Param name="q" value="{searchTerms}"/>
+  <os:Param name="searcharea" value="deals"/>
+  <os:Param name="searchin" value="first"/>
+</os:Url>
+</SearchPlugin>

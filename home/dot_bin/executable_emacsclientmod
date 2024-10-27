@@ -1,0 +1,10 @@
+#!/bin/sh
+export PATH=/usr/local/git/bin:/usr/local/bin:$PATH
+if [[ $(uname) == 'Linux' ]]; then
+    systemctl --user is-active emacs.service | grep -q 'active' || systemctl --user start emacs.service
+elif [[ $(uname) == 'Darwin' ]]; then
+    pgrep -q emacs || brew services start emacs
+else
+    exit
+fi
+LC_CTYPE=zh_CN.UTF-8 emacsclient -n -c -a emacs "$@"

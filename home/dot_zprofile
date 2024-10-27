@@ -1,0 +1,34 @@
+# export MANPATH="$NPM_PACKAGES/share/man:$MANPATH"
+# export EDITOR=vi
+# export PAGER=nvimpager
+
+pathadd() {
+    newelement=${1%/}
+    if [ -d "$1" ] && ! echo $PATH | grep -E -q "(^|:)$newelement($|:)" ; then
+        if [ "$2" = "after" ] ; then
+            PATH="$PATH:$newelement"
+        else
+            PATH="$newelement:$PATH"
+        fi
+    fi
+}
+
+pathrm() {
+    PATH="$(echo -n $PATH | sed -e "s;\(^\|:\)${1%/}\(:\|\$\);\1\2;g" -e 's;^:\|:$;;g' -e 's;::;:;g')"
+}
+
+export MYPATH="${MYPATH:-$HOME/.bin}"
+export CABALPATH="${CABALPATH:-$HOME/.cabal}"
+export CARGOPATH="${CARGOPATH:-$HOME/.cargo}"
+export LOCALPATH="${LOCALPATH:-$HOME/.local/bin}"
+export GOPATH="${GOPATH:-$HOME/Local/go}"
+export NODE_PATH="${NODE_PATH:-$HOME/.node}"
+if which ruby >/dev/null && which gem >/dev/null; then
+    RUBYREMPATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin"
+fi
+
+declare -a PATH_TO_ADD=( "$RUBYREMPATH" "$NODE_PATH/node_modules/.bin" "$GOPATH/bin" "$CARGOPATH/bin" "$CABALPATH/bin" "$LOCALPATH" "$MYPATH" )
+for p in $PATH_TO_ADD; do
+    pathadd "$p"
+done
+export PATH

@@ -1,0 +1,13 @@
+protocols:
+(
+  { name: "ssh"; service: "ssh"; host: "127.0.0.1"; port: "22"; probe: "builtin"; },
+  { name: "regex"; host: "127.0.0.1"; port: "2022"; regex_patterns: [ "^\x14\x00\x00\x00\x00\x00\x00\x00" ]; },
+  { name: "http"; host: "127.0.0.1"; port: "30080"; probe: "builtin"; },
+  {{- if ne .domain "" }}
+  { name: "tls"; sni_hostnames: [ "{{- .chezmoi.hostname -}}.{{- .domain -}}", "local.{{- .domain -}}" ]; host: "127.0.0.1"; port: "6443"; probe: "builtin"; },
+  {{- end }}
+  { name: "tls"; host: "127.0.0.1"; port: "30443"; probe: "builtin"; },
+  { name: "openvpn"; host: "127.0.0.1"; port: "1194"; probe: "builtin"; },
+  { name: "xmpp"; host: "127.0.0.1"; port: "5222"; probe: "builtin"; },
+  { name: "anyprot"; host: "127.0.0.1"; port: "443"; probe: "builtin"; }
+);

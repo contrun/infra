@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>bookingcom</os:ShortName>
+<os:Description>Booking.com: 870,095 hotels worldwide. Book your hotel now!</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMPDg0Sidr5qwAAAX5JREFUOMudkssrhGEUxn/vO9+MKTOoaaaPZCGS0qTcZqMpKQvKhn9AJBsrO3LLZWEtKaX8B6xmg0TKsLKRS6YMNchtJpfh++a1oFz6xmWeOnV6386v8zwdkd0wte1zO6pPLuKYhsmflFLoXvdWLNQXEGXt02o/cgFC8E8p3eMKy6PT60yGAUTsMlGnfVlbKVrqy6gqLwDArkkm5td5TL6glAVCCgQ1wx9fiSfU3uR3u2iBEWsAIK0el7cjiMohBmdXkQLaGitIR7AERM/vIPGAeM9GSpk+iN8sxO+T5NaMgsvx9w2Oz24YmFlhaeOQnOwseruC8J8MNnejjM+t0dqzAEBHsx+SL+QV5eOt82P7ZEmzAvhLdfo7gzTWFgOwc3AOKkVhWxNG8hnn7Q3R/egPgBIf/pIGAEJbEbrHFsGuYVxeoXk9JB4N6xCFABV/+kpz2sFue+sNE0wTshzWFpQC3M70x6vZ3urTlWlkLqV73WGZ0WhKoXtc4VioL/AKX9iHgA+DeBEAAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://www.booking.com/</SearchForm>
+<os:Url type="application/x-suggestions+json" method="GET" template="https://www.booking.com/autocomplete_2?lang=en-us&amp;aid=960054&amp;stype=1&amp;eb=0&amp;e_obj_labels=1&amp;e_smmd=2&amp;e_msm=1&amp;e_themes_msm_1=1&amp;add_themes=1&amp;themes_match_start=1&amp;include_synonyms=1&amp;sort_nr_destinations=1&amp;multipleThemes=1&amp;gpf=1&amp;term={searchTerms}&amp;e_themes_spellcheck=1&amp;e_drz=2" resultDomain="booking.com">
+</os:Url>
+<os:Url type="text/html" method="GET" template="https://www.booking.com/search.html?aid=960054;ss={searchTerms}" resultDomain="booking.com">
+</os:Url>
+</SearchPlugin>

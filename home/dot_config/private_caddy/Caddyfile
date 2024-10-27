@@ -1,0 +1,141 @@
+{
+	debug
+	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN:faketoken}
+	email {$ACME_EMAIL:admin@example.com}
+	auto_https disable_redirects
+
+	storage postgres {
+		connection_string {$POSTGRES_URL}
+		disable_ddl false
+	}
+
+	order replace after encode
+	servers {
+		listener_wrappers {
+			layer4 {
+				@proxy_protocol proxy_protocol
+				route @proxy_protocol {
+					proxy_protocol
+					subroute {
+						@ssh ssh
+						route @ssh {
+							proxy localhost:22
+						}
+					}
+				}
+				@ssh ssh
+				route @ssh {
+					proxy localhost:22
+				}
+			}
+			tls
+		}
+	}
+
+	order trojan before file_server
+	trojan {
+		caddy
+		no_proxy
+		users e {$TROJAN_PASSWORD:changethepasswordhere}
+	}
+
+	order authenticate before respond
+	order authorize before basicauth
+
+	security {
+		oauth identity provider generic {
+			delay_start 5
+			retry_attempts 3
+			retry_interval 10
+			realm generic
+			driver generic
+			client_id {env.OIDC_CLIENT_ID}
+			client_secret {env.OIDC_CLIENT_SECRET}
+			scopes openid email profile
+			base_auth_url {env.OIDC_BASE_URL}
+			metadata_url {env.OIDC_BASE_URL}/.well-known/openid-configuration
+		}
+
+		authentication portal myportal {
+			crypto default token lifetime 3600
+			crypto key sign-verify {$JWT_SHARED_KEY:428f41ab-67ec-47d1-8633-bcade9dcc7ed}
+			cookie domain {http.request.hostport}
+			enable identity provider generic
+			ui {
+				links {
+					"My Identity" "/auth/whoami" icon "las la-user"
+				}
+			}
+
+			transform user {
+				match realm generic
+				action add role authp/user
+			}
+
+			transform user {
+				match realm generic
+				match email e@home.arpa
+				action add role authp/admin
+			}
+		}
+
+		authorization policy mypolicy {
+			set auth url /auth/
+			crypto key verify {$JWT_SHARED_KEY:428f41ab-67ec-47d1-8633-bcade9dcc7ed}
+
+			allow roles authp/admin authp/user
+			validate bearer header
+			inject headers with claims
+		}
+	}
+}
+
+(subfolder_to_backend) {
+	reverse_proxy {args[1]} {
+		header_up Accept-Encoding identity
+	}
+	replace stream {
+		match {
+			header Content-Type application/javascript*
+			header Content-Type text/html*
+		}
+		re "(?P<tag>src|href)=\"((?P<slash>/?)(?P<url>[^/\"#/\{][^:\"]+))\"" "${tag}=\"${slash}{args[0]}/${url}\""
+	}
+}
+
+(secured_app) {
+	rewrite /{args[0]} /{args[0]}/
+	handle_path /{args[0]}/* {
+		authorize with mypolicy
+		import subfolder_to_backend {args[0]} {args[1]}
+	}
+}
+
+(app) {
+	rewrite /{args[0]} /{args[0]}/
+	handle_path /{args[0]}/* {
+		import subfolder_to_backend {args[0]} {args[1]}
+	}
+}
+
+localhost:{$CADDY_PORT:2016} 127.0.0.1:{$CADDY_PORT:2016} :{$CADDY_PORT:2016} {
+	log
+
+	trojan {
+		connect_method
+		websocket
+	}
+	rewrite /auth /auth/
+	route /auth/* {
+		authenticate * with myportal
+	}
+
+	rewrite /health-check /health-check/
+	handle /health-check/ {
+		respond "Hello, world!"
+	}
+
+	import app dufs http://localhost:5000
+	import app syncthing http://localhost:8384
+	import secured_app httpbin https://httpbin.org
+}

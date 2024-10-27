@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>libraryofcongress</os:ShortName>
+<os:Description>LibraryofCongress</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALklEQVQ4jWNgGCYgZMZ/FDYMExLDqoAUTLQB6K5FFyOoedQLI8ML+GwhygsUAABQ9wESsLwYGwAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>https://catalog.loc.gov</SearchForm>
+<os:Url type="text/html" method="GET" template="https://catalog.loc.gov/vwebv/search" resultDomain="catalog.loc.gov">
+  <os:Param name="searchArg" value="{searchTerms}"/>
+  <os:Param name="searchCode" value="GKEY%5E*"/>
+  <os:Param name="searchType" value="0"/>
+  <os:Param name="recCount" value="25"/>
+  <os:Param name="sk" value="en_US"/>
+</os:Url>
+</SearchPlugin>

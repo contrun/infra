@@ -1,0 +1,19 @@
+{{ $entry := "keyring/sudo" -}}
+source ~/.config/mutt/commonrc
+
+set imap_user = "{{ (keepassxc $entry).UserName }}"
+set imap_pass = "{{ (keepassxc $entry).Password }}"
+set mbox_type = Maildir
+set folder = ~/.mail/sudo
+# set folder = "imaps://{{ keepassxcAttribute $entry "ImapServer" }}:{{ keepassxcAttribute $entry "ImapPort" }}"
+set spoolfile = "+Inbox"
+set postponed = "+/Drafts"
+set from = "$imap_user"
+set postponed ="+Drafts"
+set smtp_url = "smtp://$imap_user@{{ keepassxcAttribute $entry "SmtpServer" }}:{{ keepassxcAttribute $entry "SmtpPort" }}"
+set smtp_pass = "$imap_pass"
+set realname="{{ keepassxcAttribute $entry "name" }}"
+
+set header_cache = ~/.cache/mutt/sudo/headers
+set message_cachedir = ~/.cache/mutt/sudo/bodies
+set certificate_file = ~/.cache/mutt/certificates/sudo

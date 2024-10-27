@@ -1,0 +1,49 @@
+resolver: lts-16.13
+packages:
+  - .
+# extra-deps: []
+# https://github.com/haskell/c2hs/issues/260
+extra-deps:
+  - git: https://github.com/haskell/c2hs.git
+    commit: 20d3c8dedde83af91c4ac06486bf346316e07285
+# Override default flag values for local packages and extra-deps
+# flags: {}
+
+# Extra package databases containing global packages
+# extra-package-dbs: []
+
+# Control whether we use the GHC we find on the path
+# system-ghc: true
+#
+# Require a specific version of stack, using version ranges
+# require-stack-version: -any # Default
+# require-stack-version: ">=1.9"
+#
+# Override the architecture used by stack, especially useful on Windows
+# arch: i386
+# arch: x86_64
+#
+# Extra directories used by stack for building
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
+#
+# Allow a newer minor version of GHC than the snapshot specifies
+# compiler-check: newer-minor
+nix:
+  pure: false
+  packages:
+    - alsaLib
+    - cairo
+    - gcc
+    - gnome2.pango
+    - gtk2-x11
+    - libxml2
+    - pkgconfig
+    - upower
+    - x11
+    - xorg.libX11
+    - xorg.libXext
+    - xorg.libXinerama
+    - xorg.libXrandr
+    - xorg.libXrender
+    - xorg.libXScrnSaver

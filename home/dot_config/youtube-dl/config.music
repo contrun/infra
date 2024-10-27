@@ -1,0 +1,14 @@
+--proxy 127.0.0.1:8118
+--prefer-free-formats
+--format 'bestvideo[height<=480]+bestaudio/best[height<=480]'
+--yes-playlist
+--continue
+--ignore-errors
+--no-overwrites
+--restrict-filenames
+--no-check-certificate
+--sleep-interval 5
+--write-sub
+--sub-lang "en,de,fr"
+--write-info-json
+--output "~/Downloads/youtube-dl/%(title)s-%(id)s.%(ext)s"

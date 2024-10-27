@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -xe
+cd ~/.xmonad
+# if [[ -f  xmonad-x86_64-linux ]] && find . -name xmonad.hs -newer xmonad-x86_64-linux; then
+#      exit 0
+# fi
+declare -a nix_args=()
+if [[ -d /etc/nixos ]]; then
+    nix_args+=("--nix-add-gc-roots")
+fi
+stack -v "${nix_args[@]}" build
+stack -v "${nix_args[@]}" ghc -- --make xmonad.hs -i -fforce-recomp -main-is main -v0 -o "$1"

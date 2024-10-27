@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>huihui</os:ShortName>
+<os:Description>惠惠网</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACnklEQVQ4jXWSX2jVZRzGfzszqKVYkovIdtmFQRfRRaDgvdGVDaob2SYcJhwCh24kxHRsx+RkojKXF8IUFk2nYSMlpXMXLVwbYv9mKWzNXdSca3/e3/t9f+/z6eJM3cm6eHi+7/PAlw8v38QOJPjORP/l1rVGVlyHdT8p66x5rHdNiRI7kGAHawlHG7BPGqo8u1yAv/8g/nQeX9qCFat711JDZUHpecWpG8SpG1Wu+zMC0PI9ae4O8e6PVb3LP10h8B8mpIU6fM/WKoXySQDib1fIru7Dn9iO79lKuv9l0t21uKZkhaCrVmHgTaQoBYeCq3hmFYLMqvJ4+5p813Or/uDQeuIPp5BfIE5cJXxznFA+Tvz92wrBr2VCeSW79TWyJdK2hlUEhzcoTnyJ0nll4+ew/rzsTCvZ6EUBZN8NyM60Yv15xfHPkV9Q2tbA8s4HBKV6NP09mp0kDBcJw0Xi6Hnk5oi/lB9mYbiIZqcA/kXw8QvS/BTxzzuyoQ5sqF3ZyFnk5pTdvIwNtcuGOgiXDkqzk8gvKt2zaRXBkReRuwe2BLaI/CJkKQBkvvK2RYgBQgq2RNq26RGB73pK/mQjvvdtWd97+L53/997G/F978jl61YIeuqIN88RzjZipc1k1wcJAzvx7UmVwoUC2dgXWGkzoX8H2fVBXL6OxIpr0cyY4sQl7NRr0vwkuj+p+PMF4sgxxdFPiRPD0sIM8e6oQu8rxNvXRMxwreuUWGcO3/06cew02dggdmI7uvUV+IWKbAkt/0Uc78cffoM4chpNj+A/2oZrzpFYZ4L/oEau8Czp3nr5jidwhQ3yxVcJn70lf3QLru0lucIz+H05pXs34t6vl9+fq1yia0lwzQmuaUUP5uYa3K5aXEvu8W7V/A8xlwyszakJwQAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://www.huihui.cn</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.huihui.cn/web/search" resultDomain="huihui.cn">
+  <os:Param name="q" value="{searchTerms}"/>
+  <os:Param name="keyfrom" value=""/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,19 @@
+[".oh-my-zsh"]
+type = "git-repo"
+url = "https://github.com/ohmyzsh/ohmyzsh.git"
+refreshPeriod = "168h"
+
+[".tmux"]
+type = "git-repo"
+url = "https://github.com/gpakosz/.tmux.git"
+refreshPeriod = "168h"
+
+[".tmux/plugins/tpm"]
+type = "git-repo"
+url = "https://github.com/tmux-plugins/tpm"
+refreshPeriod = "168h"
+
+[".local/bin/goodreads"]
+type = "file"
+url = "https://raw.githubusercontent.com/danishprakash/goodreadsh/master/goodreads"
+refreshPeriod = "168h"

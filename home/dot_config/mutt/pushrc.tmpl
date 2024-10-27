@@ -1,0 +1,20 @@
+{{ $entry := "keyring/push" -}}
+source ~/.config/mutt/commonrc
+
+set ssl_starttls=yes
+set imap_user = "{{ (keepassxc $entry).UserName }}"
+set imap_pass = "{{ (keepassxc $entry).Password }}"
+set mbox_type = Maildir
+set folder = ~/.mail/push
+# set folder = "imaps://{{ keepassxcAttribute $entry "ImapServer" }}:{{ keepassxcAttribute $entry "ImapPort" }}"
+set spoolfile = "+Inbox"
+set postponed="+[hotmail]/Drafts"
+set from = "$imap_user"
+set postponed ="+Drafts"
+set smtp_url = "smtp://$imap_user@{{ keepassxcAttribute $entry "SmtpServer" }}:{{ keepassxcAttribute $entry "SmtpPort" }}"
+set smtp_pass = "$imap_pass"
+set realname='push'
+
+set header_cache = ~/.cache/mutt/push/headers
+set message_cachedir = ~/.cache/mutt/push/bodies
+set certificate_file = ~/.cache/mutt/certificates/push

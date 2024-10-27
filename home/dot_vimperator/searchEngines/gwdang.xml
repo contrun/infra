@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>gwdang</os:ShortName>
+<os:Description>购物党</os:Description>
+<os:InputEncoding>GBK</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADcUlEQVQ4jTWQfUyUdQDHf3cHbNLKqZxI+J9z8eKG3cHxIg1iA3djrTUTt1qhy7FezGwt8w8FK7beNk1rdSVkzcS0LBBRYkQuwlAL8Q6453nuroM75A7vhePuuEcO7dMfh9/t++/n+9lXKLoK7GITVqHHJvTYRBY2kYNdGJCFAWd2HbefeRvnujpkXQlKRjlKehkOnQm7xoCwi0Kcj5qZ2f5OqjsOMF3/Bo6V1dhFPr7GFhYGb+LIrMQuipCFEUkYkIURWWdCWIWe8PEfUEclYl1XiHVeYdE1jW/3+4yLjcR7hoj1DDK5aQeeil1Mle9ksnQn7oIGnNk1CJvQE/m2m9Cnp/E3vsvMcweJXRrC/9qHuHLN3I8nuDvuQh2RUMdcqP9IJL1+Ih292EQ2wirWMneik+j53wh9cJJgaxuJYSu+F5oJf/Ej8b5hXLlm3IUNTBY04FpfS/hoBwt/jmITq5YN2i+QGBplvuMy0Y5e1JsywUMWEkNWPFVNzFl+wmt+HbvIZ0JsILD/OAv917CJ1akPIu1dxPuGCX9+lvCxM6gjErNvHUFZU8FU5W6SvhDuwgakjFIkbQGBw18R773KrRQgi7n2LpJeP+pVK4khK0uhCLN7PmJM5BD65BTz31/CW7+PyDcXmBAbCba2Ef31L6wPDOZO/EL42Bn8L73HTGMLsYuD3Nl3BLsoQB2RmH7qTdx5z7I0G8KxsopAs4XoxUFsYs0y4GQX6t8TxLr/INb5O4v/TuN7sRmveS9Jj5+p8l14qppIevx4t+4hcPBLYt2DD07MYs5yHoD7yST/kcrtbfuZP32Ze9E46vVx4gPXuReMEP7sLMEWC9GfBxgTeoSUVoRrbS3RUz0sDNxg4aqV0MffoTxUgWvD07gLtuPKrkMSBjy1r+LZ+gqB1jai5/qwpQDFKJkVBJotzJ/rJ95/Da95L5LYjCwMSKII+eEncKyuQdaZkFeYUG/JhI92YBM5iDGhx/f8IdRRGeWRLcw0HODumAvn+npkjRFJ8zjBw1+z5PGTuDHO4vQdkg4P7vxtSJoihKQ1oGRWoqzYsrxqxLmuFiWjHFlbgqw14sw1M1XdhLfmZbzVTThWPZky05UiZE0JsrYYOc2EnFaGnG5CEkYUbTGKtgRJa0ISm7GLPCbEY0yIPGRNCXJ6GZKmmP8BA5+yN4SaVpkAAAAASUVORK5CYII=</os:Image>
+<SearchForm>https://www.gwdang.com</SearchForm>
+<os:Url type="text/html" method="GET" template="https://www.gwdang.com/search" resultDomain="gwdang.com">
+  <os:Param name="crc64" value="1"/>
+  <os:Param name="s_product" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>oxforddictionary</os:ShortName>
+<os:Description>Oxford Dictionaries Online</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAEyUExURQvA8/b9/57m+jHK9DrM9dX0/czy/AK+8hnD8+f5/s7y/fr+/ybH9Am/8u/7/hfD81nU93Pb+CTG9AG98s3y/N32/Qe/8tr1/eb5/l7V91zV9tLz/dL0/Zfk+nrc+BXC87vt/GbX94jg+RjD80DO9Yvh+VLS9hPC88Lv/GjY95Hj+b3u/Mbw/IDe+WDW933d+GzZ94Xf+SXH9FvV9rbs+z7N9avp+2TX97fs+3nc+DvM9VfU9mXX91jU9gW+8ga/8jfL9bDr+/3+/2LW94Pf+ErQ9vj9//7//8/z/ZXk+grA8yLG9Kjo+/X8/lXT9qrp+/T8/lTT9jLK9VrU9kTP9dv2/azq+wS+8uT4/ofg+RrE8xTC8x/F9EjQ9vz+/8Hv/LLr+0nQ9snx/KPn+gC98v///yAu2s0AAADYSURBVHjaNI+HUgJhDIRz4B31AEURsIMdRJRqRbCiggUbWNHd938F/5+Dnckk800ymxVqTZ4VjuatwSiqrkrQao9A3QbsiaAcMPCtgXmNWvftq+EzSfeLAss4rnKox7Ahsx5skFOpLb8CY7iTHXhmGPcCMUuDiiSxcM9N7XJI7uNcOggbXNEgR56gL9t4neazKLBII42EZIE98vc0UiT/AJdcuiF+x9T3gfeQcD2KtdsWGcgE1YJ+vanue0+fN6qNO+F+dgfh4J0bpuVFOf+wuuQK6flfgAEA5pxJqi8GP+8AAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://en.oxforddictionaries.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://en.oxforddictionaries.com/definition/{searchTerms}" resultDomain="en.oxforddictionaries.com">
+</os:Url>
+</SearchPlugin>

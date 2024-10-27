@@ -1,0 +1,35 @@
+name: "Setup dotfiles"
+inputs:
+  install-dotfiles:
+    description: "whether to install dotfiles"
+    default: true
+    required: false
+    type: boolean
+  destination-directory:
+    description: "where the dotfiles should be installed to"
+    default: "$HOME"
+    required: false
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup nix
+      uses: contrun/infra@master
+      with:
+        setup-cachix: false
+        setup-qemu: false
+        free-disk-space: false
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        nix profile install 'nixpkgs#chezmoi' 'nixpkgs#git' 'nixpkgs#gnumake' 'nixpkgs#curl'
+
+    - name: Install
+      if: format('{0}', inputs.install-dotfiles) == 'true'
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.destination-directory }}"
+        destdir="$(cd "${{ inputs.destination-directory }}"; pwd)"
+        make DESTDIR="$destdir" init apply

@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    exec sudo --preserve-env=DONT_TOUCH_IPTABLES /usr/bin/env bash "$0" "$@"
+fi
+
+: "${CLASH_NOPROXY_GROUP:=noproxy}"
+CLASH_IPTABLES_TAG="CLASH"
+CLASH_DIR="/etc/clash-redir"
+CLASH_DEFAULT_CONFIG_FILE=config.yaml
+CLASH_CONFIG="$CLASH_DIR/$CLASH_DEFAULT_CONFIG_FILE"
+CLASH_USER="clash"
+CLASH_DNS_LISTENING_PORT=
+CLASH_REDIRECT_PORT=
+CLASH_TPROXY_PORT=
+DISABLE_UDP_PROXY=
+CLASH_MARK=0x4242
+CLASH_TABLE=100
+PID_FILE="/tmp/clash-redir.pid"
+LOG_FILE="/tmp/clash-redir.log"
+
+make_link() {
+    if [[ $# -ne 0 ]]; then
+        config="$1"
+        ln -sf "$CLASH_DIR/$config.yaml" "$CLASH_CONFIG"
+    fi
+}
+
+switch_to() {
+    local clash_api_listening_port=9090
+    if port="$(awk '/external-controller/ {print $2}' "$CLASH_CONFIG" | xargs | awk -F: '{print $2}' | xargs)"; then
+        clash_api_listening_port="$port"
+    fi
+    make_link "$@"
+    if ! curl -X PUT -H 'content-type: application/json' -d "{\"path\": \"$CLASH_CONFIG\"}" "http://127.0.0.1:${clash_api_listening_port}/configs/"; then
+        restart "$@"
+    fi
+}
+
+start() {
+    make_link "$@"
+    if [[ -f "$PID_FILE" ]]; then
+        PID="$(cat "$PID_FILE")"
+        if ps "$PID" >/dev/null 2>&1; then
+            echo "clash($PID) already running"
+            return 0
+        else
+            rm "$PID_FILE"
+        fi
+    fi
+    parse_config
+    run_clash
+    if [[ -z "${DONT_TOUCH_IPTABLES:-}" ]]; then
+        setup_iptables "$@"
+    fi
+}
+
+parse_config() {
+    CLASH_DNS_LISTENING_PORT="$(awk -F: '{print $NF}' <<<"$(awk '/\s*dns\s*:/,0' "$CLASH_CONFIG" | awk '/^\s*listen\s*:/ {print $2}' | xargs)")"
+    CLASH_REDIRECT_PORT="$(awk '/redir-port/ {print $2}' "$CLASH_CONFIG")"
+    CLASH_TPROXY_PORT="$(awk '/tproxy-port/ {print $2}' "$CLASH_CONFIG")"
+    DISABLE_UDP_PROXY="$(sed -n '/disable-udp-proxy/p' "$CLASH_CONFIG")"
+}
+
+run_clash() {
+    useradd --system --no-create-home "$CLASH_USER" >/dev/null 2>&1 || true
+    install -d -m 0777 -o clash "$CLASH_DIR"
+    capsh --user="$CLASH_USER" --caps='cap_net_admin+eip cap_setpcap,cap_setuid,cap_setgid+ep' --addamb=cap_net_admin -- -c "echo \$\$ > $PID_FILE; exec $(realpath "$(command -v clash)") -d $CLASH_DIR -f $CLASH_CONFIG >> $LOG_FILE" &
+}
+
+setup_iptables() {
+    # Retry to shut up `Another app is currently holding the xtables lock. Perhaps you want to use the -w option.`
+    succeeded=
+    retries=0
+    while [[ -z $succeeded ]] && (( retries < 3 )); do
+        # Make sure iptables cleared to avoid Chain already exists.
+        if cleanup_iptables "$@" && do_setup_iptables "$@"; then
+            succeeded=y
+        else
+            retries=$(( retries + 1 ))
+        fi
+    done
+}
+
+do_setup_iptables() {
+    method="${CLASH_PROXY_METHOD:-}"
+    if [[ "$method" == tproxy ]]; then
+        do_setup_iptables_tproxy "$@"
+    elif [[ "$method" == redirect || "$method" == redir ]]; then
+        do_setup_iptables_redirect "$@"
+    elif [[ -n "$CLASH_TPROXY_PORT" ]]; then
+        do_setup_iptables_tproxy "$@"
+    else
+        do_setup_iptables_redirect "$@"
+    fi
+}
+
+setup_dns_iptables() {
+    iptables -t nat -N CLASH_DNS_LOCAL
+    iptables -t nat -A CLASH_DNS_LOCAL -p udp ! --dport 53 -j RETURN
+    iptables -t nat -A CLASH_DNS_LOCAL -p udp -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_DNS_LOCAL -m owner --uid-owner "$CLASH_USER" -j RETURN
+    iptables -t nat -A CLASH_DNS_LOCAL -m owner --gid-owner "$CLASH_NOPROXY_GROUP" --suppl-groups -j RETURN || true
+    iptables -t nat -A CLASH_DNS_LOCAL -p udp --dport 53 -j REDIRECT --to-ports "$CLASH_DNS_LISTENING_PORT"
+    iptables -t nat -I OUTPUT -p udp -j CLASH_DNS_LOCAL
+
+    iptables -t nat -N CLASH_DNS_EXTERNAL
+    iptables -t nat -A CLASH_DNS_EXTERNAL -p udp ! --dport 53 -j RETURN
+    iptables -t nat -A CLASH_DNS_EXTERNAL -p udp -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_DNS_EXTERNAL -p udp --dport 53 -j REDIRECT --to-ports "$CLASH_DNS_LISTENING_PORT"
+    iptables -t nat -I PREROUTING -p udp -j CLASH_DNS_EXTERNAL
+}
+
+do_setup_iptables_tproxy() {
+    setup_dns_iptables
+    if [[ -z "$(ip rule list fwmark "$CLASH_MARK" table "$CLASH_TABLE")" ]]; then
+        ip rule add fwmark "$CLASH_MARK" table "$CLASH_TABLE"
+    fi
+    ip route replace local 0.0.0.0/0 dev lo table "$CLASH_TABLE"
+
+    iptables -t mangle -N CLASH_LOCAL
+    iptables -t mangle -I CLASH_LOCAL -m owner --uid-owner "$CLASH_USER" -j RETURN
+    iptables -t mangle -I CLASH_LOCAL -m owner --gid-owner "$CLASH_NOPROXY_GROUP" --suppl-groups -j RETURN || true
+    iptables -t mangle -A CLASH_LOCAL -d 0.0.0.0/8 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 127.0.0.0/8 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 224.0.0.0/4 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 172.16.0.0/12 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 169.254.0.0/16 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 240.0.0.0/4 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 192.168.0.0/16 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 10.0.0.0/8 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 100.64.0.0/10 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -d 255.255.255.255 -j RETURN
+    iptables -t mangle -A CLASH_LOCAL -p tcp -j MARK --set-mark "$CLASH_MARK"
+    iptables -t mangle -I OUTPUT -p tcp -j CLASH_LOCAL
+    if [[ -z "$DISABLE_UDP_PROXY" ]]; then
+        iptables -t mangle -A CLASH_LOCAL -p udp -j MARK --set-mark "$CLASH_MARK"
+        iptables -t mangle -I OUTPUT -p udp -j CLASH_LOCAL
+    fi
+
+    iptables -t mangle -N CLASH_EXTERNAL
+    iptables -t mangle -A CLASH_EXTERNAL -d 0.0.0.0/8 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 127.0.0.0/8 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 224.0.0.0/4 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 172.16.0.0/12 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 169.254.0.0/16 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 240.0.0.0/4 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 192.168.0.0/16 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 10.0.0.0/8 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 100.64.0.0/10 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -d 255.255.255.255 -j RETURN
+    iptables -t mangle -A CLASH_EXTERNAL -p tcp -j TPROXY --on-port "$CLASH_TPROXY_PORT" --on-ip 127.0.0.1 --tproxy-mark "$CLASH_MARK"
+    iptables -t mangle -I PREROUTING -p tcp -j CLASH_EXTERNAL
+    if [[ -z "$DISABLE_UDP_PROXY" ]]; then
+        iptables -t mangle -A CLASH_EXTERNAL -p udp -j TPROXY --on-port "$CLASH_TPROXY_PORT" --on-ip 127.0.0.1 --tproxy-mark "$CLASH_MARK"
+        iptables -t mangle -I PREROUTING -p udp -j CLASH_EXTERNAL
+    fi
+}
+
+do_setup_iptables_redirect() {
+    setup_dns_iptables
+
+    iptables -t nat -N CLASH_LOCAL
+    iptables -t nat -A CLASH_LOCAL -m owner --uid-owner "$CLASH_USER" -j RETURN
+    iptables -t nat -A CLASH_LOCAL -m owner --gid-owner "$CLASH_NOPROXY_GROUP" --suppl-groups -j RETURN || true
+    iptables -t nat -A CLASH_LOCAL -d 0.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 224.0.0.0/4 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 169.254.0.0/16 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 240.0.0.0/4 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 100.64.0.0/10 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -d 255.255.255.255 -j RETURN
+    iptables -t nat -A CLASH_LOCAL -p tcp -j REDIRECT --to-ports "$CLASH_REDIRECT_PORT"
+    iptables -t nat -I OUTPUT -p tcp -j CLASH_LOCAL
+    if [[ -z "$DISABLE_UDP_PROXY" ]]; then
+        iptables -t nat -A CLASH_LOCAL -p udp -j REDIRECT --to-ports "$CLASH_REDIRECT_PORT"
+        iptables -t nat -I OUTPUT -p udp -j CLASH_LOCAL
+    fi
+
+    iptables -t nat -N CLASH_EXTERNAL
+    iptables -t nat -A CLASH_EXTERNAL -d 0.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 224.0.0.0/4 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 169.254.0.0/16 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 240.0.0.0/4 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 100.64.0.0/10 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -d 255.255.255.255 -j RETURN
+    iptables -t nat -A CLASH_EXTERNAL -p tcp -j REDIRECT --to-ports "$CLASH_REDIRECT_PORT"
+    iptables -t nat -I PREROUTING -p tcp -j CLASH_EXTERNAL
+    if [[ -z "$DISABLE_UDP_PROXY" ]]; then
+        iptables -t nat -A CLASH_EXTERNAL -p udp -j REDIRECT --to-ports "$CLASH_REDIRECT_PORT"
+        iptables -t nat -I PREROUTING -p udp -j CLASH_EXTERNAL
+    fi
+}
+
+stop() {
+    if ! [[ -f "$PID_FILE" ]]; then
+        echo "clash already exited"
+    else
+        PID="$(cat "$PID_FILE")"
+        if ps "$PID" >/dev/null 2>&1; then
+            kill "$PID"
+        else
+            echo "clash already exited"
+        fi
+        rm -f "$PID_FILE"
+    fi
+    cleanup_iptables
+}
+
+cleanup_iptables() {
+    do_cleanup_iptables || true
+}
+
+do_cleanup_iptables() {
+    ip rule delete fwmark "$CLASH_MARK" table "$CLASH_TABLE" >& /dev/null
+    ip route delete local 0.0.0.0/0 dev lo table "$CLASH_TABLE" >& /dev/null
+    iptables-save -c | grep -v "$CLASH_IPTABLES_TAG" | iptables-restore -c
+}
+
+restart() {
+    stop "$@"
+    start "$@"
+}
+
+reload() {
+    switch_to "$@"
+}
+
+usage() {
+    echo "$0 start|stop|restart|setup_iptables|cleanup_iptables"
+    exit
+}
+
+if [[ $# -eq 0 ]]; then
+    usage
+fi
+
+action="$1"
+case "$action" in
+start | stop | restart | reload | switch_to | setup_iptables | cleanup_iptables)
+    shift
+    "$action" "$@"
+    ;;
+*)
+    usage
+    ;;
+esac

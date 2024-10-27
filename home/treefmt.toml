@@ -1,0 +1,23 @@
+[formatter.nix]
+command = "nixpkgs-fmt"
+includes = ["*.nix"]
+
+[formatter.dprint]
+command = "dprint"
+excludes = []
+includes = [".*"]
+options = ["fmt"]
+
+# Too many errors. Give up for now.
+# # run shellcheck first
+# [formatter.shellcheck]
+# command = "shellcheck"
+# includes = ["*.sh", "*.bash", "*.envrc", "*.envrc.*"]
+# priority = 0    # default is 0, but we set it here for clarity
+#
+# # shfmt second
+# [formatter.shfmt]
+# command = "shfmt"
+# options = ["-s", "-w"]
+# includes = ["*.sh", "*.bash", "*.envrc", "*.envrc.*"]
+# priority = 1

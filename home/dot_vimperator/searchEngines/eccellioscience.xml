@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>eccellioscience</os:ShortName>
+<os:Description>Search the entire web for scientific info</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADJUlEQVQ4jS3OS09jZQCA4fc7l1659Jy20HItFJiLo0ZRIho3OolmxoUr4t/RhTsTN+5nNws1EUyMyejsICOamGFGSylFCpzSFji905bT830u9A88ecTT7R313dYm27u7uJ0GEdMkbsWZnppCF4JGp4k0dSZmZijXLjjMFxG6jo7gm8+/wFBKUm82iEbDDNSQtVfu8f7629gxi8xcBgkUz04plsuclRx0dGK2zeLiPLquYXhK8WzvJSPhAKuv3+Phh/dZzsyTSiQZHx2nN7ghbtmsLCzz2tJdHn//Lc8LOYqFAlJJDKUUpm6yMDPD/fV1lmZniGiCkxfPiQYCpNNp4pEwiXiM5OgY/icPGG71eZHLI5TA0AFrPMKd28ukk0kuzk7JFXKUfn/GrBWjf2sFayLBaGaZsfnbTMdtslNT7OfygMIQAqT0MFComz7dWpXK4QFh5RESHt1LhzB9MAV6wsa2RljJZNi1Ygih0BAwPj5C0ID2ZY1K8QA7YJBOTlK+qJMvOSh02m6DXrtFbGyEzOw0d5aXQIGhFKRTKaKhAOXiAYPjIzLTaQ6OSlSbLeJJm8LRGUXnnDfDFgsjNu1Og4CpIwADAfVmi17/Gq3sEHQb/FN3yWazWNddwtEIo2NRJkmhmxqNThunek6j1fwPEICPR7deJ1Rzsc0AobBB3BrDTidwW218TWPtvXcZWhO0BkNOnQq1KxelBJpCYUrFTfUCrrt4agCmwA8GyZcr1NDYdc4p9Tw6wqTTG9DpXtMbDECAAdB1W3RRRJRkbj6D1HW2f/uTttdDRsIEY0nans/luUPROad0XEL6EgBDKI39vUPqms9nH30AqUl+ffILtXKN1VdvsbQ4T9tXPPlhk2KzRXQyhTQEoWAQAWhCwmXtir+OHR79/JQj3+Tug0/R5jJs7vzBzt9HtLUQJ9UWh/snHOzl6FzW0aT6f4BCSg8pFaVylS+/+prVt95gY2ODwccPuapVyL6zxstHjxkOhsihR951mchmQYEmlQ+6QjMEibhF3+tz4pzhSdj68Sdy+wWuGh3CoxbudY9Ks4Uv4XC/gPIl/wJBa3vC9ZvYtQAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://science.eccellio.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://science.eccellio.com/?cx=013750418607274062422%3Aekbrbietuam&amp;ie=UTF-8&amp;cof=FORID%3A9&amp;q={searchTerms}&amp;lr=&amp;site=&amp;app=&amp;as_qdr=&amp;sa=Search#928" resultDomain="science.eccellio.com">
+</os:Url>
+</SearchPlugin>

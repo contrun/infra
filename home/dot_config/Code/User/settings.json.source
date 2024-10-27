@@ -1,0 +1,140 @@
+{
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.highlightModifiedTabs": true,
+  "window.menuBarVisibility": "toggle",
+  "editor.fontSize": 13,
+  "workbench.statusBar.feedback.visible": false,
+  "languageServerHaskell.enableHIE": true,
+  "languageServerHaskell.hlintOn": true,
+  "languageServerHaskell.maxNumberOfProblems": 100,
+  "languageServerHaskell.formattingProvider": "floskell",
+  "languageServerHaskell.useCustomHieWrapper": true,
+  "languageServerHaskell.trace.server": true,
+  "java.project.importOnFirstTimeStartup": "automatic",
+  "files.exclude": {
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+  "editor.suggestSelection": "first",
+  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+  "workbench.statusBar.visible": true,
+  "remote.SSH.remotePlatform": {
+    "uzq": "linux",
+    "cef": "linux",
+    "ceft": "linux",
+    "bzr": "linux",
+    "jxt": "linux",
+    "10.200.2.171": "linux",
+    "node1": "linux",
+    "contrun-gitpodnix-5rcvkcnbpnu.ssh.ws-us87.gitpod.io": "linux",
+    "contrun-gitpodnix-jlrbgr0u0xn.ssh.ws-us100.gitpod.io": "linux",
+    "contrun-gitpodnix-m9csuuv74mp.vss.gitpod.io": "linux",
+    "contrun-gitpodnix-bde898w6u3i.vss.gitpod.io": "linux",
+    "contrun-gitpodnix-3hts3j3kfqt.vss.gitpod.io": "linux",
+    "contrun-infra-i6yqn5dj0ck.vss.gitpod.io": "linux",
+    "contrun-ckbp2pexperimen-ll57a71c3ec.vss.gitpod.io": "linux",
+    "bison-vagrant": "linux",
+    "zklab-5": "linux",
+    "*.gitpod.io": "linux",
+    "dev": "linux",
+    "devts": "linux",
+    "aol": "linux"
+  },
+  "editor.multiCursorModifier": "alt",
+  "editor.wordWrap": "on",
+  "remote.SSH.showLoginTerminal": true,
+  "remote.SSH.remoteServerListenOnSocket": true,
+  "workbench.editor.showTabs": "single",
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "terminal.integrated.scrollback": 100000,
+  "terminal.integrated.commandsToSkipShell": [
+    "language-julia.interrupt"
+  ],
+  "cmake.configureOnOpen": true,
+  "clangd.onConfigChanged": "restart",
+  "[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+  },
+  "terminal.integrated.allowChords": false,
+  "editor.minimap.enabled": false,
+  "files.watcherExclude": {
+    "**/.bloop": true,
+    "**/.metals": true,
+    "**/.ammonite": true
+  },
+  "julia.symbolCacheDownload": true,
+  "go.toolsManagement.autoUpdate": true,
+  "redhat.telemetry.enabled": false,
+  "security.workspace.trust.untrustedFiles": "open",
+  "configurationSync.store": {
+    "url": "https://gitpod.io/code-sync",
+    "stableUrl": "https://gitpod.io/code-sync",
+    "insidersUrl": "https://gitpod.io/code-sync",
+    "canSwitch": false,
+    "authenticationProviders": {
+      "gitpod": {
+        "scopes": [
+          "function:accessCodeSyncStorage",
+          "function:getLoggedInUser",
+          "resource:default"
+        ]
+      }
+    }
+  },
+  "remote.SSH.defaultExtensions": [
+    "gitpod.gitpod-remote-ssh"
+  ],
+  "agdaMode.connection.agdaLanguageServer": true,
+  "window.zoomLevel": 1,
+  "workbench.activityBar.location": "hidden",
+  "dart.checkForSdkUpdates": false,
+  "search.useGlobalIgnoreFiles": true,
+  "search.useParentIgnoreFiles": true,
+  "cmake.showOptionsMovedNotification": false,
+  "[graphql]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "julia.enableTelemetry": false,
+  "gitlens.ai.experimental.provider": "openai",
+  "gitlens.ai.experimental.openai.model": "gpt-4-1106-preview",
+  "explorer.confirmDelete": false,
+  "diffEditor.experimental.showMoves": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnSave": true,
+  "lldb.suppressUpdateNotifications": true,
+  "remote.SSH.connectTimeout": 60,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  },
+  "task.problemMatchers.neverPrompt": {
+    "shell": true
+  },
+  "workbench.colorTheme": "Default Light Modern"
+}

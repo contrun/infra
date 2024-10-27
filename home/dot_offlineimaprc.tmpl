@@ -1,0 +1,140 @@
+{{ $unified_entry := "keyring/unified" -}}
+{{ $unified_username := (keepassxc $unified_entry).UserName -}}
+{{ $unified_password := (keepassxc $unified_entry).Password -}}
+{{ $unified_imap_server := keepassxcAttribute $unified_entry "ImapServer" -}}
+{{ $unified_imap_port := keepassxcAttribute $unified_entry "ImapPort" -}}
+
+{{ $sudo_entry := "keyring/sudo" -}}
+{{ $sudo_username := (keepassxc $sudo_entry).UserName -}}
+{{ $sudo_password := (keepassxc $sudo_entry).Password -}}
+{{ $sudo_imap_server := keepassxcAttribute $sudo_entry "ImapServer" -}}
+{{ $sudo_imap_port := keepassxcAttribute $sudo_entry "ImapPort" -}}
+
+{{ $push_entry := "keyring/push" -}}
+{{ $push_username := (keepassxc $push_entry).UserName -}}
+{{ $push_password := (keepassxc $push_entry).Password -}}
+{{ $push_imap_server := keepassxcAttribute $push_entry "ImapServer" -}}
+{{ $push_imap_port := keepassxcAttribute $push_entry "ImapPort" -}}
+
+{{ $icloud_entry := "keyring/icloud" -}}
+{{ $icloud_username := (keepassxc $icloud_entry).UserName -}}
+{{ $icloud_password := (keepassxc $icloud_entry).Password -}}
+{{ $icloud_imap_server := keepassxcAttribute $icloud_entry "ImapServer" -}}
+{{ $icloud_imap_port := keepassxcAttribute $icloud_entry "ImapPort" -}}
+
+{{ $work_entry := "keyring/work" -}}
+{{ $work_username := (keepassxc $work_entry).UserName -}}
+{{ $work_password := (keepassxc $work_entry).Password -}}
+{{ $work_imap_server := keepassxcAttribute $work_entry "ImapServer" -}}
+{{ $work_imap_port := keepassxcAttribute $work_entry "ImapPort" -}}
+
+[general]
+# This lists the accounts that I will be configuring.
+accounts = unified, push, sudo
+# offlineimap by default will fsync() to try and reduce chances for data
+# inconsistency. In most cases disabling this is fine, and also reduces
+# the number write cycles.
+fsync = false
+# This is the path to the aforementioned python environment that will be used.
+# This helps prevent offlineimap hanging when network connection is lost.
+socktimeout = 60
+
+[Account unified]
+localrepository = unified-local
+remoterepository = unified-remote
+synclabels = yes
+labelsheader = X-Keywords
+# postsynchook = ~/.config/offlineimap/hooks/postsync-unified
+[Repository unified-local]
+type = Maildir
+localfolders = ~/.mail/unified
+[Repository unified-remote]
+type = IMAP
+remotehost = {{ $unified_imap_server }}
+remoteport = {{ $unified_imap_port }}
+remoteusereval = "{{ $unified_username }}"
+remotepasseval = "{{ $unified_password }}"
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+realdelete = no
+folderfilter = lambda foldername: foldername in ['Inbox', 'Sent', 'Drafts', 'Trash', 'Junk', 'Archive']
+trashfolder = /Trash
+
+[Account sudo]
+localrepository = sudo-local
+remoterepository = sudo-remote
+synclabels = yes
+labelsheader = X-Keywords
+# postsynchook = ~/.config/offlineimap/hooks/postsync-sudo
+[Repository sudo-local]
+type = Maildir
+localfolders = ~/.mail/sudo
+[Repository sudo-remote]
+type = IMAP
+remotehost = {{ $sudo_imap_server }}
+remoteport = {{ $sudo_imap_port }}
+remoteusereval = "{{ $sudo_username }}"
+remotepasseval = "{{ $sudo_password }}"
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+realdelete = no
+folderfilter = lambda foldername: foldername in ['INBOX', 'Sent', 'Archive', 'Drafts', 'Trash', 'Spam']
+trashfolder = /Trash
+[Account push]
+localrepository = push-local
+remoterepository = push-remote
+synclabels = yes
+labelsheader = X-Keywords
+# postsynchook = ~/.config/offlineimap/hooks/postsync-push
+
+[Repository push-local]
+type = Maildir
+localfolders = ~/.mail/push
+[Repository push-remote]
+type = IMAP
+remotehost = {{ $push_imap_server }}
+remoteport = {{ $push_imap_port }}
+remoteusereval = "{{ $push_username }}"
+remotepasseval = "{{ $push_password }}"
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+realdelete = no
+folderfilter = lambda foldername: foldername in ['Inbox', 'Sent', 'Drafts', 'Archive', 'Trash', 'Junk', 'Archive']
+trashfolder = /Trash
+
+[Account icloud]
+localrepository = icloud-local
+remoterepository = icloud-remote
+synclabels = yes
+labelsheader = X-Keywords
+# postsynchook = ~/.config/offlineimap/hooks/postsync-icloud
+[Repository icloud-local]
+type = Maildir
+localfolders = ~/.mail/icloud
+[Repository icloud-remote]
+type = IMAP
+remotehost = {{ $icloud_imap_server }}
+remoteport = {{ $icloud_imap_port }}
+remoteusereval = "{{ $icloud_username }}"
+remotepasseval = "{{ $icloud_password }}"
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+realdelete = no
+folderfilter = lambda foldername: foldername in ['Inbox', 'Sent']
+trashfolder = /Trash
+
+[Account work]
+localrepository = work-local
+remoterepository = work-remote
+synclabels = yes
+labelsheader = X-Keywords
+# postsynchook = ~/.config/offlineimap/hooks/postsync-work
+[Repository work-local]
+type = Maildir
+localfolders = ~/.mail/work
+[Repository work-remote]
+type = Gmail
+remotehost = {{ $work_imap_server }}
+remoteport = {{ $work_imap_port }}
+remoteusereval = "{{ $work_username }}"
+remotepasseval = "{{ $work_password }}"
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+realdelete = no
+# folderfilter = lambda foldername: foldername in ['INBOX', 'Archive', 'Sent Messages', 'Drafts', 'Deleted Messages']
+# trashfolder = /Trash

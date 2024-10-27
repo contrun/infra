@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>mrauthor</os:ShortName>
+<os:Description>Mathematical Review Author</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACLElEQVQ4jZWT20uTARjG94900U2X0WVFF5GQ0FHoYBQqmRVIlM5gdeHU+rbCtn1uxQ6uG7c11zbZXHSC3SyofWblZOU6TMpy54ogv5kz+HUh+9wMpF544OXl4YH3eZ9XxZpKJNPozRF0Jj8GRwyDI4bO5EdviZBIptfSUVUbWS4jiCF8YYlKpQLAgizzcS4DQKVSwReWEMQQslyuF5DlMhohSDZXAuDb9x+Iw1GOdzpoOedEIwSYeTcHQDZXQiMEFBEVgCCGyOZKzGcKCEP3OXLGxr5WKxt3GNmwzcieFhuHT9vo6fcx/XqWbK6EIIZWBBLJNL6wBEDbeSedmts0NFvYddT8FzrUTppO3mJpaWWdRDKNSm+OKDtLk0kuXx3hhsWL9pqLK4Nurot3uFQz8wajiid6cwSVzuRXDHmf/kJTu53l5d/0GyOMhuJ8ns+zt9XG4uIvtIPj3B2XFL7O5EdlcMSUQaFYoqHZAsCA+JjgvQl+Liyw/eAQAFrDQ0IPnit8gyNWL/Ah/YmtB0QA1ANjuAISmWyeLY0mALr6AnjG4vUCtSu8TKTYvHuF3HHRjd3zjNTbWTbtNALQ3u3C6V0V0Jn89SZOvJhhf5udYvEraq2HYc8TnsYTNJ6wUSiU6Op14w5K9SbWntFojXDo1M110dM3ArB6xmqQJl+94dhZ6z/hUTS+GqRqlLv7fExNp8jni+tiajrFhd7R+ihXRdY+U22t+0y19b/v/AeG8D3q1jqA1wAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://www.ams.org</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.ams.org/mathscinet/search/publications.html" resultDomain="ams.org">
+  <os:Param name="pg4" value="ICN"/>
+  <os:Param name="s4" value="{searchTerms}"/>
+  <os:Param name="co4" value="AND"/>
+  <os:Param name="pg5" value="TI"/>
+  <os:Param name="co5" value="AND"/>
+  <os:Param name="pg6" value="PC"/>
+  <os:Param name="co6" value="AND"/>
+  <os:Param name="pg7" value="ALLF"/>
+  <os:Param name="co7" value="AND"/>
+  <os:Param name="dr" value="all"/>
+  <os:Param name="yrop" value="eq"/>
+  <os:Param name="pg8" value="ET"/>
+  <os:Param name="s8" value="All"/>
+  <os:Param name="review_format" value="html"/>
+  <os:Param name="Submit" value="Suche"/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,6 @@
+source common-sync-options
+
+label = sync files to Workspace directory
+
+root = Workspace
+root = ssh://dev/Workspace

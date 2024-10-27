@@ -1,0 +1,22 @@
+set guioptions ''
+set page-padding 0
+set show-recent 30
+set window-title-basename true
+set window-title-page true
+set statusbar-home-tilde true
+set adjust-open width
+set scroll-full-overlap 0.02
+# set selection-clipboard clipboard
+# set selection-notification false
+
+map ,q feedkeys ":exec qpdfview $FILE<Return>"
+map ,o feedkeys ":exec okular $FILE<Return>"
+map ,t feedkeys ":exec notify-send test<Return>"
+map ,f feedkeys ":exec notify-send $FILE<Return>"
+map ,c feedkeys ":exec readingNotes.sh $FILE<Return>"
+map <A-q> feedkeys ":exec qpdfview $FILE<Return>"
+map <A-o> feedkeys ":exec okular $FILE<Return>"
+map <A-t> feedkeys ":exec notify-send test<Return>"
+map <A-c> feedkeys ":exec readingNotes.sh $FILE<Return>"
+map <A-a> feedkeys ":exec echoArguments.sh $FILE<Return>"
+# map <A-c> feedkeys ":exec readingNotes.sh $FILE<Return>"

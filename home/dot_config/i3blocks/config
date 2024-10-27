@@ -1,0 +1,108 @@
+# i3blocks config file
+#
+# Please see man i3blocks for a complete reference!
+# The man page is also hosted at http://vivien.github.io/i3blocks
+#
+# List of valid properties:
+#
+# align
+# color
+# command
+# full_text
+# instance
+# interval
+# label
+# min_width
+# name
+# separator
+# separator_block_width
+# short_text
+# signal
+# urgent
+
+# Global properties
+separator_block_width=15
+
+[focused window]
+command=xdotool getactivewindow getwindowname | sed -r 's/(^.{35})(.*)(.{35}$)/\1...\3/'
+interval=3
+color=#A6D1FA
+
+[battery]
+# label=
+command=~/.config/i3blocks/scripts/battery
+markup=pango
+# format=json
+interval=30
+
+#[capslock]
+#command=xset -q | grep Caps | sed -E 's/.*Caps Lock:[^a-z]+([a-z]+).*/Caps Lock: \1/'
+#interval=10
+
+#[numlock]
+#command=xset -q | grep Caps | sed -E 's/.*Num Lock:[^a-z]+([a-z]+).*/Num Lock: \1/'
+#interval=10
+
+# [ethernet]
+# label=E
+# instance=eth0
+# #instance=enp0s25
+# command=/usr/lib/i3blocks/network
+# color=#00FF00
+# interval=10
+
+# Do this if this block doesn't work
+# sudo apt-get install sysstat
+[cpu]
+label=
+command=/usr/lib/i3blocks/cpu_usage
+interval=1
+#min_width=CPU:100.00%
+
+[ram]
+label=
+command=/usr/lib/i3blocks/memory
+interval=10
+
+[disk-home]
+label=
+command=df -h -P -l $HOME | awk '/\/.*/ { print $4; exit 0 }'
+interval=30
+
+[wifi]
+label=
+command=/usr/lib/i3blocks/wifi
+interval=10
+
+[bandwidth]
+# command=~/.config/i3blocks-contrib/bandwidth/bandwidth
+command=~/.config/i3/scripts/bandwidth.sh
+# command=~/.config/i3blocks-contrib/bandwidth/bandwidth -p 'printf "<span font='FontAwesome'></span>%-5.1f<span font='FontAwesome'></span>%5.1f %s/s\n", rx, wx, unit'
+markup=pango
+interval=-3
+
+[ipv4]
+# label=IPV4
+command=~/.config/i3blocks/scripts/v4_availabilty
+interval=once
+
+# [ipv6]
+# label=IPV6
+# command=~/.config/i3blocks/scripts/v6_availabilty
+# interval=once
+
+[volume]
+command=~/.config/i3blocks-contrib/volume-pulseaudio/volume-pulseaudio -f 3 -F 3 -p
+interval=once
+signal=17
+
+[pomodoro]
+#label=POMODORO
+command=~/.config/i3blocks/scripts/org-pomodoro
+markup=pango
+interval=5
+
+[time]
+command=date '+%R'
+interval=60
+

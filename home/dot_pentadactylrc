@@ -1,0 +1,548 @@
+""" pentadactyl plugin settings{{{
+
+""" }}}
+
+javascript <<EOF
+if (navigator.appVersion.indexOf("Mac") != -1) {
+    dactyl.execute('map <C-c> <Leader1>');
+    dactyl.execute('map <C-x> <Leader2>');
+    dactyl.execute('map <C-v> <Leader3>');
+    dactyl.execute('map <C-s> <Leader4>');
+} else {
+    dactyl.execute('map <A-c> <Leader1>');
+    dactyl.execute('map <A-x> <Leader2>');
+    dactyl.execute('map <A-v> <Leader3>');
+    dactyl.execute('map <A-s> <Leader4>');
+}
+EOF
+""" leader key shortcuts {{{
+    map <Leader1>p :pintab<CR>
+    map <Leader1>m :bmarks! -T math<CR>
+    map <Leader1>l :bmarks! -T later<CR>
+    map <Leader1>f :tabopen https://feedly.com/i/category/1st<CR>
+    map <Leader1>g :tabopen libgen<space>
+    map <Leader1>h :tabopen http://hn.premii.com/#/f/yesterdayTop10<CR>
+    map <Leader1>a :tabopen https://arxiv.org/pdf/
+    map <Leader1>w :tabopen http://wttr.in/beijing?mM<CR>
+    map <Leader1>s :pocket <CR>
+
+    map <Leader2>t :alltabs<CR>
+    map <Leader2>s :source! $HOME/.pentadactylrc<CR>
+    map <Leader2>d :tabopen about:downloads<CR>
+    map <Leader2>a :tabopen about:addons<CR>
+    map <Leader2>c :tabopen about:config<CR>
+    map <Leader2>p :preferences<CR>
+    map <Leader2>g :switchproxy<CR>
+    map <Leader2>r :restart
+    map <Leader2>m :mpv<CR>
+    map <Leader2>y :ydl<CR>
+    map <Leader2>v :emenu File.New Private Window<CR>
+
+    map <Leader3>c :org-capture<CR>
+    map <Leader3>w :org-wiki<CR>
+    map <Leader3>t :org-todo<CR>
+    map <Leader3>b :org-bookmark<CR>
+    map <Leader3>p :push<CR>
+    map <Leader3>u :javascript dactyl.clipboardWrite(buffer.URL, true)<CR>
+    map <Leader3>q :javascript orgCapture('c')<CR>
+    map <Leader3>t :javascript dactyl.clipboardWrite(buffer.title, true)<CR>
+    map <Leader3>m :javascript dactyl.clipboardWrite('[' + buffer.title + '](' + buffer.URL + ')', true)<CR>
+    map <Leader3>o :javascript dactyl.clipboardWrite('[[' + buffer.URL + '][' + buffer.title + ']]', true)<CR>
+    map <Leader3>l :javascript dactyl.clipboardWrite('\\href{' + buffer.URL + '}{' + buffer.title + '}', true)<CR>
+    map <Leader3>h :javascript dactyl.clipboardWrite('<a href="' + buffer.URL + '">' + buffer.title + '</a>', true)<CR>
+
+    map <leader4>l -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !libgen " + str):CommandExMode().open("tabopen !libgen ")
+    map <leader4>s -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !sh " + str):CommandExMode().open("tabopen !sh ")
+    map <leader4>r -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !msc " + str):CommandExMode().open("tabopen !msc ")
+    map <leader4>o -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !mathoverflow " + str):CommandExMode().open("tabopen !mathoverflow ")
+    map <leader4>g -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen google " + str):CommandExMode().open("tabopen google ")
+    map <leader4>d -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !duckduckgo " + str):CommandExMode().open("tabopen !duckduckgo")
+    map <leader4>m -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !mw " + str):CommandExMode().open("tabopen !mw ")
+    map <leader4>t -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !mwt " + str):CommandExMode().open("tabopen !mwt ")
+    map <leader4>w -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !wiki " + str):CommandExMode().open("tabopen !wiki ")
+    map <leader4>a -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.execute("tabopen !arxiv " + str):CommandExMode().open("tabopen https://arxiv.org/pdf/")
+
+""" }}}
+
+""" Keybindings {{{
+    " new tab
+    map -m n,v,i,c,t <C-t> :emenu File.New Tab<CR>
+
+    " Disable help keybind
+    map <F1> <Nop>
+    imap <F1> <Nop>
+    cmap <F1> <Nop>
+
+    " Toggle navigation toolbar (
+    map <F1> :set invguioptions=T<CR>
+
+    " Show all opened tabs
+    map <F2> :alltabs<CR>
+    map <F21> :alltabs<CR>
+
+    " Disable quit keybinds
+    map <C-q> <Nop>
+    map <M-q> <Nop>
+    imap <C-q> <Nop>
+    cmap <C-q> <Nop>
+    map <C-S-w> <Nop>
+    imap <C-S-w> <Nop>
+    cmap <C-S-w> <Nop>
+
+    " Disable highlighted search matches
+    map <C-7> :noh<CR>
+    imap <C-7> <ESC>:noh<CR>gi
+
+    " Scroll up/down lines from 'scroll' option, default half a screen
+    map -builtin d <C-d>
+    map -builtin s <C-u>
+
+    " d to close tab
+    map -builtin d :emenu File.Close Tab<CR>
+
+    " Disable D to close tab
+    map D <Nop>
+    map gh <Nop>
+
+    " s to search selected
+    map s -js CommandExMode().open('' + buffer.focusedFrame.getSelection());
+
+    " complete www,com,org and net
+    map -modes=c <C-Return> -builtin <Home><C-Right><Right>www.<End>.com<Return>
+    map -modes=c <S-Return> -builtin <Home><C-Right><Right>www.<End>.net<Return>
+    map -modes=c <A-Return> -builtin <Home><C-Right><Right>www.<End>.org<Return>
+
+    " Pin tabs easily
+    " map -builtin gp :set apptab<CR>
+    " map -builtin gu :set noapptab<CR>
+
+    " passthrough copy cut
+    map <C-c> <C-v><C-c>
+    map <C-x> <C-v><C-x>
+
+    " Rebind Ctrl+Shift+c as copy instead of firefox inspector
+    " Same bind is used in most terminals, resulting in frequent misclicks
+    map <C-S-c> <C-c>
+    imap <C-S-c> <C-c>
+
+    " Y = C-c, instead reuse Y for copying title of a buffer (page)
+    map -builtin Y :javascript dactyl.clipboardWrite(buffer.title, true)<CR>
+
+    " tab movement
+    nmap -builtin gf <C-^>
+    nmap -builtin gb g$
+    nmap -builtin gt g0
+    map -builtin l gt
+    map -builtin h gT
+    map -builtin <S-Left> :tabmove! -1<CR>
+    map -builtin <S-Right> :tabmove! +1<CR>
+
+    " easy echo
+    " map -builtin e :echo<Space>
+
+    " zoom reset
+    map z0 :emenu View.Zoom.Reset<CR>
+    " Sometimes links can't be clicked
+    " Open highlighted text/url as new tab
+    map -builtin gx :javascript soap()<CR>
+
+    " Replace homepage with downloads for <C-j>
+    map -builtin <C-j> :tabopen about:downloads<CR>
+    imap -builtin <C-j> :tabopen about:downloads<CR>
+
+    " Ctrl+a to select all text
+    " imap -builtin <C-a> <C-Home><C-S-End>
+
+    " Always start inserting at the end of input fields
+    map -builtin gi gi<End>
+
+    " Open editor map for when <C-i> gets intercepted
+    " https://github.com/vimperator/vimperator-labs/issues/119#issuecomment-70961297
+    imap <C-S-i> <C-i>
+
+    " Tree Style Tab
+    " Inspired by ntnn's vimperatorrc:
+    " - https://gist.github.com/ntnn/213f31f2fd0584b160bb#file-vimperatorrc-L41
+    " map < :javascript TreeStyleTabService.promoteCurrentTab()<CR>
+    " map > :javascript TreeStyleTabService.demoteCurrentTab()<CR>
+    " map gz :javascript togglecollapse()<CR>
+
+    " https://github.com/vimperator/vimperator-labs/issues/547
+    map -builtin gs :javascript togglestatusline()<CR>
+""" }}}
+""" Firefox settings {{{
+    " General preferences, i.e. about:config entries
+    set! media.block-play-until-visible=true
+    " set! media.suspend-bkgnd-video.enabled=true
+    set! browser.urlbar.trimURLs=false
+    set! plugins.click_to_play=true
+    set! layout.spellcheckDefault=2
+    set! browser.display.show_image_placeholders=true
+    set! browser.tabs.loadDivertedInBackground=true
+    set! browser.search.context.loadInBackground=true
+    set! browser.tabs.loadBookmarksInBackground=true
+    set! browser.tabs.loadInBackground=true
+    set! security.dialog_enable_delay=0
+    set! dom.event.contextmenu.enabled=false
+    " set! xpinstall.signatures.required=false
+    set! reader.parse-on-load.enabled=false
+    set! dom.event.clipboardevents.enabled=false
+    set! browser.cache.offline.enable=true
+    set! browser.send_pings=false
+    " set! media.navigator.enabled=false
+    set! media.peerconnection.enabled=false
+    set! dom.battery.enabled=false
+    set! dom.disable_beforeunload=true
+    " set! dom.require_user_interaction_for_beforeunload=false
+    set! extensions.stylish.buttonStylesDisplay.app=submenu
+    set! extensions.stylish.buttonStylesDisplay.siteNonMatching=submenu
+    set! extensions.greasemonkey.installDelay=1
+    set! accessibility.blockautorefresh=true
+    set! beacon.enabled=false
+    set! browser.cache.disk.enable=false
+    set! browser.cache.memory.max_entry_size=-1
+    set! browser.download.useDownloadDir=false
+    set! browser.fixup.alternate.enabled=false
+    set! browser.newtabpage.enabled=false
+    " set! browser.newtabpage.enhanced=false
+    " set! browser.pocket.enabled=false
+    " set! browser.preferences.inContent=true
+    " set! browser.safebrowsing.downloads.enabled=true
+    " set! browser.safebrowsing.enabled=false
+    " set! browser.safebrowsing.malware.enabled=false
+    set! browser.search.defaultenginename=DuckDuckGo
+    set! browser.sessionstore.restore_on_demand=true
+    set! browser.showQuitWarning=true
+    set! browser.startup.page=3
+    set! browser.tabs.insertRelatedAfterCurrent=false
+    " set! datareporting.policy.dataSubmissionEnabled=false
+    set! devtools.chrome.enabled=true
+    " set! devtools.fontinspector.enable=true
+    set! dom.event.clipboardevents.enabled=false
+    " set! experiments.enabled=false
+    set! general.autoScroll=true
+    set! general.smoothScroll=false
+    set! general.warnOnAboutConfig=false
+    set! geo.enabled=false
+    set! layers.acceleration.force-enabled=true
+    set! layout.spellcheckDefault=0
+    " set! loop.enabled=false
+    " set! media.navigator.enabled=false
+    set! media.peerconnection.enabled=false
+    set! middlemouse.contentLoadURL=false
+    set! middlemouse.paste=false
+    set! network.http.pipelining.ssl=true
+    set! network.http.pipelining=true
+    set! network.http.proxy.pipelining=true
+    set! network.IDN_show_punycode=true
+    set! network.proxy.socks_remote_dns=true
+    " set! pdfjs.disabled=true
+    set! privacy.donottrackheader.enabled=true
+    set! social.remote-install.enabled=false
+    set! ui.key.menuAccessKeyFocuses=false
+    " set! social.share.activationPanelEnabled=false
+    " set! social.whitelist=
+
+    " Does not work for everything, for example html5 videos using play()
+    " - https://bugzilla.mozilla.org/show_bug.cgi?id=659285
+    " set! media.autoplay.enabled=false
+
+    """ Userstyles {{{
+        " Hide and tweak parts of Firefox tabs
+        style -name firefox_tabs chrome://* .tab-close-button { display: none !important; } .tab-text { font-size: 0.95em !important; } .tabbrowser-tabs[treestyletab-mode="vertical"] .tab-stack { min-height: 20px !important; } .tabs-newtab-button { display: none !important; }
+        " Hide 1px border at top of window
+        " https://github.com/vimperator/vimperator-labs/issues/182
+        style -name top1px chrome://* #navigator-toolbox::after { height: 0 !important; }
+
+        " Disable search in about:newtab
+        style -name newtab about:newtab #newtab-search-container { display: none !important; }
+
+        " Remove background for transparent images (.png)
+        " http://rideag.uk/#tranbg
+        " https://github.com/RiDeag/dotfiles/pull/1
+        style -name transpng * body > img.decoded, body > img.transparent { background: none !important; } body > img.decoded:hover, body > img.transparent:hover { background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAABlBMVEV7e3sAAAD2vrKOAAAAAnRSTlM7O/sqyyQAAAAfSURBVHja1c6hAQAAAAFB9l9aYwGBj5ceie4bZ0ZaKKW0AMmwXSJmAAAAAElFTkSuQmCC) !important; }
+    """ }}}
+
+    """ Extensions {{{
+        " set! extensions.update.autoUpdateDefault=false
+        " set! xpinstall.signatures.required=false
+
+        " Image Search Options (SauceNAO)
+        " set! extensions.imagesearchoptions.bgimagesearch=false
+        " set! extensions.imagesearchoptions.sitearray=SauceNAO Search|0|1|chrome://ImageSearchOptions/content/images/SauceNAO.png;;;0|1|0|1;;;1;;;http://saucenao.com/search.php;;;db=999|url=::$URL::;;;?|&;;;0;;;http://saucenao.com/search.php;;;db=999|file=::$IMGDATA::;;;?|&;;;1|||IQDB Search|0|1|chrome://ImageSearchOptions/content/images/IQDB.png;;;0|1|0|1;;;2;;;http://iqdb.org;;;url=::$URL::;;;?|&;;;0;;;http://iqdb.org/;;;file=::$IMGDATA::;;;?|&;;;1|||Google images|1|1|http://www.google.com/favicon.ico;;;1|1|1|1;;;0;;;https://www.google.com/searchbyimage;;;image_url=::$URL::;;;?|&;;;0;;;https://www.google.com/searchbyimage?&image_url=;;;image=::$IMGDATA::;;;?|&;;;1|||GazoPa Search|0|1|chrome://ImageSearchOptions/content/images/GazoPa.png;;;0|1|0|1;;;4;;;http://www.gazopa.com/search/navigate;;;key_url=::$URL::;;;?|&;;;0;;;http://www.gazopa.com/search/navigate;;;file=::$IMGDATA::;;;?|&;;;1|||Ascii2D Search|0|1|chrome://ImageSearchOptions/content/images/Ascii2D.png;;;0|1|0|1;;;5;;;http://www.ascii2d.net/imagesearch/search/;;;uri=::$URL::;;;?|&;;;1;;;http://www.ascii2d.net/imagesearch/search/;;;upload[file]=::$IMGDATA::;;;?|&;;;1|||Cydral Search|0|1|chrome://ImageSearchOptions/content/images/Cydral.png;;;0|1|0|1;;;6;;;http://www.cydral.com/;;;url=::$URL::;;;#|#;;;0;;;http://www.cydral.com/;;;url=::$URL::;;;#|#;;;0|||Yandex Search|1|1|chrome://ImageSearchOptions/content/images/Yandex.png;;;0|1|0|1;;;7;;;http://images.yandex.ru/yandsearch;;;rpt=imagedups|img_url=::$URL::;;;?|&;;;0;;;http://images.yandex.ru/yandsearch;;;rpt=imagedups|img_url=::$URL::;;;?|&;;;0|||Baidu Search|0|1|chrome://ImageSearchOptions/content/images/Baidu.png;;;0|1|0|1;;;8;;;http://stu.baidu.com/i;;;rt=0|rn=10|ct=1|tn=baiduimage|objurl=::$URL::;;;?|&;;;0;;;http://stu.baidu.com/i;;;rt=0|rn=10|ct=1|tn=baiduimage|objurl=::$URL::;;;?|&;;;0|||Regex Search|0|1|chrome://ImageSearchOptions/content/images/Regex.png;;;0|1|0|1;;;9;;;http://regex.info/exif.cgi;;;url=::$LURL::;;;?|&;;;0;;;http://regex.info/exif.cgi;;;url=::$URL::;;;?|&;;;0|||E-Hentai Search|0|1|chrome://ImageSearchOptions/content/images/E-Hentai.png;;;0|1|0|1;;;10;;;http://gu.e-hentai.org/image_lookup.php;;;sfile=::$IMGDATA::|f_sfile=File Search|fs_similar=on|fs_exp=on;;;?|&;;;1;;;http://u.exhentai.org/image_lookup.php?from=ex;;;sfile=::$IMGDATA::|f_sfile=File Search|fs_similar=on|fs_exp=on;;;?|&;;;1|||TinEye Search|1|1|chrome://ImageSearchOptions/content/images/TinEye.png;;;1|1|1|1;;;3;;;http://www.tineye.com/search/;;;url=::$URL::;;;?|&;;;0;;;http://www.tineye.com/search/;;;image=::$IMGDATA::;;;?|&;;;1
+        " set! extensions.imagesearchoptions.usesubmenu=true
+        " set! extensions.imagesearchoptions.usesubmenuall=false
+
+        " Imagus
+        " set! extensions.Imagus.grants=[{\"op\":\"!\",\"url\":\"imgur.com\"},{\"op\":\"!\",\"url\":\"goodreads.com\"},{\"op\":\"!\",\"url\":\"dotabuff.com\"}]
+
+        " Tree Style Tab
+        " http://piro.sakura.ne.jp/xul/xpi/nightly/treestyletab.xpi
+        " https://github.com/piroor/treestyletab/pull/816
+        " set! extensions.treestyletab.autoCollapseExpandSubtreeOnAttach=false
+        " set! extensions.treestyletab.autoCollapseExpandSubtreeOnSelect=false
+        " set! extensions.treestyletab.tabbar.autoHide.mode.toggle=1
+        " set! extensions.treestyletab.tabbar.style=mixed
+
+        " NoScript
+        " Scripts globally allowed, let uMatrix handle requests
+        " Keep NoScript for checking allowed requests, @font-face etc.
+        " set! noscript.allowedMimeRegExp=FONT@https?://netdna\\.bootstrapcdn\\.com
+        " set! noscript.autoReload.allTabs=false
+        " set! noscript.collapseObject=true
+        " set! noscript.notify=false
+        " set! noscript.doNotTrack.enabled=false
+        " set! noscript.global=true
+        " set! noscript.showAbout=false
+        " set! noscript.showAllowPage=false
+        " set! noscript.showBlockedObjects=false
+        " set! noscript.showDistrust=false
+        " set! noscript.showGlobal=false
+        " set! noscript.showRecentlyBlocked=false
+        " set! noscript.showRevokeTemp=false
+        " set! noscript.showTemp=true
+        " set! noscript.showTempAllowPage=false
+        " set! noscript.showTempToPerm=false
+        " set! noscript.showUntrusted=false
+        " set! noscript.smartClickToPlay=false
+        " set! noscript.stickyUI.liveReload=true
+
+        " uMatrix
+        " https://github.com/gorhill/uBlock/issues/112
+        " https://github.com/gorhill/uMatrix/issues/288
+        " set! extensions.umatrix.forceLegacyToolbarButton=true
+
+        " autoproxy
+        set! extension.autoproxy.customProxy="1081;;1081;socks$8118;;8118;"
+
+        " Flashgot
+        set! flashgot.defaultDM="aria2L"
+        set! flashgot.media.dm="mpv"
+        set! flashgot.dmsopts.mpv.showInContextMenu=true
+        set! flashgot.dmsopts.aria2c.showInContextMenu=true
+        set! flashgot.dmsopts.aria2L.showInContextMenu=true
+        set! flashgot.dmsopts.aria2Ln.showInContextMenu=true
+        set! flashgot.dmsopts.aria2R.showInContextMenu=true
+        set! flashgot.dmsopts.aria2Rn.showInContextMenu=true
+        set! flashgot.custom="aria2c,aria2L,aria2Ln,aria2H,aria2H,aria2R,aria2Rn,mpv,echo"
+        set! flashgot.custom.aria2c.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2c.args="-b aria2c --bo 0 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.aria2L.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2L.args="-b aria2rpc --bo 0 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.aria2Ln.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2Ln.args="-b aria2rpc --bo 1 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.aria2H.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2H.args="-b aria2rpc --bo 2 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.aria2Hn.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2Hn.args="-b aria2rpc --bo 3 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.aria2R.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2R.args="-b aria2rpc --bo 4 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.aria2Rn.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.aria2Rn.args="-b aria2rpc --bo 5 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.mpv.exe="/home/e/.bin/downloader.py"
+        set! flashgot.custom.mpv.args="-b mpv --bo 0 [--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+        set! flashgot.custom.echo.exe="/home/e/.bin/echoArguments.py"
+        set! flashgot.custom.echo.args="[--comment COMMENT] [--referer REFERER] [--cookie COOKIE] [--folder FOLDER] [--fname FNAME] [--headers HEADERS] [--post POST] [--rawpost RAWPOST] [--ulist ULIST] [--ufile UFILE] [--cfile CFILE] [--userpass USERPASS] [--ua UA] [URL]"
+
+
+        """ }}}
+""" }}}
+""" pentadactyl
+    " General settings
+    " set complete="slSth"
+    set incfind
+    set hlfind
+    set findcase=smart
+
+    set guioptions='nrs'
+    set novisualbell
+    set wildmode="full"
+    set defsearch="duckduckgo"
+    set editor="urxvtc -e vim"
+    " set focuscontent
+    set hintkeys="asdfghjkl"
+    " set newtab="addons,downloads,extoptions,help,prefs"
+    " set status="input,location,bookmark,tabcount,ssl"
+    set suggestengines="duckduckgo"
+    set titlestring=""
+    " set toolbars="nonavigation"
+    set urlseparator=""
+    " https://superuser.com/questions/725036/how-to-copy-text-from-pentadactyl-to-system-clipboard
+    js editor.defaultRegister="+"
+    " set flashblock
+
+    " prev next page
+    set nextpattern='^\s*[下后][一]?[页张个篇章节步]\s*[>»]?$','^Next [>»]','^Next »','\bnext\b',^>$,'^(>>|»)$','^(>|»)','(>|»)$','\bmore\b'
+    set previouspattern='^\s*[<«]?[上前][一]?[页张个篇章节步]\s*$','[<«] Prev$','« Prev$','\bprev(ious)?\b',^<$,'^(<<|«)$','^(<|«)','(<|«)$'
+    " insert mode delete forwardly and backwardly
+    map -modes=i <A-k> -js goDoCommand("cmd_deleteCharForward");
+    map -modes=i <A-j> -js goDoCommand("cmd_deleteCharBackward");
+
+    " open selected
+    " map t -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.open(str, {where: dactyl.NEW_TAB}):CommandExMode().open("tabopen ")
+    " map o -js str=DOM.stringify(buffer.focusedFrame.getSelection()); str!=""?dactyl.open(str, {where: dactyl.CURRENT_TAB}):CommandExMode().open("open ")
+    " 按<count>G到达本页内的第几楼。兼容翻页脚本。用途之一，打开自己的帖子，按2G自动滚到2楼，再往上滚动一点就能点击「编辑」了，免去不断滚滑轮。
+    set linenumbers+=github.com:'.blob-line-code .line'
+    " 论坛楼层，小说脚本，uAutoPagerize，Super_preloader
+    " 其中 论坛楼层 优先级高于 翻页脚本
+    set linenumbers+=*:'#postlist>div[id^="post_"]'
+    set linenumbers+=*:'#mynovelreader-content>*,.autopagerize_page_info,.sp-separator'
+
+    " Commands & tweaks
+    " toggle javascript and images
+    command! togglejs -js (function() { var p = "javascript.enabled"; prefs.set(p, !prefs.get(p)); dactyl.echo(p+" is now set to "+prefs.get(p)+"\n") })()
+    command! toggleimg -js (function() { var p = "permissions.default.image"; prefs.set(p, prefs.get(p)==1 ? 2 : 1); dactyl.echo(p+" is now set to "+prefs.get(p)+"\n") })()
+    javascript group.mappings.add([modes.INSERT], ["<C-S-i>"], "Launch the external editor.", function() { editor.editFieldExternally(); })
+    command! ydl silent js io.run("youtube-dl.sh", [buffer.URL])
+    " command! ydl js dactyl.execute('silent !youtube-dl.sh '+buffer.URL)
+    command! mpv -description "play current page in mpv" silent js io.run("mpv.sh", [buffer.URL])
+    command! push -description "push current page to email" silent js io.run("senderWrapper.sh", [buffer.URL, buffer.title])
+    command! test js dactyl.execute('silent run ~/test.sh '+buffer.URL)
+    command! alltabs -description "show all tabs" js allTabs.open();
+    command! tabnextto -nargs=1 -complete=url :js tabnextto('<args>')
+    command! backgroundimage :javascript let (doc = content.document) let (m = doc.defaultView.getComputedStyle(doc.body, '').backgroundImage.match(/url\s*\(\s*['"](.+)['"]\s*\)/)) m ? dactyl.open(m[1], dactyl.NEW_TAB) : dactyl.echoerr('background image not found')
+    command! pocket -description "Save to Pocket" open javascript:(function(){var%20e=function(t,n,r,i,s){var%20o=[1198023,2796434,2191626,1183506,2311222,7228075,3639410,4677956,2627351,3205103];var%20i=i||0,u=0,n=n||[],r=r||0,s=s||0;var%20a={'a':97,'b':98,'c':99,'d':100,'e':101,'f':102,'g':103,'h':104,'i':105,'j':106,'k':107,'l':108,'m':109,'n':110,'o':111,'p':112,'q':113,'r':114,'s':115,'t':116,'u':117,'v':118,'w':119,'x':120,'y':121,'z':122,'A':65,'B':66,'C':67,'D':68,'E':69,'F':70,'G':71,'H':72,'I':73,'J':74,'K':75,'L':76,'M':77,'N':78,'O':79,'P':80,'Q':81,'R':82,'S':83,'T':84,'U':85,'V':86,'W':87,'X':88,'Y':89,'Z':90,'0':48,'1':49,'2':50,'3':51,'4':52,'5':53,'6':54,'7':55,'8':56,'9':57,'\/':47,':':58,'?':63,'=':61,'-':45,'_':95,'&':38,'$':36,'!':33,'.':46};if(!s||s==0){t=o[0]+t}for(var%20f=0;f<t.length;f++){var%20l=function(e,t){return%20a[e[t]]?a[e[t]]:e.charCodeAt(t)}(t,f);if(!l*1)l=3;var%20c=l*(o[i]+l*o[u%o.length]);n[r]=(n[r]?n[r]+c:c)+s+u;var%20p=c%(50*1);if(n[p]){var%20d=n[r];n[r]=n[p];n[p]=d}u+=c;r=r==50?0:r+1;i=i==o.length-1?0:i+1}if(s==331){var%20v='';for(var%20f=0;f<n.length;f++){v+=String.fromCharCode(n[f]%(25*1)+97)}o=function(){};return%20v+'5494157aa2'}else{return%20e(u+'',n,r,i,s+1)}};var%20t=document,n=t.location.href,r=t.title;var%20i=e(n);var%20s=t.createElement('script');s.type='text/javascript';s.src='https://getpocket.com/b/r4.js?h='+i+'&u='+encodeURIComponent(n)+'&t='+encodeURIComponent(r);e=i=function(){};var%20o=t.getElementsByTagName('head')[0]||t.documentElement;o.appendChild(s)})()
+    " command! capture -description "org capture" :javascript location.href="org-protocol://capture?template=c&url="+encodeURIComponent(location.href)+"&title="+encodeURIComponent(document.title)+"&body="+encodeURIComponent(window.getSelection())
+    command! capture -description "org capture" :javascript location.href="org-protocol://capture?template=c&url="+encodeURIComponent(buffer.URL)+"&title="+encodeURIComponent(buffer.title)+"&body="+encodeURIComponent(buffer.focusedFrame.getSelection())
+    command! org-todo -description "org todo" :js orgCapture('t')
+    command! org-capture -description "org capture" :js orgCapture('c')
+    command! org-wiki -description "org wiki" :js orgCapture('w')
+    command! org-bookmark -description "org bookmark" :js orgCapture('b')
+
+    " autocmds
+    " auto pin gmail, feedly
+    " autocmd PageLoadPre mail.google.com js if(!getBrowser().mCurrentTab.pinned) dactyl.execute('pintab')
+    " autocmd PageLoadPre gmail.com js if(!getBrowser().mCurrentTab.pinned) dactyl.execute('pintab');
+    " autocmd PageLoadPre feedly.com js if(!getBrowser().mCurrentTab.pinned) dactyl.execute('pintab');
+
+    " passkeys
+    set passkeys=feedly.com:j,k,n,p,o,v,m,x,b,c,s,?,shift+j,gt,ga,gf,gl,gi,go,r,<Esc>
+
+
+    " Abbreviations
+    cabbrev -javascript TITLE buffer.title
+    cabbrev -javascript URI buffer.URI
+
+    abbreviate enja https://translate.google.com/#en/ja/
+    abbreviate enno https://translate.google.com/#en/no/
+    abbreviate jaen https://translate.google.com/#ja/en/
+    abbreviate jano https://translate.google.com/#ja/no/
+    abbreviate noen https://translate.google.com/#no/en/
+    abbreviate noja https://translate.google.com/#no/ja/
+    abbreviate deen https://translate.google.com/#de/en/
+    abbreviate deno https://translate.google.com/#de/no/
+""" }}}
+""" Colorscheme based off darkness.vimp {{{
+   "  highlight Bell border: 0 none; background-color: #191919;
+   "  highlight CmdLine background: #191919; color: #afafaf; font-size: 9pt;
+   "  highlight CompDesc color: #c6c6c6; width: 50%; font-size: 9pt;
+   "  highlight CompItem[selected] background: #666666; color: #afafaf;
+   "  highlight CompResult width: 45%; overflow: hidden;font-size: 9pt; font-family: monospace; font-weight: normal;
+   "  highlight CompTitle color: #afafaf; background: #191919; font-weight: bold;
+   "  highlight CompTitle>* padding: 0 .5ex;
+   "  highlight ContentSeparator border-top: 1px solid #454545; display: -moz-box;
+   "  highlight ErrorMsg color: #ffffff; background: red; font-weight: bold;
+   "  highlight Filter font-weight: bold;color: #afafaf;
+   "  highlight FrameIndicator background-color: #191919; opacity: 0.5; z-index: 999; position: fixed; top: 0; bottom: 0; left: 0; right: 0;
+   "  highlight Function color: lightgreen; background: #191919;
+   "  highlight Hint font-family: monospace; font-size: 14px; font-weight: bold; text-transform: uppercase; color: white; background-color: red; border-color: ButtonShadow; border-width: 0px; border-style: solid; padding: 0px 1px 0px 1px;
+   "  highlight HintActive background: blue; color: #f6e9e9;
+   "  highlight HintElem background-color: #191919; color: #f6e9e9;
+   "  highlight InfoMsg color: #afafaf; background: #191919;
+   "  highlight LineNr color: #afafaf; background: #191919;
+   "  highlight ModeMsg color: #afafaf; background: #191919;
+   "  highlight MoreMsg color: #afafaf; background: #191919;
+   "  highlight NonText color: lightblue; min-height: 16px; padding-left: 2px;
+   "  highlight Normal color: #afafaf; background: #191919;
+   "  highlight Number color: tan; background: #191919
+   "  highlight Question color: #ffffff; background: #191919; font-weight: bold;
+   "  highlight StatusLine color: #F1F1E0; background: #191919; font-size: 9pt;
+   "  highlight String color: #191919; background: #afafaf;
+   "  highlight Tag color: #191919; background: #afafaf;
+   "  highlight Title color: #191919; background: #afafaf; font-weight: bold;
+   "  highlight URL text-decoration: none; color: lightblue; background: inherit;
+   "  highlight WarningMsg color: red; background: #191919;
+""" }}}
+
+" Functions
+javascript <<EOF
+
+// https://github.com/FRIGN/soap
+// let soap decide which application to run based off url
+// if query is not an url let firefox decide what do to
+function soap(query) {
+    if(typeof query === "undefined") {
+        selection = content.getSelection().toString()
+
+        if(selection.length < 1) {
+            query = buffer.URL;
+        } else {
+            query = selection;
+        }
+    }
+
+    if(!query.match(/^https?/)) {
+        dactyl.open(selection, dactyl.NEW_TAB);
+        return;
+    }
+
+    dactyl.execute("silent !/usr/local/bin/soap " + query + " &", null, true);
+}
+// https://www.reddit.com/r/linux/comments/3xfcsb//cy5d4ek
+hints.addMode("P", "Open with SOAP:", (elem, loc) => soap(loc));
+EOF
+
+javascript <<EOF
+
+// toggle Tree Style Tab subtree collapse
+function togglecollapse() {
+    if(gBrowser.treeStyleTab.isSubtreeCollapsed(TreeStyleTabService.getRootTab(gBrowser.selectedTab))) {
+        gBrowser.treeStyleTab.collapseExpandSubtree(TreeStyleTabService.getRootTab(gBrowser.selectedTab), false, true)
+    } else {
+        gBrowser.treeStyleTab.collapseExpandSubtree(TreeStyleTabService.getRootTab(gBrowser.selectedTab), true, true)
+    }
+}
+EOF
+
+javascript <<EOF
+function orgCapture(template) {
+    cmd = 'emacsclient';
+    selection = encodeURIComponent(buffer.focusedFrame.getSelection());
+    title = encodeURIComponent(buffer.title);
+    url = encodeURIComponent(buffer.URL);
+    args = cmd + ' -n -c ' + '"org-protocol://capture?template=' + template + '&url=' + url + '&title=' + title + '&body=' + selection + '"';
+    dactyl.execute('silent !' + args);
+}
+EOF
+
+javascript <<EOF
+
+function togglestatusline() {
+    if (['auto', 'visible'].indexOf(options['statuslinevisibility']) >= 0) {
+        options['statuslinevisibility'] = 'hidden'
+    } else {
+        // or 'visible'
+        options['statuslinevisibility'] = 'auto'
+    }
+}
+EOF
+
+javascript <<EOF
+        function tabnextto(url) {
+                let n = gBrowser.tabContainer.selectedIndex;
+                dactyl.execute(':tabopen ' + url);
+                dactyl.execute(':tabmove ' + (n + 2));
+        }
+EOF
+
+
+""" helper scripts
+
+source! $HOME/.pentadactyl/dactylrc.local
+source! $HOME/.pentadactyl/dactylrc.after
+
+" left hand only
+map -builtin xa gT
+map -builtin xd gt
+
+

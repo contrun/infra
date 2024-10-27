@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>subscene</os:ShortName>
+<os:Description>Subscene</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB/0lEQVQ4jW2SO28aQRSF52/MnfkHdv4EWsMKG2eFDSy72Lws5LWIQQ4xGEyKyJIrKufRI+EiUhorkgvSochSmlhp3KRxKheWgoRIe1LMzrB+jHQ11XfOmXOHycJbREf4fUj/GNLrQea7kLkOhNtRd+YNZKYFsXEASjch0g0wA+lbg+4RpHsEkW2H04LYfA25uYCFsw8m/P4T1xc773D+7QcA4O/sH0bjKyxv90DppoKdfYiXddD6nkog/WPlGo6Gb+/ucXt3DwD4+v2ncZXOq4iA13sYO9eBPjry6fACy9s95ezUFZwKQKkgFNBlZduQuY5xHY2vHrxXu9L6HsTaLsRaDSwKi2wbMtNCMBiaFL9+/8GSd2hASgUKXq2Bkjtgwg3hcEW65fanz09FUgHEas3AZFfAorDYOFATRm5/ODcik+ubCFwF2RWQXVYCMtOC1OCj9yYbJ0Yk2TgBJavgdhlkl0HxIlj0Z1G6iSXvEB+/jHE6vAiL2sXk+gYA4HYHCrTLoEQJfGUL7HHL+f6ZcRxdTjC6nAAAprM5KFECxYsG5itbYAZ26pDhfjvvR5jO5kZoOpur+PEiKF4EjyuYWwWw5z6HLsvtDlTsRMm4a5BbBfBYHkw49Wf3S3YF3K4aWEcmywdZPngsD7I8sMWvWsDcrpqiTGyrEMIeeCxv5j91Fyk7QMfG7QAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>https://subscene.com</SearchForm>
+<os:Url type="text/html" method="GET" template="https://subscene.com/subtitles/title" resultDomain="subscene.com">
+  <os:Param name="q" value="{searchTerms}"/>
+  <os:Param name="l" value=""/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>googleplay</os:ShortName>
+<os:Description>Search the Google Play for Android applications</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAe5JREFUOI2t0k9IVFEUx/Hv/eN7M6PvzRt0dFUIrQI3hWFLCdcxYO0KbJsEbbKFgc6mlZBuazEu+kv4ZztIzVCKVJugFuFY82ihSOM42EyOTd3XwkkzsTQ6cLhw4Xz4ce4F4GR62utMT3v8Q0mA4nNS1UXyZ2cnh8/PTxwKkgBWk/JqX7RX/KiHPDvIX33zuO9wgKOxHUW5YrG8FPI826RuLj7K3/IfJg4E2I7CdjSWoylshMmtOMQjpj0WMlMPPt3PTK/d6/4LoOspNLarWdps4nUhRjxsaA6Z7qhlMi9XU1PB8PX2fYGtFPV2FR9qLnNrrbSEDXG+0THpJ3DIB7cHUsHdAW834CpsV2+3VU/yzsTILDdzbMInvLkBsQBc+ogG+eDJtQSA/plAKIHUAlk/hRJENr/SeeMpFVUg1NMGkQAiQBiQgb8DuHuB0EaNc0NpWv1VKmKdhvkqbu/RElYwRgOj4tRI6TcApJJIBU0rVXoGZ2l5XyKQCoOk+rY47l44khRdI/6vS9QAVqMCsXURzVU4c+UVbuUzRkhMILPfhXWpLTPj0zWz5xk1sD3s5Kqc7l9AVwxGqKwROtnx7E52vz+wAwCNCzVO9C+hyvhGqmT33OD4nwZ3AeGcKR2/vF6SZZnsfXFx9CCD/61+AGIcpbpLqQ1sAAAAAElFTkSuQmCC</os:Image>
+<SearchForm>https://play.google.com</SearchForm>
+<os:Url type="text/html" method="GET" template="https://play.google.com/store/search?q={searchTerms}&amp;c=apps" resultDomain="play.google.com">
+</os:Url>
+</SearchPlugin>

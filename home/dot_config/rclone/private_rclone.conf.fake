@@ -1,0 +1,17 @@
+# Fake remote storages to make command running rclone totally from command line easier
+# rclone --no-check-certificate  mount --webdav-url https://192.168.31.109:8181/ --webdav-user e --webdav-pass "$(echo "password" | rclone obscure -$)" webdav:/ /mnt/rclone/webdav
+
+[sftp]
+type = sftp
+
+[webdav]
+type = webdav
+
+[s3]
+type = s3
+
+[ftp]
+type = ftp
+
+[hdfs]
+type = hdfs

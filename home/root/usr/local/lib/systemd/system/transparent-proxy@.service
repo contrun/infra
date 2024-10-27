@@ -1,0 +1,23 @@
+[Unit]
+Description=Transparent Proxy with v2ray or shadowsocks
+After=network.target
+Wants=network.target
+BindsTo=clean-dns.service
+After=clean-dns.service
+
+[Service]
+Type=simple
+LimitNOFILE=102400
+EnvironmentFile=/opt/transparent-proxy/conf.d/%i-env
+ExecStartPre=/opt/transparent-proxy/transparent-proxy pre_start
+ExecStart=/opt/transparent-proxy/transparent-proxy start
+ExecStartPost=/opt/transparent-proxy/transparent-proxy post_start
+ExecStopPost=/opt/transparent-proxy/transparent-proxy post_stop
+
+Restart=on-failure
+# Don't restart in the case of configuration error
+RestartPreventExitStatus=23
+
+[Install]
+WantedBy=multi-user.target
+DefaultInstance=default

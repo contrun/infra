@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>opensubtitles</os:ShortName>
+<os:Description>Subtitles free download for DivX movies, search in many languages from a multi-language website. Thousands of translated subtitles for XviD movies and TV serials</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAEgAAABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAAAAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACqqqr///////+qqqoAAAAAAADMzMzu7u7///////9VVVUAAAAAAAAAAAAAAAB3d3eZmZkAAAAAAACZmZmIiIgAAACIiIgAAAAAAABERETd3d0AAAAAAAAAAAAAAADu7u4REREAAAAAAAARERHu7u4AAABERET////////d3d0zMzMAAAAAAAAAAAAAAADd3d0iIiIAAAAAAAARERHd3d0AAADd3d1EREQAAAAAAAAAAAAAAAAAAAAAAAAAAAB3d3eZmZkAAAAAAACqqqp3d3cAAADMzMxEREQAAAARERHd3d0AAAAAAAAAAAAAAAAAAACZmZn///////+qqqoAAAAAAAAiIiLu7u7////////u7u4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAAAAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAD///////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</os:Image>
+<SearchForm>http://www.opensubtitles.org</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.opensubtitles.org/en/search2/moviename-{searchTerms}/sublanguageid-all" resultDomain="opensubtitles.org">
+</os:Url>
+<os:Url type="application/rss+xml" method="GET" template="http://www.opensubtitles.org/en/search2/moviename-{searchTerms}/sublanguageid-all/rss_2_00" resultDomain="opensubtitles.org">
+</os:Url>
+<os:Url type="application/atom+xml" method="GET" template="http://www.opensubtitles.org/en/search2/moviename-{searchTerms}/sublanguageid-all/atom_1_00" resultDomain="opensubtitles.org">
+</os:Url>
+<os:Url type="application/xml" method="GET" template="http://www.opensubtitles.org/en/search2/moviename-{searchTerms}/sublanguageid-all/xml" resultDomain="opensubtitles.org">
+</os:Url>
+<os:Url type="application/xml" method="GET" template="http://www.opensubtitles.org/en/search2/moviename-{searchTerms}/sublanguageid-all/simplexml" resultDomain="opensubtitles.org">
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://www.opensubtitles.org/libs/suggest.php?format=json&amp;MovieName={searchTerms}&amp;SubLanguageID=all" resultDomain="opensubtitles.org">
+</os:Url>
+</SearchPlugin>

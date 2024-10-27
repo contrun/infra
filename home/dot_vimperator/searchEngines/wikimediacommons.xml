@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>wikimediacommons</os:ShortName>
+<os:Description>Wikimedia Commons</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/vnd.microsoft.icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAN1wAADdcBQiibeAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAKoSURBVDiNjZNLaJRnFIaf75vvy2UGTWr8NYkxl0IFUYkNXSSZQNWFWlxIEVy1FLLo0i4adddVXRnS4kJwYxci2GaRTWlSFGKFGRXNmFBF62VMO4TENBdjMv9k5p//Oy4SLzgqHs7yPc95eTlHiQjvqniPbVYRzuBoR+FQDEvId4neIPNCY945DayNVff/8NUvn9XXNJMv5hhKnTvYP3ymHmj/IMBSbmHjjP8fycxv+MEzGqtatUI1vK7R7wM4J32XUv3Li/l5imGBkbtXlsMw/PF1jXozg3iP3aM0Z8XRBFDr1fl7Og9EnTguXx30p/6fjAIozb/i6C4BdB2z6QOfH27ZUFNL0QUELs/tycs4J2zdGEerCADTM1P8df3PxyUZiKPF8zyGHpwGFLC6QCCRuYA4QQQ6mw4hjhYT77GN2qiBWFnV5sXc0xMAgfKx5foVYKURB2vLPbxoM8auODE6ws/fH+77dHtjhxp5OHzywpWf/IIsRk25Rq0CRFY4UVNNndkmqZFRf3YuWaYUS0aE3RP5MXX3/iCOgu3Y1WYfL90sdSDgxRoYTY5mZ2anjwC/AqEBdM4tMJ4dwYs1YiOGSBkYrVHqlQNxoC34OV8BdxK9gQ+guo7bwdYdrXu92nU6nR7Pzc/PSXxfazTj30IpRaWpIqbX4UQoBDkWJlRwLzVeLBTyGs2UcUX5duzvsfPqNpvDovQhnBIdELGaWFk1hclYmLx2fxmFbNm5qXJNvdi2DQ1WAsO1P/5petshyf6v25gJ0nxUUUeiP531s/kvAcor7MDOL2pjz3JzVKpqUoMTpb8QsSqdeTT98fomjyDv8LP5aKI3uAgQP2orCkGAVRVMZxbQhnQJIAzkm3s3Js6GSfkEQEd4+bpa8+TW71P1ANqoB65I93OA2DgV+Z+omgAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://commons.wikimedia.org/wiki/Special:Search</SearchForm>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://commons.wikimedia.org/w/api.php" resultDomain="commons.wikimedia.org">
+  <os:Param name="action" value="opensearch"/>
+  <os:Param name="search" value="{searchTerms}"/>
+</os:Url>
+<os:Url type="text/html" method="GET" template="http://commons.wikimedia.org/wiki/Special:Search" resultDomain="commons.wikimedia.org">
+  <os:Param name="search" value="{searchTerms}"/>
+  <os:Param name="sourceid" value="Mozilla-search"/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,90 @@
+# Run in non-interactive mode
+auto = true
+batch = true
+
+# Propagate last modification time
+times = true
+
+# Prefer last modified files, but also keep conflicted copies
+prefer = newer
+copyonconflict = true
+
+# These should be passed from the command line
+# Watch for file modifications and repeated run syncing process
+# watch = true
+# repeat = watch
+
+# Detect symlink support for windows automatically
+links = true
+
+# Ignore common temporary files
+ignore = Name temp.*
+ignore = Name *~
+ignore = Name .*~
+ignore = Name *.o
+ignore = Name *.tmp
+ignore = Name *.log
+ignore = Name .DStore
+ignore = Name .DS_Store
+ignore = Name *.output
+ignore = Name Thumbs.db
+ignore = Name Thumbs.db:encryptable
+ignore = Name Desktop.ini
+ignore = Name desktop.ini
+ignore = Name .DocumentRevisions-V100
+ignore = Name .fseventsd
+ignore = Name .Spotlight-V100
+ignore = Name .TemporaryItems
+ignore = Name .Trashes
+ignore = Name .VolumeIcon.icns
+ignore = Name .com.apple.timemachine.donotpresent
+
+# Large files
+ignore = Regex .*/.*\.gguf
+ignore = Regex .*/.*\.avd
+
+# Programming languages build artifacts files
+ignore = Regex .*/__debug_bin.*
+
+# Programming languages build artifacts directories
+ignore = Regex .*/result
+ignore = Regex .*/result-[0-9]+
+ignore = Regex .*/\.direnv
+ignore = Regex .*/\.devenv
+ignore = Regex .*/\.venv
+ignore = Regex .*/\.parcel-cache
+ignore = Regex .*/target
+ignore = Regex .*/dist
+ignore = Regex .*/dist-.*
+ignore = Regex .*/\.stack-work
+ignore = Regex .*/\.cabal-sandbox
+ignore = Regex .*/build
+ignore = Regex .*/_build
+ignore = Regex .*/Release
+ignore = Regex .*/Debug
+ignore = Regex .*/node_modules
+ignore = Regex .*/\.lake
+ignore = Regex .*/\.pnpm
+ignore = Regex .*/\.yarn
+ignore = Regex .*/\.next
+ignore = Regex .*/\.dart_tool
+ignore = Regex .*/flutter/ephemeral
+ignore = Regex .*/Flutter/ephemeral
+
+# IDE/language server temporary directories
+ignore = Regex .*/\.metals
+ignore = Regex .*/\.bloop
+ignore = Regex .*/\.idea/caches
+ignore = Regex .*/\.idea/artifacts
+ignore = Regex .*/\.idea/.*/libraries
+
+# OS trashes
+ignore = Regex .*/\.Trash-.*
+ignore = Regex .*/\$RECYCLE\.BIN
+
+# Generic temporary directories
+ignore = Regex .*/\.cache
+ignore = Regex .*/tmp
+
+# Some specific temporary directories
+ignore = Regex .*/node-data

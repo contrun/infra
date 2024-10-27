@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>devdocs</os:ShortName>
+<os:Description>DevDocs API Documentation</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABPUlEQVQ4jaXTMYrCUBDGca+3V/AksQmkshLh6QtMTCTaBAKSQvAAImhyg1RqCEYhj7iN7X8rhV0XXd3iawbm9xjmTcvzvA8RKUSEVxKG4SWKonZLRIo8zzmfzy8lz3PCMLy0ROTl5mtEhDtgu90ymUywbRvHcYjjmLIs/wbsdju63S6j0Yj1es1yuUQpRa/XY7/fPwem0ym+73M6nW61qqpwXZckSWia5jFg2zZpmt69lKYpSinqun4MOI7DarW6A7IsYzAYYIx5DMRxzHA4pKqqW62ua4IgYDabPR+hLEv6/T5aazabDVmWEQQBnU4H3/c5Ho/P11gUBfP5HK01WmuSJEFEsCwLz/O+rfRX4BpjDMYYmqbhcDjgui6WZaG1/hvwM0VRoJRisVi8Bzz6if87pnfPeTwef0ZR1P4C90BhbX9eDNMAAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://devdocs.io</SearchForm>
+<os:Url type="text/html" method="GET" template="http://devdocs.io/" resultDomain="devdocs.io">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

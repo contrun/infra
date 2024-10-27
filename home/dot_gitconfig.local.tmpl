@@ -1,0 +1,7 @@
+{{- if ne .githubToken "" -}}
+[url "https://{{- .githubToken -}}@github.com/"]
+	insteadOf = git@github.com:
+
+[url "https://{{- .githubToken -}}@github.com/"]
+	insteadOf = https://github.com/
+{{- end }}

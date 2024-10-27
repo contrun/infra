@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>ubuntu</os:ShortName>
+<os:Description>This OpenSearch add-on adds a custom search provider to your Firefox or Internet Explorer search bar to quickly search the Ubuntu Manpages website (manpages.ubuntu.com) using their internal search engine and view individual manpages.</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAC5UlEQVQ4jXWTX2xTZRjGf+fr4XRnbecGbAwtAkVZSLowzRwbiaZgAUk0YdywYEZ2AYgNBFTAuXAlBCVKspGYyiJkEciMNyQSwsBBijFkKpPKv22IhVTLRjLa0JYdzunpOV6MjcHguXy+93m+969k2zYTof83MD/T1f6BdjUSMGLRKgDFVxVV/YGI552NB53eihsT46WJBqnj+7clj7TsI2coPAtTFGNq495PS+o/aX3CwDJ0ZWj3uye1aHfwmUJg1jd9SI4pZjw0X6gLg93lu356TyhOQwAMh0PhJ8RCoii4mbKtx5jxUSeu1+vBzIEkyWAL7dKZ5cnvW74AkLSbf1YlPq7uxbIEgDKnDqXch2fZOgprlgNgxPtJHmpBv30ZM/nPo0+E5T1wuVJOn/r2wzGxKJxOaagVobpJfBZEqEXYehZXTT1lOzuwTYPEjqXkBq+AZYls5GijY/NLqTYrmyoBKF7VjCe4ltQPX/Hw2mmskXvYegY99jv54SSeJWuQp3nJ/toJQD49PF2YQzHf1LVfMvfHLPrfvRjxfjLn2ic1MXvhKOmuDsy78XEuN3jzFRmHbNraAxkrT/7BfUSBCzunTTKwjRHSXYexHmYe74CsGMJRUj6UOr6bWw0vUOh/E7lsFqp/5SQD56sBvK2/ULxq6zgnl74cF6o/EBkj7ncdQB/opaShGeGeiaN4NpKs4KppYMb2Q5j37pDq3DNuUOAPRKSR/p7qO9tr/xgj3bXvIxW4KHxjBe63Vo+OMXaF5JHP0f+9hnm37/EY26KVslqx6KL77aaO7NmOJoBsz7HRd0XFGkmPZnYiTGmoDYBEcx0AnmXrv3POqbwu2bZNXteUwV1Lz+v9PbWTin8E79cXsc2clWiuE84Fiy+8uOfcEqE4jfFjyuuaMhwOHRzL5HnwrNjYPm1D6xaHUzXgqWsE0AZ+q878fHiD9ld30ByK+QDkcl9MXRjsLlq5KVww77XoxPj/AVbUMuqfhgL5AAAAAElFTkSuQmCC</os:Image>
+<SearchForm>http://manpages.ubuntu.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://manpages.ubuntu.com/cgi-bin/search.py?q={searchTerms}&amp;op=&amp;cx=003883529982892832976%3A5zl6o8w6f0s&amp;cof=FORID%3A9&amp;ie=UTF-8&amp;siteurl=manpages.ubuntu.com" resultDomain="manpages.ubuntu.com">
+</os:Url>
+</SearchPlugin>

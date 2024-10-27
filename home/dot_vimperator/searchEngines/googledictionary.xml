@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>googledictionary</os:ShortName>
+<os:Description>Google Dictionary Search (English)</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAMAABILAAASCwAAAAAAAAAAAAD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2Fr7fFmc6p5hrPQ1uL6%2Bvv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2BgqcckMpo%2BU6IyWqVjcqi6wdbz9Pb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2Fr7fA6R6Q%2FSLGewdyjq9ZQXa4kNpJJWZycpsXj5u3%2B%2Fv7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2BhqccRG7whJsuAl8rZ3OLk5um8v91pcrspOZgxQpN6hrLO0%2BL4%2Bfr%2F%2F%2F%2F%2F%2F%2F%2Fq7PBHVKoiKeQFBt8UFtI9Qs2Eh8%2FEyNrj5ebO0OKIjsk5RqQlNpJ4hrP%2F%2F%2F%2F%2F%2F%2F%2BfqMcRG8E1OvYSFesDBOMBAtoICdAkKcdeYseiqM7V2N7X2eOboc1JWpz%2F%2F%2F%2Fr7fA%2FS64EB%2BoYHPcqL%2FYiJvISFekEBdwVFtkaHNESFsM8QsB2f8KqsMpue6b%2F%2F%2F%2BcpccJEbsICvAIC%2FYYG%2FYkKPcgJfUjJ%2B0zNOUlKNkBAs0AAsMGCcEbI7BPX5zn6e5ATaYCBcsSFu8QFPVLUPNLUPQZHPYvM%2FIjJ%2BolJuIgIdYbG84JDMEZJpu2vdSPmsAiK6seIt0qMvUhJ%2FVmbvNgZ%2FR3fvNUWvNKUO08QeYfItkSEtARG6eDjrr9%2Ff1PXqUxNsFPVvJaZPhha%2Fh1ffNgZvM%2FRfRCR%2FRUW%2FBUWusZHN8AAb5EUqPq7PH%2F%2F%2F9IV6U7RNF0fvh9hfiLlPepsPBNU%2FQaH%2FVUWvVaYfU1OvABA94aJqLBx9j%2F%2F%2F%2F%2F%2F%2F9terBQXb9rdOt3f%2FeJkviMlfdmbvcpLvUYHPUWGfYHCfYFD7yCjbv9%2Fv3%2F%2F%2F%2F%2F%2F%2F%2FY2%2BeFkbpYaKlNXbZUYs9ga%2BdhavNJUfdKUfggJfkKEN1HVKjr7PD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2B%2Fv7p6%2FG%2BxNeMl7xjc69IWLI2RbgrN80SGdgeLKu%2Fxtn%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F09ffa3ue1vNGQmsBqeLKYosX7%2FPz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</os:Image>
+<SearchForm>http://www.google.com/dictionary</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.google.com/webhp" resultDomain="google.com">
+  <os:Param name="#q" value="{searchTerms}"/>
+  <os:Param name="hl" value="en"/>
+  <os:Param name="tbo" value="1"/>
+  <os:Param name="tbs" value="dfn:1"/>
+  <os:Param name="fp" value="1"/>
+</os:Url>
+</SearchPlugin>

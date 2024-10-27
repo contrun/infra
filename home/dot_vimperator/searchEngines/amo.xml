@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>amo</os:ShortName>
+<os:Description>Searches addons on addons.mozilla.org</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,/9j/4AAQSkZJRgABAQEASABIAAD//gATQ3JlYXRlZCB3aXRoIEdJTVD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAATABMDASIAAhEBAxEB/8QAGQABAQADAQAAAAAAAAAAAAAAAAoFBwgJ/8QAJBAAAQQCAgEEAwAAAAAAAAAABQIDBAYBBwAICRESFBcTFiP/xAAZAQACAwEAAAAAAAAAAAAAAAAGCAIEBQf/xAAkEQACAgEEAgEFAAAAAAAAAAACAwEEBQAGERITIgcIISMyQf/aAAwDAQACEQMRAD8AvbtFmA0qs2K5WopGCVepAi9mshqblaYYgCBHyCpgpLU2ha0xh4+JIlv5Qha8NMrylCs+mMz+9gfJTseVfdjmdD7E2bDqAKSDzqoQvT48LVbnBVS6xKJqP07aWgnt729xF6XbYh2VrKwh4winJBFxjRGbmQzJ2f5WSe6oNktsf9c3ka63kOsBWNayGrZmzo1XA5+Rtb7tnXRimFh1Ilu/Wqqdke1tiMQr+IDZnIZnJf8AjI8Q7rThzdisM4iodIPEJpIo3FchGngbhg8UKQa4g6UgQn4QEVYLS0oSPyZJDZBh1mZBEKmT2VNJS/6gvnfcW1M3j9obcw+VrvK451nJCOQoscjHoS+y6vaSli2YlVa1LrrVrdC1gt5PQSzTrlO9t5XsZbRi6FSyDJYZsf1eqTWgFsYa2CJCVYVsknEIn1HqckEiQaqdjeTfom+yh2T2Iq4N9WV4dE20Fd6ZYoakLUjLZOs22rhbCKdX7cOtNEhkRx+M4zLZS5FkMPOOSa3NPiJWdz93PeSBnajQarxrkzWo/VOPW2SESrh4sdmvMBkSILQJoczCbEIzIfnpHJjYLPOlfmuKcJ6/znuV1dDfP8Xs8qVM8itxXoWfcBLuuPycAXPYI8h+sx7l+06S94XTAC7bfLsAl2DIN6F2iJ5H1L1nnmPYvt/Z4mdXO2etAbpWrDTrSMjG6xbAZatWMNNSpUMuBOwJAsuMlpQpC1Rp4+VIiPpQtCstOrwlSc+mcciBPHd1Cr1F2brYZrE2mn7gTr1vYEGdt7dZgiUa1RZply12wLshfYs6zVOPVLPPmGBseoGALHyZDmJDb7OcNYccZS/gsJlXKs5TDYrJWEV7lND7+PqXHJqZFBVchVU2wlhrr36xnXuIAoVaQZJeJrKRk7dTqWSE7FWs8wBqgNyFNIFvCVvWJGJSIOXMraETAsCZE4IZmNYUb4xehwyEzCT1xqBPDP5c5n2UtcbackqeecfW4RsVpspg+Ud97ikoeJEpTrbKW47a0R2WmkOOOVF7T2sla0p21t9SlAC1KXhsctalrGBBawGtAgACIiADECIjERERERqA4+gAiAUaYAAwIANZIiIjHAiIwEQIjERERERERHERxr//2Q==</os:Image>
+<SearchForm>https://addons.mozilla.org/-/firefox/search</SearchForm>
+<os:Url type="text/html" method="GET" template="https://addons.mozilla.org/-/firefox/search" resultDomain="addons.mozilla.org">
+  <os:Param name="cat" value="all"/>
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="https://addons.mozilla.org/-/firefox/search?cat=all&amp;q={searchTerms}" resultDomain="addons.mozilla.org">
+</os:Url>
+</SearchPlugin>

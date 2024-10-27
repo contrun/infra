@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>linux</os:ShortName>
+<os:Description>This OpenSearch add-on adds a custom search provider to your Firefox or Internet Explorer search bar to quickly search the die.net site for the Linux Manpages.</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAABAmgAkJK/AGlqqAB4dq0A9fb8AFBTlwC6u9kAr6/PAOfo8QCjosYA29roAB8ffAAZFnMAKSp/AAAAAAAAAAAAAAAAAAAAAAAAAAWUSQBwAAAAaiDKi0AAAAetAACYQAAAOAAAAANAAABmAAAAAEAAAEUAAAAAQAAASwAAAABAAAClAAAAAEAAAJoAAAAMQAAACmAAAAhAAAACqtADgUAAAADXhEggQAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</os:Image>
+<SearchForm>http://www.die.net/</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.die.net/search/?q={searchTerms}&amp;sa=Search&amp;ie=ISO-8859-1&amp;cx=partner-pub-5823754184406795%3A54htp1rtx5u&amp;cof=FORID%3A9&amp;siteurl=www.die.net%2Fsearch%2F%3Fq%3D{searchTerms}%26sa%3DSearch#908" resultDomain="die.net">
+</os:Url>
+</SearchPlugin>

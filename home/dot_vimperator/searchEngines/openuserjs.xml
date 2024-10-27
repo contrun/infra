@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>openuserjs</os:ShortName>
+<os:Description>OpenUserJS</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABI0lEQVQ4jcXTMW6DMBgF4KyYC6Q0yRmKGnENS2wwlZ7AcoJgSXbCOVLEMQjmAKRDClVw1dBzvC4FoRLSIa06ePSn3+9/Hr1+vOGaM/p1oKwlIpHBcENotg/N9mG4ISKRoazlZeBwOkJfbEAog0oZFJNDMTlUykAow5wHOJyO54Gylu3l24cVtkmKXBbIZYEo2WHirFqkO0kLRCIDoQwTZ4V9VfZG3Vclps4ahDLEqegDhhtCpQzbJB0MLEp2UCmDvgz7gGb7UEyOXBaDQC4LEJPjxvavBCzvD57QhDh11mdDfK4KzB4vhFjWEnMetMjTtzXOvjYwuMamSA2iUgZicpBOke55gJf3gSJ1J4lTAX0ZYmx5GFse7hYbxKn4ucr/8hs/AUdbMZBfA/uYAAAAAElFTkSuQmCC</os:Image>
+<SearchForm>https://openuserjs.org</SearchForm>
+<os:Url type="text/html" method="GET" template="https://openuserjs.org/" resultDomain="openuserjs.org">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

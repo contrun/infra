@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>dictionary</os:ShortName>
+<os:Description>Dictionary - Reference.com bundle</os:Description>
+<os:InputEncoding>ISO-8859-1</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%10%00%00%00%10%08%02%00%00%00%90%91h6%00%00%00%14tEXtCreation%20Time%00%07%D9%06%06%13%0A%92%2CGz%00%00%00%07tIME%07%D9%06%15%0A4%09%DE%03%7B%CF%00%00%00%09pHYs%00%00%0A%F0%00%00%0A%F0%01B%AC4%98%00%00%01VIDATx%DA%95R-p%C20%14.%DCDe%EA%8A%CC%5C%E7%A8kee%258*%2B%C1%81%ACD2%D7%BAU%0E7%1C%B8!%5B%B7%CA%B8E%06%97%B8E%EE%2B%81%0Ev%ECn%E4.%BD%97%E6%7D%3F%EF%E5%F5%E84%B7%EEY%0F%D8%E2%DF%D9%03%CB%EA%DFE%2F%EE%05%DCP%08)-%93%D8%B6%1Ds%DC%CE%E3%D8%A3W%0A%2F%F3%98%2FS%E4%99__RM%02%CA%B2%D1%E0%9C%F46%FD%C1%23%E8ge-%B5~%3F%C2%86%C4i%94t%16k%DC%7D%E6S%B0%8C%8B%1Aq1%0E%8C%9F%88%92%1E%DA*%8E%87j%99%1A%9A%D1j%03%18%8CAj%B6%AE%99%90%A0%3B(%ED%12%1B%DF%13%C0%2C%D8-%92%08%C1%9E%89%7C%5B%8F%23o%1E%0D%D9Ay.Y%D7%BC%AC%18%E7%BC%05%B8%C4a%DA%D2Z%5E%C2%C0%F7%BCo%86%94D%AD%B1%DD%8Eq%E3%AA%7D%B8%CDbd%E4%5E%3F%D8%AE%11%7B%AEhVv0p%9Bl%D3%A5%93%82%FFD%A9k'%BEg%90%B8%03%98%1Ft%3E%09%1Eg%C5%E5(%B4%0A(%B1%A9Z%3F%D9%A6B%E3%12%FF%0A%FCkpz%F6%DF%C3%97%86%3E%14%D0%E5%AE%BC%93B%F7%EC%5Dg%B1%40o%02%7F%40*~%0B%80J%8C%EF%B68)%85P%08%96i%90'a%B8R%9D%C879%84%AAo%F2%92%DFr%00%00%00%00IEND%AEB%60%82</os:Image>
+<SearchForm>http://dictionary.reference.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://dictionary.reference.com/browse/{searchTerms}" resultDomain="dictionary.reference.com">
+</os:Url>
+</SearchPlugin>

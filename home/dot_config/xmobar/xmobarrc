@@ -1,0 +1,139 @@
+Config
+  { font = "xft:Source Han Sans:pixelsize=16:antialias=true:hinting=true",
+    additionalFonts = ["xft:FontAwesome:pixelsize=16:antialias=true:hinting=true", "xft:la-solid-900:pixelsize=16:antialias=true:hinting=true"],
+    borderColor = "black",
+    border = TopB,
+    -- , bgColor = "black"
+    -- , fgColor = "grey"
+    alpha = 200,
+    position = Top,
+    textOffset = -1,
+    iconOffset = -1,
+    lowerOnStart = True,
+    pickBroadest = False,
+    persistent = False,
+    hideOnStart = False,
+    iconRoot = ".",
+    allDesktops = True,
+    overrideRedirect = True,
+    commands =
+      [ Run StdinReader,
+        -- , Run Weather "EGPF" ["-t","<station>: <tempC>C",
+        --                       "-L","18","-H","25",
+        --                       "--normal","yellow",
+        --                       "--high","red",
+        --                       "--low","lightblue"] 36000
+        Run
+          DynNetwork
+          [ "-L",
+            "1000",
+            "-H",
+            "10000",
+            "--normal",
+            "yellow",
+            "--high",
+            "red",
+            "-t",
+            "<fn=1>\xf0ab</fn><rx>K<fn=1>\xf0aa</fn><tx>K"
+          ]
+          10,
+        Run
+          MultiCpu
+          [ "-t",
+            "<fn=1>\xf085</fn><total>%",
+            "-L",
+            "3",
+            "-H",
+            "50",
+            "--normal",
+            "yellow",
+            "--high",
+            "red"
+          ]
+          10,
+        Run
+          Memory
+          [ "-t",
+            "<fn=1>\xf1fe</fn><usedratio>%",
+            "-L",
+            "40",
+            "-H",
+            "75",
+            "--normal",
+            "yellow",
+            "--high",
+            "red"
+          ]
+          10,
+        Run
+          Volume
+          "default"
+          "Master"
+          [ "-t",
+            "<status>",
+            "--",
+            "--on",
+            "<fc=#859900><fn=1>\xf028</fn><volume></fc>",
+            "--onc",
+            "#859900",
+            "--off",
+            "<fc=#dc322f><fn=1>\xf026</fn>MUTE</fc>",
+            "--offc",
+            "#dc322f"
+          ]
+          1,
+        -- Run
+        --   Volume
+        --   "default"
+        --   "Master"
+        --   [ "-t",
+        --     "<fn=1>\xf028</fn> <volume>%",
+        --     "-L",
+        --     "40",
+        --     "-H",
+        --     "75",
+        --     "--normal",
+        --     "yellow",
+        --     "--high",
+        --     "red"
+        --   ]
+        --   10,
+        Run
+          Battery
+          [ "-t",
+            "<fc=#b58900><acstatus></fc>",
+            "-L",
+            "20",
+            "-H",
+            "85",
+            "-l",
+            "#dc322f",
+            "-n",
+            "#b58900",
+            "-h",
+            "#b58900",
+            "--", -- battery specific options
+            -- discharging status
+            "-o",
+            "<fn=1>\xf242</fn><left>% (<timeleft>) <watts>",
+            -- AC "on" status
+            "-O",
+            "<fn=1>\xf1e6</fn><left>%",
+            -- charged status
+            "-i",
+            "<fn=1>\xf1e6</fn><left>%",
+            "--off-icon-pattern",
+            "<fn=1>\xf1e6</fn>",
+            "--on-icon-pattern",
+            "<fn=1>\xf1e6</fn>"
+          ]
+          10,
+        Run Date "<fn=1>\xf017</fn>%a %b %d %H:%M:%S" "date" 10,
+        -- , Run Brightness ["-t", "B <bar>"] 60
+        Run ComX "sh" ["-e", "-c", "zpool list -o capacity | tail -n -1 | xargs -r -I _ echo '<fc=#52be80><fn=1>\xf0c7</fn>_</fc>'"] "N/A" "zpool_usage" 1800
+        -- , Run Uptime [] 36000
+      ],
+    sepChar = "%",
+    alignSep = "}{",
+    template = "%StdinReader% }{ %dynnetwork% / %multicpu% / %memory% / %zpool_usage% / %default:Master% / %battery% / <fc=#ee9a00>%date%</fc>"
+  }

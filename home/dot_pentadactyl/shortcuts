@@ -1,0 +1,24 @@
+map <A-c> <Leader1>
+
+" can't remember sites I visit
+map <Leader1>m :bmarks! -T math<CR>
+map <Leader1>l :bmarks! -T later<CR>
+map <Leader1>f :tabopen https://feedly.com/i/category/1st <CR>
+map <Leader1>g :tabopen http://libgen.io/ <CR>
+map <Leader1>h :tabopen http://hn.premii.com/#/f/yesterdayTop10 <CR>
+map <Leader1>s :pocket <CR>
+
+map <A-x> <Leader2>
+map <Leader2>s :source ~/.vimperatorrc <CR>
+map <Leader2>d :downloads<CR>
+map <Leader2>a :addons<CR>
+map <Leader2>p :preferences<CR>
+map <Leader2>r :restart
+map <Leader2>m :js liberator.execute('silent !mpv.sh '+buffer.URL)<CR>
+map <Leader2>y :js liberator.execute('silent !youtube-dl.sh '+buffer.URL)<CR>
+
+map <A-v> <Leader3>
+map <Leader3>u :js util.copyToClipboard(buffer.URL, true)<CR>
+map <Leader3>t :js util.copyToClipboard(buffer.title, true)<CR>
+map <Leader3>m :js util.copyToClipboard('[' + buffer.title + '](' + buffer.URL + ')', true)<CR>
+map <Leader3>h :js util.copyToClipboard('<a href="' + buffer.URL + '">' + buffer.title + '</a>', true)<CR>

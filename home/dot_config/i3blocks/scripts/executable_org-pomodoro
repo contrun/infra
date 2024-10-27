@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# https://www.reddit.com/r/emacs/comments/5ayjjl/pomodoro_in_emacs/d9lagov/
+
+result=$(emacsclient -e '(dakra/org-pomodoro-text-time)' 2>&1)
+if grep -q -E 'org-pomodoro|No\sactive\spomodoro' <<< "$result"; then
+    :
+else
+    result=${result:1:$((${#result}-2))}
+    minutes=$(echo "$result" | cut -d'|' -f1)
+    description=${result:$((${#minutes}+1)):${#result}}
+    echo "<span color='yellow'>${description}</span> <span color='red'>${minutes} minutes</span>"
+#    echo "<span color='red'>${minutes}</span>"
+#    printf '%s\n%s\n#FF0000' "$result" "$result"
+fi

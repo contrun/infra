@@ -1,0 +1,802 @@
+# mod1=alt mod3=hyper mod4=super
+set $mod mod1+mod4
+set $altmod $mod+Control
+
+# TODO: `footclient htop` does not worki
+set $terminal wezterm
+set $terminal_with_app_id $terminal -a
+set $terminal_with_title $terminal -T
+set $reload_command swaymsg reload
+set $browser_command env MOZ_ENABLE_WAYLAND=1 firefox
+set $scratchpad_terminal_name scratchpad_terminal
+set $switch_output_command swaymsg -r -t get_workspaces | jq -r 'map(select(.visible == true) | select(.focused == false))[0].output' | xargs -n 1 -t -r swaymsg focus output
+set $laptop_output eDP-1
+
+# https://i3wm.org/docs/userguide.html#_focus_wrapping
+focus_wrapping yes
+
+# turn on mouse fosfllowing
+focus_follows_mouse no
+
+# Use Mouse+$mod to drag floating windows to their wanted position
+floating_modifier mod4
+
+# http://build.i3wm.org/docs/userguide.html#focus_on_window_activation
+focus_on_window_activation smart
+
+# default workspace layout
+workspace_layout default
+
+# Font for window titles. Will also be used by the bar unless a different font
+# is used in the bar {} block below.
+# This font is widely installed, provides lots of unicode glyphs, right-to-left
+# text rendering and scalability on retina/hidpi displays (thanks to pango).
+# font pango:DejaVu Sans Mono 8
+font pango:Source Code Pro 10
+
+default_border pixel
+
+default_floating_border none
+
+popup_during_fullscreen leave_fullscreen
+
+show_marks yes
+
+# Assume you are on workspace "1: www" and switch to "2: IM" using mod+2
+# because somebody sent you a message. You don’t need to remember
+# where you came from now, you can just press $mod+2 again to switch back to "1: www".
+workspace_auto_back_and_forth yes
+
+# window (client) colors
+# class                 border  bground text    indicator child_border
+client.placeholder      #000000 #0C0C0C #FFFFFF #000000   #0C0C0C
+
+client.background       #FFFFFF
+
+# startup applications
+exec dunst
+exec wlsunset -l 39.9 -L 116.4
+exec aw-server
+exec aw-watcher-afk
+exec aw-watcher-window
+exec_always systemctl --user import-environment DISPLAY WAYLAND_DISPLAY
+# WAYLAND_DISPLAY XDG_CURRENT_DESKTOP requried to share screen
+# https://github.com/emersion/xdg-desktop-portal-wlr/wiki/%22It-doesn't-work%22-Troubleshooting-Checklist
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+exec_always systemctl --user start foot || foot --server
+exec_always "$(dirname "$(dirname "$(realpath $(which kdeconnect-cli))")")/libexec/kdeconnectd"
+exec_always fcitx5 -d --replace
+exec_always copyq
+exec_always swaybg -m fill -i "$(shuf -n1 -e ~/Storage/wallpapers/*)"
+# exec libinput-gestures-setup start
+
+# move specific application to specific workspace
+for_window [class="Pale moon" window_role="^(?!GtkFileChooserDialog)"] floating enable
+for_window [class="Firefox" window_role="^(?!GtkFileChooserDialog)"] floating enable
+for_window [class="Luakit" window_role="^(?!GtkFileChooserDialog)"] floating enable
+for_window [instance="Browser" window_role="^(?!GtkFileChooserDialog)"] floating enable
+for_window [title=".*mpsyt$" class="^Xfce4-terminal$"] move --no-auto-back-and-forth to workspace w
+
+# for_window [app_id="(?i)$scratchpad_terminal_name"] floating enable, move to scratchpad, scratchpad show, move position 1000px 20px, mark $scratchpad_terminal_name
+
+# Run with `exec swaymsg "[con_mark=scratchpad_pyradio] scratchpad show" || $terminal_with_app_id scratchpad_pyradio`
+for_window [app_id="(?i)scratchpad.*"] exec swaymsg mark "$(swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused==true).app_id')", floating enable, move to scratchpad, scratchpad show
+
+# specific window settings
+for_window [class="Firefox"] move --no-auto-back-and-forth to workspace w
+for_window [class="Nightly"] move --no-auto-back-and-forth to workspace w
+for_window [app_id="firefox"] move --no-auto-back-and-forth to workspace w
+for_window [class="Zotero"] move --no-auto-back-and-forth to workspace r
+for_window [class="vlc"] move --no-auto-back-and-forth to workspace v
+for_window [app_id="mpv"] move --no-auto-back-and-forth to workspace v
+# for_window [app_id="org.pwmt.zathura"] move --no-auto-back-and-forth to workspace r
+for_window [app_id="calibre-gui"] move --no-auto-back-and-forth to workspace r
+for_window [app_id="org.zealdocs.Zeal"] move --no-auto-back-and-forth to workspace d
+for_window [app_id="org.keepassxc.KeePassXC"] move --no-auto-back-and-forth to workspace p
+for_window [class="mpv"] exec wmctrl -r mpv -b remove,demands_attention
+for_window [class="^floating-.*$"] floating enable
+for_window [class="Nemo" instance="^desktop_window$"] floating disable
+for_window [class="copyq"] floating enable
+for_window [title=".*mpsyt$" class="^Xfce4-terminal$"] move --no-auto-back-and-forth to workspace v
+for_window [title=".*mpsyt$" class="^Xfce4-terminal$"] focus
+for_window [title="scratchpad.*" class="^Xfce4-terminal$"] floating enable, move scratchpad
+
+for_window [title="scratchpad.*" class="^Xfce4-terminal$"] move scratchpad, scratchpad show
+for_window [title="scratchpad.*" class="^URxvt$"] floating enable, move scratchpad
+for_window [title="scratchpad.*" app_id="termite"] floating enable, move scratchpad
+for_window [title="scratchpad.*" app_id="foot"] floating enable, move scratchpad
+for_window [title="scratchpad.*" app_id="Alacritty"] floating enable, move scratchpad
+
+for_window [title="floating.*" class="^Xfce4-terminal$"] floating enable
+for_window [title="floating.*" class="^URxvt$"] floating enable
+for_window [title="floating.*" app_id="termite"] floating enable
+for_window [title="floating.*" app_id="foot"] floating enable
+for_window [title="floating.*" app_id="Alacritty"] floating enable
+
+for_window [window_role="pop-up"] floating enable
+# chrome extension popups
+# for_window [instance="^crx.*$" window_role="pop-up"]  floating enable
+# for_window [instance="^crx.*$" window_role="pop-up"]  sticky   enable
+
+for_window [shell=".*"] title_format "%title :: %shell"
+
+output "Lenovo Group Limited LEN S28u-10 VNA48A99" {
+       scale 1.4
+}
+
+output "Unknown GOOVIS_T2 0x00008800" {
+       scale 1.5
+}
+
+output "Unknown 0x5D2D 0x00000000" {
+       scale 1.2
+}
+
+output "Unknown 0x8544 0x00000000" {
+       scale 1.2
+}
+
+output "Unknown 0xC199 0x00000000" {
+       scale 1.4
+}
+
+output "Unknown 0xC199 Unknown" {
+       scale 1.4
+}
+
+output "AU Optronics 0xC199 Unknown" {
+       scale 1.4
+}
+
+output "XMI Mi 27 NU 3613700006199" {
+       scale 1.2
+}
+
+output "XMI Redmi 27 NU 3948623NN1396" {
+       scale 1.2
+}
+
+output "Technical Concepts Ltd TCL Smart TV 0x00000001" {
+       scale 3.5
+       mode 4096x2160@24Hz
+}
+
+output "XMI Redmi 27 NU 3948622Y80B61" {
+       scale 1.4
+}
+
+# start a terminal
+bindsym $mod+Return exec $terminal
+bindsym $mod+t exec swaymsg "[con_mark=$scratchpad_terminal_name] scratchpad show" || $terminal_with_app_id $scratchpad_terminal_name
+
+# kill focused window
+bindsym Mod1+F4 kill
+bindsym $mod+Escape kill
+
+# change focus
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+bindsym $mod+Shift+Left focus output left
+bindsym $mod+Shift+Down focus output down
+bindsym $mod+Shift+Up focus output up
+bindsym $mod+Shift+Right focus output right
+
+bindsym $mod+j focus child
+bindsym $mod+k focus parent
+
+# move focused window
+bindsym $altmod+Left move left
+bindsym $altmod+Down move down
+bindsym $altmod+Up move up
+bindsym $altmod+Right move right
+bindsym $altmod+Shift+Left move output left
+bindsym $altmod+Shift+Down move output down
+bindsym $altmod+Shift+Up move output up
+bindsym $altmod+Shift+Right move output right
+
+# move workspace
+bindsym $mod+F1 workspace prev
+bindsym $mod+F2 workspace next
+bindsym $mod+bracketleft workspace prev
+bindsym $mod+bracketright workspace next
+
+# function key mode
+bindsym $mod+F10 mode "fnkey"
+mode "fnkey" {
+# for chromebooks to change volume and backlight
+        bindsym F8 exec pamixer --toggle-mute && pkill -RTMIN+17 i3blocks
+        bindsym F9 exec pamixer --decrease 5 && pkill -RTMIN+17 i3blocks
+        bindsym F10 exec pamixer --increase 5 && pkill -RTMIN+17 i3blocks
+        bindsym F7 exec xbacklight -inc 10
+        bindsym F6 exec xbacklight -dec 10
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+# enter fullscreen mode for the focused container
+bindsym $mod+F11 fullscreen
+
+mode passthrough {
+        bindsym $mod+F12 mode "default"
+}
+bindsym $mod+F12 mode passthrough
+
+# next and last workspace
+# bindsym $mod+n exec swaymsg workspace number "$(($(swaymsg -t get_workspaces | jq '.[].num' | sort -rn | head -n1) + 1))"
+# bindsym $altmod+n exec swaymsg move container to workspace number "$(($(swaymsg -t get_workspaces | jq '.[].num' | sort -rn | head -n1) + 1))"
+bindsym $mod+Shift+bracketright exec swaymsg workspace number "$(swaymsg -t get_workspaces | jq '.[].num' | sort -n | tail -n1)"
+bindsym $mod+Shift+bracketleft exec swaymsg workspace number "$(swaymsg -t get_workspaces | jq '.[].num' | sort -rn | tail -n1)"
+bindsym $altmod+bracketright exec swaymsg move container to workspace number "$(swaymsg -t get_workspaces | jq '.[].num' | sort -n | tail -n1)"
+bindsym $altmod+bracketleft exec swaymsg move container to workspace number "$(swaymsg -t get_workspaces | jq '.[].num' | sort -rn | tail -n1)"
+
+# change container layout
+bindsym $mod+n layout toggle all
+
+# toggle tiling / floating
+bindsym $altmod+space floating toggle
+
+# change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# switch to workspace
+bindsym $mod+KP_1 workspace number 1
+bindsym $mod+KP_2 workspace number 2
+bindsym $mod+KP_3 workspace number 3
+bindsym $mod+KP_4 workspace number 4
+bindsym $mod+KP_5 workspace number 5
+bindsym $mod+KP_6 workspace number 6
+bindsym $mod+KP_7 workspace number 7
+bindsym $mod+KP_8 workspace number 8
+bindsym $mod+KP_9 workspace number 9
+bindsym $mod+KP_0 workspace number 0
+bindsym $mod+1    workspace number 1
+bindsym $mod+2    workspace number 2
+bindsym $mod+3    workspace number 3
+bindsym $mod+4    workspace number 4
+bindsym $mod+5    workspace number 5
+bindsym $mod+6    workspace number 6
+bindsym $mod+7    workspace number 7
+bindsym $mod+8    workspace number 8
+bindsym $mod+9    workspace number 9
+bindsym $mod+0    workspace number 0
+# h for hidden
+bindsym $mod+h    workspace h
+# w for web
+bindsym $mod+w    workspace w
+# r for reference
+bindsym $mod+r    workspace r
+# e for editor
+bindsym $mod+e    workspace e
+# d for documentation
+bindsym $mod+d    workspace d
+# q for quick workspace
+bindsym $mod+q    workspace q
+# i for ide
+bindsym $mod+i    workspace i
+# p for private
+bindsym $mod+p    workspace p
+# c for chat
+bindsym $mod+c    workspace c
+# v for video
+bindsym $mod+v    workspace v
+
+# move focused container to workspace
+bindsym $altmod+KP_1 move container to workspace number 1
+bindsym $altmod+KP_2 move container to workspace number 2
+bindsym $altmod+KP_3 move container to workspace number 3
+bindsym $altmod+KP_4 move container to workspace number 4
+bindsym $altmod+KP_5 move container to workspace number 5
+bindsym $altmod+KP_6 move container to workspace number 6
+bindsym $altmod+KP_7 move container to workspace number 7
+bindsym $altmod+KP_8 move container to workspace number 8
+bindsym $altmod+KP_9 move container to workspace number 8
+bindsym $altmod+KP_0 move container to workspace number 8
+bindsym $altmod+1    move container to workspace number 1
+bindsym $altmod+2    move container to workspace number 2
+bindsym $altmod+3    move container to workspace number 3
+bindsym $altmod+4    move container to workspace number 4
+bindsym $altmod+5    move container to workspace number 5
+bindsym $altmod+6    move container to workspace number 6
+bindsym $altmod+7    move container to workspace number 7
+bindsym $altmod+8    move container to workspace number 8
+bindsym $altmod+9    move container to workspace number 9
+bindsym $altmod+0    move container to workspace number 0
+# h for hidden
+bindsym $altmod+h    move container to workspace h
+# w for web
+bindsym $altmod+w    move container to workspace w
+# r for reference
+bindsym $altmod+r    move container to workspace r
+# e for editor
+bindsym $altmod+e    move container to workspace e
+# d for documentation
+bindsym $altmod+d    move container to workspace d
+# q for quick workspace
+bindsym $altmod+q    move container to workspace q
+# i for ide
+bindsym $altmod+i    move container to workspace i
+# p for private
+bindsym $altmod+p    move container to workspace p
+# c for chat
+bindsym $altmod+c    move container to workspace c
+# v for video
+bindsym $altmod+v    move container to workspace v
+
+
+bindsym $altmod+F1    move container to workspace prev
+bindsym $altmod+F2    move container to workspace next
+
+bindsym $altmod+Shift+d output $laptop_output toggle
+bindsym $altmod+Shift+c exec $reload_command
+
+bindsym $mod+o exec $switch_output_command
+
+# See Screen won't turn on after resume from sleep https://github.com/swaywm/sway/issues/7228
+# bindswitch --reload --locked lid:on output $laptop_output disable
+# bindswitch --reload --locked lid:off output $laptop_output enable
+
+set $mode_system (l)ock, r(e)start sway, log(o)ut, reload (c)onfig, (s)uspend, (h)ibernate, (r)eboot, (p)oweroff
+mode "$mode_system" {
+        bindsym l exec swaylock; mode  "default"
+        bindsym e restart; mode "default"
+        bindsym o exec swaymsg exit, mode "default"
+        bindsym c exec $reload_command, mode "default"
+        bindsym s exec systemctl suspend, mode "default"
+        bindsym h exec systemctl hibernate, mode "default"
+        bindsym r exec systemctl reboot, mode "default"
+        bindsym p exec systemctl poweroff, mode "default"
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bindsym $mod+XF86PowerOff mode "$mode_system"
+bindsym $mod+Pause mode "$mode_system"
+bindsym $mod+Delete mode "$mode_system"
+
+
+mode "xselection_run" {
+        bindsym space                 exec clipOpener.py -d; mode "default"
+        bindsym $mod+space            exec clipOpener.py -d; mode "default"
+        bindsym a                     exec clipOpener.py -a; mode "default"
+        bindsym b                     exec clipOpener.py -b; mode "default"
+        bindsym c                     exec clipOpener.py -c; mode "default"
+        bindsym d                     exec clipOpener.py -d; mode "default"
+        bindsym e                     exec clipOpener.py -e; mode "default"
+        bindsym f                     exec clipOpener.py -f; mode "default"
+        bindsym g                     exec clipOpener.py -g; mode "default"
+        bindsym h                     exec clipOpener.py -h; mode "default"
+        bindsym i                     exec clipOpener.py -i; mode "default"
+        bindsym j                     exec clipOpener.py -j; mode "default"
+        bindsym k                     exec clipOpener.py -k; mode "default"
+        bindsym l                     exec clipOpener.py -l; mode "default"
+        bindsym m                     exec clipOpener.py -m; mode "default"
+        bindsym n                     exec clipOpener.py -n; mode "default"
+        bindsym o                     exec clipOpener.py -o; mode "default"
+        bindsym p                     exec clipOpener.py -p; mode "default"
+        bindsym q                     exec clipOpener.py -q; mode "default"
+        bindsym r                     exec clipOpener.py -r; mode "default"
+        bindsym s                     exec clipOpener.py -s; mode "default"
+        bindsym t                     exec clipOpener.py -t; mode "default"
+        bindsym u                     exec clipOpener.py -u; mode "default"
+        bindsym v                     exec clipOpener.py -v; mode "default"
+        bindsym w                     exec clipOpener.py -w; mode "default"
+        bindsym x                     exec clipOpener.py -x; mode "default"
+        bindsym y                     exec clipOpener.py -y; mode "default"
+        bindsym z                     exec clipOpener.py -z; mode "default"
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+# resize window (you can also use the mouse for that)
+mode "resize_window" {
+        bindsym Left        resize shrink width  16 px or 5 ppt
+        bindsym Down        resize shrink height 16 px or 5 ppt
+        bindsym Up          resize grow height   16 px or 5 ppt
+        bindsym Right       resize grow width    16 px or 5 ppt
+        bindsym h           resize shrink width  16 px or 5 ppt
+        bindsym j           resize shrink height 16 px or 5 ppt
+        bindsym k           resize grow height   16 px or 5 ppt
+        bindsym l           resize grow width    16 px or 5 ppt
+        bindsym comma       resize grow height   9 px or 5 ppt; resize grow width    16 px or 5 ppt
+        bindsym period      resize shrink height 9 px or 5 ppt; resize shrink width  16 px or 5 ppt
+
+# back to normal: Enter or Escape
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+# https://www.reddit.com/r/i3wm/comments/2a1zru/some_useful_i3_mode_menus/ciqpepf/
+mode "resize_precise" {
+        bindsym h resize shrink left 1 px or 1 ppt
+        bindsym j resize shrink down 1 px or 1 ppt
+        bindsym k resize shrink up 1 px or 1 ppt
+        bindsym l resize shrink right 1 px or 1 ppt
+        bindsym Shift+H resize grow left 1 px or 1 ppt
+        bindsym Shift+J resize grow down 1 px or 1 ppt
+        bindsym Shift+K resize grow up 1 px or 1 ppt
+        bindsym Shift+L resize grow right 1 px or 1 ppt
+
+        bindsym p mode "resize"
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+# move floating window
+# https://faq.i3wm.org/question/2787/move-floating-window-with-arrows/
+
+mode "windows" {
+        bindsym Up move up 16px
+        bindsym Left move left 16px
+        bindsym Down move down 16px
+        bindsym Right move right 16px
+
+        # split in horizontal orientation
+        bindsym h split h
+        # split in vertical orientation
+        bindsym v split v
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+mode "mouse" {
+# set your three speeds here
+
+        set $slow 1
+        set $quick 10
+        set $fast 50
+
+# Mouse movement (slow/fine-tuned) -- vim keybindings
+
+        bindsym h exec ydotool mousemove_relative -- -$slow 0
+        bindsym j exec ydotool mousemove_relative 0 $slow
+        bindsym k exec ydotool mousemove_relative -- 0 -$slow
+        bindsym l exec ydotool mousemove_relative $slow 0
+
+# Mouse movement (slow/fine-tuned) -- arrow keys
+
+        bindsym Left exec ydotool mousemove_relative -- -$slow 0
+        bindsym Down exec ydotool mousemove_relative 0 $slow
+        bindsym Up exec ydotool mousemove_relative -- 0 -$slow
+        bindsym Right exec ydotool mousemove_relative $slow 0
+
+# Mouse movement (quicker) -- vim keybindings
+
+        bindsym Shift+h exec ydotool mousemove_relative -- -$quick 0
+        bindsym Shift+j exec ydotool mousemove_relative 0 $quick
+        bindsym Shift+k exec ydotool mousemove_relative -- 0 -$quick
+        bindsym Shift+l exec ydotool mousemove_relative $quick 0
+
+# Mouse movement (quicker) -- arrow keys
+
+        bindsym Shift+Left exec ydotool mousemove_relative -- -$quick 0
+        bindsym Shift+Down exec ydotool mousemove_relative 0 $quick
+        bindsym Shift+Up exec ydotool mousemove_relative -- 0 -$quick
+        bindsym Shift+Right exec ydotool mousemove_relative $quick 0
+
+# Mouse movement (fast) -- vim keybindings
+
+        bindsym Shift+$mod+h exec ydotool mousemove_relative -- -$fast 0
+        bindsym Shift+$mod+j exec ydotool mousemove_relative 0 $fast
+        bindsym Shift+$mod+k exec ydotool mousemove_relative -- 0 -$fast
+        bindsym Shift+$mod+l exec ydotool mousemove_relative $fast 0
+
+# Mouse movement (fast) -- arrow keys
+
+        bindsym Shift+$mod+Left exec ydotool mousemove_relative -- -$fast 0
+        bindsym Shift+$mod+Down exec ydotool mousemove_relative 0 $fast
+        bindsym Shift+$mod+Up exec ydotool mousemove_relative -- 0 -$fast
+        bindsym Shift+$mod+Right exec ydotool mousemove_relative $fast 0
+
+# Mouse movement (special down-right)
+
+        bindsym m exec ydotool mousemove_relative 10 10
+
+# Left Click
+        bindsym f exec ydotool click 1
+
+# Middle Click
+        bindsym d exec ydotool click 2
+
+# Right Click
+        bindsym s exec ydotool click 3
+
+# Left Click-and-drag
+        bindsym Shift+f exec ydotool mousedown 1
+
+# Middle Click-and-drag
+        bindsym Shift+d exec ydotool mousedown 2
+
+# Right Click-and-drag
+        bindsym Shift+s exec ydotool mousedown 3
+
+# Left Drag release
+        bindsym $mod+f exec ydotool mouseup 1
+
+# Middle Drag release
+        bindsym $mod+d exec ydotool mouseup 2
+
+# Right Drag release
+        # bindsym $mod+m exec ydotool mouseup 3
+
+
+# return to normal keybindings -- IMPORTANT!!
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+# this serves as the exhaustive collection of things one can do with workspaces
+mode "workspace" {
+        bindsym Left   workspace prev_on_output
+        bindsym Right  workspace next_on_output
+        bindsym Down   workspace prev
+        bindsym Up     workspace next
+
+        bindsym Tab    layout toggle all
+
+        bindsym r      mode "default"; exec i3-input -F 'rename workspace to "%s"' -P 'New name: '
+
+        bindsym comma    move workspace to output left
+        bindsym period   move workspace to output right
+
+# back to normal: Enter or Escape
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+# easy marking window http://www.slackword.net/?p=657
+mode "mark_window" {
+        bindsym 1 mark m1
+        bindsym 2 mark m2
+        bindsym 3 mark m3
+        bindsym 4 mark m4
+        bindsym 5 mark m5
+        bindsym a mark ma
+        bindsym b mark mb
+        bindsym c mark mc
+        bindsym d mark md
+        bindsym e mark me
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+
+bindsym $mod+g mode "goto_window"
+
+mode "goto_window" {
+        bindsym 1 [con_mark="m1"] focus
+        bindsym 2 [con_mark="m2"] focus
+        bindsym 3 [con_mark="m3"] focus
+        bindsym 4 [con_mark="m4"] focus
+        bindsym 5 [con_mark="m5"] focus
+        bindsym a [con_mark="ma"] focus
+        bindsym b [con_mark="mb"] focus
+        bindsym c [con_mark="mc"] focus
+        bindsym d [con_mark="md"] focus
+        bindsym e [con_mark="me"] focus
+        bindsym m [class="^mpv$"] focus; mode "default"
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bar {
+        mode hide
+        hidden_state hide
+        modifier $mod
+        position top
+        status_command i3status-rs
+        tray_output primary
+        colors {
+                separator #666666
+                background #222222
+                statusline #dddddd
+                focused_workspace #0088CC #0088CC #ffffff
+                active_workspace #333333 #333333 #ffffff
+                inactive_workspace #333333 #333333 #888888
+                urgent_workspace #2f343a #900000 #ffffff
+        }
+}
+
+# Make the currently focused window a scratchpad
+bindsym $altmod+z move scratchpad
+
+# Show the first scratchpad window
+bindsym $mod+z scratchpad show
+
+# Hides vertical and horizontal borders when there's only one window.
+# hide_edge_borders both
+hide_edge_borders none
+
+
+# window border size
+# new_window pixel 0
+
+# $mod+tab switch between the current and the previously focused one
+bindsym $mod+Tab workspace back_and_forth
+bindsym $altmod+Tab move container to workspace back_and_forth; workspace back_and_forth
+
+# chromebook keybinding, for some unknown reason, does not work
+bindsym XF86AudioMute exec pamixer --toggle-mute && pkill -RTMIN+17 i3blocks
+bindsym XF86AudioLowerVolume exec pamixer --decrease 5 && pkill -RTMIN+17 i3blocks
+bindsym XF86AudioRaiseVolume exec pamixer --increase 5 && pkill -RTMIN+17 i3blocks
+bindsym XF86MonBrightnessUp exec xbacklight -inc 10
+bindsym XF86MonBrightnessDown exec xbacklight -dec 10
+
+bindsym Mod5+F8 exec pamixer --toggle-mute && pkill -RTMIN+17 i3blocks
+bindsym Mod5+F9 exec pamixer --decrease 5 && pkill -RTMIN+17 i3blocks
+bindsym Mod5+F10 exec pamixer --increase 5 && pkill -RTMIN+17 i3blocks
+bindsym Mod5+F7 exec xbacklight -inc 10
+bindsym Mod5+F6 exec xbacklight -dec 10
+
+# rofi bindings
+bindsym Mod1+space exec rofi -show drun
+bindsym $mod+s exec rofi -show search -modi search:rofi-web-search.py -i -p "Search: "
+# bindsym $mod+f exec bemenu-run
+
+# move any window to the current workspace
+# bindsym F8 exec python ~/.config/i3/quickswitch.py
+
+mode "output" {
+        bindsym Left exec swaymsg move workspace to output left
+        bindsym Down exec swaymsg move workspace to output down
+        bindsym Up exec swaymsg move workspace to output up
+        bindsym Right exec swaymsg move workspace to output right
+        bindsym h exec swaymsg move workspace to output left
+        bindsym j exec swaymsg move workspace to output down
+        bindsym k exec swaymsg move workspace to output up
+        bindsym l exec swaymsg move workspace to output right
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+# user interface tweak mode
+mode "ui_tweak" {
+        bindsym b border toggle; mode "default"
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+# switch currently active mode
+bindsym $mod+m mode "$switch_modes"
+
+set $switch_modes (m)ouse, (r)esize, resize_(p)recise, (w)indows, mar(k), (g)oto, work(s)pace, (f)nkey, (o)utput, (u)i_tweak, (x)selection_run
+mode "$switch_modes" {
+        bindsym m mode "mouse"
+        bindsym r mode "resize_window"
+        bindsym p mode "resize_precise"
+        bindsym w mode "windows"
+        bindsym k mode "mark_window"
+        bindsym g mode "go_to_window"
+        bindsym s mode "workspace"
+        bindsym f mode "fnkey"
+        bindsym o mode "output"
+        bindsym u mode "ui_tweak"
+        bindsym x mode "xselection_run"
+
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+# opener mode, less frequently used applications
+bindsym $mod+a mode "alternative launcher"
+
+mode "alternative launcher" {
+        bindsym y exec swaymsg "[con_mark=scratchpad_pyradio] scratchpad show" || $terminal_with_app_id scratchpad_pyradio -e pyradio; mode "default"
+        bindsym u exec swaymsg "[con_mark=scratchpad_cmus] scratchpad show" || $terminal_with_app_id scratchpad_cmus -e cmus; mode "default"
+        bindsym t exec swaymsg "[con_mark=scratchpad_htop] scratchpad show" || $terminal_with_app_id scratchpad_htop -e htop; mode "default"
+        bindsym m exec swaymsg "[con_mark=scratchpad_neomutt] scratchpad show" || $terminal_with_app_id scratchpad_neomutt -e neomutt; mode "default"
+        bindsym h exec swaymsg "[con_mark=scratchpad_nnn] scratchpad show" || $terminal_with_app_id scratchpad_nnn -e nnn; mode "default"
+        bindsym x exec swaymsg "[con_mark=scratchpad_sdcv] scratchpad show" || $terminal_with_app_id scratchpad_sdcv -e sdcv; mode "default"
+        bindsym i workspace f; exec orgCapture.sh i; mode "default"
+        bindsym c workspace f; exec orgCapture.sh c; mode "default"
+        bindsym j workspace f; exec orgCapture.sh j; mode "default"
+        bindsym r exec readingNotes.py; mode "default"
+        bindsym n exec $terminal_with_title 'floating fzf live notes files' -e noting.sh; mode "default"
+        bindsym z exec $terminal_with_title 'floating fzf zotero files' -e fzfLauncher.sh zotero; mode "default"
+        bindsym w exec $terminal_with_title 'floating sway tree' -e bash -c 'nvim <(swaymsg -t get_tree | jq)'; mode "default"
+        bindsym s exec swaymsg "[con_mark=scratchpad_smos] scratchpad show" || $terminal_with_app_id scratchpad_smos -e smos; mode "default"
+        bindsym a exec $terminal_with_title 'floating fzf reading materials' -e fzfLauncher.sh reading; mode "default"
+        bindsym l exec $terminal_with_title 'floating fzf calibre library' -e fzfLauncher.sh calibre; mode "default"
+        bindsym f exec $terminal_with_title 'floating fzf zotero files' -e fzfLauncher.sh choosing; mode "default"
+        # need shell to expand `~`
+        bindsym d exec $terminal_with_title 'floating fzf downloaded files' -e sh -c "fzfLauncher.sh ~/Downloads"; mode "default"
+        bindsym o exec $terminal_with_title 'floating fzf files' -e fzfLauncher.sh; mode "default"
+        # bindsym z exec $terminal_with_title 'floating zotero files' -e zoteroOpen.sh; mode "default"
+        bindsym e exec $terminal_with_title 'floating files' -e ranger; mode "default"
+        bindsym p exec $terminal_with_title 'floating pronounce.sh' -e pronounce.sh; mode "default"
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+mode "opener" {
+        bindsym f exec $browse_command; mode "default"
+#    bindsym v exec mpv; mode "default"
+        bindsym x exec "eval `xclip -selection clipboard -o`"; mode  "default"
+#    bindsym m exec xvkbd -text '\S\CU'; exec mpv.sh $(xclip -selection clipboard -o); mode "default"
+        bindsym d exec noDisturb.sh; mode "default"
+        bindsym m exec mpvClipboard.sh; mode "default"
+        bindsym n exec networkRestart.sh; mode "default"
+#    bindsym t exec xvkbd -xsendevent -text '\S\CU'; mode "default"
+        bindsym t exec toggleTouchpad.sh tap; mode "default"
+        bindsym a exec artpip.sh tap; mode "default"
+        bindsym i exec ydotool getactivewindow getwindowname | xclip; mode "default"
+        bindsym p exec toggleTouchpad.sh; mode "default"
+        bindsym o exec openFileWithCurrentProgram.sh; mode "default"
+        bindsym v exec sleep 1 && ydotool type --clearmodifiers `xclip -selection c -out`; mode "default"
+        bindsym s exec stickyWindow.sh; mode "default"
+        bindsym e exec spacemacs; mode "default"
+        bindsym z exec zeal; mode "default"
+# bindsym z fullscreen disable; floating enable; resize set 422 240; sticky enable; move position 870 25; mode default
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+# launcher mode, favorite applications
+bindsym $mod+x mode "launcher"
+
+mode "launcher" {
+        bindsym $mod+x mode "opener"
+        bindsym w exec $browser_command; mode "default"
+        bindsym e exec env LC_CTYPE=zh_CN.UTF-8 emacsclient -c -a emacs; mode "default"
+        # bindsym s exec kupfer; mode "default"
+        bindsym d exec goldendict; mode "default"
+        bindsym a exec android-studio; mode "default"
+        bindsym c exec code; mode "default"
+        bindsym f exec pcmanfm; mode "default"
+        bindsym z exec zotero; mode "default"
+        bindsym q exec qpdfview; mode "default"
+        bindsym s exec screenshot.sh; mode  "default"
+        bindsym y exec geany; mode "default"
+        bindsym l exec calibre; mode "default"
+        bindsym g exec logseq; mode "default"
+        bindsym u exec logseq; mode "default"
+        # bindsym v exec vlc; mode "default"
+        bindsym k exec keepassxc; mode "default"
+        bindsym v exec copyq show; mode "default"
+        bindsym t exec $terminal; mode "default"
+        bindsym o exec okular; mode  "default"
+        bindsym b exec wezterm connect box; mode  "default"
+        bindsym r exec okular; mode  "default"
+        bindsym p exec rofi-zathura.sh; mode  "default"
+        bindsym m exec telegram-desktop; mode "default"
+        bindsym x exec clash-verge; mode "default"
+
+        bindsym $mod+m mode "$switch_modes"
+        bindsym Escape mode "default"
+        bindsym Return mode "default"
+}
+
+
+input 1267:12795:ASUE120D:00_04F3:31FB_Touchpad {
+        tap enabled
+}
+
+input 2:7:SynPS\/2_Synaptics_TouchPad {
+        tap enabled
+}

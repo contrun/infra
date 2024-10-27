@@ -1,0 +1,34 @@
+!Originally: Vintage
+!By: kori
+!Edited by: adr
+
+!Set colorscheme
+URxvt.background:               #1b1b1b
+URxvt.foreground:               #FFFFFF
+URxvt.colorBD:                  #CFCFCF
+URxvt.colorUL:                  #969696
+URxvt.colorIT:                  #686868
+!Black
+*color0:                        #2D2D2D
+*color8:                        #3D3D3D
+!Red
+*color1:                        #5f5f5f
+*color9:                        #9f9f9f
+!Green
+*color2:                        #555555
+*color10:                       #777777
+!Yellow
+*color3:                        #A0A0A0
+*color11:                       #FDFDFD
+!Blue
+*color4:                        #2F2F2F
+*color12:                       #6F6F6F
+!Magenta
+*color5:                        #6B6B6B
+*color13:                       #9F9F9F
+!Cyan
+*color6:                        #BDBDBD
+*color14:                       #CFCFCF
+!White
+*color7:                        #FFFFFF
+*color15:                       #C7C7C7

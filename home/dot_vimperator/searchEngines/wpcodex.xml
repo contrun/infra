@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>wpcodex</os:ShortName>
+<os:Description>This OpenSearch add-on adds a custom search provider to your Firefox or Internet Explorer search bar to quickly search the WordPress Codex website (codex.wordpress.org) using their internal search engine.</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADDklEQVQ4jXWTT0gjdxiGn/llUnE1iSYqhthNMKYZbDEJhFx68SC46KEUPMRzKb0JthTm0lMvOS14XHq0FOPB0lspImI9SWo2ssjkT8eJDewyxqghMcEkM73k0C7tC9/l5f2+y/c+Eu8pk8l8BHwFLAPxof0aOAZeqapa+mdeem/5ayHEd5FI5CIWi7llWQ4B9Pt9o1AoNMvl8pJlWd+rqvryXwcymcwHwC9ut3t+Y2NDlMvlhWKxiGma9Ho9ZmdnicVihMPhSjabtZrNpg58pqrqkwNgZWXlpc/n+zidTgcPDg5mLy8vabVa2LaNEILHx0d0XWcwGHg3NzfHNE3rdjqd8OHh4W9SJpP5RAjx+9bW1rvj42Ol3+9TKpVYWFhACAFAu93GMAy2t7dxOp08PT3VdnZ2xi3L+lQAXyqKci6EUFZXV4lGo8iyDMDa2hrr6+tIkoQsy7x99xaAbqczpyjKOfCFAF4kEomJo6MjAEZGRrBtG13X0XUdgNHRURwOB3/kzgG4vv6LRCIxAbwQQMjv94cMw6DRaOD3+xkbG0OWZcrlMrZts7i4SK/b5f7uDoDKnxWmp6fngTkxfJNwOp0Ui0UcDgfRaBTbtvH5fAAEg0GeuVyMu8a5vb3FNE0kSQIQAri+ubnRp6amMAwD27aJRCJ0221cLhcnJycIIQgEAvj9fvL5PIPBANM0deBaAL/m8/n7cDhMr9ejVqsxMzPDfCRCpVLh9PQUCYjH44RCIXK5HIqikM/n74FDAbzSNC0eDAZLPp+ParXKsBtcXV3RaDRotds8//A5j+02k5OTJJPJkqZpceAHoarqG8uyfspms63l5eVWs9mk1+shSRLdbhePx4OmaUgSNO7uSKfTrf39/ZZlWT+qqvpGDCv9Tb1eN3d3d2upVKpi2zamaeL1egkEAnQ6HZAkwuFwZW9v77per5vAt/8LUzQafR2LxdzBYDAEUK1WjUKh0CwWi/H/gukZMA5MABPJZHIplUp97vV6lx4eHuYAPB5PrdFoXJydnf2cy+UugPvhtP4GHAlkNqH/6kgAAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://codex.wordpress.org/</SearchForm>
+<os:Url type="text/html" method="GET" template="http://wordpress.org/search/{searchTerms}" resultDomain="wordpress.org">
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>googlemaps</os:ShortName>
+<os:Description>Google Maps Search</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAqVJREFUOMt1k8tuW1UUhr99Ls2xfY5dx7XT2E5UqVeKEBUQMesABOqQN2DCC/QN8iKMmDPpGJgwSFQBQpZKm6A2aRrHTuLE9rnvs/fZDHBRWto1WlrS/6274E2zer1eU9fl51Xf/a6/vvYVxnDwcvhTEsXfx9NiKxpFE6B8LbBfO5ubm1Zqp21Zib/pfbL88PqD3medTwO/8YHntu74XcdxPlSxSkph7ctQpv8DtNvtmqgWX7hr5uH6/fY9v+PVklkq8kSKoFv1gtVKR0vTzWbyaTiOh4B6AzCfz9vSS7699nX7fr1bqelMc7B9THya0ez7VJpLtus7/vlOpETsPE7TNASwFnqxdmMluHq1sxEs1+pCCLKZJI8KdF4SHqcYDMEVP1hb72/c+uhaAIiLAABK82+0SBXjJ1NkpEjOc0aDM2SiAAOAEspeVO84C63ZGeyFLeVvX5441ysNp6mLktsP+hgMo8E5KtXEUR6+3Hv1x+jPsxJoAOK/GaRpWiw1vMRG3POalzrV1pLd6NbwAhen4pDNpHq1fbIzfnr6w3QcHgEe4NsXOtCBY82LvFQ43GzdrDe9wLWEJTDalIe/nQ2H25MfJ/vhk1KXVWAF6FwEEIYyL0t7rLTyau3K3VrLq5nSMPk7jPZ+Pt4a757/XmRFFegBq8CK/dYlmizKYse2ZzrXG1duNVa1NOKvR/snw8Hk13SeaWAZqANVYOltAEBpq1w6gXe5tlr9OJ8X9vNfRs9mR/HQlMYC3Av3U74LgJSoZj8wKtNfJqe5e7o720qn+XyxewPkwBQ4dni3FTJWo8nz2ZF7ybFUpg8BvRBPgSPgEJi8D2DOTqLMFdYLSwidhVICCTACdoEDIAKy9wHIpplSypoaI9q61BbwAhgssseLlzb/AGKMUzZ9rrC0AAAAAElFTkSuQmCC</os:Image>
+<SearchForm>http://maps.google.com/</SearchForm>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://maps.google.com/maps/suggest?q={searchTerms}&amp;hl={moz:locale}" resultDomain="maps.google.com">
+</os:Url>
+<os:Url type="text/html" method="GET" template="http://maps.google.com/maps" resultDomain="maps.google.com">
+  <os:Param name="q" value="{searchTerms}"/>
+  <os:Param name="ie" value="utf-8"/>
+  <os:Param name="oe" value="utf-8"/>
+  <os:Param name="aq" value="t"/>
+  <os:Param name="rls" value="{moz:distributionID}:{moz:locale}:{moz:official}"/>
+</os:Url>
+</SearchPlugin>

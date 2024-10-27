@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>eccellio</os:ShortName>
+<os:Description>Eccellio</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,R0lGODlhEAAQAIQSAAADBREA/AUF/xkA/ApAOq0A/PwALr0A/O0dDu0O6e1alXaogQ7tFQ7t3gD8k/zjAP/mBfzrAP///////////////////////////////////////////////////////yH/C05FVFNDQVBFMi4wAwEAAAAh/idlY2NlbGxpby5jb20gVGhlIEZhY2V0aW5nIFNlYXJjaCBFbmdpbmUAIfkECWQAHwAsAAAAABAAEAAABUUgII5kKQooIK1A4aosKsBS+661qY84AP00QGMY/EGCw8Zu+WgGe73m48nqLXU9hjaI6Aa1DK73akqYg4500JxAq63kUQgAIfkEAWQAHwAsAAAAABAAEAAABUkgII5kKSooIK1A4KosqsBS+661qY847R9AX68HPOyOiSTAwAQsnr5kYtl8LnxHXc/BFbK23SEraxqYfZE0gMAGmAdoNZtALoUAADs=</os:Image>
+<SearchForm>http://www.eccellio.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.eccellio.com/?cx=013750418607274062422%3Aekbrbietuam&amp;ie=UTF-8&amp;cof=FORID%3A9&amp;q={searchTerms}&amp;lr=&amp;site=&amp;app=&amp;sa=Search#899" resultDomain="eccellio.com">
+</os:Url>
+</SearchPlugin>

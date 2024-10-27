@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: defmain
+# key: defmain
+# --
+
+def main(args: Array[String]) {
+  $1
+}

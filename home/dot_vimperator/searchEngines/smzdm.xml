@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>smzdm</os:ShortName>
+<os:Description>什么值得买</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACdklEQVQ4jXWTT4iVZRTGj+QiiKiFmzYhaSoqNvR5Z+53fo8twmYTLZIKgiTozyKmwspNxjSrisogkXBAQQjdDLWIGIagmKQwqGvfe843N4zAMXAlbSJJkqHbojtxZ6QH3tV7znOe85xzzEawaLaxlR4NeLrAi+E+E/B2uB9t3N+4UNdb7f9Qxse3lbp+Jt0/CGgSvstud3/AckrXE+YD3ou6fnZgtmFN8pJ0X39iYmfAqZQGw/dnr6ruSOnLArPhPpNwI2E6YXoNSePeSWlq0WxjSCspDQKWY+/e7aXT2ZXuz6fUWyUP9w8DDpmZWezZc1tKl8J9pnWfTOlacX814HDW9Y6E8wm/BlwdUXetSO82ExP3WrgfTWlQ3A8WOP5fFWmldZ/8sdvdH+6758xuSfhr9b/A6QJvWsA3Ia30ququhHOrAT33LQGnAi4n/GBmlnBlpMDVAu9YQC9hvldVd7fuD49UmG673SdCOpbwe999LKW5kTYGASct4WwjTYV0oVdVWwKacH8sYbHAgYD3Az4N95dTmlpDIH1sAa8n/JLSIN0fCLhYJCV836uqTcM96C9Jjyzt28c6BV9ZA4cSbgzH80KBMwmzCbNR108W99fC/VjC+QKvRF0fLrCrgYcS5qwZG7szpYWUBq30Uev+VMK54n4wpX7AJ8X9pXB/MOC5Fk6GlCl93bpPmplZv663pvRHwEIZH98W8PNFuD07nXsCjqT006j0lBaaun58zToP+18ejvO3gM9Sur7OtJUCZwLeWty8+dabDiq63fsTvkj4e51ZV0L6PODbgCM3HdMoBmYbArYnzOe/hp5OOBtwonEfWx//D64fnj3KQ61DAAAAAElFTkSuQmCC</os:Image>
+<SearchForm>http://search.smzdm.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://search.smzdm.com/" resultDomain="search.smzdm.com">
+  <os:Param name="c" value="home"/>
+  <os:Param name="s" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

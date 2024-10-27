@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>reddit</os:ShortName>
+<os:Description>Reddit Search (Google)</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAA09JREFUOI1NzF9MlXUcx/H37znP8ZwHBhwOEOiRZDqGWQnT1qhlgHKG1Wp017yK5kVzNVzOyFqjtVlzDWjMXBfN1WytG3OjC80E3DTLzdUoDRj/Cg7gQf49h3Oe8/zOn+fbRaz1unjffT4q7Xmy7oISEAUIKDYpEBH8foNsxkNrTUXYwg8sJXJYlolaSHkysehiIIhSILJ5sFmfQSphU1xaTLgsyODl6yQSaxxqa8fzMphKBAPBVODx79jw+chmNKFwETcGf+DCuU94rGE/yaRDpKwQU3kMrK7w6rHXMFAKlCIvHkoZ5PIebtollUqhDI+fhn/klaNvcuxkJ3kFkW2VPN34JJPjowQsA8PzPHLZHKbPj+uksSyLym0l7KzbipPKktUO0ZfaKX4owun+s4zFklwavMMbXR8yP+ugltIisQTYK8tEqsuZnIhxe+gyyw+WWJidYnZmgsamKEVFpex/NkrTgd2MTzukUymqd1SgYusp6e4+jV6/j62FkqCiYV8De/fsZsf27QSDFlPT0/wxPs7Ind9YtB2qSgqxN5I8d6QDdaanXwq2wHwsRsBv8n73B/iW4lBaBpbFf+bnIFLN55+d5d7oGF0nT/D68VNw8fsr0nywVfo/7RMRET0/Jw6Ifr5NMtmMZPN5ybzVKWkQ55dbIiLy5fnz0traKu991CskRKTlhZdldmZKtOtKRrsiZz4WfemiaK1Fay3u8JDIqS7Jr66Idl1JJxNy4GCb/PzXmpgB8ajZVcfa6hqRh2twtcZ8+x228D/NLdDcQiabxVQG8fuL1OyqI1wewsyLouGpJnr6+vjqwtcUWBZXBga4eu0ah9raCAYCXB8a4pHaWo50dADQ29tDbX0jfp+Hml13xfYCfPvFOebu3ubE8U4era/n5s1bTE9NIgKVW6uIRqPMzUzT29uHWV7N0c53cZIOKu548uffSaqqirgxPMTV776hojjIE/saCJeGUEph2xv8OvI7c/FVnjnczuEX23kQ36CoJIBaSOZlclGTz7iEy0sRYPTuPSbGRrBXlxCB4lCYnbWPs2dvPYGAwXLcxvSbBC0Ttaw9mVnOYRoKV2sUipJQAQWF4POBAOJB2gF73SWXyxG0guRzHlaBj38AJhmrK0IN8a0AAAAASUVORK5CYII%3D</os:Image>
+<SearchForm>http://www.google.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.google.com/search?hl=en&amp;q={searchTerms}+site:reddit.com&amp;tbo=1" resultDomain="google.com">
+</os:Url>
+</SearchPlugin>

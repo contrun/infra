@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>wikipedia</os:ShortName>
+<os:Description>English Wikipedia with SSL protection (en.wikipedia.org for best performance)</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAAAAD///8F////Yf///8v/////////////////////////////////////////////////////////y////2H///8F////Yf//////////////////////////////////////////////////////////////////////////////Yf///8v/////////////////////2NjY//39/f////////////T09P/k5OT//////////////////////////8v/////////////////////+vr6/xsbG/+QkJD///////////9tbW3/Pj4+/////////////////////////////////////////////////6CgoP8KCgr/RkZG//j4+P/t7e3/CgoK/zk5Of/MzMz///////////////////////////////////////////8sLCz/a2tr/7Ozs/+Tk5P/g4OD/ycnJ//q6ur/ZGRk//////////////////////////////////////+3t7f/AgIC/93d3f//////TU1N/xUVFf+hoaH//////2ZmZv/l5eX/////////////////////////////////QkJC/1RUVP///////////2tra/8UFBT/+/v7///////MzMz/eXl5////////////////////////////zc3N/wAAAP/IyMj///////v7+/8jIyP/Ly8v//f39////////////0pKSv/19fX//////////////////////1lZWf89PT3///////////+ampr/HR0d/62trf+Kior///////////+kpKT/lpaW/////////////////+Dg4P8EBAT/sbGx///////19fX/ICAg/5OTk///////QkJC/+7u7v//////+fn5/zs7O//7+/v//////8/Pz/9AQED/AAAA/5SUlP/9/f3/R0dH/wAAAP+enp7/4uLi/zo6Ov9DQ0P/5eXl/6+vr/8TExP/UFBQ/9fX1//8/Pz/9/f3//f39//4+Pj///////f39//39/f/+vr6//39/f/39/f/9/f3//39/f/6+vr/9/f3//f39//8/Pz/////y///////////////////////////////////////////////////////////////////////////////y////2H//////////////////////////////////////////////////////////////////////////////2H///8F////Yf///8v/////////////////////////////////////////////////////////y////2H///8FwAMAAIABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAAwAMAAA==</os:Image>
+<SearchForm>https://en.wikipedia.org/wiki/</SearchForm>
+<os:Url type="text/html" method="GET" template="https://en.wikipedia.org/wiki/Special:Search?go=Go&amp;search={searchTerms}" resultDomain="en.wikipedia.org">
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="https://en.wikipedia.org/w/api.php?action=opensearch&amp;search={searchTerms}" resultDomain="en.wikipedia.org">
+</os:Url>
+<os:Url type="application/opensearchdescription+xml" method="GET" template="http://mycroftproject.com/updateos.php/id0/wikipedia_en_ssl.xml" rel="self" resultDomain="mycroftproject.com">
+</os:Url>
+</SearchPlugin>

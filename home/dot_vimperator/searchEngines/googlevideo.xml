@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>googlevideo</os:ShortName>
+<os:Description>Google Video Search</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAADh0lEQVQ4EU1T709bVRh+z+X03v7mtnJXbAuMBTpGcY52S0RJTNBhYgLMaCYmYiIx2ReN/0ITP5gYox90X2YIBqeZblEjTsxkMVsWNALFDQotbbNiC22hv9vb373H06td9iYn95z3Ps/7vufe5wF4LAghTHM9lsJmp1lNz49y/2NQC4NbGxdxMQghyW63s0vLSxd7urqn1Ur1AEKMqtaoZQuFvDscDc1TzG1aBDUXDSLzW10vL1w+te3zbEhEoiki1esNkisUSfQwRfyhA8n9wEOW7/x2w+X6lG8Sm0Wwy/Vf58+vfGKfHJv43WrpEsrlcp2WaCIQpnOp2DYSjhyRncAeWPrRq6OTgmXWPTdOJ8i37oI9Xs/KQN/AuUwuW1MplQoahGEY+X2lUoH4YZRs/rOBqvzDqlZQs7kd3ZWLY29dkgG/3r45c3rQsZDPF+sqDmODwQClcpns7++naJcSHYZn9TVtohaBPTFAUmIctIyyzvmOnZM/olpnfC2ZK0Eml0eCwEMpHiNHsbi/32YrKRRYWcgWo9thd5en7VanP30AkSzXYBTPKEZVnVMYXC5WH9weLOEQ4EIOjO3t4G8XkoNOp5hOJldo3J2YvPCOHZ7CN/8MdSQaL2EeWcGkM4O+7jvDnHxxmuNzIU0lGQCSDyPBcw10+UiZ4dTKh96tn2dmZr6LRQ/8PN/OnT12vjLW9yw812NEwxYMOpVCx/hGr5VQr5Cu6DHskgyRHLvAqe/riyIRz46MvLe5ufnRiRO9zuBepFqM7mgSvlWIJxIkJjZALBZTVGGuehVl/36CccN2OE1WG32k10b0u1t/mDO5ssVkMk0FAgGuIUl9O94IBFfXyfMCgRFDFbhyYk2WqFu0ft3t6AK1pgRfLLWhu94hctLWb5Ya1VOZTMZM/8ppx/AZrdDBg1qngV6zgI1SNnvjqy8XqfYBvX7h7V/2s90/vjttxqSts/rx1SD8tPwXYVU6tuf4cS3PG9BRIkWS6bzEKrj6kxYLrN9/8Nni4i3vI00PvfC+af4Dx5Le8PTwyka4EYzEiELBIsGoByOvIxhjsHSamIH+bubeveXrEy9PvUnVXG15QRaUzflGx7ffX78aCgUbTTPQkE3Reh4eRcWFb+Y/pCSVTARALSnLxmgmmw6bvTQ7Mn5+/BWrxTrEsaymIBbSXp9vfW5+7oe1lbUtWpDCZCr5F3lxxdNUdNXHAAAAAElFTkSuQmCC</os:Image>
+<SearchForm>http://www.google.com/search?tbm=vid&amp;q=</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.google.com/search?tbm=vid&amp;" resultDomain="google.com">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://suggestqueries.google.com/complete/search?output=firefox&amp;client=firefox&amp;hl={moz:locale}&amp;q={searchTerms}" resultDomain="suggestqueries.google.com">
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://www.google.com/search?tbm=vid&amp;" resultDomain="google.com">
+</os:Url>
+</SearchPlugin>

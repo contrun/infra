@@ -1,0 +1,19 @@
+{{ $passphrase := promptStringOnce . "passphrase" "gpg encryption passphrase" -}}
+{{ $domain := promptStringOnce . "domain" "domain to use" -}}
+{{ $githubToken := promptStringOnce . "githubToken" "github token" -}}
+
+encryption = "gpg"
+
+[data]
+    passphrase = {{ $passphrase | quote }}
+    domain = {{ $domain | quote }}
+    githubToken = {{ $githubToken | quote }}
+
+[gpg]
+    symmetric = true
+    args = ["--quiet", "--batch", "--passphrase", {{ $passphrase | quote }}, "--no-symkey-cache"]
+
+[keepassxc]
+# It is too tedious to enter keepass word everytime when I try to apply changes.
+# Comment out keepassxc database to skip querying keepassxc
+#     database = {{ joinPath .chezmoi.homeDir "Sync/private/keepass/kdbx.kdbx" | quote }}

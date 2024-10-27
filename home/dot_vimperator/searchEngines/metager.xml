@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>metager</os:ShortName>
+<os:Description>MetaGer</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAyElEQVQ4jWP438DwnxLMMGoAwoB/19b+//////9/03Qh/InKEP7zCxD+xpT/yODfqjA0A/79/f/v0/P//x4egZgOU7ij+P+/DckQdiMzRG0Dw/9/zexoXvj///+/CYoQ+smp///21UHYXWIQeoYhRN3+egjGCIP//xEG/f6OKdYpDLH9YDNCHGbAvwlKcMF/S73//2tkgoQFTOzNLYghB1v+/7u3H4sBc6xQnPW/geH/v3l2KGL/5tr8/7e35v+/pd6DNR0MXQMAqyK0cDaz8wYAAAAASUVORK5CYII=</os:Image>
+<SearchForm>https://metager.de</SearchForm>
+<os:Url type="text/html" method="GET" template="https://metager.de/en/meta/meta.ger3" resultDomain="metager.de">
+  <os:Param name="focus" value="web"/>
+  <os:Param name="eingabe" value="{searchTerms}"/>
+  <os:Param name="encoding" value="utf8"/>
+  <os:Param name="lang" value="all"/>
+  <os:Param name="resultCount" value="20"/>
+  <os:Param name="time" value="1500"/>
+  <os:Param name="sprueche" value="on"/>
+  <os:Param name="newtab" value="on"/>
+  <os:Param name="maps" value="off"/>
+  <os:Param name="key" value=""/>
+  <os:Param name="theme" value="default"/>
+</os:Url>
+</SearchPlugin>

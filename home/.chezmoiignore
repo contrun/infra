@@ -1,0 +1,21 @@
+/root
+/secrets
+chezmoi.toml
+/Makefile
+/ignored
+/flake.nix
+/flake.lock
+/.github
+/result*/
+*.qcow2
+action.yml
+./.config/Code/User/settings.json.source
+{{ if ne .chezmoi.os "darwin" }}
+Library/Application Support/Code/User/settings.json
+{{ end }}
+{{ if ne .chezmoi.os "linux" }}
+./.config/Code/User/settings.json
+{{ end }}
+/dprint.json
+/treefmt.toml
+/.pre-commit-config.yaml

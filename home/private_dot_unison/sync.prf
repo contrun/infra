@@ -1,0 +1,22 @@
+source common-sync-options
+
+label = sync files to Sync directory
+
+root = .unison/profile-roots/sync
+root = Sync
+
+# Note that path specified must exist on both side, otherwise the following error would be reported
+# Fatal error: Filesystem watcher error: Path '/home/e/Sync/apps/atuin' does not exist
+# The watcher can be disabled by setting preference 'watch' to false
+# This is because we specified repeat=watch and watch=true in our common config.
+
+path = apps/atuin
+follow = Path apps/atuin
+# Only include all *.db files
+# TODO: this may lost data or even corrupt the database.
+# see https://www.sqlite.org/howtocorrupt.html
+# and https://www.sqlite.org/tempfiles.html
+ignore = Path apps/atuin/*
+ignorenot = Path apps/atuin/*.db
+ignorenot = Path apps/atuin/*.db-wal
+ignorenot = Path apps/atuin/*.db-journal

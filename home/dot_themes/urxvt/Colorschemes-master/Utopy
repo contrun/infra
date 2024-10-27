@@ -1,0 +1,34 @@
+!UTOPY
+!By: adr
+
+!Set colorscheme
+URxvt.background:               #1b1b1b
+URxvt.foreground:               #FFFFFF
+URxvt.colorBD:                  #CFCFCF
+URxvt.colorUL:                  #969696
+URxvt.colorIT:                  #686868
+!Black
+*color0:                        #1b1b1b
+*color8:                        #3D3D3D
+!Red
+*color1:                        #BD4645
+*color9:                        #DF5352
+!Green
+*color2:                        #5F6E39
+*color10:                       #788A48
+!Yellow
+*color3:                        #B8802C
+*color11:                       #E8A238
+!Blue
+*color4:                        #45566B
+*color12:                       #646E8A
+!Magenta
+*color5:                        #7F3D4B
+*color13:                       #A14C5E
+!Cyan
+*color6:                        #8A83AD
+*color14:                       #A69ED1
+!White
+*color7:                        #FFFFFF
+*color15:                       #C1C1C1
+

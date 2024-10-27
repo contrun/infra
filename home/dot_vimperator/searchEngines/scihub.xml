@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>scihub</os:ShortName>
+<os:Description>Sci-Hub</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABcElEQVQ4jbWSS0tCURDHhzIwehFFO+mBBHnzdY7hpihoKe2CWrSJqA/QN2gZtCxo0aJN0LqHW4OQ9J5zvUpSRkXbwugBKZRe/i2uaZJeMmhgFmeY+f1nzgzRfxkkBwTb/1uxyrYgOSrOco2r13VP0Lo46ukrJ2sc+bCC+3WH+U4Evnd1aKkuOQGS42qhA7crPYDgEMyMvZ+4y6CagMx8OwpxP5AM4G61F5ezbXjaGYKhMWjBJiBR6kJlMyQYZc8YjUhOOA+1PuuTNjxuD0L4CKlpOwydI7vZj9yRgvgo4Wapu1pdcoJgFJWMPvJhBfqEzUxImfOqXoLkhLdjFyA50iE7cgcKIFjGBDAyJCdcL3ZFkB7Dw4YDxYT5B697wygKBn28GdA40qFWCB/Vn71w6jNV3WbSy64TMRdB9RCSUy0w4v6vDRi1N6CyZesbKHnM2Wl9C5EBOwQr1gNYFv+ACXZRDfCvNQSojOeda1j9N/YJtVVdpMlIAv4AAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://sci-hub.cc</SearchForm>
+<os:Url type="text/html" method="POST" template="http://sci-hub.cc/" resultDomain="sci-hub.cc">
+  <os:Param name="sci-hub-plugin-check" value=""/>
+  <os:Param name="request" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

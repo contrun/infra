@@ -1,0 +1,175 @@
+# Avoid indefinite hang in tramp, https://www.emacswiki.org/emacs/TrampMode#toc9
+[[ $TERM == "tramp" ]] && unsetopt zle && PS1='$ ' && return
+# [ -f /etc/profile.d/my.sh ] && . /etc/profile.d/my.sh
+ZSH_CONF="full"
+if fzf_base="$(dirname "$(dirname "$(realpath "$(which fzf)")")")/share/fzf" && [[ -d $fzf_base ]]; then
+  export FZF_BASE="$fzf_base"
+fi
+[[ -f ~/.zsh_conf ]] && ZSH_CONF="$(cat ~/.zsh_conf)"
+
+add_to_path() {
+  for p in $@; do
+    [[ ":$PATH:" != *":$p:"* ]] && PATH="$p:${PATH}"
+  done
+  export PATH
+}
+
+do_on_full() {
+  if [[ "$ZSH_CONF" == "full" ]]; then
+    eval "$@"
+  fi
+}
+
+declare -a plugins
+add_plugins_on_full() {
+  if [[ "$ZSH_CONF" == "full" ]]; then
+    add_plugins "$@"
+  fi
+}
+
+add_plugins() {
+  plugins+=("$@")
+}
+
+local PLATFORM="$(uname)"
+if [[ "$PLATFORM" == 'Linux' ]]; then
+  # if [[ -z "$DISPLAY" && "${TTY:8:1}" -le 3 ]]; then
+  #     exec startx -- -ignoreABI
+  # fi
+  # my_startx
+  # alias open="open"
+  add_plugins systemd
+elif [[ "$PLATFORM" == 'Darwin' ]]; then
+  add_plugins brew osx
+else
+  :
+fi
+
+set -o ignoreeof
+
+export ZSH=~/.oh-my-zsh
+ZSH_CUSTOM="${ZSH}/custom"
+ZSH_THEME="random"
+DISABLE_AUTO_UPDATE="true"
+
+# command -v atuin >/dev/null && eval "$(atuin init zsh)"
+
+# pyenv
+# web-search
+# wd
+# tmuxinator
+add_plugins_on_full git pass pip
+add_plugins_on_full cp
+add_plugins_on_full cabal
+add_plugins_on_full rust
+add_plugins_on_full mvn
+add_plugins_on_full aws
+add_plugins_on_full adb
+add_plugins_on_full docker
+add_plugins_on_full docker-compose
+add_plugins_on_full kubectl
+add_plugins_on_full helm
+add_plugins_on_full emacs
+if [[ -d "$ZSH" ]] && ! [[ -d "$ZSH_CUSTOM/plugins/wakatime" ]]; then
+  git clone https://github.com/sobolevn/wakatime-zsh-plugin.git "$ZSH_CUSTOM/plugins/wakatime"
+fi
+add_plugins_on_full wakatime
+command -v wakatime-cli >/dev/null && export ZSH_WAKATIME_BIN=wakatime-cli
+add_plugins fzf
+add_plugins_on_full gitignore
+add_plugins_on_full golang
+# add_plugins_on_full gpg-agent
+# add_plugins_on_full ssh-agent
+add_plugins_on_full thefuck
+add_plugins_on_full httpie
+add_plugins_on_full transfer
+add_plugins_on_full urltools
+add_plugins_on_full nmap
+add_plugins_on_full redis-cli
+add_plugins_on_full rsync
+add_plugins_on_full rust
+add_plugins_on_full sbt
+add_plugins_on_full scala
+add_plugins_on_full stack
+add_plugins_on_full sudo
+add_plugins_on_full taskwarrior
+add_plugins_on_full tmux
+add_plugins_on_full ansible
+# virtualenvwrapper
+#fbterm
+
+source $ZSH/oh-my-zsh.sh
+# source $HOME/.zaw/zaw.zsh
+
+do_on_full fortune -a
+
+# eval $(thefuck --alias)
+
+alias ,i="orgCapture.sh i"
+alias ,t="orgCapture.sh t"
+alias nv=nvim
+alias qo="quickOpen.sh"
+alias u="pc.sh -q neomutt -F ~/.mutt/unifiedrc"
+alias unified="pc.sh -q neomutt -F ~/.mutt/unifiedrc"
+alias push="pc.sh -q neomutt -F ~/.mutt/gmxrc"
+alias p="pc.sh -q pushmessage.sh"
+alias n="pc.sh -q notify.py"
+alias ct='cd "$(mktemp -d)"'
+
+# export VIRTUALENVWRAPPER_PYTHON=$(which python3)
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/Workspace
+# source $(which virtualenvwrapper.sh)
+# command -v virtualenvwrapper.sh >/dev/null && source <(sed 's/exec/source/' $(command -v virtualenvwrapper.sh))
+
+m() {
+  mailbox="$HOME/.mutt/${1}rc"
+  shift
+  [[ -f "$mailbox" ]] && neomutt -F "$mailbox" "$@" || echo "$mailbox does not exist."
+}
+
+dcleanup() {
+  docker rm -v $(docker ps --filter status=exited -q 2>/dev/null) 2>/dev/null
+  docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2>/dev/null
+}
+
+pb() {
+  curl -F 'clbin=<-' https://clbin.com | xclip
+}
+
+gi() {
+  curl -sLw n https://www.gitignore.io/api/"$@"
+}
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+
+[[ -f ~/.config/broot/launcher/bash/br ]] && . ~/.config/broot/launcher/bash/br
+
+command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+
+test -r ~/.opam/opam-init/init.sh && . ~/.opam/opam-init/init.sh >/dev/null 2>&1
+
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=999999999
+SAVEHIST=$HISTSIZE
+setopt APPEND_HISTORY
+setopt EXTENDED_HISTORY
+setopt HIST_IGNORE_SPACE
+setopt INC_APPEND_HISTORY_TIME
+setopt INTERACTIVE_COMMENTS
+
+# My zsh history file is randomly truncated
+# https://unix.stackexchange.com/questions/568907/why-do-i-lose-my-zsh-history
+history_dir="$HOME/.cache/commmand_line_history"
+merged_history_file="$history_dir/merged_zsh_history"
+if [[ -z "$(find "$history_dir" -newermt '1 day ago' -name "zsh_history*" 2>/dev/null)" ]]; then
+  mkdir -p "$history_dir"
+  cp "$HISTFILE" "$history_dir/zsh_history_$(date +%Y-%m-%d).bak"
+  merge_zsh_histories.rb "$HISTFILE" "$history_dir"/zsh_history_* >"$merged_history_file"
+fi
+
+[[ -f ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh

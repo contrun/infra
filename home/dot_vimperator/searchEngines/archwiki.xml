@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>archwiki</os:ShortName>
+<os:Description>Search Arch Wiki</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAN1wAADdcBQiibeAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAG8SURBVDiNjZM/iBNBFMZ/MzvJunfmYFfwtjgbEzk4jhSKoNa2goiNaGXhCaYRDAiHNlprcYuVhaCNWIj4BxSusBJRhNtDRTF6nCkWPUQMJJe4s2PhBhIvE/yaebz3vY/fDIwwxmBTGMX7JwtSNRbmX9g8yrr9V+ccISYAa4CwEey6sbpDCJpFR6rZwJ19fLzyeZRP2pIni3LBU3IbGNVJs/M2nzXAU3K3pySeknTS7OTZZ+v+fwccuvPhqOuIV64Sy56S9LTxm796i6O8W95g3633xcBTDWOYSY35kRl8bYzwHNkqFWX5/rHy97EEgafqEwU54yqBMQRdnYnf2rCps1JHm0tjCeZuvpvaE7hrG+3U/9rq0dPDdK4jWlOuU1k9PfdtJMGmzupvkrbf+NntLz8A7vbnXW1KG530wkiCMIp3Ag1gez57lNSqR/LZbeBU3m8D5aRWTf4luDywDPBwoH6anwb4AtSHrhBGcRk4w7A+DdRv+8SAC9wbCgCuAoW8XgOuAR8HAprAdWAdqADLYRSfABDTSyt7gdfAE+BKUqu+ZIzCKD4ILAKHgXkxvbRyEXie1KrWHzcm6MAfcSib4f24CrwAAAAASUVORK5CYII=</os:Image>
+<SearchForm>https://wiki.archlinux.org</SearchForm>
+<os:Url type="text/html" method="GET" template="https://wiki.archlinux.org/index.php?search={searchTerms}" resultDomain="wiki.archlinux.org">
+</os:Url>
+</SearchPlugin>

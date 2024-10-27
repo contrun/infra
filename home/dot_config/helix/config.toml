@@ -1,0 +1,6 @@
+[editor]
+true-color = true
+auto-save = true
+
+[editor.soft-wrap]
+enable = true

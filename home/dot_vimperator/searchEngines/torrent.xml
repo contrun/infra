@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>torrent</os:ShortName>
+<os:Description>IPduh Torrent Search</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,/9j/4AAQSkZJRgABAQEASABIAAD//gAMzqMgdG9ycmVudP/bAEMAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAf/bAEMBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAf/AABEIABAAEAMBIgACEQEDEQH/xAAWAAEBAQAAAAAAAAAAAAAAAAAKCAn/xAAdEAACAgMBAQEAAAAAAAAAAAAFBgQHAgMICQET/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AKu9vzPrZy/3NsvbT6DXZyj5Q3AQrdcyuCmaeEX8H5EcMklQRJWm5a0+zlNuHI71Y40iz4PgE0fh6pLhoXoIki37xSyWRl5i1LeFO816ML89AcfSAjbLnlbNV9F/E1eRhU+pXCvUbNQVVKOtOTwHaF37kCYX4S0DzWWorDct/wCMX5FgYTJJqPbKu/VHp70yXVo35zWx3D5ccvkUNurehEKz1+l686EtGfV4Q+ZfLZa5Q9vPtGCc6tTFX+tb+AYAjBcWJooRkJ3Nz0TaNQBbP2D2iv8ABN1dDebXQ/IZjmT0GaQpehKm6Rlyjuqg2jhK963XLo0zU9i57BaV0XdFmo6NNj4/Jp1WSID1EgyNiQ6Pi8VD/9k=</os:Image>
+<SearchForm>http://ipduh.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://ipduh.com/search/torrent/?q={searchTerms}" resultDomain="ipduh.com">
+</os:Url>
+</SearchPlugin>

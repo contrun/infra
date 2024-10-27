@@ -1,0 +1,35 @@
+( require 'sawfish.wm.commands.jump-or-exec )
+( require 'sawfish.wm.custom )
+( require 'sawfish.wm.edge.flip )
+( require 'sawfish.wm.ext.auto-raise )
+( require 'sawfish.wm.ext.match-window )
+( require 'sawfish.wm.ext.window-history )
+( require 'sawfish.wm.menus )
+( require 'sawfish.wm.viewport )
+
+( bind-keys global-keymap
+            ;; Applications
+            "Super-s"               '(system "synapse")
+            "Super-f"               '(system "exo-open --launch FileManager")
+            "Super-d"               '(system "rox &")
+            "Super-m"               '(system "urxvt -e mutt &")
+            ;; "Super-v"               '(jump-or-exec "Gvim" "gvim" t)
+            "Super-o"               '(jump-or-exec "Emacs" "emacsc" t)
+            "Super-b"               '(jump-or-exec "Luakit" "/home/crshd/bin/lightgtk luakit" t)
+
+            ;; Media Keys
+            "XF86AudioPrev"         '(system "mpc prev &")
+            "XF86AudioPlay"         '(system "mpc toggle &")
+            "XF86AudioNext"         '(system "mpc next &")
+            "XF86AudioStop"         '(system "mpc stop &")
+            "XF86AudioLowerVolume"  '(system "/home/crshd/bin/volume -d 5 &")
+            "XF86AudioRaiseVolume"  '(system "/home/crshd/bin/volume -i 5 &")
+            "XF86AudioMute"         '(system "/home/crshd/bin/volume -t &")
+            "XF86AudioMedia"        '(system "/home/crshd/bin/mpm &")
+
+            ;; WM Functions
+            "Super-q"               'delete-window-instance
+            "W-TAB"                 'cycle-windows
+            "Super-Left"            'previous-workspace
+            "Super-Right"           'next-workspace
+            "Super-r" 'restart )

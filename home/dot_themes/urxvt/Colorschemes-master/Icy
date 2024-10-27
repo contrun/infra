@@ -1,0 +1,34 @@
+!ICY
+!By: adr
+
+!Set colorscheme
+URxvt.background:               #FFFFFF
+URxvt.foreground:               #1b1b1b
+URxvt.colorBD:                  #CFCFCF
+URxvt.colorUL:                  #969696
+URxvt.colorIT:                  #686868
+!Black
+*color0:                        #1b1b1b
+*color8:                        #3D3D3D
+!Red
+*color1:                        #012B69
+*color9:                        #023F99
+!Green
+*color2:                        #03789E
+*color10:                       #0484D1
+!Yellow
+*color3:                        #53709E
+*color11:                       #698EC8
+!Blue
+*color4:                        #45566B
+*color12:                       #646E8A
+!Magenta
+*color5:                        #233A78
+*color13:                       #2B4691
+!Cyan
+*color6:                        #8A83AD
+*color14:                       #A69ED1
+!White
+*color7:                        #C1C1C1
+*color15:                       #B8B8B8
+

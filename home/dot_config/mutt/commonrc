@@ -1,0 +1,57 @@
+set editor = 'nvim'
+set sort = 'threads'
+set sort_aux = 'reverse-last-date-received'
+set auto_tag = yes
+set charset="utf-8"
+set rfc2047_parameters=yes
+# set envelope_from=yes
+set mail_check = 120
+set imap_keepalive = 1800
+set move = no
+set use_ipv6 = yes
+set include
+
+# security
+set ssl_force_tls = yes
+# set ssl_min_dh_prime_bits = '0'
+# set ssl_starttls = yes
+set ssl_use_sslv2 = yes
+set ssl_use_sslv3 = yes
+# set ssl_use_tlsv1 = yes
+set ssl_use_tlsv1_1 = yes
+set ssl_use_tlsv1_2 = yes
+set ssl_usesystemcerts = yes
+set ssl_verify_dates = yes
+set ssl_verify_host = yes
+
+# sidebar
+set sidebar_visible = no
+bind index,pager B sidebar-toggle-visible
+
+# urlscan
+macro index,pager \cb "<pipe-message> urlscan<Enter>" "call urlscan to extract URLs out of a message"
+macro attach,compose \cb "<pipe-entry> urlscan<Enter>" "call urlscan to extract URLs out of a message"
+
+# Sync email
+macro index O "<shell-escape>offlineimap<enter>"           "run offlineimap to sync all mail"
+macro index o "<shell-escape>offlineimap -qf INBOX<enter>" "run offlineimap to sync inbox"
+
+#html
+auto_view text/html
+alternative_order text/plain text/enriched text/html
+
+
+# Colors
+color attachment brightmagenta default
+color error      brightred    default
+color hdrdefault red          default
+color indicator  brightyellow red
+color markers    brightcyan   default
+color message    brightcyan   default
+color normal     default      default
+color quoted     brightblue   default
+color search     default      green
+color signature  red          default
+color status     yellow       blue
+color tilde      magenta      default
+color tree       magenta      default

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+export OLDHOME="$HOME"
+export HOME="$OLDHOME/.spacemacs.home"
+export SPACEMACS_HOME="$OLDHOME/.spacemacs.home"
+emacs "$@"

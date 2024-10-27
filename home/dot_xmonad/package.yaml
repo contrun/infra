@@ -1,0 +1,43 @@
+name: my-xmonad
+version: 0.1.0.0
+github: "contrun/dotfiles"
+license: BSD3
+author: "Author name here"
+maintainer: "example@example.com"
+copyright: "2019 Author name here"
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: Please see the README on GitHub at <https://github.com/contrun/dotfiles#readme>
+
+dependencies:
+  - xmonad
+  - xmonad-contrib
+  - xmonad-extras
+  - base >= 4.7 && < 5
+  - tuple
+  - process
+  - containers
+  - random
+  - monad-loops
+  - hashmap
+  - sort
+  - unordered-containers
+  - lens
+  - regex-posix
+
+library:
+  source-dirs: src
+
+executables:
+  my-xmonad:
+    main: xmonad.hs
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N

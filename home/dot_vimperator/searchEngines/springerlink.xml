@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>springerlink</os:ShortName>
+<os:Description>Springer's SpringerLink is one of the largest online collections of published scientific research. Springer is an international publisher of science, technology and medicine.</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAuElEQVQ4jbWRsQ2EMAxFMwjFzULHJvR0GeAaKL2GV4jEANmBiorqOipf5ejH+Dg46b5kRYLv5x8niKNl3SQSC6fs/a4UvOamG0pxyrKs231A24+H8xKg7cdi1ukKjcTngEhcjBobT72SC0ADmjA6pyxNN/gApHPKEoklElcAHYJLDRpdjXaJNrL9FjCaNnrTTwEK0RfAl7gMsCBPH3eAzfYaWN5eDgnuqgLs8ySv5+Nr7fP0J8AvegOhkGr6AYHSEgAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://springerlink.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://springerlink.com/content/" resultDomain="springerlink.com">
+  <os:Param name="k" value="{searchTerms}"/>
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://suggestqueries.google.com/complete/search?output=firefox&amp;client=firefox&amp;hl=en&amp;q={searchTerms}" resultDomain="suggestqueries.google.com">
+</os:Url>
+</SearchPlugin>

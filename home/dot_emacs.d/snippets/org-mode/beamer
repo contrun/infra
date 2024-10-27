@@ -1,0 +1,43 @@
+# -*- mode: snippet -*-
+# name: beamer
+# key: beamer
+# --
+#+TITLE: $1
+#+AUTHOR: Yi
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
+#+startup: beamer
+#+LATEX_COMPILER: xelatex
+#+LATEX_HEADER: %%% Local Variables: 
+#+LATEX_HEADER: %%% coding: utf-8
+#+LATEX_HEADER: %%% mode: latex
+#+LATEX_HEADER: %%% TeX-engine: xetex
+#+LATEX_HEADER: %%% End: 
+#+LATEX_CLASS: beamer
+#+BEAMER_THEME: AnnArbor
+#+BEAMER_COLOR_THEME: seagull
+#+LATEX_CLASS_OPTIONS: [utf8]
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \usepackage[BoldFont,SlantFont,CJKchecksingle]{xeCJK}
+#+LATEX_HEADER: \XeTeXlinebreaklocale "zh"
+#+LATEX_HEADER: \XeTeXlinebreakskip = 0pt plus 1pt
+#+LATEX_HEADER: \setmainfont{Noto Serif}
+#+LATEX_HEADER: \setsansfont{Noto Sans}
+#+LATEX_HEADER: \setmonofont{Noto Sans Mono}
+#+LATEX_HEADER: \setCJKmainfont{Noto Serif CJK SC}
+#+LATEX_HEADER: \setCJKsansfont{Noto Sans CJK SC}
+#+LATEX_HEADER: \setCJKmonofont{Noto Sans Mono CJK SC}
+#+LATEX_HEADRE: \defaultfontfeatures{Mapping=tex-text}
+#+LATEX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{indentfirst}
+#+LATEX_HEADER: \setlength{\parindent}{2em}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \usepackage{tikz-cd}
+#+LATEX_HEADER: \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage{mathtools}
+#+LATEX_HEADER: \usepackage{tabularx}
+#+LATEX_HEADER: \usepackage{booktabs}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \usepackage[all, knot]{xy}
+#+LATEX_HEADER: \lstset{numbers=left, numberstyle=\tiny, keywordstyle=\color{blue!70}, commentstyle=\color{red!50!green!50!blue!50}, frame=shadowbox, rulesepcolor=\color{red!20!green!20!blue!20}}
+#+LATEX_HEADER: \tolerance=1000

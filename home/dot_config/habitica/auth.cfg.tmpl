@@ -1,0 +1,9 @@
+{{ $habitica_entry := "keyring/habitica" -}}
+{{ $habitica_username := (keepassxc $habitica_entry).UserName -}}
+{{ $habitica_password := (keepassxc $habitica_entry).Password -}}
+{{ $habitica_url := (keepassxc $habitica_entry).URL -}}
+
+[Habitica]
+url = {{ $habitica_url }}
+login = {{ $habitica_username }}
+password = {{ $habitica_password }}

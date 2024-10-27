@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>snopes</os:ShortName>
+<os:Description>Snopes</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAeUlEQVQ4jWP4fSXiPyWYgZCCI8u8yDdASV4RjivSzSkzAIaJMgCbRqINQFeIrPnnz5///7xcSdgAbGL+vn7/////T5wLDiz2JD8adTWUcfqXpFjAF3AkJSRChhA0AFfAEh0Lr44Gk24AMQkIrxfenQwhOiaICgN8GACD8tpnp/SxfwAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://www.snopes.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.snopes.com/" resultDomain="snopes.com">
+  <os:Param name="s" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,25 @@
+#!/bin/sh
+set -xe
+MYSHELL=${MYSHELL:-zsh}
+MYTERMINAL=${MYTERMINAL:-alacritty}
+case "$MYTERMINAL" in
+    termite)
+        setsid "$MYTERMINAL" -e "tmux new \"$*; exec $MYSHELL\"" &
+        ;;
+    urxvt|urxvtc)
+        startup() {
+            urxvtc -e sh -c "tmux new \"$*; exec $MYSHELL\""
+        }
+        startup "$@"
+        if [ $? -eq 2 ]; then
+            urxvtd -q -o -f
+            startup "$@"
+        fi
+        ;;
+    alacritty)
+        setsid "$MYTERMINAL" -e tmux new "$*; exec $MYSHELL" &
+        ;;
+    *)
+        echo "$MYTERMINAL is not supported"
+        exit
+esac

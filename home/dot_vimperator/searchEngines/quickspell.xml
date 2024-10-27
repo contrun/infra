@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>quickspell</os:ShortName>
+<os:Description>Dictionary word look-up.</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAABl0RVh0U29mdHdhcmUAUGFpbnQuTkVUIHYzLjUuNUmK/OAAAAKBSURBVDhPdZJNaBNRFIUnIrhp6cYudCu4MIiIrRViiTU1Y9O0mSTWtlLQIioWg6ALiy6MuBUEQRGk0PpXqCKhoFhdKIKbCko1tuqmU1pDGmgmySTp/GTmeN90xg5iHxxm3sy737v33MsBGCbtn+gBOG5d3iR9BRKkfZxrQa16nC0UeqcDvRT8lQUn03ZQGpKXwQhKy+cG5DKLFgCm7mHikIbIDts3nqaAhyyrNGXgQN2AGoyQBYDRZH13H6TADlITKUlgOGA3QAXa2T4nF7b8DyDYgJsbASqmsakCeIqkfwESBfOkfguyQQb0z1Ni5v110nWQfvpZN5gfTmk9E8yL9QVFWzMxn1+DsFudFlpdsIFOSye/TMOE1lszlDpSM6A3kBqhKwJ1YQcDnHC77p4Fzgucu5xAVZH3kLaZMLbrhlZfrZa3Uhc2y6V8PQe5EiBA3B6oCx8/vMPLyRQWxHmrDFZOvO8Ynjwbh1xT/SNPHyHS14M79+9Bh9FCGbgMYSWpqvAqlUJ3qAOmpvNdnWE2TMOxWEz8PjcrHOkIoQbcLlTLiVwhH7B8WEGxwbHp+o2kODU1hWiEOmrgQNDXBshay3E+LE2/fX8qEuAlqMZuMmZXUS4JboOtd3/rITweHUOorR2V5RU+2OyTBsNRvLj7AFg1Wt+MjcO304vnI6NAzei0gpacobBKgEA39KOiRsm9vVjVB7CqtUKSG2nvJ/HWs1D0QVF4C0CTVeekcjEcF9Uf8zPXBgZFZLKvh7q7RCxnxJMB/yfkMtKleLdU/vYZt86eAbLL4HTTHkmbgGwJV49GYc7M4ooQBZbmMRQJAoUlnI8cBn7PIcEfBDILwK+f+AP70E13VH7STgAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://dkprojects.net</SearchForm>
+<os:Url type="text/html" method="GET" template="http://dkprojects.net/quickspell/?q={searchTerms}&amp;language={language}" resultDomain="dkprojects.net">
+</os:Url>
+<os:Url type="application/x-suggestions+json" method="GET" template="http://dkprojects.net/quickspell/quickspell_json.php?q={searchTerms}&amp;language={language}" resultDomain="dkprojects.net">
+</os:Url>
+</SearchPlugin>

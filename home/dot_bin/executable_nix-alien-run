@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+: "${NIX_ALIEN_BIN_DIR:=$HOME/.cache/bin}"
+: "${NIX_ALIEN_BIN:="$NIX_ALIEN_BIN_DIR/$(basename "$0")"}"
+
+declare -a NIX_ALIEN=(nix run "github:thiagokokada/nix-alien#nix-alien")
+if command="$(command -v nix-alien)"; then
+	NIX_ALIEN=("$command")
+fi
+
+"${NIX_ALIEN[@]}" -- "$NIX_ALIEN_BIN" "$@"

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>searxme</os:ShortName>
+<os:Description>searx.me</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABdElEQVQ4jbXNsWoqQRiG4W9cjXGRcXd0BhHMJQSRdHYhYJlOm8BpPUL6dNk03oD3EAKSTq0CVhEbRbERy4WghYWInELIfqcxIYWaIORtZvjn5xngF4vvmMX2Lf/dnmeWZQWJRIJaa0opGQqF3gFEtu8v+wACuIrH4yyXy/xos9kwn8/Ttm0CuNzu7QYikUhQrVa5q1wuRyFEcAh40lpzuVxyvV5ztVqxUql83heLBaWUBHCzD7jNZDL0fZ/z+ZzGGCqlWCgUOJvN6Ps+tdZ7fweAc2MMx+Mxp9Mp6/U6Hcdho9HgZDLhaDSi4zgHAcRiMdZqNfZ6PQ4GAw6HQ/b7fXa7XRaLRVqWFRwEANwppeh5HlutFtvtNpvNJkulEl3XpZTy9TsAAO5t22Y6nWY2m6UxhtFoNADAcDgcKKXeSIqfQNcAHgBcfJn9E0IErusSwI+QXY2EEEylUvQ87+RY5BFAkEwm2el0To9F/gCgMeb5WOCz/8P0xt6yDBO7AAAAAElFTkSuQmCC</os:Image>
+<SearchForm>https://searx.me</SearchForm>
+<os:Url type="text/html" method="POST" template="https://searx.me/" resultDomain="searx.me">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>camelcamelcamel</os:ShortName>
+<os:Description>camelcamelcamel</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABz0lEQVQ4jWNgwALub22QwCZOEOzIzvZfqq7+/3aL2v/r85MasKnZlpvLvrmhgQurAYu1tH4tgxpwo1XzF7r81oSE2GXq6v+Xqav/X2htvQFVMjU1ASZ5u0Xt/+0Wtf+X2sxeHKrWr2toYGBiYGBgWOPjswmmZpm6+v/FBgbvGfa0tQmvioy0R5aAGQDDV5p1fq8qDOVcbmNzBaZmtbf3KgYGBgaGVatWMW9cPf3v5rUz/8MwsmEwvK6lHC6/cc2snw0NDUyQQNm4+ByyZlwGrG9FGLB25ax1cL/v2r78JCkGbFoz4x/cdgYGBoZNa6b/gGlcv2r6P5gBC9XV/8E0L42KUlrXVgExfNlscYzogxmwv6GBBSY229ZWb5m6+v+5RkYfVxUWcuJKOwwb8rNPrAr2/b86O3U/svixJhfdkylq/6/Pq7XHqZmBgYFhf3Fx/FIXl9PLvb1RDehw0b3VovZvf0MCB14DGBgYGJYaG+ct0df/NcnTkx0mdrDJTvd6m+6bq6sa2AgasEhN7d9iY+NPS9XV/8PErs9Par3dovb/QrfjPYIGLDcxebSzvNyKgYGBkYGBgWF/QwPL1Va9z9ebNX/vb1Ag7AUsgJFYhQA7yS2PHLXyEAAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>https://camelcamelcamel.com</SearchForm>
+<os:Url type="text/html" method="GET" template="https://camelcamelcamel.com/search" resultDomain="camelcamelcamel.com">
+  <os:Param name="sq" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

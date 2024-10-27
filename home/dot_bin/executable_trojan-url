@@ -1,0 +1,215 @@
+#!/usr/bin/env -S cargo +nightly -Zscript
+---
+[package]
+name = "trojan-url"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4.5.19"
+image = "0.25.2"
+percent-encoding = "2.3.1"
+qr2term = "0.3.3"
+qrcode = "0.14.1"
+serde_json = "1.0.128"
+url = "2.5.2"
+---
+
+use clap::{Arg, Command};
+use image::{ImageFormat, Luma};
+use percent_encoding::{percent_decode, percent_encode, NON_ALPHANUMERIC};
+use qrcode::QrCode;
+use serde_json::{json, Value};
+use std::fs::File;
+use std::io::{self, Read, Write};
+use std::process;
+use url::Url;
+
+const DEFAULT_CONFIG: &str = r#"{
+    "run_type": "client",
+    "local_addr": "127.0.0.1",
+    "local_port": 1080,
+    "remote_addr": "example.com",
+    "remote_port": 443,
+    "password": [
+        "password1"
+    ],
+    "log_level": 1,
+    "ssl": {
+        "verify": true,
+        "verify_hostname": true,
+        "cert": "",
+        "cipher": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:AES128-SHA:AES256-SHA:DES-CBC3-SHA",
+        "cipher_tls13": "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
+        "sni": "",
+        "alpn": [
+            "h2",
+            "http/1.1"
+        ],
+        "reuse_session": true,
+        "session_ticket": false,
+        "curves": ""
+    },
+    "tcp": {
+        "no_delay": true,
+        "keep_alive": true,
+        "reuse_port": false,
+        "fast_open": false,
+        "fast_open_qlen": 20
+    }
+}"#;
+
+fn fail(msg: &str) -> ! {
+    eprintln!("{}", msg);
+    process::exit(1);
+}
+
+fn encode(
+    qr: bool,
+    input: &str,
+    output_path: Option<&String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let config: Value = serde_json::from_str(input)?;
+
+    if config["run_type"] != "client" {
+        fail("Please provide a client config");
+    }
+
+    let remote_addr = if config["remote_addr"].as_str().unwrap().contains(':') {
+        format!("[{}]", config["remote_addr"].as_str().unwrap())
+    } else {
+        config["remote_addr"].as_str().unwrap().to_string()
+    };
+
+    let password = percent_encode(
+        config["password"][0].as_str().unwrap().as_bytes(),
+        NON_ALPHANUMERIC,
+    );
+
+    let url = format!(
+        "trojan://{}@{}:{}",
+        password,
+        remote_addr,
+        config["remote_port"].as_u64().unwrap()
+    );
+
+    if qr {
+        let code = QrCode::new(url.as_bytes())?;
+        let image = code.render::<Luma<u8>>().build();
+        match output_path {
+            Some(output_file) => {
+                let mut file = File::create(output_file)?;
+                image.write_to(&mut file, ImageFormat::Png)?;
+            }
+            None => {
+                qr2term::print_qr(url)?;
+            }
+        }
+    } else {
+        match output_path {
+            Some(output_file) => {
+                let mut file = File::create(output_file)?;
+                file.write_all(url.as_bytes())?;
+            }
+            _ => {
+                io::stdout().write_all(url.as_bytes())?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn decode(input: &str, writer: &mut dyn Write) -> Result<(), Box<dyn std::error::Error>> {
+    let url = Url::parse(input.trim())?;
+
+    if url.scheme() != "trojan" {
+        fail("Not trojan URL");
+    }
+
+    let (password, addr_port) = url
+        .authority()
+        .split_once('@')
+        .ok_or("Invalid trojan URL")?;
+    let password = percent_decode(password.as_bytes()).decode_utf8()?;
+
+    let (addr, port_str) = addr_port.rsplit_once(':').ok_or("Invalid trojan URL")?;
+    let addr = addr.trim_start_matches('[').trim_end_matches(']');
+    let port: u16 = port_str.parse()?;
+
+    let mut config: Value = serde_json::from_str(DEFAULT_CONFIG)?;
+    config["remote_addr"] = json!(addr);
+    config["remote_port"] = json!(port);
+    config["password"][0] = json!(password.to_string());
+
+    writer.write_all(serde_json::to_string_pretty(&config)?.as_bytes())?;
+
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let matches = Command::new("Trojan URL Encoder/Decoder")
+        .arg(
+            Arg::new("decode")
+                .short('d')
+                .long("decode")
+                .action(clap::ArgAction::SetTrue)
+                .help("Decode input"),
+        )
+        .arg(
+            Arg::new("qrcode")
+                .short('q')
+                .long("qrcode")
+                .action(clap::ArgAction::SetTrue)
+                .help("Output QR code"),
+        )
+        .arg(
+            Arg::new("input")
+                .short('i')
+                .long("input")
+                .value_name("FILE")
+                .help("Input file (default: stdin)")
+                .default_value("-")
+                .required(false),
+        )
+        .arg(
+            Arg::new("output")
+                .short('o')
+                .long("output")
+                .value_name("FILE")
+                .help("Output file (default: stdout)")
+                .default_value("-")
+                .required(false),
+        )
+        .get_matches();
+
+    if matches.get_flag("qrcode") && matches.get_flag("decode") {
+        fail("Decoding QR code is not supported");
+    }
+
+    let mut reader: Box<dyn Read> = match matches.get_one::<String>("input") {
+        Some(input_file) if input_file != "-" => Box::new(File::open(input_file)?),
+        _ => Box::new(io::stdin()),
+    };
+
+    let mut input = String::new();
+    reader.read_to_string(&mut input)?;
+    let trimmed_input = input.trim();
+
+    let output_path = match matches.get_one::<String>("output") {
+        Some(output_file) if output_file != "-" => Some(output_file),
+        _ => None,
+    };
+
+    if matches.get_flag("decode") {
+        let mut writer: Box<dyn Write> = match output_path {
+            Some(output_file) => Box::new(File::create(output_file)?),
+            _ => Box::new(io::stdout()),
+        };
+        decode(trimmed_input, &mut writer)?;
+    } else {
+        encode(matches.get_flag("qrcode"), trimmed_input, output_path)?;
+    }
+
+    Ok(())
+}

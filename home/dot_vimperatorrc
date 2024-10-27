@@ -1,0 +1,471 @@
+""" vimperator plugin settings{{{
+
+    " autochanger_proxy settings
+    javascript <<EOF
+          liberator.globalVariables.autochanger_proxy_enabled = true;
+          liberator.globalVariables.autochanger_proxy_settings = [{
+              name  : 'disable',
+              usage : 'direct connection',
+              proxy :{
+                type      :0,
+              },
+            },{
+              name  : 'http',
+              usage : 'localhost http proxy 8118',
+              proxy :{
+                type      : 1,
+                http      : 'localhost',
+                http_port : 8118,
+              },
+              url   : /http:\/\/www.nicovideo.jp/,
+              run   : '/home/vv/test.sh',
+              args  : ['C:\Personal\Apps\Internet\NicoCacheNl\NicoCache_nl.jar'],
+            },{
+              name  : 'socks',
+              usage : 'localhost socks proxy 1081',
+              proxy :{
+                type      : 1,
+                socks     : 'localhost',
+                socks_port : 1081,
+                no_proxies_on:'localhost,127.0.0.1,example.com'
+              },
+              url   : /http:\/\/www.nicovideo.jp/,
+              run   : '/home/vv/test.sh',
+              args  : ['C:\Personal\Apps\Internet\NicoCacheNl\NicoCache_nl.jar'],
+            }];
+EOF
+
+    " mstrans settings
+"    javascript <<EOF
+"          liberator.globalVariables.microsoft_translator_client_id = "";
+"          liberator.globalVariables.microsoft_translator_client_secret = "";
+"EOF
+
+""" }}}
+
+""" leader key shortcuts {{{
+    map <Leader1>p :set apptab=true<CR>
+    map <Leader1>m :bmarks! -T math<CR>
+    map <Leader1>l :bmarks! -T later<CR>
+    map <Leader1>f :tabopen https://feedly.com/i/category/1st<CR>
+    map <Leader1>g :tabopen libgen<space>
+    map <Leader1>h :tabopen http://hn.premii.com/#/f/yesterdayTop10<CR>
+    map <Leader1>a :tabopen https://arxiv.org/pdf/
+    map <Leader1>w :tabopen http://wttr.in/beijing?mM<CR>
+    map <Leader1>s :pocket <CR>
+
+    map <Leader2>s :source! $HOME/.vimperatorrc<CR>
+    map <Leader2>d :tabopen about:downloads<CR>
+    map <Leader2>a :tabopen about:addons<CR>
+    map <Leader2>c :tabopen about:config<CR>
+    map <Leader2>p :tabopen about:preferences<CR>
+    map <Leader2>g :javascript toggleproxy()<CR>
+    map <Leader2>r :restart
+    map <Leader2>m :mpv<CR>
+    map <Leader2>M :mpvsubtitle<CR>
+    map <Leader2>y :ydl<CR>
+    map <Leader2>v :emenu File.New Private Window<CR>
+    map <Leader2>t :emenu View.Sidebar.Synced Tabs<CR>
+
+    map <Leader3>u :js util.copyToClipboard(buffer.URL, true)<CR>
+    map <Leader3>t :js util.copyToClipboard(buffer.title, true)<CR>
+    map <Leader3>m :js util.copyToClipboard('[' + buffer.title + '](' + buffer.URL + ')', true)<CR>
+    map <Leader3>h :js util.copyToClipboard('<a href="' + buffer.URL + '">' + buffer.title + '</a>', true)<CR>
+
+""" }}}
+
+""" Keybindings {{{
+    " Disable help keybind
+    map <F1> <Nop>
+    imap <F1> <Nop>
+    cmap <F1> <Nop>
+
+    " Toggle navigation toolbar (
+    map <F1> :set toolbars=invnavigation<CR>
+
+    " Disable quit keybinds
+    map <C-q> <Nop>
+    imap <C-q> <Nop>
+    cmap <C-q> <Nop>
+    map <M-q> <Nop>
+    imap <M-q> <Nop>
+    cmap <M-q> <Nop>
+    map <C-S-w> <Nop>
+    imap <C-S-w> <Nop>
+    cmap <C-S-w> <Nop>
+
+    " Disable highlighted search matches
+    map <C-7> :noh<CR>
+    imap <C-7> <ESC>:noh<CR>gi
+
+    " Scroll up/down lines from 'scroll' option, default half a screen
+    noremap d <C-d>
+    noremap s <C-u>
+
+    " d to close tab
+    noremap d :emenu File.Close Tab<CR>
+
+    " Disable D to close tab
+    map D <Nop>
+
+    " Pin tabs easily
+    noremap gp :set apptab<CR>
+    noremap gu :set noapptab<CR>
+
+    " Rebind Ctrl+Shift+c as copy instead of firefox inspector
+    " Same bind is used in most terminals, resulting in frequent misclicks
+    map <C-S-c> <C-c>
+    imap <C-S-c> <C-c>
+
+    " Y = C-c, instead reuse Y for copying title of a buffer (page)
+    noremap Y :js util.copyToClipboard(buffer.title, true)<CR>
+
+    " tab movement
+    nnoremap gf <C-^>
+    nnoremap gb g$
+    nnoremap gt g0
+    noremap l gt
+    noremap h gT
+    noremap <S-Left> :tabmove! -1<CR>
+    noremap <S-Right> :tabmove! +1<CR>
+
+    " easy echo
+    noremap e :echo<Space>
+
+    " zoom reset
+    map z0 :emenu View.Zoom.Reset<CR>
+    " Sometimes links can't be clicked
+    " Open highlighted text/url as new tab
+    noremap gx :js soap()<CR>
+
+    " Replace homepage with downloads for <C-j>
+    " noremap <C-j> :tabopen about:downloads<CR>
+    " inoremap <C-j> :tabopen about:downloads<CR>
+
+    " Ctrl+a to select all text
+    " inoremap <C-a> <C-Home><C-S-End>
+
+    " Always start inserting at the end of input fields
+    noremap gi gi<End>
+
+    " Open editor map for when <C-i> gets intercepted
+    " https://github.com/vimperator/vimperator-labs/issues/119#issuecomment-70961297
+    imap <C-S-i> <C-i>
+
+    " Tree Style Tab
+    " Inspired by ntnn's vimperatorrc:
+    " - https://gist.github.com/ntnn/213f31f2fd0584b160bb#file-vimperatorrc-L41
+    " map < :js TreeStyleTabService.promoteCurrentTab()<CR>
+    " map > :js TreeStyleTabService.demoteCurrentTab()<CR>
+    " map gz :js togglecollapse()<CR>
+
+    " https://github.com/vimperator/vimperator-labs/issues/547
+    noremap gs :js togglestatusline()<CR>
+""" }}}
+""" Firefox settings {{{
+    " General preferences, i.e. about:config entries
+    set! media.block-play-until-visible=true
+    set! media.suspend-bkgnd-video.enabled=true
+    set! browser.urlbar.trimURLs=false
+    set! plugins.click_to_play=true
+    set! layout.spellcheckDefault=2
+    set! browser.display.show_image_placeholders=true
+    set! browser.tabs.loadDivertedInBackground=true
+    set! browser.search.context.loadInBackground=true
+    set! browser.tabs.loadBookmarksInBackground=true
+    set! browser.tabs.loadInBackground=true
+    set! security.dialog_enable_delay=0
+    set! dom.event.contextmenu.enabled=false
+    set! xpinstall.signatures.required=false
+    set! reader.parse-on-load.enabled=false
+    set! dom.event.clipboardevents.enabled=false
+    set! browser.cache.offline.enable=true
+    set! browser.send_pings=false
+    set! media.navigator.enabled=false
+    set! media.peerconnection.enabled=false
+    set! dom.battery.enabled=false
+    set! dom.disable_beforeunload=true
+    set! dom.require_user_interaction_for_beforeunload=false
+    set! extensions.stylish.buttonStylesDisplay.app=submenu
+    set! extensions.stylish.buttonStylesDisplay.siteNonMatching=submenu
+    set! extensions.greasemonkey.installDelay=1
+    set! accessibility.blockautorefresh=true
+    set! beacon.enabled=false
+    set! browser.cache.disk.enable=false
+    set! browser.cache.memory.max_entry_size=-1
+    set! browser.download.useDownloadDir=true
+    set! browser.fixup.alternate.enabled=false
+    set! browser.newtabpage.enabled=false
+    set! browser.newtabpage.enhanced=false
+    set! browser.pocket.enabled=false
+    set! browser.preferences.inContent=true
+    set! browser.safebrowsing.downloads.enabled=true
+    set! browser.safebrowsing.enabled=false
+    set! browser.safebrowsing.malware.enabled=false
+    set! browser.search.defaultenginename=DuckDuckGo
+    set! browser.sessionstore.restore_on_demand=true
+    set! browser.showQuitWarning=true
+    set! browser.startup.page=3
+    set! browser.tabs.insertRelatedAfterCurrent=false
+    set! network.captive-portal-service.enabled=false
+    set! datareporting.policy.dataSubmissionEnabled=false
+    set! devtools.chrome.enabled=true
+    set! devtools.fontinspector.enable=true
+    set! dom.event.clipboardevents.enabled=false
+    set! experiments.enabled=false
+    set! general.autoScroll=true
+    set! general.smoothScroll=false
+    set! general.warnOnAboutConfig=false
+    set! geo.enabled=false
+    set! layers.acceleration.force-enabled=true
+    set! layout.spellcheckDefault=0
+    set! loop.enabled=false
+    set! media.navigator.enabled=false
+    set! media.peerconnection.enabled=false
+    set! middlemouse.contentLoadURL=false
+    set! middlemouse.paste=false
+    set! network.http.pipelining.ssl=true
+    set! network.http.pipelining=true
+    set! network.http.proxy.pipelining=true
+    set! network.IDN_show_punycode=true
+    set! network.proxy.socks_remote_dns=true
+    set! pdfjs.disabled=true
+    set! privacy.donottrackheader.enabled=true
+    set! social.remote-install.enabled=false
+    set! ui.key.menuAccessKeyFocuses=false
+    set! social.share.activationPanelEnabled=false
+    set! social.whitelist=
+
+    " Does not work for everything, for example html5 videos using play()
+    " - https://bugzilla.mozilla.org/show_bug.cgi?id=659285
+    set! media.autoplay.enabled=false
+
+    """ Userstyles {{{
+        " Hide and tweak parts of Firefox tabs
+        style -name firefox_tabs chrome://* .tab-close-button { display: none !important; } .tab-text { font-size: 0.95em !important; } .tabbrowser-tabs[treestyletab-mode="vertical"] .tab-stack { min-height: 20px !important; } .tabs-newtab-button { display: none !important; }
+        " Hide 1px border at top of window
+        " https://github.com/vimperator/vimperator-labs/issues/182
+        style -name top1px chrome://* #navigator-toolbox::after { height: 0 !important; }
+
+        " Disable search in about:newtab
+        style -name newtab about:newtab #newtab-search-container { display: none !important; }
+
+        " Remove background for transparent images (.png)
+        " http://rideag.uk/#tranbg
+        " https://github.com/RiDeag/dotfiles/pull/1
+        style -name transpng * body > img.decoded, body > img.transparent { background: none !important; } body > img.decoded:hover, body > img.transparent:hover { background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAABlBMVEV7e3sAAAD2vrKOAAAAAnRSTlM7O/sqyyQAAAAfSURBVHja1c6hAQAAAAFB9l9aYwGBj5ceie4bZ0ZaKKW0AMmwXSJmAAAAAElFTkSuQmCC) !important; }
+    """ }}}
+
+    """ Extensions {{{
+        set! extensions.update.autoUpdateDefault=false
+        set! xpinstall.signatures.required=false
+
+        " Image Search Options (SauceNAO)
+        set! extensions.imagesearchoptions.bgimagesearch=false
+        set! extensions.imagesearchoptions.sitearray=SauceNAO Search|0|1|chrome://ImageSearchOptions/content/images/SauceNAO.png;;;0|1|0|1;;;1;;;http://saucenao.com/search.php;;;db=999|url=::$URL::;;;?|&;;;0;;;http://saucenao.com/search.php;;;db=999|file=::$IMGDATA::;;;?|&;;;1|||IQDB Search|0|1|chrome://ImageSearchOptions/content/images/IQDB.png;;;0|1|0|1;;;2;;;http://iqdb.org;;;url=::$URL::;;;?|&;;;0;;;http://iqdb.org/;;;file=::$IMGDATA::;;;?|&;;;1|||Google images|1|1|http://www.google.com/favicon.ico;;;1|1|1|1;;;0;;;https://www.google.com/searchbyimage;;;image_url=::$URL::;;;?|&;;;0;;;https://www.google.com/searchbyimage?&image_url=;;;image=::$IMGDATA::;;;?|&;;;1|||GazoPa Search|0|1|chrome://ImageSearchOptions/content/images/GazoPa.png;;;0|1|0|1;;;4;;;http://www.gazopa.com/search/navigate;;;key_url=::$URL::;;;?|&;;;0;;;http://www.gazopa.com/search/navigate;;;file=::$IMGDATA::;;;?|&;;;1|||Ascii2D Search|0|1|chrome://ImageSearchOptions/content/images/Ascii2D.png;;;0|1|0|1;;;5;;;http://www.ascii2d.net/imagesearch/search/;;;uri=::$URL::;;;?|&;;;1;;;http://www.ascii2d.net/imagesearch/search/;;;upload[file]=::$IMGDATA::;;;?|&;;;1|||Cydral Search|0|1|chrome://ImageSearchOptions/content/images/Cydral.png;;;0|1|0|1;;;6;;;http://www.cydral.com/;;;url=::$URL::;;;#|#;;;0;;;http://www.cydral.com/;;;url=::$URL::;;;#|#;;;0|||Yandex Search|1|1|chrome://ImageSearchOptions/content/images/Yandex.png;;;0|1|0|1;;;7;;;http://images.yandex.ru/yandsearch;;;rpt=imagedups|img_url=::$URL::;;;?|&;;;0;;;http://images.yandex.ru/yandsearch;;;rpt=imagedups|img_url=::$URL::;;;?|&;;;0|||Baidu Search|0|1|chrome://ImageSearchOptions/content/images/Baidu.png;;;0|1|0|1;;;8;;;http://stu.baidu.com/i;;;rt=0|rn=10|ct=1|tn=baiduimage|objurl=::$URL::;;;?|&;;;0;;;http://stu.baidu.com/i;;;rt=0|rn=10|ct=1|tn=baiduimage|objurl=::$URL::;;;?|&;;;0|||Regex Search|0|1|chrome://ImageSearchOptions/content/images/Regex.png;;;0|1|0|1;;;9;;;http://regex.info/exif.cgi;;;url=::$LURL::;;;?|&;;;0;;;http://regex.info/exif.cgi;;;url=::$URL::;;;?|&;;;0|||E-Hentai Search|0|1|chrome://ImageSearchOptions/content/images/E-Hentai.png;;;0|1|0|1;;;10;;;http://gu.e-hentai.org/image_lookup.php;;;sfile=::$IMGDATA::|f_sfile=File Search|fs_similar=on|fs_exp=on;;;?|&;;;1;;;http://u.exhentai.org/image_lookup.php?from=ex;;;sfile=::$IMGDATA::|f_sfile=File Search|fs_similar=on|fs_exp=on;;;?|&;;;1|||TinEye Search|1|1|chrome://ImageSearchOptions/content/images/TinEye.png;;;1|1|1|1;;;3;;;http://www.tineye.com/search/;;;url=::$URL::;;;?|&;;;0;;;http://www.tineye.com/search/;;;image=::$IMGDATA::;;;?|&;;;1
+        set! extensions.imagesearchoptions.usesubmenu=true
+        set! extensions.imagesearchoptions.usesubmenuall=false
+
+        " Imagus
+        set! extensions.Imagus.grants=[{\"op\":\"!\",\"url\":\"imgur.com\"},{\"op\":\"!\",\"url\":\"goodreads.com\"},{\"op\":\"!\",\"url\":\"dotabuff.com\"}]
+
+        " Tree Style Tab
+        " http://piro.sakura.ne.jp/xul/xpi/nightly/treestyletab.xpi
+        " https://github.com/piroor/treestyletab/pull/816
+        set! extensions.treestyletab.autoCollapseExpandSubtreeOnAttach=false
+        set! extensions.treestyletab.autoCollapseExpandSubtreeOnSelect=false
+        set! extensions.treestyletab.tabbar.autoHide.mode.toggle=1
+        set! extensions.treestyletab.tabbar.style=mixed
+
+        " NoScript
+        " Scripts globally allowed, let uMatrix handle requests
+        " Keep NoScript for checking allowed requests, @font-face etc.
+        set! noscript.allowedMimeRegExp=FONT@https?://netdna\\.bootstrapcdn\\.com
+        set! noscript.autoReload.allTabs=false
+        set! noscript.collapseObject=true
+        set! noscript.notify=false
+        set! noscript.doNotTrack.enabled=false
+        set! noscript.global=true
+        set! noscript.showAbout=false
+        set! noscript.showAllowPage=false
+        set! noscript.showBlockedObjects=false
+        set! noscript.showDistrust=false
+        set! noscript.showGlobal=false
+        set! noscript.showRecentlyBlocked=false
+        set! noscript.showRevokeTemp=false
+        set! noscript.showTemp=true
+        set! noscript.showTempAllowPage=false
+        set! noscript.showTempToPerm=false
+        set! noscript.showUntrusted=false
+        set! noscript.smartClickToPlay=false
+        set! noscript.stickyUI.liveReload=true
+
+        " uMatrix
+        " https://github.com/gorhill/uBlock/issues/112
+        " https://github.com/gorhill/uMatrix/issues/288
+        set! extensions.umatrix.forceLegacyToolbarButton=true
+    """ }}}
+""" }}}
+""" Vimperator
+    " General settings
+    set complete="slSth"
+    set visualbell
+    set nohlsearch
+    set wildmode="full"
+    set defsearch="duckduckgo"
+    set editor="urxvtc -e vim"
+    set focuscontent
+    set hintchars="asdfg"
+    set newtab="addons,downloads,extoptions,help,prefs"
+    set status="input,location,bookmark,tabcount,ssl"
+    set suggestengines="duckduckgo"
+    set titlestring=""
+    set toolbars="nonavigation"
+    set urlseparator=""
+
+    " Commands & tweaks
+    js mappings.addUserMap([modes.INSERT], ["<C-S-i>"], "Launch the external editor.", function() { editor.editFieldExternally(); })
+    com! ydl js liberator.execute('silent !youtube-dl.sh '+buffer.URL)
+    com! mpv js {liberator.execute('silent !mpv.sh "'+buffer.URL+'"'); liberator.echo('running mpv')}
+    com! mpvsubtitle js {util.copyToClipboard(buffer.title, true); liberator.execute('silent !mpvSubtitle.sh'); liberator.echo('running mpv')}
+    com! test js liberator.execute('silent run ~/test.sh '+buffer.URL)
+    command! backgroundimage :js let (doc = content.document) let (m = doc.defaultView.getComputedStyle(doc.body, '').backgroundImage.match(/url\s*\(\s*['"](.+)['"]\s*\)/)) m ? liberator.open(m[1], liberator.NEW_TAB) : liberator.echoerr('background image not found')
+    command! pocket -description "Save to Pocket" open javascript:(function(){var%20e=function(t,n,r,i,s){var%20o=[1198023,2796434,2191626,1183506,2311222,7228075,3639410,4677956,2627351,3205103];var%20i=i||0,u=0,n=n||[],r=r||0,s=s||0;var%20a={'a':97,'b':98,'c':99,'d':100,'e':101,'f':102,'g':103,'h':104,'i':105,'j':106,'k':107,'l':108,'m':109,'n':110,'o':111,'p':112,'q':113,'r':114,'s':115,'t':116,'u':117,'v':118,'w':119,'x':120,'y':121,'z':122,'A':65,'B':66,'C':67,'D':68,'E':69,'F':70,'G':71,'H':72,'I':73,'J':74,'K':75,'L':76,'M':77,'N':78,'O':79,'P':80,'Q':81,'R':82,'S':83,'T':84,'U':85,'V':86,'W':87,'X':88,'Y':89,'Z':90,'0':48,'1':49,'2':50,'3':51,'4':52,'5':53,'6':54,'7':55,'8':56,'9':57,'\/':47,':':58,'?':63,'=':61,'-':45,'_':95,'&':38,'$':36,'!':33,'.':46};if(!s||s==0){t=o[0]+t}for(var%20f=0;f<t.length;f++){var%20l=function(e,t){return%20a[e[t]]?a[e[t]]:e.charCodeAt(t)}(t,f);if(!l*1)l=3;var%20c=l*(o[i]+l*o[u%o.length]);n[r]=(n[r]?n[r]+c:c)+s+u;var%20p=c%(50*1);if(n[p]){var%20d=n[r];n[r]=n[p];n[p]=d}u+=c;r=r==50?0:r+1;i=i==o.length-1?0:i+1}if(s==331){var%20v='';for(var%20f=0;f<n.length;f++){v+=String.fromCharCode(n[f]%(25*1)+97)}o=function(){};return%20v+'5494157aa2'}else{return%20e(u+'',n,r,i,s+1)}};var%20t=document,n=t.location.href,r=t.title;var%20i=e(n);var%20s=t.createElement('script');s.type='text/javascript';s.src='https://getpocket.com/b/r4.js?h='+i+'&u='+encodeURIComponent(n)+'&t='+encodeURIComponent(r);e=i=function(){};var%20o=t.getElementsByTagName('head')[0]||t.documentElement;o.appendChild(s)})()
+	js << EOF
+commands.addUserCommand(['video'], 'Play video with external player',
+  function(args) {
+    if (args.bang) liberator.execute('mpvsubtitle');
+    else liberator.execute('mpv');
+  }, {
+    bang: true
+});
+
+EOF
+
+    " autocmds
+    " auto pin gmail, feedly
+    autocmd PageLoadPre mail.google.com js if(!getBrowser().mCurrentTab.pinned) liberator.execute('set apptab=true')
+    autocmd PageLoadPre gmail.com js if(!getBrowser().mCurrentTab.pinned) liberator.execute('set apptab=true');
+    autocmd PageLoadPre feedly.com js if(!getBrowser().mCurrentTab.pinned) liberator.execute('set apptab=true');
+
+    " passkeys
+
+    " Abbreviations
+    cabbrev -javascript TITLE buffer.title
+    cabbrev -javascript URI buffer.URI
+
+    abbreviate enja https://translate.google.com/#en/ja/
+    abbreviate enno https://translate.google.com/#en/no/
+    abbreviate jaen https://translate.google.com/#ja/en/
+    abbreviate jano https://translate.google.com/#ja/no/
+    abbreviate noen https://translate.google.com/#no/en/
+    abbreviate noja https://translate.google.com/#no/ja/
+    abbreviate deen https://translate.google.com/#de/en/
+    abbreviate deno https://translate.google.com/#de/no/
+""" }}}
+""" Colorscheme based off darkness.vimp {{{
+    highlight! Bell border: 0 none; background-color: #191919;
+    highlight! CmdLine background: #191919; color: #afafaf; font-size: 9pt;
+    highlight! CompDesc color: #c6c6c6; width: 50%; font-size: 9pt;
+    highlight! CompItem[selected] background: #666666; color: #afafaf;
+    highlight! CompResult width: 45%; overflow: hidden;font-size: 9pt; font-family: monospace; font-weight: normal;
+    highlight! CompTitle color: #afafaf; background: #191919; font-weight: bold;
+    highlight! CompTitle>* padding: 0 .5ex;
+    highlight! ContentSeparator border-top: 1px solid #454545; display: -moz-box;
+    highlight! ErrorMsg color: #ffffff; background: red; font-weight: bold;
+    highlight! Filter font-weight: bold;color: #afafaf;
+    highlight! FrameIndicator background-color: #191919; opacity: 0.5; z-index: 999; position: fixed; top: 0; bottom: 0; left: 0; right: 0;
+    highlight! Function color: lightgreen; background: #191919;
+    highlight! Hint font-family: monospace; font-size: 14px; font-weight: bold; text-transform: uppercase; color: white; background-color: red; border-color: ButtonShadow; border-width: 0px; border-style: solid; padding: 0px 1px 0px 1px;
+    highlight! HintActive background: blue; color: #f6e9e9;
+    highlight! HintElem background-color: #191919; color: #f6e9e9;
+    highlight! InfoMsg color: #afafaf; background: #191919;
+    highlight! LineNr color: #afafaf; background: #191919;
+    highlight! ModeMsg color: #afafaf; background: #191919;
+    highlight! MoreMsg color: #afafaf; background: #191919;
+    highlight! NonText color: lightblue; min-height: 16px; padding-left: 2px;
+    highlight! Normal color: #afafaf; background: #191919;
+    highlight! Number color: tan; background: #191919
+    highlight! Question color: #ffffff; background: #191919; font-weight: bold;
+    highlight! StatusLine color: #F1F1E0; background: #191919; font-size: 9pt;
+    highlight! String color: #191919; background: #afafaf;
+    highlight! Tag color: #191919; background: #afafaf;
+    highlight! Title color: #191919; background: #afafaf; font-weight: bold;
+    highlight! URL text-decoration: none; color: lightblue; background: inherit;
+    highlight! WarningMsg color: red; background: #191919;
+""" }}}
+
+" Functions
+:js << EOF
+
+// https://github.com/FRIGN/soap
+// let soap decide which application to run based off url
+// if query is not an url let firefox decide what do to
+function soap(query) {
+    if(typeof query === "undefined") {
+        selection = content.getSelection().toString()
+
+        if(selection.length < 1) {
+            query = buffer.URL;
+        } else {
+            query = selection;
+        }
+    }
+
+    if(!query.match(/^https?/)) {
+        liberator.open(selection, liberator.NEW_TAB);
+        return;
+    }
+
+    liberator.execute("silent !/usr/local/bin/soap " + query + " &", null, true);
+}
+
+// https://www.reddit.com/r/linux/comments/3xfcsb//cy5d4ek
+hints.addMode("P", "Open with SOAP:", (elem, loc) => soap(loc));
+
+// toggle Tree Style Tab subtree collapse
+function togglecollapse() {
+    if(gBrowser.treeStyleTab.isSubtreeCollapsed(TreeStyleTabService.getRootTab(gBrowser.selectedTab))) {
+        gBrowser.treeStyleTab.collapseExpandSubtree(TreeStyleTabService.getRootTab(gBrowser.selectedTab), false, true)
+    } else {
+        gBrowser.treeStyleTab.collapseExpandSubtree(TreeStyleTabService.getRootTab(gBrowser.selectedTab), true, true)
+    }
+}
+
+function togglestatusline() {
+    if (['auto', 'visible'].indexOf(options['statuslinevisibility']) >= 0) {
+        options['statuslinevisibility'] = 'hidden'
+    } else {
+        // or 'visible'
+        options['statuslinevisibility'] = 'auto'
+    }
+}
+
+function toggleproxy() {
+    if (services.get("prefs").prefHasUserValue('network.proxy.socks')) {
+		liberator.execute('proxy disable')
+		liberator.echo('proxy disabled')
+    } else {
+		liberator.execute('proxy socks')
+		liberator.echo('proxy enabled')
+    }
+}
+
+EOF
+
+""" helper scripts
+javascript <<EOF
+if (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULRuntime).OS == 'Darwin') {
+    liberator.execute('map <C-c> <Leader1>');
+    liberator.execute('map <C-x> <Leader2>');
+    liberator.execute('map <C-v> <Leader3>');
+} else {
+    liberator.execute('map <A-c> <Leader1>');
+    liberator.execute('map <A-x> <Leader2>');
+    liberator.execute('map <A-v> <Leader3>');
+}
+EOF
+
+source! $HOME/.vimperator/vimprc.local
+source! $HOME/.vimperator/vimprc.after
+

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>pdfonly</os:ShortName>
+<os:Description>Search documents in Adobe PDF format with Google</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/gif;base64,R0lGODlhEAAQAMZnAIoAAKQBAZoFCKwBAa0BAa4BAa8BAbABAbgBAb8CAq4HB6YKEbQHCm4ZKpcPGccDA48TH6wNDaUPFYYXJ8cHB9AFBcwHB64PF9IICMwKCtAJCcsLC84REdoSEs4WFr8bIIkrMN4XF7ckLY4yN64qOcslKdsiIuIiIuAjI+QiIpU5PmlGYLI0QYpCStcuMZlARpVBS7w8SJBJUcY8SeI4O+44OOM7O+84OJVQWPE4OPM4OMhDT+Y+PqZQUOo+PutAQsZLW/JBQe5CQ5tYYJlZY9BLVvVDQ75RZNRMVvhFRdZQWvtHR+xVVaxpafNYWPldXbVwcJh3m2mEtGyGuHCJufRqanSMuvmDg5Ko05iszqCz06e41qu82bPD37bG5LvJ5b3L5svY7NXh8+Dg4Oz2/+73//D3/////////////////////////////////////////////////////////////////////////////////////////////////////yH5BAEAAH8ALAAAAAAQABAAAAfHgH+CYV+Fhl9dgoqCYGeOj2dcW4uMZ2aXmFtik4uNmJhaWllZnWddp6dlYmJeVqWYZbFkZGFWY1FIQko/RTQ7LjElLB8kF2NHQY5XVY5MNo8WDGNAyUZnSWdLZ09nPiEYC2MzNWc3ZzlnOmdOjh0VDmMiKI4nJ2cpZzxnJhoPEGMSNpzJQNARBw9nKCRAMGGMgAMHDBQgQGDAAAURCAQI0GAMgB5NYEB5MUQFjhEyQLQgsmKMIixWqMicOaWmFJeKxujcydNlIAA7</os:Image>
+<SearchForm>http://www.google.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.google.com/search?q={searchTerms}+filetype:pdf" resultDomain="google.com">
+</os:Url>
+<os:Url type="application/opensearchdescription+xml" method="GET" template="http://sitime.ru/files/search-plugin/onlypdf.xml" rel="self" resultDomain="sitime.ru">
+</os:Url>
+</SearchPlugin>

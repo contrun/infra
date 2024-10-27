@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: new lecture notes
+# key: nln
+# --
+\documentclass[12pt]{article}
+\usepackage{../templates/notesfather}
+\title{$1}
+\author{YI}
+\date{`(format-time-string "%a, %d %b %Y %T %z")`}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+$2
+
+\end{document}

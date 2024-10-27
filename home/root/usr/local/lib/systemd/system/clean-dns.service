@@ -1,0 +1,18 @@
+[Unit]
+Description=Clean DNS
+After=network.target
+Wants=network.target
+Conflicts=dnsmasq.service
+
+[Service]
+Type=simple
+LimitNOFILE=102400
+EnvironmentFile=/opt/transparent-proxy/conf.d/default-env
+ExecStart=/opt/transparent-proxy/clean-dns start
+ExecStartPre=/opt/transparent-proxy/clean-dns pre_start
+ExecStartPost=/opt/transparent-proxy/clean-dns post_start
+ExecStopPost=/opt/transparent-proxy/clean-dns post_stop
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

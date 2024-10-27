@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: ncdots
+# key: ncdots
+# --
+$1_{1}, $1_{2}, \cdots, $1_{n}

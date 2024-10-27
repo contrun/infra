@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# export XMODIFIERS="@im=fcitx"
+# export QT_IM_MODULE="fcitx"
+# export GTK_IM_MODULE="fcitx"
+# fcitx
+# export QT_IM_MODULE="xim"
+# export GTK_IM_MODULE="xim"
+#eval "$(dbus-launch --sh-syntax --exit-with-session)"
+
+#export GTK_IM_MODULE_FILE="/usr/lib/gtk-3.0/3.0.0/immodules.cache"
+
+# export MYPATH="$HOME/.local/bin"
+# export GOPATH="$HOME/Workspace/go"
+# RUBYPATH="$(ruby -e 'print Gem.user_dir')"
+# export PATH="$MYPATH:$PATH:$GOPATH/bin:$RUBYPATH/bin"
+# export EDITOR=vi
+#export XDG_RUNTIME_DIR="/var/run/user/1000"
+echo "$(date -R): xruncommand" /tmp/startup.log
+if [ -x "${HOME}/.env" ]; then
+    . "${HOME}/.env"
+fi
+[ -f /etc/profile.d/my.sh ] && . /etc/profile.d/my.sh
+export PATH="${PATH}"
+# host="$(cat /etc/hostname)"
+# if [ -x ~/.Xmodmap.$host ]; then
+#     ~/.Xmodmap.$host
+# else
+#     [ -x ~/.Xmodmap ] && ~/.Xmodmap
+# fi
+keymap.sh
+if [ -f ~/.Xresources.$host ]; then
+    xrdb -load -I$HOME ~/.Xresources.$host
+else
+    [ -f ~/.Xresources ] && xrdb -load -I$HOME ~/.Xresources
+fi
+# dbus-update-activation-environment --systemd DISPLAY
+# eval $(/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
+# export SSH_AUTH_SOCK
+
+# export GTK_IM_MODULE="ibus"
+# export XMODIFIERS="@im=ibus"
+# export QT_IM_MODULE="ibus"
+# ibus-daemon -x -r -d
+# export LC_CTYPE=zh_CN.UTF-8
+# export XIM=fcitx
+# export XIM_PROGRAM=fcitx
+# export GTK_IM_MODULE="fcitx"
+# export XMODIFIERS="@im=fcitx"
+# export QT_IM_MODULE="fcitx"
+# fcitx &

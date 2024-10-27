@@ -1,0 +1,3 @@
+33 * * * * fcrontab - <~/.config/cron/crontab
+*/5 * * * * ~/.bin/ddns.sh
+43 * * * * ~/.bin/artpip.sh new

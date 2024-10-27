@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>eccelliomovies</os:ShortName>
+<os:Description>Search the entire web for movies info</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAC80lEQVQ4jV2QTUsybQCFr3vm1nHGNEstRaKeTRBYG1uEO+sX1Mpl0B8p+gXRn2gTtGgRtSiI2uhKIhC/vynSmmImM8d5Fy+P8L4HrtXhHA5HnJ+fuz6fD8Mw8Pl8jMdjfn9/GY/HOI7D8vIy0WiUvxJC4LouiqIAIP1+P5qm4fP56HQ6nJyc0O12iUQiVKtVMpkMh4eHLC4u8n8JIVA8Hg9CCEzT5PT0lFarheM4NBoNwuEwz8/PHB0dYds2iqL8ByHEvws8Hg8PDw+oqsr29ja9Xg9VVYnFYlQqFe7v78nlcmQyGYQQCCEAcF0Xqes6mqZhWRZbW1vs7+9TLBap1+vUajV0XScYDHJzc0M6ncYwjGlYCIHi9/vRdZ10Ok2tVqPRaGBZFpZlMZlM6Ha72LaNaZqUSqXpAlVVUVUVxev1oqoqGxsbhEIhnp6eqFarXFxc0Gw20TSNlZUVTNPk7e1tWvAXxePxIKVE0zSy2SyO41CpVAiHwxwcHLC0tEQikcCyLDwezxQpJaqqIl5fX10ARVEYjUbc3d0Rj8cpl8ukUikuLy8pl8sMBgPW1tbo9/usrq5iGAaxWAzR7/fdyWSCqqpIKanX6+Tzeebn5xkOh1xdXfHy8oIQAsMwEEIQCASIxWIMBgOU6ZuKQrfb5fj4mNFohGVZNBqNqSelRFEU/H4/juNg2zZSSiSAlBLTNCkUCgSDQVzXZXl5mXK5TCwWw3EcOp0OyWSSP3/+YNs27Xab8XiMnEwmfH190e/36ff7aJpGIBBgbm6On58frq+vEUKQzWZJpVJ8f3/TbDZJJBIUi0WUXq9Hu91G13W8Xi8AzWYT13Xxer2EQiHW19fZ29vDMAxarRalUonb21ui0ShyOBzSaDSYTCaMRiMWFhZot9sUCgU2NzdxHIfd3V00TUNKieu6vL+/Mzs7SzAYRInH48zMzJDL5fj4+GA4HBKJRHh8fMS2bXZ2dohGo3x+fpLP5zk7O2M4HJJMJul0OvwDAeRWJKTUdawAAAAASUVORK5CYII=</os:Image>
+<SearchForm>http://movies.eccellio.com</SearchForm>
+<os:Url type="text/html" method="GET" template="http://movies.eccellio.com/results.php?cref=http%3A%2F%2Fwww.eccellio.com%2Fclusters%2Fdef_AllTheWeb.xml&amp;cof=FORID%3A9&amp;q={searchTerms}&amp;lr=&amp;site=&amp;app=&amp;as_qdr=&amp;sa=Search#961" resultDomain="movies.eccellio.com">
+</os:Url>
+</SearchPlugin>

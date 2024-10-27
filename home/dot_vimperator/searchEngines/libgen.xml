@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>libgen</os:ShortName>
+<os:Description>Library Genesis</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABhklEQVQ4jaWTzyvDcRjHXT7JaQcnOcnBgaK0Yb4pP5qSiIOLC3ERDn5cxL6+viGJGS5oCRkpO8jKr7YL2WzCzI/5uYnz9194OWw3su9yePfUc3j1PK+nJ03TYvwnab81o59RRlfcLO548QRuUwdoWozWISfCZEUUW2ke2Ewd4AuFGVs+YmbrjH77oX7A0XmQNnmXup41ajodVLYv0dC7Qfeki/vXp+SA6FeUgpYFhKQipPFEVRFmhdEVt74Vdk4CiKIRMiSFnHobeY02DJLKuvtMvwNP4Jbwyzue4B37p1ccnN/gCz38DfCFwlg6HGTVTpNulhFGGWFUEpERJgVL1+rfEwzM7SFKFYRZQZhVRJmcSLxnqBpPvkJFpyMuriwxhUlGlFgRpQqFTQvJAc5DP/mNdvpm93Ae+LkIP3MV+eA68koo8qhPoqbFuH97Z/vYT9eEi8xyFZf3Ut8VBu3HGKon4y6MctyHScET/PkXvwJc3kuyLVOIcpUMSSW3wcbw/H5qv6A337cmPsIp7ZJdAAAAAElFTkSuQmCC</os:Image>
+<SearchForm>http://libgen.io</SearchForm>
+<os:Url type="text/html" method="GET" template="http://libgen.io/search.php" resultDomain="libgen.io">
+  <os:Param name="req" value="{searchTerms}"/>
+  <os:Param name="lg_topic" value="libgen"/>
+  <os:Param name="open" value="0"/>
+  <os:Param name="view" value="detailed"/>
+  <os:Param name="res" value="100"/>
+  <os:Param name="phrase" value="1"/>
+  <os:Param name="column" value="def"/>
+</os:Url>
+</SearchPlugin>

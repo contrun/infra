@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>mathoverflow</os:ShortName>
+<os:Description>MathOverflow</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABz0lEQVQ4jaXTPWhTURQH8COoOFjaQD4eL/eec965IiJq4+IkJU7qYAYdzCJEcYhLszTwrLTXkGqlMaK8vsRBLS52cLGLSxBF6gdiR9sxe7GbkMHhukhpxaAk//nw4w/nHIBhU6vfsfX6nGvM19ziwqx71px2yw+rbiWquM7iDbcaX3VrraJbbxVct3XGfW/l3FY7Z/8EfjbmazZuzNql5rRdfjRlV6JJ24nL9kNcsmvtot1oF2y3nbf9gN7/Nh4eiE/MbUbHz/8VMFof8zwvxUqdk0RiVCl1SBBP7wQCrQuiqWmIZoJ0OrMN+L6fNMTvAk23AkVVQ/QpQLwiml6zUnkAAEG0gvSDtS4K8ntB/rKrgSAvsc9HGPiAIX4LACCargVE15PJ5IgQ90TTk9+zj4W490/AaC6J5jIiHjXEjhEnAWCPQVoXpDc7gb2C9DJQ6pTneSkh/gwA+xmxEhBNAcA+QdowSB8N8nNDvEm+f3Ib4DEeY8V5znJOstnDrDhvMpl0oPVEoPUEAEAqlTooii6JoouSSIwOvMat9vjZwe+g3ykv3L0dRvdmwqf3b4YvHlTDV1El7ETlcDUuhV/jy+G3+ELYjfNhP2DwZxo2vwAn4PqmA9rwGgAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>https://mathoverflow.net</SearchForm>
+<os:Url type="text/html" method="GET" template="https://mathoverflow.net/search" resultDomain="mathoverflow.net">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

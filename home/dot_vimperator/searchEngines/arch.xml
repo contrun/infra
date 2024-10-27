@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>arch</os:ShortName>
+<os:Description>Search packages for Arch Linux</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABQklEQVQ4y2NgwAMkJ182AWEGcoH45ItLgXg5WZqFp1+QBmr+BcS/paZeliXZALHJF+uBmv+D8aQLHeQ4/zjCgIuvxbsvcpOg+VKU+JRLc4GaH8ANmXyhgjjdM8+wAjXchWr8jDDg4luB/vMCBPVLTLmUjaQJDV9qx6tZauYZLqCiZ7gNuPhFdOpVCXx+L0RS/E98ysVW8SkXmoHsvzBxiUmXerFqBvkPqOANUsjPhntr8sXpSAZ/B6URTNuBcY3i3EkXfeFpYsplVyS5O8A0MhVFs/SkizJAiW/IBgCdag+TF5163gBJ7r3E5EtNDP//MyL5/cI8uIIpF8+AUiHIULgXJp0TFZ90qQYofwJuwZSLPbCA0wUK/JGYdHE7ULM5oWiWnHjJGKh+KyhgxSZd0Qf6/WKV5JRLdqQmdclJF21BegEJKvp+UgEm2wAAAABJRU5ErkJggg==</os:Image>
+<SearchForm>http://www.archlinux.org/packages/</SearchForm>
+<os:Url type="text/html" method="GET" template="http://www.archlinux.org/packages/?q={searchTerms}" resultDomain="archlinux.org">
+</os:Url>
+</SearchPlugin>

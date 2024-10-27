@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>wordnik</os:ShortName>
+<os:Description>Wordnik</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA9klEQVQ4ja2SMUoDQRSG5wTyZt4ewCMIwSbbBGKXZiEKghZCLCxSpFA7ZZuQKkwqE6vJDTzCHsEjeIQc4Usjm4y7Jrvig695j/+bx8wY81+FFyG4CWstCBoISa+cBc1Y68f37K4+vEo+eU+IeNOMZZJX+ksNsWDuchZKBe82tf2FwnxvE2ZaMFNaMXX5TvCiBa9KO/YFz87z5GjFo0x2grFkjB2teJDT+CJH9ot7RyNGLn4FY4zhVnrcWI4jG65/nF5KLsUztBzkSqofKZIMJDCw1CP+YLiU9CXQt0RcNAyXkvTEkwqkAt0ja/8q6UjGuZz9Kdy0tqWsWjWdSkIqAAAAAElFTkSuQmCC</os:Image>
+<SearchForm>https://www.wordnik.com</SearchForm>
+<os:Url type="text/html" method="GET" template="https://www.wordnik.com/words" resultDomain="wordnik.com">
+  <os:Param name="myWord" value="{searchTerms}"/>
+  <os:Param name="commit" value="I+always+feel+lucky"/>
+</os:Url>
+</SearchPlugin>

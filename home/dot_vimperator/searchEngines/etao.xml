@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>etao</os:ShortName>
+<os:Description>一淘网</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABCklEQVQ4ja2SP87CMAzFfSgXCZZQNiQEAwt3gImpmxkQW4UQB2Dqzg16B3YmBkYGRic8hhTUUsK/74tkKXKcn/2eTPQfx2WZaL8vOB6NMosyQ5nlY4DGMZQZ2utJCZAX92C45dI3sUkCbbfhskxcmoo2myggr6PVAgEwv8i+QciOx7DzeY7dzhQPosz4GKCNhh+n04HbbMoeBKMCuGy3uY5GUGa46VQ0js2DWbeP91wFQESE89nY9TrH6VTzo1IYyrvVytO7XaNR9P0Edwlp+r0H2O9FowjKDBwOte17K8Elie84HHpyIeEZ4KkEu1hAmWFns3JRWXN97MoeDAZe/2QiREShVQ4C/nquQ3tsXx56g/QAAAAASUVORK5CYII=</os:Image>
+<SearchForm>https://etao.com</SearchForm>
+<os:Url type="text/html" method="GET" template="https://etao.com/" resultDomain="etao.com">
+  <os:Param name="q" value="{searchTerms}"/>
+</os:Url>
+</SearchPlugin>

@@ -1,0 +1,6 @@
+--prefer-free-formats
+--format bestvideo[height<=480]+bestaudio/best[height<=480]
+--yes-playlist
+--ignore-errors
+--no-check-certificate
+--sub-lang en,de,fr

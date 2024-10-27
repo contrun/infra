@@ -1,0 +1,25 @@
+source! .vimperatorrc.local
+source! shortcuts
+
+" autochanger_proxy settings
+javascript <<EOF
+      liberator.globalVariables.autochanger_proxy_enabled = true;
+      liberator.globalVariables.autochanger_proxy_settings = [{
+          name  : 'disable',
+          usage : 'direct connection',
+          proxy :{
+            type      :0,
+          },
+        },{
+          name  : 'privoxy',
+          usage : 'localhost proxy',
+          proxy :{
+            type      : 1,
+            http      : 'localhost',
+            http_port : 8118,
+          },
+          url   : /http:\/\/www.nicovideo.jp/,
+          run   : '/home/vv/test.sh',
+          args  : ['C:\Personal\Apps\Internet\NicoCacheNl\NicoCache_nl.jar'],
+        }];
+EOF

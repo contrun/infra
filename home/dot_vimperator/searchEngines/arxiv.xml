@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/" xmlns:os="http://a9.com/-/spec/opensearch/1.1/">
+<os:ShortName>arxiv</os:ShortName>
+<os:Description>arXiv</os:Description>
+<os:InputEncoding>UTF-8</os:InputEncoding>
+<os:Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABzUlEQVQ4jYWSMWgTURzG33RvejfdDXI3WSgEty4BEVe1UATrW9pFKRSCotRKVZRKAy4libWIENIWkQz2MliEkqBS4nIiqDilg3Q5FNolEOOS6efwkhzXJC0ff/hz9/7f+77v/YXAQKNRhwpxCnx8NBrZluaLQLD9t0iudAv14HQCjSb39jHXn05gtS1DUHr/iJmVSd78fBGriAQi6FZkhq22RfXHK6rF+0xdO4cIuwqcsoNX9Fha00zPTfBwyyIMBWAqDAULgUCdVeSyV0jfHTe39yz0kM6Ns/PB6g8er/KGRF1U8fBxgoUgPlwoDO/nn9vJVPpNJBKyhRA0G+5A/7Fi9zNJEgRJuftfbDotOdA3G64JdhRBpyWp1+SA/3pN0mnJEwi6Fuo1idaCKIqHo0gwed5md9NlZ80fYQHB7Y345nxeoLWp7D1jodOSzC76w0P08Qk/veT1ujf0Cf/9tinMj6HeqUGCPHmiP5/J3EzjlB1urLjsbro0Gy5HX32C7Biziz7OVYdny9OkDlOobyomKP1aZe9gj+UnF2LmEaucq8xw9L1K5s4ls/a9H5nVy6SmziTlDYFz4LBdWcIreskMrLaVTPcEWPvxKv8Hwd1AeHSPNtcAAAAASUVORK5CYII=</os:Image>
+<SearchForm>https://arxiv.org</SearchForm>
+<os:Url type="text/html" method="POST" template="https://arxiv.org/search" resultDomain="arxiv.org">
+  <os:Param name="query" value="{searchTerms}"/>
+  <os:Param name="searchtype" value="all"/>
+</os:Url>
+</SearchPlugin>

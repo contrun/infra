@@ -1,0 +1,60 @@
+name: Elisp test
+
+on:
+  pull_request:
+    paths:
+      - "dot_emacs.d/**"
+      - ".github/workflows/elisp.yml"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - "dot_emacs.d/**"
+      - ".github/workflows/elisp.yml"
+
+jobs:
+  emacs-init-check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs_version:
+          - 28.2
+        ignore_warnings:
+          - true
+        include:
+          - emacs_version: snapshot
+            ignore_warnings: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+
+      - uses: leotaku/elisp-check@master
+        with:
+          check: load-file
+          file: dot_emacs.d/init.el
+          ignore_warnings: ${{ matrix.ignore_warnings }}
+
+      # upload-artifact fails when there are socket files under the uploading path.
+      # See https://github.com/actions/upload-artifact/issues/139
+      # - name: remove socket files
+      #   run: |
+      #     find .
+      #     find . -type s -delete
+      #     find ~/.emacs.d
+      #     find ~/.emacs.d -type s -delete
+      #     tar --zstd -cvf emacs.d.tar.zst -C dot_emacs.d .
+      #     du -hs * | sort -h
+
+      # Does not work. Artifact file too large
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: .emacs.d-${{ matrix.eamcs_version }}
+      #     path: emacs.d.tar.zst

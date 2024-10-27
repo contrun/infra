@@ -1,0 +1,68 @@
+name: neovim
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "dot_config/nvim/**"
+      - ".github/workflows/neovim.yml"
+  push:
+    branches:
+      - master
+      - main
+      - actions
+      - ci
+      - "releases/*"
+    paths:
+      - "dot_config/nvim/**"
+      - ".github/workflows/neovim.yml"
+
+jobs:
+  neovim:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        neovim_version:
+          - stable
+        experimental:
+          - false
+        include:
+          - neovim_version: nightly
+            experimental: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dotfiles
+        uses: ./
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.neovim_version }}
+
+      # TODO: Not working for now. Always timeout. Don't know why.
+      - name: Install packer packages
+        if: false
+        run: |
+          set -xeuo pipefail
+
+          # Otherwise, neovim may block
+          echo <<EOF | tee ~/.wakatime.cfg
+          [settings]
+          api_url = https://api.wakatime.com/api/v1
+          api_key = ffffffff-ffff-ffff-ffff-ffffffffffff
+          EOF
+
+          # neovim treesitter needs a c compiler
+          nix profile install 'nixpkgs#gcc' 'nixpkgs#neovim'
+          # https://github.com/nvim-treesitter/nvim-treesitter/issues/2900
+          nvim --headless -V20 -c 'command! -bar MyTSUpdateSync TSUpdateSync' -c 'autocmd User PackerComplete MyTSUpdateSync | quitall' -c 'PackerSync'
+
+      - name: Get startup time
+        if: false
+        run: |
+          nix profile install 'nixpkgs#go'
+          go run -v github.com/rhysd/vim-startuptime@latest -verbose -vimpath nvim
