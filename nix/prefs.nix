@@ -182,7 +182,7 @@ let
     syncFolder = "${self.home}/Sync";
     nixosSystem = "x86_64-linux";
     getNixConfig = path: ./. + "/${path}";
-    getDotfile = args.inputs.dotfiles.getDotfile;
+    getDotfile = path: ./../home + "/${path}";
     helpersPath = self.getNixConfig "lib/mkHelpers.nix";
     videoDrivers = null;
     enableNvidiaPrimeConfig = false;
