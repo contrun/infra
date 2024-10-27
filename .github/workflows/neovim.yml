@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - "dot_config/nvim/**"
+      - "home/dot_config/nvim/**"
       - ".github/workflows/neovim.yml"
   push:
     branches:
@@ -14,7 +14,7 @@ on:
       - ci
       - "releases/*"
     paths:
-      - "dot_config/nvim/**"
+      - "home/dot_config/nvim/**"
       - ".github/workflows/neovim.yml"
 
 jobs:
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dotfiles
-        uses: ./
+        uses: ./home
 
       - uses: rhysd/action-setup-vim@v1
         with:

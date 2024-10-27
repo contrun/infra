@@ -2,7 +2,11 @@ name: Create dotfiles
 
 on:
   pull_request:
+    paths:
+      - "home/**"
   push:
+    paths:
+      - "home/**"
     branches:
       - master
       - main
@@ -16,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./
+      - uses: ./home
         with:
           destination-directory: "$HOME/artifacts"
 

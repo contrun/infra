@@ -32,4 +32,4 @@ runs:
       run: |
         mkdir -p "${{ inputs.destination-directory }}"
         destdir="$(cd "${{ inputs.destination-directory }}"; pwd)"
-        make DESTDIR="$destdir" init apply
+        make DESTDIR="$destdir" chezmoi-init chezmoi-apply
