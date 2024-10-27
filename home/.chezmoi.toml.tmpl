@@ -2,6 +2,11 @@
 {{ $domain := promptStringOnce . "domain" "domain to use" -}}
 {{ $githubToken := promptStringOnce . "githubToken" "github token" -}}
 
+# Ensure that chezmoi works even if the we have not copied this repo
+# to the default ~/.local/share/chezmoi directory.
+workingTree = "{{ .chezmoi.workingTree }}"
+sourceDir = "{{ .chezmoi.sourceDir }}"
+
 encryption = "gpg"
 
 [data]

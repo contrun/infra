@@ -610,10 +610,18 @@ require("lazy").setup({
       'xvzc/chezmoi.nvim',
       dependencies = { 'nvim-lua/plenary.nvim' },
       config = function()
+        -- Get sourceDir from command `chezmoi dump-config --format json | jq -r .sourceDir`
+        local sourceDir = os.getenv("HOME") .. "/.local/share/chezmoi"
+        local output = fn.system("chezmoi dump-config --format json")
+        local success, data = pcall(vim.json.decode, output)
+        if success then
+          sourceDir = data.sourceDir
+        end
         require("chezmoi").setup {
-          --  e.g. ~/.local/share/chezmoi/*
           vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-            pattern = { os.getenv("HOME") .. "/.local/share/chezmoi/*" },
+            pattern = {
+              sourceDir .. "/*",
+            },
             callback = function(ev)
               local bufnr = ev.buf
               local edit_watch = function()
