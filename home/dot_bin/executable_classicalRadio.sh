@@ -99,15 +99,17 @@ EOF
 
 download_tag() {
         tag="$1"
+        # We have to encode the tag to be used in the URL
+        encoded_tag=$(python -c "import urllib.parse; print(urllib.parse.quote('$tag'))")
         filename="$2"
         if [[ -f "$filename" ]] && [[ $(find "$filename" -mtime -7 -print) ]]; then
                 return 0
         fi
         local -a mirrors=("https://de1.api.radio-browser.info" "https://fr1.api.radio-browser.info")
         for mirror in "${mirrors[@]}"; do
-                url="${mirror}/json/stations/bytagexact/$tag"
+                url="${mirror}/json/stations/bytagexact/$encoded_tag"
                 if ! curl -s -L --create-dirs -o "$filename" "$url"; then
-                        echo "Downloading $url to $filename failed"
+                        echo "Downloading $url to $filename failed (tag=$tag)"
                 else
                         return 0
                 fi
@@ -118,7 +120,7 @@ download_tag() {
 download_radio_browser_data() {
         dir="$HOME/.customized/radio_stations"
         pyradio_file="$HOME/.config/pyradio/stations.csv"
-        declare -a tags=("classical")
+        declare -a tags=("classical music")
 
         for tag in "${tags[@]}"; do
                 download_tag "$tag" "$dir/$tag.json"
