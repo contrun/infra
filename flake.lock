@@ -318,22 +318,6 @@
         "type": "github"
       }
     },
-    "dotfiles": {
-      "locked": {
-        "lastModified": 1728891861,
-        "narHash": "sha256-mnk67f/3tUuEPQc9b+G8k8gCzdJPiw2TLOqL0VewohA=",
-        "owner": "contrun",
-        "repo": "dotfiles",
-        "rev": "4ded10d49a9410d5f4c1c98495b29f6a4d149a7c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "contrun",
-        "repo": "dotfiles",
-        "rev": "4ded10d49a9410d5f4c1c98495b29f6a4d149a7c",
-        "type": "github"
-      }
-    },
     "emacs-overlay": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -1814,7 +1798,6 @@
         "android-nixpkgs": "android-nixpkgs",
         "authinfo": "authinfo",
         "deploy-rs": "deploy-rs",
-        "dotfiles": "dotfiles",
         "emacs-overlay": "emacs-overlay",
         "flake-compat": "flake-compat",
         "flake-compat-result": "flake-compat-result",

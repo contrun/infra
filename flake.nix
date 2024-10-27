@@ -99,9 +99,6 @@
       flake = false;
     };
 
-    dotfiles.url =
-      "github:contrun/dotfiles/4ded10d49a9410d5f4c1c98495b29f6a4d149a7c";
-
     jtojnar-nixfiles = {
       url = "github:jtojnar/nixfiles";
       inputs = {
