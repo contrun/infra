@@ -616,6 +616,11 @@
                 type = "app";
                 program = "${self.packages."${system}".magit}/bin/magit";
               };
+
+              magitc = {
+                type = "app";
+                program = "${self.packages."${system}".magitc}/bin/magitc";
+              };
             };
 
             defaultApp = apps.run;
@@ -658,6 +663,58 @@
 
                 try_use_gpg_ssh_agent || try_start_ssh_agent || true
               '';
+
+              magitf = console: name:
+                let
+                  consoleArgs = if console then [ "-nw" ] else [ ];
+                  defaultArgs = [
+                    "-q"
+                    "-l"
+                    "magit"
+                    "-f"
+                    "magit"
+                    "--eval"
+                    ''"(local-set-key \"q\" #'kill-emacs)"''
+                    "-f"
+                    "delete-other-windows"
+                  ];
+                  emacs = builtins.concatStringsSep " "
+                    ([ "emacs" ] ++ consoleArgs ++ defaultArgs);
+                in with pkgs;
+                writeShellApplication {
+                  inherit name;
+                  text = ''
+                    function usage() {
+                        cat <<EOF
+                    ${name} [EMACS_OPTIONS] [PATH]
+                    If the last arguments is a valid directory, then run magit within it,
+                    else all arguments are passed to emacs.
+                    Run emacs --help to see emacs options.
+                    EOF
+                    }
+
+                    for i in "$@" ; do
+                        if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
+                            usage
+                            exit
+                        fi
+                    done
+
+                    emacs_arguments=( "''${@}" )
+
+                    if [[ $# -gt 0 ]]; then
+                        path="''${*: -1}"
+                        if [[ -d "$path" ]]; then
+                            cd "$path"
+                            emacs_arguments=( "''${@:1: (( $# -1 )) }" )
+                        fi
+                    fi
+
+                    ${emacs} "''${emacs_arguments[@]}"
+                  '';
+                  runtimeInputs =
+                    [ git (emacsWithPackages (epkgs: [ epkgs.magit ])) ];
+                };
             in {
               nixos-generators = {
                 vbox = inputs.nixos-generators.nixosGenerate {
@@ -739,41 +796,9 @@
                 hypervisor = "qemu";
               in config.microvm.runner.${hypervisor};
 
-              magit = with pkgs;
-                writeShellApplication {
-                  name = "magit";
-                  text = ''
-                    function usage() {
-                        cat <<EOF
-                    magit [EMACS_OPTIONS] [PATH]
-                    If the last arguments is a valid directory, then run magit within it,
-                    else all arguments are passed to emacs.
-                    Run emacs --help to see emacs options.
-                    EOF
-                    }
+              magit = magitf false "magit";
 
-                    for i in "$@" ; do
-                        if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
-                            usage
-                            exit
-                        fi
-                    done
-
-                    emacs_arguments=( "''${@}" )
-
-                    if [[ $# -gt 0 ]]; then
-                        path="''${*: -1}"
-                        if [[ -d "$path" ]]; then
-                            cd "$path"
-                            emacs_arguments=( "''${@:1: (( $# -1 )) }" )
-                        fi
-                    fi
-
-                    emacs -q -l magit -f magit --eval "(local-set-key \"q\" #'kill-emacs)" -f delete-other-windows "''${emacs_arguments[@]}"
-                  '';
-                  runtimeInputs =
-                    [ git (emacsWithPackages (epkgs: [ epkgs.magit ])) ];
-                };
+              magitc = magitf true "magitc";
 
               riscv-gnu-toolchain-shell = with pkgs;
                 with stdenv;

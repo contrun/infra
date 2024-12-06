@@ -307,6 +307,7 @@ let
         "guile"
         "emacs"
         "myPackages.magit"
+        "myPackages.magitc"
         "mu"
         "yq-go"
         "dhall"
