@@ -40,7 +40,8 @@
     "*.gitpod.io": "linux",
     "dev": "linux",
     "devts": "linux",
-    "aol": "linux"
+    "aol": "linux",
+    "devnts": "linux"
   },
   "editor.multiCursorModifier": "alt",
   "editor.wordWrap": "on",
@@ -136,5 +137,6 @@
   "task.problemMatchers.neverPrompt": {
     "shell": true
   },
-  "workbench.colorTheme": "Default Light Modern"
+  "workbench.colorTheme": "Default Light Modern",
+  "cSpell.diagnosticLevel": "Hint"
 }
