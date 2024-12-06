@@ -6,7 +6,7 @@ set window-title-page true
 set statusbar-home-tilde true
 set adjust-open width
 set scroll-full-overlap 0.02
-# set selection-clipboard clipboard
+set selection-clipboard clipboard
 # set selection-notification false
 
 map ,q feedkeys ":exec qpdfview $FILE<Return>"

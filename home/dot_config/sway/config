@@ -120,6 +120,22 @@ for_window [window_role="pop-up"] floating enable
 
 for_window [shell=".*"] title_format "%title :: %shell"
 
+output "headless-pinenote" {
+       scale 1.4
+       mode 1404x1872@10Hz
+}
+
+output "headless-cz1000" {
+       scale 1.4
+       mode 1920x1200
+}
+
+output "headless-swift5" {
+       scale 1.4
+       mode 2560x1600
+}
+
+
 output "Lenovo Group Limited LEN S28u-10 VNA48A99" {
        scale 1.4
 }
