@@ -4,8 +4,8 @@ set $altmod $mod+Control
 
 # TODO: `footclient htop` does not worki
 set $terminal wezterm
-set $terminal_with_app_id $terminal -a
-set $terminal_with_title $terminal -T
+set $terminal_with_app_id foot -a
+set $terminal_with_title foot -T
 set $reload_command swaymsg reload
 set $browser_command env MOZ_ENABLE_WAYLAND=1 firefox
 set $scratchpad_terminal_name scratchpad_terminal
