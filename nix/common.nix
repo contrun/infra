@@ -319,7 +319,8 @@ in
       enable = prefs.enableInputMethods;
       config = {
         inputMethod = {
-          enabled = prefs.enabledInputMethod;
+          enable = true;
+          type = prefs.enabledInputMethod;
           ibus.engines = with pkgs.ibus-engines; [
             libpinyin
             table
@@ -421,13 +422,13 @@ in
         fuse
         bindfs
         iptables
-        iproute
+        iproute2
         ethtool
         nftables
         ipset
         dnsmasq
         wireguard-tools
-        nixFlakes
+        nixVersions.stable
         nix-info
         nixos-generators
         niv
@@ -647,7 +648,7 @@ in
           list = [
             # steam-run-native
             # aqemu
-            bpftool
+            bpftools
             prefs.kernelPackages.perf
             prefs.kernelPackages.bpftrace
             prefs.kernelPackages.bcc
@@ -759,7 +760,7 @@ in
     # vim.defaultEditor = true;
     adb.enable = prefs.enableADB;
     slock.enable = prefs.enableSlock;
-    bash = { enableCompletion = true; };
+    bash = { completion = { enable = true; }; };
     fish = { enable = prefs.enableFish; };
     nix-ld = {
       enable = prefs.enableNixLd;
@@ -824,7 +825,7 @@ in
       nerdfonts
       arphic-ukai
       arphic-uming
-      noto-fonts-cjk
+      noto-fonts-cjk-sans
       inconsolata
       ubuntu_font_family
       hasklig
@@ -847,10 +848,6 @@ in
       dejavu_fonts
       terminus_font
     ]);
-  };
-
-  sound = {
-    mediaKeys = { enable = prefs.enableMediaKeys; };
   };
 
   nixpkgs =
@@ -877,28 +874,19 @@ in
   hardware = {
     enableAllFirmware = prefs.enableAllFirmware;
     enableRedistributableFirmware = prefs.enableRedistributableFirmware;
-    opengl = {
-      enable = prefs.enableOpengl;
-      driSupport = true;
+    graphics = {
+      enable = prefs.enableGraphics;
     };
     bumblebee = {
       enable = prefs.enableBumblebee;
       connectDisplay = true;
     };
     nvidia = {
+      open = true;
       modesetting.enable = prefs.enableNvidiaModesetting;
       powerManagement.enable = prefs.enableNvidiaPowerManagement;
       powerManagement.finegrained = prefs.enableNvidiaPowerManagementFinegrained;
-      # Nvidia driver broken in latest kernel
-      # https://discourse.nixos.org/t/unable-to-build-nix-due-to-nvidia-drivers-due-or-kernel-6-10/49266/18
-      package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-        version = "555.58.02";
-        sha256_64bit = "sha256-xctt4TPRlOJ6r5S54h5W6PT6/3Zy2R4ASNFPu8TSHKM=";
-        sha256_aarch64 = "sha256-8hyRiGB+m2hL3c9MDA/Pon+Xl6E788MZ50WrrAGUVuY=";
-        openSha256 = "sha256-8hyRiGB+m2hL3c9MDA/Pon+Xl6E788MZ50WrrAGUVuY=";
-        settingsSha256 = "sha256-ZpuVZybW6CFN/gz9rx+UJvQ715FZnAOYfHn5jt5Z2C8=";
-        persistencedSha256 = "sha256-xctt4TPRlOJ6r5S54h5W6PT6/3Zy2R4ASNFPu8TSHKM=";
-      };
+      package = config.boot.kernelPackages.nvidiaPackages.beta;
     } // (lib.optionalAttrs prefs.enableNvidiaPrimeConfig {
       prime = prefs.nvidiaPrimeConfig;
     });
@@ -921,7 +909,6 @@ in
   };
 
   system = {
-    stateVersion = prefs.systemStateVersion;
     activationScripts =
       {
         # Diff system changes on switch. Taken from
@@ -1065,8 +1052,7 @@ in
     };
     aria2 = {
       enable = prefs.enableAria2;
-      # rpcSecretFile = "/run/secrets/aria2-rpc-secret";
-      extraArguments = "--rpc-listen-all --rpc-secret $ARIA2_RPC_SECRET";
+      rpcSecretFile = "/run/secrets/aria2-rpc-secret";
     };
     fprintd = { enable = prefs.enableFprintd; };
     openldap =
@@ -1414,9 +1400,11 @@ in
     dnsmasq = {
       enable = prefs.enableDnsmasq;
       resolveLocalQueries = prefs.dnsmasqResolveLocalQueries;
-      extraConfig = prefs.dnsmasqExtraConfig;
       settings = {
         servers = prefs.dnsmasqServers;
+        listen-address = prefs.dnsmasqListenAddress;
+        bind-interfaces = true;
+        cache-size = 1000;
       };
     };
     smartdns = {
@@ -1469,11 +1457,11 @@ in
     };
     samba = {
       enable = prefs.enableSamba;
-      extraConfig = ''
-        workgroup = WORKGROUP
-        security = user
-      '';
-      shares = {
+      settings = {
+        global = {
+          workgroup = "WORKGROUP";
+          security = "user";
+        };
         owner = {
           comment = "home folder";
           path = prefs.home;
@@ -3233,6 +3221,7 @@ in
         systemd.network.enable = prefs.enableSystemdNetworkd;
         networking.useHostResolvConf = false;
         services.resolved.fallbackDns = [ "223.6.6.6" "119.29.29.29" ];
+        system.stateVersion = prefs.systemStateVersion;
       };
     };
   };
@@ -4975,7 +4964,7 @@ builtins.toString prefs.ownerGroupGid
             description =
               "Setup route table and route rule for local transparent proxy";
             after = [ "network.target" ];
-            path = [ pkgs.iproute pkgs.procps pkgs.iptables ];
+            path = [ pkgs.iproute2 pkgs.procps pkgs.iptables ];
 
             # TODO: Dont't know why `ip route show table 100` results will disappear.
             # The error of `ip route show table 100` is
@@ -5598,7 +5587,7 @@ builtins.toString prefs.ownerGroupGid
               pkgs.procps
               pkgs.libcap
               pkgs.iptables
-              pkgs.iproute
+              pkgs.iproute2
               pkgs.bash
               pkgs.gawk
             ];
@@ -6183,7 +6172,7 @@ builtins.toString prefs.ownerGroupGid
                 pkgs.inetutils
                 pkgs.parallel
                 pkgs.miniupnpc
-                pkgs.iproute
+                pkgs.iproute2
                 pkgs.gawk
                 pkgs.perl
                 pkgs.curl
@@ -6256,7 +6245,7 @@ builtins.toString prefs.ownerGroupGid
                 pkgs.coreutils
                 pkgs.parallel
                 pkgs.miniupnpc
-                pkgs.iproute
+                pkgs.iproute2
                 pkgs.gawk
               ];
               serviceConfig = {
@@ -6285,7 +6274,7 @@ builtins.toString prefs.ownerGroupGid
               onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
               serviceConfig = {
                 Type = "oneshot";
-                ExecStart = "${pkgs.taskwarrior}/bin/task synchronize";
+                ExecStart = "${pkgs.taskwarrior3}/bin/task synchronize";
               };
             };
             timers.${name} = {
@@ -6357,9 +6346,8 @@ prefs.yandexExcludedDirs
 
   nix = {
     inherit (prefs) buildMachines distributedBuilds;
-    package = pkgs.nixFlakes;
-    extraOptions = lib.optionalString (config.nix.package == pkgs.nixFlakes)
-      "experimental-features = nix-command flakes";
+    package = pkgs.nixVersions.stable;
+    extraOptions = "experimental-features = nix-command flakes";
     settings = {
       sandbox = true;
       trusted-users = [ "root" prefs.owner "@wheel" ];
@@ -6421,10 +6409,6 @@ prefs.yandexExcludedDirs
       systemd-boot = {
         enable = prefs.enableSystemdBoot;
         configurationLimit = 25;
-      };
-      raspberryPi = {
-        enable = prefs.enableRaspberryPiBoot;
-        version = prefs.raspberryPiVersion;
       };
     };
 

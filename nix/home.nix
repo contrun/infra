@@ -2,7 +2,7 @@
 let
   brokenPackages = let p = ./broken-packages.nix;
   in if builtins.pathExists p then (import p) else [ ];
-  linuxOnlyPackages = [ "kdeconnect" ];
+  linuxOnlyPackages = [ "plasma5Packages.kdeconnect-kde" ];
   x86OnlyPackages = let
     brokenOnArmPackages =
       [ "eclipses.eclipse-java" "hardinfo" "ltrace" "brave" "mplayer" ];
@@ -368,7 +368,6 @@ let
         "grex"
         "bingrep"
         "xxd"
-        "bless"
         "dhex"
         "yj"
         "eza"
@@ -590,7 +589,6 @@ let
         "nixpkgs-review"
         "nix-prefetch-scripts"
         "nix-prefetch-github"
-        "nix-universal-prefetch"
         "pulsemixer"
         "pavucontrol"
         "pciutils"
@@ -608,9 +606,9 @@ let
         "mimeo"
         "libsecret"
         "libsystemtap"
-        "gnome3.gnome-keyring"
-        "gnome3.libgnome-keyring"
-        "gnome3.seahorse"
+        "gnome-keyring"
+        "libgnome-keyring"
+        "seahorse"
         "mlocate"
         "htop"
         "bottom"
@@ -692,7 +690,6 @@ let
       priority = 35;
       packages = getPackages [
         "aha"
-        "lzma"
         "libuchardet"
         "recode"
         "maim"
@@ -704,7 +701,7 @@ let
         "lz4"
         "zip"
         "xclip"
-        "kdeconnect"
+        "plasma5Packages.kdeconnect-kde"
         "localsend"
         "adbfs-rootless"
         "asciinema"
@@ -717,7 +714,7 @@ let
         "tectonic"
         "patchelf"
         "libelf"
-        "libusb"
+        "libusb1"
         "cachix"
         "barcode"
         "bitlbee"

@@ -51,12 +51,7 @@ let
         hub = "mdq";
       };
     pkgsRelatedPrefs = rec {
-      kernelPackages = if self.enableZfsUnstable then
-        pkgs.zfsUnstable.latestCompatibleLinuxPackages
-      else if self.enableZfs then
-        pkgs.zfs.latestCompatibleLinuxPackages
-      else
-        pkgs.linuxPackages_latest;
+      kernelPackages = pkgs.linuxPackages_latest;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
       ];
@@ -208,7 +203,7 @@ let
     enableSessionVariables = true;
     enableAllFirmware = !self.isMinimalSystem;
     enableRedistributableFirmware = !self.isMinimalSystem;
-    enableOpengl = !self.isMinimalSystem;
+    enableGraphics = !self.isMinimalSystem;
     dpi = 144;
     enableHidpi = true;
     enableIPv6 = true;
@@ -231,7 +226,6 @@ let
     in hostnameToIndex."${self.hostname}" or null;
     enableSystemdBoot = self.bootloader == "systemd";
     enableSystemdNetworkd = true;
-    enableRaspberryPiBoot = self.bootloader == "raspberrypi";
     efiCanTouchEfiVariables = true;
     isRaspberryPi = false;
     networkController =
@@ -333,11 +327,6 @@ let
     enableDnsmasq = false;
     dnsmasqListenAddress = "127.0.0.233";
     dnsmasqResolveLocalQueries = false;
-    dnsmasqExtraConfig = ''
-      listen-address=${self.dnsmasqListenAddress}
-      bind-interfaces
-      cache-size=1000
-    '';
     dnsmasqServers = [ "223.6.6.6" "180.76.76.76" "8.8.8.8" "9.9.9.9" ];
     enableArbtt = false;
     enableActivityWatch = false;
@@ -925,7 +914,6 @@ let
       enableZerotierone = false;
       enableTailScale = false;
       enableVirtualboxHost = false;
-      bootloader = "raspberrypi";
       isRaspberryPi = true;
       raspberryPiVersion = 4;
       enableVsftpd = false;

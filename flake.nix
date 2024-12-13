@@ -1,8 +1,8 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.05";
-    home-manager.url = "github:nix-community/home-manager/release-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
+    home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -391,7 +391,15 @@
                       inherit name;
                       pkg =
                         inputs.self.packages.${super.system}.${name} or null;
-                    }) [ "magit" "coredns" "ssh" "mosh" "ssho" "mosho" ]);
+                    }) [
+                      "magit"
+                      "magitc"
+                      "coredns"
+                      "ssh"
+                      "mosh"
+                      "ssho"
+                      "mosho"
+                    ]);
                 function = acc: elem:
                   acc // (if (elem.pkg != null) then {
                     ${elem.name} = elem.pkg;
@@ -678,7 +686,7 @@
                     "-f"
                     "delete-other-windows"
                   ];
-                  emacs = builtins.concatStringsSep " "
+                  emacsCommand = builtins.concatStringsSep " "
                     ([ "emacs" ] ++ consoleArgs ++ defaultArgs);
                 in with pkgs;
                 writeShellApplication {
@@ -710,10 +718,10 @@
                         fi
                     fi
 
-                    ${emacs} "''${emacs_arguments[@]}"
+                    ${emacsCommand} "''${emacs_arguments[@]}"
                   '';
                   runtimeInputs =
-                    [ git (emacsWithPackages (epkgs: [ epkgs.magit ])) ];
+                    [ git (emacs.pkgs.withPackages (epkgs: [ epkgs.magit ])) ];
                 };
             in {
               nixos-generators = {

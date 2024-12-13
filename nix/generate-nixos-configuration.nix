@@ -12,6 +12,7 @@ let
 
   systemInfo = { lib, pkgs, config, ... }: {
     system.configurationRevision = lib.mkIf (inputs.self ? rev) inputs.self.rev;
+    system.stateVersion = prefs.systemStateVersion;
     system.nixos.label = lib.mkIf
       (inputs.self.sourceInfo ? lastModifiedDate
         && inputs.self.sourceInfo ? shortRev) "flake.${
