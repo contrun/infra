@@ -563,8 +563,6 @@ require("lazy").setup({
       end
     },
 
-    { 'fidian/hexmode' },
-
     {
       'sindrets/diffview.nvim',
       dependencies = 'nvim-lua/plenary.nvim',
@@ -719,7 +717,14 @@ require("lazy").setup({
         -- Command to show logs
         vim.api.nvim_create_user_command("BaleiaLogs", vim.g.baleia.logger.show, { bang = true })
       end,
-    }
+    },
+
+    {
+      'RaafatTurki/hex.nvim',
+      config = function()
+        require 'hex'.setup()
+      end,
+    },
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
