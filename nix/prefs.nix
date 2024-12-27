@@ -378,8 +378,9 @@ let
     buildCores = 0;
     maxJobs = "auto";
     proxy = null;
+    enableMihomo = !self.isMinimalSystem;
     enableClashVerge = !self.isMinimalSystem;
-    enableClashRedir = !self.enableClashVerge;
+    enableClashRedir = false;
     enableClashRedirWatchdog = false;
     enableNetworkWatchdog = false;
     autoStartClashRedir = self.enableClashRedir;
