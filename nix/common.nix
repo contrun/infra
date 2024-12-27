@@ -1571,13 +1571,6 @@ in
       datasets = prefs.sanoidDatasets;
     };
 
-    mihomo = {
-      enable = prefs.enableMihomo;
-      tunMode = true;
-      webui = pkgs.metacubexd;
-      configFile = "/etc/mihomo/config.yaml";
-    };
-
     grafana = {
       enable = prefs.enableGrafana;
       settings = {
@@ -5332,17 +5325,6 @@ builtins.toString prefs.ownerGroupGid
             enable = prefs.enablePostgresql;
             config = {
               "postgresql" = { serviceConfig = { SupplementaryGroups = "keys"; }; };
-            };
-          }
-          {
-            enable = prefs.enableMihomo;
-            config = {
-              mihomo = {
-                serviceConfig.ExecStartPre = [
-                  "${pkgs.coreutils}/bin/ln -sf ${pkgs.v2ray-geoip}/share/v2ray/geoip.dat /var/lib/private/mihomo/GeoIP.dat"
-                  "${pkgs.coreutils}/bin/ln -sf ${pkgs.v2ray-domain-list-community}/share/v2ray/geosite.dat /var/lib/private/mihomo/GeoSite.dat"
-                ];
-              };
             };
           }
           {

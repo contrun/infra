@@ -327,8 +327,4 @@ if is_windows then
   config.ssh_backend = "Ssh2"
 end
 
--- Wihtout this, rendering will fail.
--- See https://github.com/NixOS/nixpkgs/issues/336069
-config.front_end = "WebGpu"
-
 return config
