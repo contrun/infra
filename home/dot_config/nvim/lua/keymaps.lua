@@ -9,6 +9,33 @@ local inoremap = Utils.inoremap
 -- local nmap = Utils.nmap
 -- local xmap = Utils.xmap
 
+local pos_equal = function(p1, p2)
+  local r1, c1 = unpack(p1)
+  local r2, c2 = unpack(p2)
+  return r1 == r2 and c1 == c2
+end
+
+local goto_next_error_then_hint = function()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  vim.diagnostic.goto_next({ severity = vim.diagnostic.severity.ERROR, wrap = true })
+  local pos2 = vim.api.nvim_win_get_cursor(0)
+  if (pos_equal(pos, pos2)) then
+    vim.diagnostic.goto_next({ wrap = true })
+  end
+end
+
+local goto_prev_error_then_hint = function()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  vim.diagnostic.goto_prev({ severity = vim.diagnostic.severity.ERROR, wrap = true })
+  local pos2 = vim.api.nvim_win_get_cursor(0)
+  if (pos_equal(pos, pos2)) then
+    vim.diagnostic.goto_prev({ wrap = true })
+  end
+end
+
+vim.api.nvim_create_user_command('GotoErrorPrev', goto_prev_error_then_hint, {})
+vim.api.nvim_create_user_command('GotoErrorNext', goto_next_error_then_hint, {})
+
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
@@ -137,3 +164,6 @@ nnoremap("<leader>dh", "<Cmd>lua require'dap.ui.widgets'.hover()<CR>")
 nnoremap("<leader>dss", "<Cmd>lua require'dap.ui.widgets'.scopes()<CR>")
 nnoremap("<leader>dib", "<Cmd>lua require'dap'.list_breakpoints()<CR>")
 nnoremap("<leader>dis", "<Cmd>lua require'dap'.status()<CR>")
+
+nnoremap("]g", "<Cmd>GotoErrorNext<CR>")
+nnoremap("[g", "<Cmd>GotoErrorPrev<CR>")
