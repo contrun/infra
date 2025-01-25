@@ -1441,6 +1441,13 @@ in {
     '';
   };
 
+  gtk = {
+    cursorTheme = {
+      package = pkgs.bibata-cursors;
+      name = "Bibata-Modern-Amber";
+      size = 32;
+    };
+  };
   xdg = {
     portal = {
       enable = prefs.enableHomeManagerXdgPortal;
