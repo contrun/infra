@@ -816,3 +816,7 @@ input 1267:12795:ASUE120D:00_04F3:31FB_Touchpad {
 input 2:7:SynPS\/2_Synaptics_TouchPad {
         tap enabled
 }
+
+# Pick up configuration created by nwg-display
+include ~/.config/sway/outputs
+seat * xcursor_theme Bibata-Modern-Amber 32
