@@ -164,20 +164,28 @@ output "AU Optronics 0xC199 Unknown" {
        scale 1.4
 }
 
-output "XMI Mi 27 NU 3613700006199" {
-       scale 1.2
-}
-
-output "XMI Redmi 27 NU 3948623NN1396" {
-       scale 1.2
-}
-
 output "Technical Concepts Ltd TCL Smart TV 0x00000001" {
        scale 3.5
        mode 4096x2160@24Hz
 }
 
+output "XMI Mi 27 NU 3613700006199" {
+       scale 1.4
+}
+
+output "XMI Redmi 27 NU 3948623NN1396" {
+       scale 1.4
+}
+
 output "XMI Redmi 27 NU 3948622Y80B61" {
+       scale 1.4
+}
+
+output "Xiaomi Corporation Redmi 27 NU 3948623NN1396" {
+       scale 1.4
+}
+
+output "Xiaomi Corporation Redmi 27 NU 3948623NN0A61" {
        scale 1.4
 }
 
