@@ -769,8 +769,28 @@ in
       };
     sway = {
       enable = prefs.enableSway;
-      extraOptions = [ "--unsupported-gpu" ];
-      extraPackages = with pkgs; [ swaylock swaybg swayidle i3status-rust termite alacritty rofi bemenu grim ];
+      extraOptions = [
+        "--verbose"
+        "--debug"
+        "--unsupported-gpu"
+      ];
+      extraPackages = with pkgs; [
+        swaylock
+        swaybg
+        swayidle
+        i3status-rust
+        termite
+        alacritty
+        rofi
+        bemenu
+        grim
+        drm_info
+        jq
+        coreutils
+        gawk
+        gnused
+        gnugrep
+      ];
       extraSessionCommands = ''
         export TERMINAL="alacritty"
         export BROWSER="firefox"
@@ -792,6 +812,23 @@ in
         # https://wiki.archlinux.org/title/Wayland#Requirements
         # export GBM_BACKEND=nvidia-drm
         # export __GLX_VENDOR_LIBRARY_NAME=nvidia
+
+        # https://wiki.hyprland.org/hyprland-wiki/pages/Configuring/Multi-GPU/
+        # Changing the order of using GPUs to intel -> amd -> other -> nvidia.
+        wlr_drm_devices="$(drm_info -j |\
+          jq -r 'with_entries(.value |= .driver.desc) | to_entries | .[] | "\(.key) \(.value)"' |\
+          sed -E 's#(^\S+)\s+(.*intel.*)#\1 10#gI;
+            s#(^\S+)\s+(.*amd.*)#\1 20#gI;
+            s#(^\S+)\s+(.*nvidia.*)#\1 40#gI;
+            # Below line assign all other devices to the priority 30,
+            # which means the order is intel -> amd -> other -> nvidia.
+            s#(^\S+)\s+([^0-9]+$)#\1 30#gI' |\
+          sort -n -k2 |\
+          awk '{print $1}' |\
+          paste -sd ':')"
+        if [[ -n "$wlr_drm_devices" ]]; then
+          export WLR_DRM_DEVICES="$wlr_drm_devices"
+        fi
       '';
     };
     tmux = { enable = true; };
