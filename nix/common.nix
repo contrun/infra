@@ -624,20 +624,6 @@ in
         { enable = prefs.enableXmonad; list = [ xmobar ]; }
         { enable = prefs.enableEmacs; list = [ emacs ]; }
         {
-          enable = config.hardware.nvidia.prime.offload.enable;
-          list =
-            let
-              nvidia-offload = pkgs.writeShellScriptBin "nvidia-offload" ''
-                export __NV_PRIME_RENDER_OFFLOAD=1
-                export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
-                export __GLX_VENDOR_LIBRARY_NAME=nvidia
-                export __VK_LAYER_NV_optimus=NVIDIA_only
-                exec "$@"
-              '';
-            in
-            [ nvidia-offload ];
-        }
-        {
           enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux");
           list = [
             wine
@@ -881,15 +867,6 @@ in
       enable = prefs.enableBumblebee;
       connectDisplay = true;
     };
-    nvidia = {
-      open = true;
-      modesetting.enable = prefs.enableNvidiaModesetting;
-      powerManagement.enable = prefs.enableNvidiaPowerManagement;
-      powerManagement.finegrained = prefs.enableNvidiaPowerManagementFinegrained;
-      package = config.boot.kernelPackages.nvidiaPackages.beta;
-    } // (lib.optionalAttrs prefs.enableNvidiaPrimeConfig {
-      prime = prefs.nvidiaPrimeConfig;
-    });
     pulseaudio = {
       # Allow VM to override this
       enable = prefs.enablePulseaudio;

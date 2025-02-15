@@ -180,10 +180,6 @@ let
     getDotfile = path: ./../home + "/${path}";
     helpersPath = self.getNixConfig "lib/mkHelpers.nix";
     videoDrivers = null;
-    enableNvidiaPrimeConfig = false;
-    enableNvidiaModesetting = false;
-    enableNvidiaPowerManagement = false;
-    enableNvidiaPowerManagementFinegrained = false;
     consoleFont = null;
     hostname = "hostname";
     hostId = "346b7a87";
@@ -1052,20 +1048,6 @@ let
       enableAllOciContainers = false;
       enableWireguard = false;
       enableContainerWired = false;
-      pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-        # https://discourse.nixos.org/t/unable-to-build-nix-due-to-nvidia-drivers-due-or-kernel-6-10/49266
-        # nvidia driver is frequently broken, use a slightly older kernel version
-        # kernelPackages = pkgs.linuxPackages_xanmod_latest;
-        # kernelPackages = pkgs.linuxPackages_zen;
-      };
-      videoDrivers = [ "nvidia" "modesetting" ];
-      enableNvidiaPrimeConfig = true;
-      enableNvidiaModesetting = true;
-      nvidiaPrimeConfig = {
-        offload = { enable = true; };
-        nvidiaBusId = "PCI:1:0:0";
-        intelBusId = "PCI:0:2:0";
-      };
     } else if hostname == "madbox" then {
       isMinimalSystem = true;
       isHomeManagerOnly = true;

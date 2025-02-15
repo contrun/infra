@@ -415,7 +415,6 @@ let
         "bundix"
         "buildah"
         "ansible"
-        "vite"
         "solargraph"
         "tree-sitter"
         "sumneko-lua-language-server"
@@ -442,24 +441,7 @@ let
         "stress-ng"
         "expat"
         "mkcert"
-      ] ++ (lib.optionals
-        (prefs.enableNvidiaPrimeConfig || prefs.enableNvidiaModesetting)
-        # This will rebuild a ton of packages, disabling for now
-        (builtins.map (x: "cudaPackages_12.${x}") [
-          # "cudatoolkit"
-          # nccl
-          # cuda_nvcc
-          # cuda_cccl
-          # cuda_gdb
-          # cuda_cuobjdump
-          # cuda_nvdisasm
-          # cuda_nvprune
-
-          # cuda_cudart
-
-          # "cudnn"
-          # "libcublas"
-        ])));
+      ]);
     }
     {
       name = "multimedia";
