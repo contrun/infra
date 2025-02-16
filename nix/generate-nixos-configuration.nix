@@ -322,6 +322,7 @@ let
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;
+      backupFileExtension = "backup";
       users = {
         ${prefs.owner} = {
           _module.args = moduleArgs;
