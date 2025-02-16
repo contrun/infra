@@ -64,6 +64,9 @@
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
+  # https://bbs.archlinux.org/viewtopic.php?pid=2093176#p2093176
+  boot.kernelParams = [ "i915.enable_psr=0" ];
+
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
   hardware = {
