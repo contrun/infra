@@ -3012,10 +3012,18 @@ in
 
     greetd = {
       enable = prefs.enableGreetd;
+      vt = 7;
     } // lib.optionalAttrs prefs.enableSwayForGreeted {
-      settings = {
+      settings = let swayCommand = "systemd-cat -t sway sway";
+      in {
+        initial_session = {
+          user = prefs.owner;
+          command = swayCommand;
+        };
         default_session = {
-          command = "${pkgs.greetd.greetd}/bin/agreety --cmd 'systemd-cat -t sway sway'";
+          user = "greeter";
+          command =
+            "${pkgs.greetd.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
         };
       };
     };
