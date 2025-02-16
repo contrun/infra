@@ -762,13 +762,26 @@ in
         autoStart = enable;
         tunMode = enable;
       };
-    sway = {
+    sway = let
+      # Fix screen tearing in external display of machine with nvidia GPU
+      # https://old.reddit.com/r/swaywm/comments/z98btz/external_monitor_finally_working_with_glitches/kjusdq6/
+      nvidiaEnabled = lib.elem "nvidia" config.services.xserver.videoDrivers
+        && config.hardware.nvidia.modesetting.enable;
+      nvidiaArgs = if nvidiaEnabled then [
+        "--unsupported-gpu"
+        "-Dlegacy-wl-drm"
+      ] else
+        [ ];
+      nvidiaEnv = if nvidiaEnabled then ''
+        export WLR_NO_HARDWARE_CURSORS=1
+      '' else
+        "";
+    in {
       enable = prefs.enableSway;
       extraOptions = [
         "--verbose"
         "--debug"
-        "--unsupported-gpu"
-      ];
+      ] ++ nvidiaArgs;
       extraPackages = with pkgs; [
         swaylock
         swaybg
@@ -834,6 +847,8 @@ in
         if [[ -n "$wlr_drm_devices" ]]; then
           export WLR_DRM_DEVICES="$wlr_drm_devices"
         fi
+
+        ${nvidiaEnv}
       '';
     };
     tmux = { enable = true; };
