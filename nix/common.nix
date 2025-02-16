@@ -802,6 +802,11 @@ in
       extraSessionCommands = ''
         # see also https://wiki.hyprland.org/Configuring/Environment-variables/
 
+        # Fix screen tearing in external display of machine with nvidia GPU
+        # https://old.reddit.com/r/swaywm/comments/102cdqa/how_can_i_fix_my_external_screen_flickering_with/
+        # Seems to be not working
+        # export WLR_RENDERER=vulkan
+
         export TERMINAL="alacritty"
         export BROWSER="firefox"
 
@@ -831,16 +836,20 @@ in
         # export GBM_BACKEND=nvidia-drm
         # export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
+        # https://old.reddit.com/r/swaywm/comments/17sob2b/sway_wont_launch_with_vulkan_renderer_on_nvidia/k8rkxo4/
+        nvidia_priority=40
+        # If $WLR_RENDERER == vulkan, then the nvidia card should be prioritized to the first
+        # otherwise, nvidia card should be deprioritized to the last.
+        if [[ "$WLR_RENDERER" == "vulkan" ]]; then
+          nvidia_priority=40
+        fi
         # https://wiki.hyprland.org/hyprland-wiki/pages/Configuring/Multi-GPU/
-        # Changing the order of using GPUs to intel -> amd -> other -> nvidia.
         wlr_drm_devices="$(drm_info -j |\
           jq -r 'with_entries(.value |= .driver.desc) | to_entries | .[] | "\(.key) \(.value)"' |\
-          sed -E 's#(^\S+)\s+(.*intel.*)#\1 10#gI;
+          sed -E "s#(^\S+)\s+(.*intel.*)#\1 10#gI;
             s#(^\S+)\s+(.*amd.*)#\1 20#gI;
-            s#(^\S+)\s+(.*nvidia.*)#\1 40#gI;
-            # Below line assign all other devices to the priority 30,
-            # which means the order is intel -> amd -> other -> nvidia.
-            s#(^\S+)\s+([^0-9]+$)#\1 30#gI' |\
+            s#(^\S+)\s+(.*nvidia.*)#\1 $nvidia_priority#gI;
+            s#(^\S+)\s+([^0-9]+$)#\1 30#gI" |\
           sort -n -k2 |\
           awk '{print $1}' |\
           paste -sd ':')"
