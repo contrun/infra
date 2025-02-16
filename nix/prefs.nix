@@ -1048,6 +1048,7 @@ let
       enableAllOciContainers = false;
       enableWireguard = false;
       enableContainerWired = false;
+      enableFallbackAccount = true;
     } else if hostname == "madbox" then {
       isMinimalSystem = true;
       isHomeManagerOnly = true;
