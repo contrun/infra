@@ -3,8 +3,9 @@
 
 POUND := \#
 
-HOST ?= $(shell hostname -s)
-USER ?= $(USER)
+HOST ?= $(shell hostname)
+HOME ?= $(HOMEDRIVE)$(HOMEPATH)
+USER ?= $(USERNAME)
 
 EXTRANIXFLAGS ?=
 NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --show-trace --keep-going) $(EXTRANIXFLAGS))
@@ -26,10 +27,10 @@ NIXOSREBUILD.switch = sudo nixos-rebuild switch --flake ".$(POUND)$(HOST)"
 NIXOSREBUILD.bootloader = $(NIXOSREBUILD.switch) --install-bootloader
 nixos-rebuild = $(NIXOSREBUILD.$(word 2,$(subst -, ,$1)))
 
-DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 ROOTDIR = $(DIR)/root
 IGNOREDDIR = $(DIR)/ignored
-DESTDIR ?= ${HOME}
+DESTDIR ?= $(HOME)
 DESTROOTDIR ?= /
 VERBOSE ?=
 # The chezmoi state directory is stored in the same directory as the config file,
@@ -67,10 +68,10 @@ upload: pull push
 update: pull update-upstreams
 
 chezmoi-init chezmoi-update chezmoi-status chezmoi-apply chezmoi-purge:
-	$(CHEZMOI) $(CHEZMOIFLAGS) -D $(DESTDIR) -S $(SRCDIR) $(word 2,$(subst -, ,$@)) || true
+	$(CHEZMOI) $(CHEZMOIFLAGS) -D "$(DESTDIR)" -S "$(SRCDIR)" $(word 2,$(subst -, ,$@))
 
 home-install root-install:
-	$(call chezmoi,$@) -D $(call dest,$@) -S $(call src,$@) apply || true
+	$(call chezmoi,$@) -D "$(call dest,$@)" -S "$(call src,$@)" apply
 
 all-install: home-install root-install
 
