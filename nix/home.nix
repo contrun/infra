@@ -1052,23 +1052,21 @@ in {
           Description = "Unison file sync";
           After = [ "network-online.target" "network.target" ];
           Wants = [ "network-online.target" ];
+          # Disable start limit.
+          # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
+          StartLimitIntervalSec = 0;
         };
         Install = {
           WantedBy = [ "default.target" ];
           DefaultInstance = "default";
         };
-        Timer = { OnBootSec = "3min"; };
         Service = let commonArgs = "-sshargs='-i %h/.ssh/id_ed25519_unison'";
         in {
           TimeoutStartSec = "infinity";
           Restart = "always";
-          # Disable start limit.
-          # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
-          StartLimitIntervalSec = 0;
-          # The first delay is approximately half a second.
+          # Exponential backoff for the restart.
           RestartSteps = 20;
-          # 2^20s. A little over one month.
-          RestartSecMax = 104857;
+          RestartMaxDelaySec = 3600;
           # watch and repeat parameter can't handle non-existent folders.
           # So we have to run unison without watch and repeat first.
           ExecStartPre = "-${pkgs.unison}/bin/unison ${commonArgs} %i";
@@ -1244,7 +1242,6 @@ in {
           After = [ "network-online.target" "network.target" ];
           Wants = [ "network-online.target" ];
         };
-        # Timer = { OnBootSec = "3min"; };
         Install = {
           WantedBy = [ "default.target" ];
           DefaultInstance = "default";
@@ -1290,21 +1287,18 @@ in {
           Description = "autossh";
           After = [ "network-online.target" "network.target" ];
           Wants = [ "network-online.target" ];
+          # Disable start limit.
+          # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
+          StartLimitIntervalSec = 0;
         };
         Install = {
           WantedBy = [ "default.target" ];
           DefaultInstance = "default";
         };
-        Timer = { OnBootSec = "3min"; };
         Service = {
           Restart = "always";
-          # Disable start limit.
-          # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
-          StartLimitIntervalSec = 0;
-          # The first delay is approximately half a second.
           RestartSteps = 20;
-          # 2^20s. A little over one month.
-          RestartSecMax = 104857;
+          RestartMaxDelaySec = 3600;
           # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
           ExecStart =
             "${pkgs.autossh}/bin/autossh -i %h/.ssh/id_ed25519_autossh $SSH_OPTIONS %i";
