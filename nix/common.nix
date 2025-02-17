@@ -721,11 +721,6 @@ in
         }
       ])
     );
-    variables = {
-      # systemctl --user does not work without this
-      # https://serverfault.com/questions/887283/systemctl-user-process-org-freedesktop-systemd1-exited-with-status-1/887298#887298
-      # XDG_RUNTIME_DIR = ''/run/user/"$(id -u)"'';
-    };
   };
 
   programs = {
@@ -6167,12 +6162,6 @@ builtins.toString prefs.ownerGroupGid
       )
     ]) // {
       user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
-        {
-          sockets.gpg-agent-ssh = lib.mkIf config.programs.gnupg.agent.enable {
-            wantedBy = [ "sockets.target" ];
-            socketConfig = { RemoveOnStop = true; };
-          };
-        }
         { services = notify-systemd-unit-failures; }
         (
           let
