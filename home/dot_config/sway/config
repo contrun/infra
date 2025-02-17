@@ -809,7 +809,7 @@ mode "launcher" {
         bindsym r exec okular; mode  "default"
         bindsym p exec rofi-zathura.sh; mode  "default"
         bindsym m exec telegram-desktop; mode "default"
-        bindsym x exec clash-verge; mode "default"
+        bindsym x exec toggle-clash-tun.sh; mode "default"
 
         bindsym $mod+m mode "$switch_modes"
         bindsym Escape mode "default"
