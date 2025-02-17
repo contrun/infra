@@ -71,7 +71,10 @@
       lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     nvidia = {
-      open = true;
+      # TODO: Suspend not working with the new open source nvidia driver
+      # https://github.com/NVIDIA/open-gpu-kernel-modules/issues/472
+      # https://wiki.hyprland.org/Nvidia/
+      open = false;
       modesetting.enable = true;
       powerManagement.enable = true;
       powerManagement.finegrained = true;
