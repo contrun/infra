@@ -3,11 +3,7 @@
 	name = YI
 
 [http]
-	cookiefile = ~/.gitcookies
-; 	proxy = http://127.0.0.1:8118
-
-; [https]
-; 	proxy = http://127.0.0.1:8118
+	cookiefile = gitcookies
 
 [color]
 	ui = auto
@@ -28,16 +24,16 @@
 	defaultBranch = main
 
 [core]
-	pager = delta
 ;	excludesFile = ~/.gitignore
+	pager = delta
 ;	https://stackoverflow.com/questions/66366582/github-unexpected-disconnect-while-reading-sideband-packet
-  packedGitLimit = 512m 
-  packedGitWindowSize = 512m 
+	packedGitLimit = 512m
+	packedGitWindowSize = 512m
 
 [pack] 
-  deltaCacheSize = 2047m 
-  packSizeLimit = 2047m 
-  windowMemory = 2047m
+	deltaCacheSize = 2047m
+	packSizeLimit = 2047m
+	windowMemory = 2047m
 
 [interactive]
 	diffFilter = delta --color-only
@@ -52,6 +48,8 @@
 	colorMoved = default
 
 [include]
-	path = ~/.gitconfig.local
+	path = config.sensitive
+	path = config.local
+
 [protocol "file"]
 	allow = always
