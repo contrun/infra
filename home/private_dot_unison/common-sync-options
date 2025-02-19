@@ -49,6 +49,8 @@ ignore = Regex .*/__debug_bin.*
 # Programming languages build artifacts directories
 ignore = Regex .*/result
 ignore = Regex .*/result-[0-9]+
+ignore = Regex .*/result-tools
+ignore = Regex .*/result-dev
 ignore = Regex .*/\.direnv
 ignore = Regex .*/\.devenv
 ignore = Regex .*/\.venv
@@ -88,3 +90,9 @@ ignore = Regex .*/tmp
 
 # Some specific temporary directories
 ignore = Regex .*/node-data
+
+# Devenv and direnv
+ignore = Regex .*/\.devenv.*
+ignore = Regex .*/devenv.local.nix
+ignore = Regex .*/\.direnv
+ignore = Regex .*/\.pre-commit-config.yaml
