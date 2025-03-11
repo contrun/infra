@@ -76,8 +76,8 @@
       # https://wiki.hyprland.org/Nvidia/
       open = false;
       modesetting.enable = true;
-      powerManagement.enable = true;
-      powerManagement.finegrained = true;
+      powerManagement.enable = false;
+      powerManagement.finegrained = false;
       package = config.boot.kernelPackages.nvidiaPackages.beta;
       prime = {
         offload = {
