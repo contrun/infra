@@ -1,7 +1,7 @@
 local get_servers_to_install = function()
   local servers_to_install = {
     "clangd", "pyright", "jsonls", "dockerls", "rust_analyzer", "elixirls",
-    "zls", "gopls", "texlab"
+    "zls", "gopls", "texlab", "denols"
   }
   return servers_to_install
 end
@@ -44,6 +44,14 @@ local setup_servers = function()
 
     -- Now we'll create a server_default table where we'll specify our custom LSP server configuration
     local server_specific_options = {
+      ["denols"] = function(options)
+        options.single_file_support = true
+        return options
+      end,
+      ["bashls"] = function(options)
+        options.single_file_support = true
+        return options
+      end,
       -- Provide settings that should only apply to the "eslintls" server
       ["eslintls"] = function(options)
         options.settings = { format = { enable = true } }

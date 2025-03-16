@@ -731,6 +731,90 @@ require("lazy").setup({
         require 'hex'.setup()
       end,
     },
+
+    { "hlucco/nvim-eswpoch" },
+
+    {
+      'akinsho/toggleterm.nvim',
+      version = "*",
+      config = function()
+        require("toggleterm").setup()
+        local trim_spaces = true
+        -- Does not work https://github.com/akinsho/toggleterm.nvim/issues/542
+        local set_opfunc = vim.fn[vim.api.nvim_exec2(
+          [[
+            func s:set_opfunc(val)
+            let &opfunc = a:val
+            endfunc
+            echon get(function('s:set_opfunc'), 'name')
+          ]],
+          { output = true }
+        )]
+        vim.keymap.set("v", "<space>rs", function()
+          require("toggleterm").send_lines_to_terminal("visual_selection", trim_spaces, { args = vim.v.count })
+        end)
+        vim.keymap.set("n", "<space>rt", function()
+          vim.cmd "ToggleTerm"
+        end)
+        vim.keymap.set("n", "<space>rr", function()
+          require("toggleterm").exec_command("cmd=" .. vim.fn.expand("%:p"), 1)
+        end)
+        vim.keymap.set("v", "<space>rs", function()
+          require("toggleterm").send_lines_to_terminal("visual_selection", trim_spaces, { args = vim.v.count })
+        end)
+        vim.keymap.set("v", "<space>rl", function()
+          require("toggleterm").send_lines_to_terminal("single_line", trim_spaces, { args = vim.v.count })
+        end)
+        vim.keymap.set("v", "<space>rL", function()
+          require("toggleterm").send_lines_to_terminal("visual_lines", trim_spaces, { args = vim.v.count })
+        end)
+        --  -- For use as an operator map:
+        --  -- Send motion to terminal
+        --  vim.keymap.set("n", [[<leader><c-\>]], function()
+        --    set_opfunc(function(motion_type)
+        --      require("toggleterm").send_lines_to_terminal(motion_type, false, { args = vim.v.count })
+        --    end)
+        --    vim.api.nvim_feedkeys("g@", "n", false)
+        --  end)
+        --  -- Double the command to send line to terminal
+        --  vim.keymap.set("n", [[<leader><c-\><c-\>]], function()
+        --    set_opfunc(function(motion_type)
+        --      require("toggleterm").send_lines_to_terminal(motion_type, false, { args = vim.v.count })
+        --    end)
+        --    vim.api.nvim_feedkeys("g@_", "n", false)
+        --  end)
+        --  -- Send whole file
+        --  vim.keymap.set("n", [[<leader><leader><c-\>]], function()
+        --    set_opfunc(function(motion_type)
+        --      require("toggleterm").send_lines_to_terminal(motion_type, false, { args = vim.v.count })
+        --    end)
+        --    vim.api.nvim_feedkeys("ggg@G''", "n", false)
+        --  end)
+      end,
+    },
+
+    {
+      "nvim-telescope/telescope.nvim",
+      tag = "0.1.5",
+      dependencies = {
+        'nvim-lua/plenary.nvim',
+        'jonarrien/telescope-cmdline.nvim',
+      },
+      keys = {
+        { 'Q',                '<cmd>Telescope cmdline<cr>', desc = 'Cmdline' },
+        { '<leader><leader>', '<cmd>Telescope cmdline<cr>', desc = 'Cmdline' }
+      },
+      opts = {
+        extensions = {
+          cmdline = {
+          },
+        }
+      },
+      config = function(_, opts)
+        require("telescope").setup(opts)
+        require("telescope").load_extension('cmdline')
+      end,
+    }
   },
   -- Configure any other settings here. See the documentation for more details.
   -- colorscheme that will be used when installing plugins.
