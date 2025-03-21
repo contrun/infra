@@ -141,5 +141,6 @@
   "cSpell.diagnosticLevel": "Hint",
   "[nix]": {
     "editor.defaultFormatter": "jnoortheen.nix-ide"
-  }
+  },
+  "solidity.telemetry": false
 }
