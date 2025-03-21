@@ -10,6 +10,17 @@
 
 [pull]
 	rebase = true
+  autosquash = true
+  autostash = true
+
+[push]
+  autoSetupRemote = true
+
+[commit]
+  verbose = true
+
+[rerere]
+  enabled = true
 
 [github]
 	user = contrun
