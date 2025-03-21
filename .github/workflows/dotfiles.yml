@@ -24,7 +24,7 @@ jobs:
         with:
           destination-directory: "$HOME/artifacts"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dotfiles-${{ github.sha }}
           path: ~/artifacts
