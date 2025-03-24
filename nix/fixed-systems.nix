@@ -10,15 +10,8 @@ rec {
     # "armv7l-linux"
   ];
   systems =
-    builtins.foldl' (acc: current: acc // { "${current}" = current; }) { }
-      systemsList
-    // builtins.foldl' (acc: current: acc // { "cicd-${current}" = current; })
-      { }
-      systemsList
-    // builtins.foldl' (acc: current: acc // { "minimal-${current}" = current; })
-      { }
-      systemsList
-    // builtins.foldl' (acc: current: acc // { "maximal-${current}" = current; })
-      { }
-      systemsList;
+    builtins.foldl' (acc: current: acc // { "${current}" = current; }) { } systemsList
+    // builtins.foldl' (acc: current: acc // { "cicd-${current}" = current; }) { } systemsList
+    // builtins.foldl' (acc: current: acc // { "minimal-${current}" = current; }) { } systemsList
+    // builtins.foldl' (acc: current: acc // { "maximal-${current}" = current; }) { } systemsList;
 }

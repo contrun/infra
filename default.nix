@@ -1,5 +1,8 @@
-{ system ? builtins.currentSystem }:
-let rootDirectory = ./.;
+{
+  system ? builtins.currentSystem,
+}:
+let
+  rootDirectory = ./.;
 in
 (import
   (
@@ -8,12 +11,12 @@ in
       locked = lock.nodes.flake-compat.locked;
     in
     fetchTarball {
-      url =
-        "https://github.com/${locked.owner}/${locked.repo}/archive/${locked.rev}.tar.gz";
+      url = "https://github.com/${locked.owner}/${locked.repo}/archive/${locked.rev}.tar.gz";
       sha256 = locked.narHash;
     }
   )
   {
     src = rootDirectory;
     inherit system;
-  }).defaultNix.legacyPackages.${system}
+  }
+).defaultNix.legacyPackages.${system}

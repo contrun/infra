@@ -1,4 +1,10 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -67,8 +73,7 @@
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
   hardware = {
-    cpu.intel.updateMicrocode =
-      lib.mkDefault config.hardware.enableRedistributableFirmware;
+    cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     nvidia = {
       # TODO: Suspend not working with the new open source nvidia driver

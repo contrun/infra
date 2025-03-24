@@ -1,4 +1,12 @@
-{ stdenv, lib, fetchFromGitHub, kernel, bc, dnsmasq, hostapd }:
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  kernel,
+  bc,
+  dnsmasq,
+  hostapd,
+}:
 stdenv.mkDerivation rec {
   name = "rtl88x2bu-${kernel.version}-${version}";
   version = "5.6.1_30362.20181109_COEX20180928-6a6a";
