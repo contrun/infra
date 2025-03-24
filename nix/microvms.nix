@@ -1,4 +1,5 @@
 {
+  self,
   microvm,
   nixpkgs,
   system,
@@ -19,13 +20,15 @@ in
       };
 
       microvm = {
-        hypervisor = "crosvm";
+        hypervisor = "cloud-hypervisor";
         graphics.enable = true;
       };
 
       networking.hostName = "graphical-microvm";
       nixpkgs = {
-        overlays = [ microvm.overlay ];
+        overlays = [
+          microvm.overlay
+        ];
       };
 
       services.getty.autologinUser = "user";

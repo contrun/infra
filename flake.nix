@@ -520,6 +520,11 @@
               overlays = self.overlayList;
             };
 
+            pkgsWithCloudHypervisor = import nixpkgs {
+              inherit system config;
+              overlays = [ inputs.microvm.overlay ];
+            };
+
             pkgsUnstable = import inputs.nixpkgs-unstable { inherit system config; };
 
             pkgsUnstableWithOverlays = import inputs.nixpkgs-unstable { inherit system config; };

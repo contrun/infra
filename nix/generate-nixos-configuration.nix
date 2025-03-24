@@ -143,7 +143,7 @@ let
       microvm =
         let
           allVms = import (getNixConfig "microvms.nix") {
-            inherit (inputs) microvm;
+            inherit (inputs) microvm self;
             inherit system nixpkgs;
           };
         in

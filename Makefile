@@ -8,7 +8,7 @@ HOME ?= $(HOMEDRIVE)$(HOMEPATH)
 USER ?= $(USERNAME)
 
 EXTRANIXFLAGS ?=
-NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --show-trace --keep-going) $(EXTRANIXFLAGS))
+NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going) $(EXTRANIXFLAGS))
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
@@ -115,7 +115,7 @@ nixos-profile-path-info: create-dirs
 	sort -h -k3 < tmp/nixos-profile-path-info.$(HOST)
 
 nixos-build nixos-switch nixos-bootloader:
-	$(call nixos-rebuild,$@) $(NIXFLAGS)
+	$(call nixos-rebuild,$@)$(if $(filter nixos-build,$@), --print-out-paths,) $(NIXFLAGS)
 
 nixos-generate:
 	$(GENERATE) -f $(GENERATEFORMAT) --flake ".#$(HOST)"
