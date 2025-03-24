@@ -434,7 +434,7 @@ in
         niv
         nix-serve
         (pkgs.myPackage.home-manager or home-manager)
-        nixpkgs-fmt
+        nixfmt-rfc-style
         nix-du
         nix-index
         nix-top
@@ -762,108 +762,112 @@ in
         autoStart = enable;
         tunMode = enable;
       };
-    sway = let
-      # Fix screen tearing in external display of machine with nvidia GPU
-      # https://old.reddit.com/r/swaywm/comments/z98btz/external_monitor_finally_working_with_glitches/kjusdq6/
-      nvidiaEnabled = lib.elem "nvidia" config.services.xserver.videoDrivers
-        && config.hardware.nvidia.modesetting.enable;
-      nvidiaArgs = if nvidiaEnabled then [
-        "--unsupported-gpu"
-        "-Dlegacy-wl-drm"
-      ] else
-        [ ];
-      nvidiaEnv = if nvidiaEnabled then ''
-        export WLR_NO_HARDWARE_CURSORS=1
-      '' else
-        "";
-    in {
-      enable = prefs.enableSway;
-      extraOptions = [
-        "--verbose"
-        "--debug"
-      ] ++ nvidiaArgs;
-      extraPackages = with pkgs; [
-        swaylock
-        swaybg
-        swayidle
-        i3status-rust
-        termite
-        alacritty
-        rofi
-        bemenu
-        grim
-        drm_info
-        jq
-        coreutils
-        gawk
-        gnused
-        gnugrep
-      ];
-      extraSessionCommands = ''
-        # For debugging purpose, if the environment variable SWAY_SKIP_SETTING_ENV is set,
-        # sway will not set the environment variables.
-        if [[ -z "$SWAY_SKIP_SETTING_ENV" ]]; then
-          # see also https://wiki.hyprland.org/Configuring/Environment-variables/
+    sway =
+      let
+        # Fix screen tearing in external display of machine with nvidia GPU
+        # https://old.reddit.com/r/swaywm/comments/z98btz/external_monitor_finally_working_with_glitches/kjusdq6/
+        nvidiaEnabled = lib.elem "nvidia" config.services.xserver.videoDrivers
+          && config.hardware.nvidia.modesetting.enable;
+        nvidiaArgs =
+          if nvidiaEnabled then [
+            "--unsupported-gpu"
+            "-Dlegacy-wl-drm"
+          ] else
+            [ ];
+        nvidiaEnv =
+          if nvidiaEnabled then ''
+            export WLR_NO_HARDWARE_CURSORS=1
+          '' else
+            "";
+      in
+      {
+        enable = prefs.enableSway;
+        extraOptions = [
+          "--verbose"
+          "--debug"
+        ] ++ nvidiaArgs;
+        extraPackages = with pkgs; [
+          swaylock
+          swaybg
+          swayidle
+          i3status-rust
+          termite
+          alacritty
+          rofi
+          bemenu
+          grim
+          drm_info
+          jq
+          coreutils
+          gawk
+          gnused
+          gnugrep
+        ];
+        extraSessionCommands = ''
+          # For debugging purpose, if the environment variable SWAY_SKIP_SETTING_ENV is set,
+          # sway will not set the environment variables.
+          if [[ -z "$SWAY_SKIP_SETTING_ENV" ]]; then
+            # see also https://wiki.hyprland.org/Configuring/Environment-variables/
 
-          # Fix screen tearing in external display of machine with nvidia GPU
-          # https://old.reddit.com/r/swaywm/comments/102cdqa/how_can_i_fix_my_external_screen_flickering_with/
-          # Seems to be not working
-          # export WLR_RENDERER=vulkan
+            # Fix screen tearing in external display of machine with nvidia GPU
+            # https://old.reddit.com/r/swaywm/comments/102cdqa/how_can_i_fix_my_external_screen_flickering_with/
+            # Seems to be not working
+            # export WLR_RENDERER=vulkan
 
-          export TERMINAL="alacritty"
-          export BROWSER="firefox"
+            export TERMINAL="alacritty"
+            export BROWSER="firefox"
 
-          export _JAVA_AWT_WM_NONREPARENTING=1
-          export QT_AUTO_SCREEN_SCALE_FACTOR=1
-          export QT_QPA_PLATFORM="wayland;xcb"
-          export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
-          export GDK_BACKEND=wayland,x11,*
-          export XDG_CURRENT_DESKTOP=sway
-          export MOZ_ENABLE_WAYLAND=1
-          export CLUTTER_BACKEND=wayland
-          export SDL_VIDEODRIVER=wayland
+            export _JAVA_AWT_WM_NONREPARENTING=1
+            export QT_AUTO_SCREEN_SCALE_FACTOR=1
+            export QT_QPA_PLATFORM="wayland;xcb"
+            export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+            export GDK_BACKEND=wayland,x11,*
+            export XDG_CURRENT_DESKTOP=sway
+            export MOZ_ENABLE_WAYLAND=1
+            export CLUTTER_BACKEND=wayland
+            export SDL_VIDEODRIVER=wayland
 
-          export GTK_IM_MODULE=fcitx
-          export QT_IM_MODULE=fcitx
-          export XMODIFIERS=@im=fcitx
+            export GTK_IM_MODULE=fcitx
+            export QT_IM_MODULE=fcitx
+            export XMODIFIERS=@im=fcitx
 
-          # https://wiki.hyprland.org/Nvidia/
-          export NIXOS_OZONE_WL=1
+            # https://wiki.hyprland.org/Nvidia/
+            export NIXOS_OZONE_WL=1
 
-          # https://discourse.nixos.org/t/nixos-ozone-wl-1-seemingly-not-having-any-affect/56776/3
-          export ELECTRON_OZONE_PLATFORM_HINT=wayland
+            # https://discourse.nixos.org/t/nixos-ozone-wl-1-seemingly-not-having-any-affect/56776/3
+            export ELECTRON_OZONE_PLATFORM_HINT=wayland
 
-          # https://github.com/swaywm/sway/issues/5008
-          # export WLR_DRM_NO_MODIFIERS=1
-          # https://wiki.archlinux.org/title/Wayland#Requirements
-          # export GBM_BACKEND=nvidia-drm
-          # export __GLX_VENDOR_LIBRARY_NAME=nvidia
+            # https://github.com/swaywm/sway/issues/5008
+            # export WLR_DRM_NO_MODIFIERS=1
+            # https://wiki.archlinux.org/title/Wayland#Requirements
+            # export GBM_BACKEND=nvidia-drm
+            # export __GLX_VENDOR_LIBRARY_NAME=nvidia
 
-          # https://old.reddit.com/r/swaywm/comments/17sob2b/sway_wont_launch_with_vulkan_renderer_on_nvidia/k8rkxo4/
-          nvidia_priority=40
-          # If $WLR_RENDERER == vulkan, then the nvidia card should be prioritized to the first
-          # otherwise, nvidia card should be deprioritized to the last.
-          if [[ "$WLR_RENDERER" == "vulkan" ]]; then
+            # https://old.reddit.com/r/swaywm/comments/17sob2b/sway_wont_launch_with_vulkan_renderer_on_nvidia/k8rkxo4/
             nvidia_priority=40
-          fi
-          # https://wiki.hyprland.org/hyprland-wiki/pages/Configuring/Multi-GPU/
-          wlr_drm_devices="$(drm_info -j |\
-            jq -r 'with_entries(.value |= .driver.desc) | to_entries | .[] | "\(.key) \(.value)"' |\
-            sed -E "s#(^\S+)\s+(.*intel.*)#\1 10#gI;
-              s#(^\S+)\s+(.*amd.*)#\1 20#gI;
-              s#(^\S+)\s+(.*nvidia.*)#\1 $nvidia_priority#gI;
-              s#(^\S+)\s+([^0-9]+$)#\1 30#gI" |\
-            sort -n -k2 |\
-            awk '{print $1}' |\
-            paste -sd ':')"
-          if [[ -n "$wlr_drm_devices" ]]; then
-            export WLR_DRM_DEVICES="$wlr_drm_devices"
-          fi
+            # If $WLR_RENDERER == vulkan, then the nvidia card should be prioritized to the first
+            # otherwise, nvidia card should be deprioritized to the last.
+            if [[ "$WLR_RENDERER" == "vulkan" ]]; then
+              nvidia_priority=40
+            fi
+            # https://wiki.hyprland.org/hyprland-wiki/pages/Configuring/Multi-GPU/
+            wlr_drm_devices="$(drm_info -j |\
+              jq -r 'with_entries(.value |= .driver.desc) | to_entries | .[] | "\(.key) \(.value)"' |\
+              sed -E "s#(^\S+)\s+(.*intel.*)#\1 10#gI;
+                s#(^\S+)\s+(.*amd.*)#\1 20#gI;
+                s#(^\S+)\s+(.*nvidia.*)#\1 $nvidia_priority#gI;
+                s#(^\S+)\s+([^0-9]+$)#\1 30#gI" |\
+              sort -n -k2 |\
+              awk '{print $1}' |\
+              paste -sd ':')"
+            if [[ -n "$wlr_drm_devices" ]]; then
+              export WLR_DRM_DEVICES="$wlr_drm_devices"
+            fi
 
-          ${nvidiaEnv}
-        fi
-      '';
-    };
+            ${nvidiaEnv}
+          fi
+        '';
+      };
     tmux = { enable = true; };
     wireshark.enable = prefs.enableWireshark;
   };
@@ -3019,21 +3023,22 @@ in
       enable = prefs.enableGreetd;
       vt = 7;
     } // lib.optionalAttrs prefs.enableSwayForGreeted {
-      settings = let swayCommand = "systemd-cat -t sway sway";
-      in {
-        initial_session = {
-          # Example of debugging sway.
-          # user = "fallback";
-          # command = "env SWAY_SKIP_SETTING_ENV=1 WLR_RENDERER=vulkan ${swayCommand}";
-          user = prefs.owner;
-          command = swayCommand;
+      settings =
+        let swayCommand = "systemd-cat -t sway sway";
+        in {
+          initial_session = {
+            # Example of debugging sway.
+            # user = "fallback";
+            # command = "env SWAY_SKIP_SETTING_ENV=1 WLR_RENDERER=vulkan ${swayCommand}";
+            user = prefs.owner;
+            command = swayCommand;
+          };
+          default_session = {
+            user = "greeter";
+            command =
+              "${pkgs.greetd.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
+          };
         };
-        default_session = {
-          user = "greeter";
-          command =
-            "${pkgs.greetd.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
-        };
-      };
     };
     libinput = {
       enable = prefs.enableLibInput;

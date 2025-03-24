@@ -1,7 +1,10 @@
 let
   pathOr = path: default: if (builtins.pathExists path) then path else default;
 in
-{ prefs, inputs }:
+{ self
+, prefs
+, inputs
+}:
 let
   inherit (prefs)
     hostname isMinimalSystem isMaximalSystem isVirtualMachine system getDotfile getNixConfig;

@@ -4605,7 +4605,7 @@ Selectively runs either `after-make-console-frame-hooks' or
   :commands my/format-all-mode my/toggle-format-project-files format-all-buffer format-all-mode
   :init
   (setq format-all-formatters
-        '(("Nix" nixpkgs-fmt)))
+        '(("Nix" nixfmt)))
   :config
   (defvar my/just-format-it-root-marker ".just_format_it")
 
