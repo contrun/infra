@@ -7,6 +7,8 @@ in
   inputs,
 }:
 let
+  nixpkgs = inputs.nixpkgs;
+
   inherit (prefs)
     hostname
     isMinimalSystem
@@ -138,7 +140,16 @@ let
     }:
     lib.optionalAttrs prefs.enableMicrovmHost {
       imports = [ inputs.microvm.nixosModules.host ];
-      microvm = prefs.microvmHostConfig;
+      microvm =
+        let
+          allVms = import (getNixConfig "microvms.nix") {
+            inherit (inputs) microvm;
+            inherit system nixpkgs;
+          };
+        in
+        {
+          vms = lib.filterAttrs (name: vm: prefs.enabledMicroVmGuests ? "${name}") allVms;
+        };
     };
 
   microvmGuestConfiguration =

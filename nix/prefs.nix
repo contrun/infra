@@ -301,6 +301,7 @@ let
     enableMicrovmGuest = false;
     microvmHostConfig = { };
     microvmGuestConfig = { };
+    enabledMicroVmGuests = { };
     # cannot enable X11 forwarding without setting xauth location
     enableSshX11Forwarding = !self.isMinimalSystem && !self.enableMicrovmGuest;
     enableSshPortForwarding = true;
@@ -1234,6 +1235,10 @@ let
           enableWireguard = false;
           enableContainerWired = false;
           enableFallbackAccount = true;
+          enableMicrovmHost = true;
+          enabledMicroVmGuests = {
+            graphics = { };
+          };
         }
       else if hostname == "madbox" then
         {
