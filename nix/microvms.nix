@@ -22,6 +22,8 @@ in
       microvm = {
         hypervisor = "cloud-hypervisor";
         graphics.enable = true;
+        balloonMem = 1536;
+        vcpu = 8;
       };
 
       networking.hostName = "graphical-microvm";
@@ -71,6 +73,8 @@ in
 
       environment.systemPackages = with pkgs; [
         xdg-utils # Required
+        firefox-wayland
+        librewolf-wayland
       ];
 
       hardware.graphics.enable = true;
