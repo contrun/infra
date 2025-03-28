@@ -19,7 +19,15 @@
     "sd_mod"
     "sdhci_pci"
   ];
-  boot.initrd.kernelModules = [ ];
+  # Fix nvidia-offload not working
+  # See https://discourse.nixos.org/t/nvidia-drivers-not-loading/40913
+  boot.initrd.kernelModules = [
+    "nvidia"
+    "i915"
+    "nvidia_modeset"
+    "nvidia_uvm"
+    "nvidia_drm"
+  ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
