@@ -103,6 +103,8 @@
     };
   };
 
+  nixpkgs.config.cudaSupport = true;
+
   nix.settings = {
     substituters = [
       "https://cuda-maintainers.cachix.org"
