@@ -119,6 +119,8 @@ let
     in
     domainPrefixes:
     "(${lib.concatMapStringsSep " || " getRuleByPrefix (lib.splitString "," domainPrefixes)})";
+  nvidiaEnabled =
+    lib.elem "nvidia" config.services.xserver.videoDrivers && config.hardware.nvidia.modesetting.enable;
 in
 {
   passthru = {
@@ -808,6 +810,15 @@ in
           };
         }
       ])
+      // (mergeOptionalConfigs [
+        {
+          enable = nvidiaEnabled;
+          config = {
+            CUDA_PATH = "${pkgs.cudatoolkit}";
+            CUDA_TOOLKIT_ROOT_DIR = "${pkgs.cudatoolkit}";
+          };
+        }
+      ])
     );
   };
 
@@ -845,7 +856,20 @@ in
     };
     nix-ld = {
       enable = prefs.enableNixLd;
-      libraries = options.programs.nix-ld.libraries.default;
+      libraries =
+        options.programs.nix-ld.libraries.default
+        ++ (
+          with pkgs;
+          with cudaPackages;
+          if nvidiaEnabled then
+            [
+              cudatoolkit
+              cudnn
+              libcublas
+            ]
+          else
+            [ ]
+        );
     };
     zsh = {
       enable = prefs.enableZSH;
@@ -870,8 +894,6 @@ in
       let
         # Fix screen tearing in external display of machine with nvidia GPU
         # https://old.reddit.com/r/swaywm/comments/z98btz/external_monitor_finally_working_with_glitches/kjusdq6/
-        nvidiaEnabled =
-          lib.elem "nvidia" config.services.xserver.videoDrivers && config.hardware.nvidia.modesetting.enable;
         nvidiaArgs =
           if nvidiaEnabled then
             [
