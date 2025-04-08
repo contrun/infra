@@ -72,6 +72,9 @@ ignore = Regex .*/\.next
 ignore = Regex .*/\.dart_tool
 ignore = Regex .*/flutter/ephemeral
 ignore = Regex .*/Flutter/ephemeral
+ignore = Regex .*/storage/datasets
+ignore = Regex .*/storage/key_value_stores
+ignore = Regex .*/storage/request_queues
 
 # IDE/language server temporary directories
 ignore = Regex .*/\.metals
