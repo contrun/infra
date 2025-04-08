@@ -64,6 +64,3 @@
 
 [protocol "file"]
 	allow = always
-
-[blame]
-	ignoreRevsFile = .git-blame-ignore-revs
