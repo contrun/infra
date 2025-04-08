@@ -620,7 +620,7 @@ in
               # (pkgs.myPackages.helix or helix)
               helix
 
-              # gnome.adwaita-icon-theme
+              # adwaita-icon-theme
               # gnome.dconf
               # gnome.gsettings-desktop-schemas
               # gnome.zenity
@@ -695,21 +695,15 @@ in
             list = [ emacs ];
           }
           {
-            enable = !prefs.isMinimalSystem && (prefs.nixosSystem == "x86_64-linux");
-            list = [
-              wine
-            ];
-          }
-          {
             enable = !prefs.isMinimalSystem && prefs.nixosSystem == "x86_64-linux";
             list = [
               # steam-run-native
               # aqemu
               bpftools
-              prefs.kernelPackages.perf
-              prefs.kernelPackages.bpftrace
-              prefs.kernelPackages.bcc
-              prefs.kernelPackages.systemtap
+              config.boot.kernelPackages.perf
+              config.boot.kernelPackages.bpftrace
+              config.boot.kernelPackages.bcc
+              config.boot.kernelPackages.systemtap
             ];
           }
           {

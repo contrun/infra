@@ -27,7 +27,6 @@
     nix-alien = {
       url = "github:thiagokokada/nix-alien";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
     nix-autobahn.url = "github:Lassulus/nix-autobahn";

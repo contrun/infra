@@ -1237,7 +1237,10 @@ let
           enableFallbackAccount = true;
           enableMicrovmHost = true;
           enabledMicroVmGuests = {
-            graphics = { };
+            # graphics = { };
+          };
+          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
+            kernelPackages = pkgs.linuxPackages_6_12;
           };
         }
       else if hostname == "madbox" then
