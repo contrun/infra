@@ -351,14 +351,14 @@ let
     enableAioproxy = !self.isMinimalSystem;
     aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
-    enableHomeManagerUnison = !self.isMinimalSystem;
+    enableHomeManagerUnison = false;
     enableHomeManagerWayvnc = false;
     enableHomeManagerXdgPortal = false;
-    enableHomeManagerRcloneBisync = !self.isMinimalSystem;
-    enableHomeManagerRcloneSync = !self.isMinimalSystem;
-    enableHomeManagerRcloneMount = !self.isMinimalSystem;
-    enableHomeManagerRcloneServe = !self.isMinimalSystem;
-    enableHomeManagerAutossh = !self.isMinimalSystem;
+    enableHomeManagerRcloneBisync = false;
+    enableHomeManagerRcloneSync = false;
+    enableHomeManagerRcloneMount = false;
+    enableHomeManagerRcloneServe = false;
+    enableHomeManagerAutossh = false;
     enableHomeManagerCloudflared = false;
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
@@ -1244,6 +1244,12 @@ let
           pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
             kernelPackages = pkgs.linuxPackages_6_12;
           };
+          enableHomeManagerUnison = true;
+          enableHomeManagerRcloneBisync = true;
+          enableHomeManagerRcloneSync = true;
+          enableHomeManagerRcloneMount = true;
+          enableHomeManagerRcloneServe = true;
+          enableHomeManagerAutossh = true;
         }
       else if hostname == "madbox" then
         {
