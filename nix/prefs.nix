@@ -359,6 +359,7 @@ let
     enableHomeManagerRcloneMount = !self.isMinimalSystem;
     enableHomeManagerRcloneServe = !self.isMinimalSystem;
     enableHomeManagerAutossh = !self.isMinimalSystem;
+    enableHomeManagerCloudflared = false;
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
     enableHomeManagerCodeTunnel = false;
@@ -1206,6 +1207,7 @@ let
           enableHomeManagerDufs = true;
           enableHomeManagerWayvnc = true;
           enableHomeManagerXdgPortal = true;
+          enableHomeManagerCloudflared = true;
         }
       else if hostname == "aol" then
         {

@@ -1518,6 +1518,49 @@ in
 
       (
         let
+          name = "cloudflared@";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerCloudflared {
+          services.${name} = {
+            Unit = {
+              Description = "cloudflared tunnel";
+              After = [
+                "network-online.target"
+                "network.target"
+              ];
+              Wants = [ "network-online.target" ];
+              # Disable start limit.
+              # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
+              StartLimitIntervalSec = 0;
+            };
+            Install = {
+              WantedBy = [ "default.target" ];
+              DefaultInstance = "default";
+            };
+            Service = {
+              Restart = "always";
+              RestartSteps = 20;
+              RestartMaxDelaySec = 3600;
+              # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
+              ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run";
+              Environment = [
+                # INF Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared] originCertPath=
+                # Obtain the certificate by running `cloudflared login`
+                # "TUNNEL_ORIGIN_CERT=%h/.cloudflared/cert.pem"
+                # Obtain the tunenl token by running `cloudflared tunnel token $TUNNEL_NAME`
+                # "TUNNEL_TOKEN="
+              ];
+              EnvironmentFile = [
+                "-%h/.config/cloudflared/env"
+                "-%h/.config/cloudflared/%i.env"
+              ];
+            };
+          };
+        }
+      )
+
+      (
+        let
           name = "foot";
         in
         lib.optionalAttrs prefs.enableFoot {
