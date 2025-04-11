@@ -1540,16 +1540,33 @@ in
             Service =
               let
                 configName = "jupyter_lab_config.py";
-                jupyter = pkgs.python3.withPackages (
-                  ps:
-                  (with ps; [
-                    ipykernel
-                    jupyter-collaboration
-                    jupyter-lsp
-                    jupyterlab
-                  ])
-                  ++ (with pkgs; [ bash ])
-                );
+                execName = "jupyter-lab";
+                jupyter =
+                  let
+                    python = pkgs.python3.withPackages (
+                      ps: with ps; [
+                        ipykernel
+                        jupyter-collaboration
+                        jupyter-lsp
+                        jupyterlab
+                      ]
+                    );
+                  in
+                  pkgs.writeShellApplication {
+                    name = execName;
+                    text = ''
+                      # https://discourse.nixos.org/t/how-to-add-path-into-systemd-user-home-manager-service/31623
+                      # No good way to add nix-profie/bin to the PATH
+                      export PATH=${
+                        pkgs.lib.makeBinPath [
+                          python
+                          pkgs.bash
+                          pkgs.uv
+                        ]
+                      }:$HOME/.nix-profile/bin:$PATH
+                      exec ${python}/bin/jupyter-lab "$@"
+                    '';
+                  };
                 jupyterLabConfig = pkgs.writeTextFile {
                   name = configName;
                   text = ''
@@ -1568,7 +1585,7 @@ in
                 Restart = "always";
                 RestartSteps = 20;
                 RestartMaxDelaySec = 3600;
-                ExecStart = "${jupyter}/bin/jupyter-lab --no-browser --config ${jupyterLabConfig}";
+                ExecStart = "${jupyter}/bin/${execName} --no-browser --config ${jupyterLabConfig}";
                 Environment = [
                   "NOTEBOOKS_DIR=%h/Workspace/notebooks"
                   "ALLOW_REMOTE_ACCESS=true"
