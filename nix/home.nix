@@ -1518,6 +1518,74 @@ in
 
       (
         let
+          name = "jupyter";
+        in
+        lib.optionalAttrs prefs.enableHomeManagerJupyter {
+          services.${name} = {
+            Unit = {
+              Description = "jupyter notebooks";
+              After = [
+                "network-online.target"
+                "network.target"
+              ];
+              Wants = [ "network-online.target" ];
+              # Disable start limit.
+              # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
+              StartLimitIntervalSec = 0;
+            };
+            Install = {
+              WantedBy = [ "default.target" ];
+              DefaultInstance = "default";
+            };
+            Service =
+              let
+                configName = "jupyter_lab_config.py";
+                jupyter = pkgs.python3.withPackages (
+                  ps:
+                  (with ps; [
+                    ipykernel
+                    jupyter-collaboration
+                    jupyter-lsp
+                    jupyterlab
+                  ])
+                  ++ (with pkgs; [ bash ])
+                );
+                jupyterLabConfig = pkgs.writeTextFile {
+                  name = configName;
+                  text = ''
+                    # This config file should be a valid python script
+                    import os
+                    import json
+                    notebooks_dir = os.environ.get('NOTEBOOKS_DIR')
+                    if notebooks_dir:
+                      c.NotebookApp.root_dir = notebooks_dir
+                    if 'ALLOW_REMOTE_ACCESS' in os.environ:
+                      c.ServerApp.allow_remote_access = json.loads(os.environ['ALLOW_REMOTE_ACCESS'].lower())
+                  '';
+                };
+              in
+              {
+                Restart = "always";
+                RestartSteps = 20;
+                RestartMaxDelaySec = 3600;
+                ExecStart = "${jupyter}/bin/jupyter-lab --no-browser --config ${jupyterLabConfig}";
+                Environment = [
+                  "NOTEBOOKS_DIR=%h/Workspace/notebooks"
+                  "ALLOW_REMOTE_ACCESS=true"
+                  # Used by jupyter lab itself
+                  "JUPYTER_PORT=8899"
+                  # JUPYTER_TOKEN=mynotebooktoken
+                ];
+                EnvironmentFile = [
+                  "-%h/.config/${name}/env"
+                ];
+              };
+          };
+        }
+      )
+
+      (
+        let
           name = "cloudflared@";
         in
         lib.optionalAttrs prefs.enableHomeManagerCloudflared {
@@ -1541,7 +1609,6 @@ in
               Restart = "always";
               RestartSteps = 20;
               RestartMaxDelaySec = 3600;
-              # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
               ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run";
               Environment = [
                 # INF Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared] originCertPath=

@@ -363,6 +363,7 @@ let
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
     enableHomeManagerCodeTunnel = false;
+    enableHomeManagerJupyter = false;
     enableHomeManagerDufs = false;
     enableNetbird = !self.isMinimalSystem;
     enableX2goServer = false;
@@ -1208,6 +1209,7 @@ let
           enableHomeManagerWayvnc = true;
           enableHomeManagerXdgPortal = true;
           enableHomeManagerCloudflared = true;
+          enableHomeManagerJupyter = true;
         }
       else if hostname == "aol" then
         {
