@@ -189,10 +189,6 @@
   "dataWrangler.enabledFileTypes": {
     "jsonl": true
   },
-  "extensions.experimental.affinity": {
-    "ms-toolsai.jupyter": 1,
-    "ms-toolsai.jupyter-renderers": 1,
-    "ms-python.python": 1,
-    "ms-python.vscode-pylance": 1
-  }
+  "remote.downloadExtensionsLocally": true,
+  "extensions.experimental.affinity": {}
 }
