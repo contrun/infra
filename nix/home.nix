@@ -1096,9 +1096,9 @@ in
 
       (
         let
-          name = "caddy";
+          name = "caddy@";
         in
-        lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
+        lib.optionalAttrs prefs.enableHomeManagerCaddy {
           services.${name} = {
             Unit = {
               Description = "Caddy server";
@@ -1107,19 +1107,30 @@ in
                 "network.target"
               ];
               Wants = [ "network-online.target" ];
+              # Disable start limit.
+              # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
+              StartLimitIntervalSec = 0;
             };
             Install = {
               WantedBy = [ "default.target" ];
             };
             Service = {
+              TimeoutStartSec = "infinity";
+              Restart = "always";
+              # Exponential backoff for the restart.
+              RestartSteps = 20;
+              RestartMaxDelaySec = 3600;
               Type = "notify";
               ExecStart = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/config.dhall --adapter dhall
+                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/%i.Caddyfile --adapter caddyfile
               '';
               ExecReload = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/config.dhall --adapter dhall
+                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/%i.Caddyfile --adapter caddyfile
               '';
-              EnvironmentFile = "%h/.config/caddy/env";
+              EnvironmentFile = [
+                "-%h/.config/caddy/env"
+                "-%h/.config/caddy/%i.env"
+              ];
             };
           };
         }
