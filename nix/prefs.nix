@@ -1211,6 +1211,20 @@ let
           enableHomeManagerCloudflared = true;
           enableHomeManagerJupyter = true;
         }
+      else if hostname == "humpback" then
+        {
+          home = "/home/contrun";
+          isMinimalSystem = false;
+          enableFoot = false;
+          enableHomeManagerCaddy = true;
+          enableHomeManagerTailScale = true;
+          enableHomeManagerCodeTunnel = true;
+          enableHomeManagerDufs = true;
+          enableHomeManagerWayvnc = true;
+          enableHomeManagerXdgPortal = true;
+          enableHomeManagerCloudflared = true;
+          enableHomeManagerJupyter = true;
+        }
       else if hostname == "aol" then
         {
           isMinimalSystem = false;

@@ -237,6 +237,7 @@
       homeManagerHosts = [
         "madbox"
         "contrun@zklab-5"
+        "contrun@humpback"
       ];
       homeManagerConfigs = darwinNodes ++ allHosts ++ homeManagerHosts;
     in

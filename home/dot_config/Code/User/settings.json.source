@@ -37,6 +37,7 @@
     "contrun-ckbp2pexperimen-ll57a71c3ec.vss.gitpod.io": "linux",
     "bison-vagrant": "linux",
     "zklab-5": "linux",
+    "humpback": "linux",
     "*.gitpod.io": "linux",
     "dev": "linux",
     "devts": "linux",
