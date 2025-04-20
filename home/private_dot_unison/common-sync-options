@@ -75,6 +75,8 @@ ignore = Regex .*/Flutter/ephemeral
 ignore = Regex .*/storage/datasets
 ignore = Regex .*/storage/key_value_stores
 ignore = Regex .*/storage/request_queues
+ignore = Regex .*/migrations/development/meta
+ignore = Regex .*/migrations/local
 
 # IDE/language server temporary directories
 ignore = Regex .*/\.metals
