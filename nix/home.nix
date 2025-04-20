@@ -856,6 +856,7 @@ let
         "tcllib"
         "foot"
         "wezterm"
+        "ghostty"
         "texinfo"
         "thefuck"
         "tk"
