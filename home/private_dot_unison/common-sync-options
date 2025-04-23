@@ -101,3 +101,6 @@ ignore = Regex .*/\.devenv.*
 ignore = Regex .*/devenv.local.nix
 ignore = Regex .*/\.direnv
 ignore = Regex .*/\.pre-commit-config.yaml
+
+ignore = Regex .*/\.stversions
+ignore = Regex .*/\.syncthing.*tmp
