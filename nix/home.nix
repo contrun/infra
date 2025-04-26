@@ -1619,6 +1619,54 @@ in
 
       (
         let
+          name = "gost";
+          unitName = "${name}@";
+          p =
+            with pkgs;
+            writeShellApplication {
+              inherit name;
+              text = ''
+                set -euo pipefail
+                # shellcheck disable=SC2086
+                exec gost $GOST_ARGS
+              '';
+              runtimeInputs = [
+                gost
+              ];
+            };
+        in
+        lib.optionalAttrs prefs.enableHomeManagerGost {
+          services.${unitName} = {
+            Unit = {
+              Description = "gost tunnel";
+              After = [
+                "network-online.target"
+                "network.target"
+              ];
+              Wants = [ "network-online.target" ];
+              # Disable start limit.
+              # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
+              StartLimitIntervalSec = 0;
+            };
+            Install = {
+              WantedBy = [ "default.target" ];
+              DefaultInstance = "default";
+            };
+            Service = {
+              Restart = "always";
+              RestartSteps = 20;
+              RestartMaxDelaySec = 3600;
+              ExecStart = "${p}/bin/gost";
+              EnvironmentFile = [
+                "-%h/.config/${name}/%i.env"
+              ];
+            };
+          };
+        }
+      )
+
+      (
+        let
           name = "cloudflared@";
         in
         lib.optionalAttrs prefs.enableHomeManagerCloudflared {

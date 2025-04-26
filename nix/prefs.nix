@@ -360,6 +360,7 @@ let
     enableHomeManagerRcloneServe = false;
     enableHomeManagerAutossh = false;
     enableHomeManagerCloudflared = false;
+    enableHomeManagerGost = false;
     enableHomeManagerTailScale = false;
     enableHomeManagerCaddy = false;
     enableHomeManagerCodeTunnel = false;
@@ -1209,6 +1210,7 @@ let
           enableHomeManagerWayvnc = true;
           enableHomeManagerXdgPortal = true;
           enableHomeManagerCloudflared = true;
+          enableHomeManagerGost = true;
           enableHomeManagerJupyter = true;
         }
       else if hostname == "humpback" then
@@ -1223,6 +1225,7 @@ let
           enableHomeManagerWayvnc = true;
           enableHomeManagerXdgPortal = true;
           enableHomeManagerCloudflared = true;
+          enableHomeManagerGost = true;
           enableHomeManagerJupyter = true;
         }
       else if hostname == "aol" then
