@@ -2,6 +2,8 @@
 auto = true
 batch = true
 
+maxsizethreshold = 200000
+
 # Propagate last modification time
 times = true
 
