@@ -194,4 +194,7 @@
   "extensions.experimental.affinity": {},
   "geminicodeassist.project": "awesome-name-8121d",
   "github.copilot.chat.localeOverride": "en",
+  "editor.tabCompletion": "on",
+  "diffEditor.codeLens": true,
+  "workbench.editor.splitOnDragAndDrop": false
 }
