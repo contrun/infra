@@ -8,6 +8,7 @@
       zerotier: overlay_nodes
       wireguard: overlay_nodes
       gost: edge_proxies
+      phantun: edge_proxies
       envoy: edge_proxies
       nginx: edge_proxies
       promtail: servers
@@ -19,14 +20,14 @@
       rclone: servers
       syncthing: sync_servers
   tasks:
-   - set_fact:
+    - set_fact:
         group: "{{ service_groups[services] }}"
         service_and_group_dict: "{{ dict((services | split(',')) | zip(services | split(',') | map('extract', service_groups))) }}"
-     delegate_to: localhost
-     delegate_facts: yes
-   - debug:
+      delegate_to: localhost
+      delegate_facts: yes
+    - debug:
         msg: "Installing service {{ item.key }} to {{ item.value }}"
-     with_dict: "{{ hostvars.localhost.service_and_group_dict }}"
+      with_dict: "{{ hostvars.localhost.service_and_group_dict }}"
 
 - name: deploy new services
   # TODO: ideally we should do the following to run multiple service tasks

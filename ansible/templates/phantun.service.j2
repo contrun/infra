@@ -1,0 +1,11 @@
+[Unit]
+Description=phantun server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/phantun_server {{ phantun_arguments }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

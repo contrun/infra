@@ -1,0 +1,23 @@
+- name: Copy phantun-server
+  ansible.builtin.copy:
+    src: "{{ lookup('ansible.builtin.env', 'HOME') }}/.local/bin/phantun_server"
+    dest: /usr/local/bin/phantun_server
+    mode: "0755"
+
+- name: Copy systemd unit
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - src: phantun.service.j2
+      dest: /etc/systemd/system/phantun.service
+  register: phantun_unit
+
+- name: Start/reload phantun
+  ansible.builtin.systemd:
+    name: phantun
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  when: phantun_unit.changed
