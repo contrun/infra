@@ -1,7 +1,6 @@
 {
   "workbench.editor.enablePreview": false,
   "workbench.editor.highlightModifiedTabs": true,
-  "window.menuBarVisibility": "toggle",
   "editor.fontSize": 13,
   "workbench.statusBar.feedback.visible": false,
   "languageServerHaskell.enableHIE": true,
@@ -46,7 +45,6 @@
   },
   "editor.multiCursorModifier": "alt",
   "editor.wordWrap": "on",
-  "remote.SSH.showLoginTerminal": true,
   "remote.SSH.remoteServerListenOnSocket": true,
   "workbench.editor.showTabs": "single",
   "[rust]": {
@@ -186,7 +184,6 @@
   "notebook.formatOnSave.enabled": true,
   "files.autoSave": "afterDelay",
   "notebook.output.textLineLimit": 100,
-  "notebook.lineNumbers": "on",
   "dataWrangler.enabledFileTypes": {
     "jsonl": true
   },
@@ -196,5 +193,9 @@
   "github.copilot.chat.localeOverride": "en",
   "editor.tabCompletion": "on",
   "diffEditor.codeLens": true,
-  "workbench.editor.splitOnDragAndDrop": false
+  "workbench.editor.splitOnDragAndDrop": false,
+  "notebook.lineNumbers": "on",
+  "notebook.experimental.remoteSave": true,
+  "ipynb.experimental.serialization": true,
+  "window.menuBarVisibility": "compact",
 }
