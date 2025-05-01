@@ -24,11 +24,6 @@
     };
     nixpkgs-wayland.inputs.nixpkgs.follows = "nixpkgs";
 
-    nix-alien = {
-      url = "github:thiagokokada/nix-alien";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nix-autobahn.url = "github:Lassulus/nix-autobahn";
     nix-autobahn.inputs.nixpkgs.follows = "nixpkgs";
     nix-autobahn.inputs.flake-utils.follows = "flake-utils";
@@ -123,7 +118,6 @@
       home-manager,
       flake-utils,
       gomod2nix,
-      nix-alien,
       nix-on-droid,
       ...
     }@inputs:
@@ -434,24 +428,6 @@
                       "mycaddy"
                     ]
                   )
-                  ++ (builtins.concatLists (
-                    builtins.attrValues (
-                      builtins.mapAttrs
-                        (
-                          repo: packages:
-                          builtins.map (name: {
-                            inherit name;
-                            pkg = inputs.${repo}.packages.${super.system}.${name} or null;
-                          }) packages
-                        )
-                        {
-                          "nix-alien" = [
-                            "nix-alien"
-                            "nix-index-update"
-                          ];
-                        }
-                    )
-                  ))
                   ++ (builtins.map
                     (name: {
                       inherit name;

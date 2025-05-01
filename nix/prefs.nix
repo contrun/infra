@@ -449,7 +449,7 @@ let
     maxJobs = "auto";
     proxy = null;
     enableMihomo = !self.isMinimalSystem;
-    enableClashVerge = !self.isMinimalSystem;
+    enableClashVerge = false;
     enableClashRedir = false;
     enableClashRedirWatchdog = false;
     enableNetworkWatchdog = false;

@@ -611,8 +611,6 @@ in
 
               (pkgs.myPackages.deploy-rs or null)
               (pkgs.myPackages.nix-autobahn or null)
-              (pkgs.myPackages.nix-alien or null)
-              (pkgs.myPackages.nix-index-update or null)
               (pkgs.myPackages.aioproxy or null)
               # Not working for now
               # error: store path '/nix/store/7phspaj5lxw5qja709r5j3ivcllp0gk2-hyhhrcbzng0kgkyv63mqhznhrp67fhf5-source-crate2nix' is not allowed to have references
