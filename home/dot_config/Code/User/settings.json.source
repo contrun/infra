@@ -197,5 +197,6 @@
   "notebook.lineNumbers": "on",
   "notebook.experimental.remoteSave": true,
   "ipynb.experimental.serialization": true,
-  "window.menuBarVisibility": "compact",
+  "window.menuBarVisibility": "toggle",
+  "window.titleBarStyle": "native",
 }
