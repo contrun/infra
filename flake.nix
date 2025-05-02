@@ -851,6 +851,8 @@
                   };
                 };
 
+                cmcc-jtydn = with pkgs; callPackage ./nix/packages/cmcc-jtydn/default.nix { };
+
                 containers =
                   let
                     genContainers = import ./nix/containers.nix;
