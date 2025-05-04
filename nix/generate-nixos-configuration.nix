@@ -593,6 +593,14 @@ let
     else
       { };
 
+  readModulesDir =
+    path:
+    builtins.map (x: path + "/${x}") (
+      builtins.filter (str: (builtins.match "^[^.]*(\.nix)?$" str) != null) (
+        builtins.attrNames (builtins.readDir path)
+      )
+    );
+
   miscConfiguration =
     {
       config,
@@ -643,7 +651,7 @@ in
       miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)
-    ];
+    ] ++ (readModulesDir (getNixConfig "modules"));
 
     specialArgs = moduleArgs;
   };
