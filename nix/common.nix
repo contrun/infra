@@ -7109,6 +7109,7 @@ in
         "@wheel"
       ];
       max-jobs = prefs.maxJobs;
+      builders-use-substitutes = true;
       build-cores = prefs.buildCores;
       binary-caches = [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
       binary-cache-public-keys = [ ];
