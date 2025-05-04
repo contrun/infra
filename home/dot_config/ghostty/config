@@ -1,0 +1,7 @@
+keybind = ctrl+alt+"=new_split:down
+keybind = ctrl+alt+%=new_split:right
+keybind = ctrl+alt+b=jump_to_prompt:-1
+keybind = ctrl+alt+f=jump_to_prompt:1
+keybind = ctrl+alt+o=goto_split:next
+keybind = ctrl+shift+page_up=scroll_to_top
+keybind = ctrl+shift+page_down=scroll_to_bottom
