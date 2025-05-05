@@ -860,14 +860,7 @@ let
       nixosRebuildFlags = [ ];
       onCalendar = "04:30";
     };
-    extraOutputsToInstall = [
-      "dev"
-      "lib"
-      "doc"
-      "info"
-      "out"
-      "man"
-    ];
+    extraOutputsToInstall = [ ];
   };
 
   hostSpecific =
