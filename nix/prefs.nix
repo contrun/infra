@@ -1227,6 +1227,7 @@ let
           hostId = "85d4bfd4";
           systemStateVersion = "22.05";
           homeManagerStateVersion = "22.05";
+          installHomePackages = true;
           enableGlusterfs = false;
           enableTraefik = false;
           enablePrometheus = false;
