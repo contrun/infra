@@ -444,7 +444,7 @@ let
     enableGdm = self.displayManager == "gdm";
     enableSddm = self.displayManager == "sddm";
     enableStartx = self.displayManager == "startx";
-    installHomePackages = !self.isMinimalSystem;
+    installHomePackages = false;
     buildCores = 0;
     maxJobs = "auto";
     proxy = null;
