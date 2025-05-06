@@ -55,7 +55,6 @@
     microvm.inputs.flake-utils.follows = "flake-utils";
 
     mycaddy.url = "github:contrun/mycaddy";
-    mycaddy.inputs.nixpkgs.follows = "nixpkgs";
     mycaddy.inputs.flake-utils.follows = "flake-utils";
 
     nixos-generators = {
