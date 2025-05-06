@@ -1196,6 +1196,7 @@ let
           home = "/home/contrun";
           isMinimalSystem = false;
           enableFoot = false;
+          installHomePackages = true;
           enableHomeManagerCaddy = true;
           enableHomeManagerTailScale = true;
           enableHomeManagerCodeTunnel = true;
@@ -1211,6 +1212,7 @@ let
           home = "/home/contrun";
           isMinimalSystem = false;
           enableFoot = false;
+          installHomePackages = true;
           enableHomeManagerCaddy = true;
           enableHomeManagerTailScale = true;
           enableHomeManagerCodeTunnel = true;
