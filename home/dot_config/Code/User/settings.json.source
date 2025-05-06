@@ -188,7 +188,6 @@
     "jsonl": true
   },
   "remote.downloadExtensionsLocally": true,
-  "extensions.experimental.affinity": {},
   "geminicodeassist.project": "awesome-name-8121d",
   "github.copilot.chat.localeOverride": "en",
   "editor.tabCompletion": "on",
@@ -199,4 +198,10 @@
   "ipynb.experimental.serialization": true,
   "window.menuBarVisibility": "toggle",
   "window.titleBarStyle": "native",
+  "extensions.experimental.affinity": {
+    "ms-toolsai.jupyter": 1,
+    "ms-toolsai.jupyter-renderers": 1,
+    "ms-python.python": 1,
+    "ms-python.vscode-pylance": 1
+  }
 }
