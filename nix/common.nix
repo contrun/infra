@@ -1825,10 +1825,11 @@ in
 
     mihomo = {
       enable = prefs.enableMihomo;
+      package = unstable.mihomo;
       tunMode = true;
       webui = pkgs.metacubexd;
       extraOpts = "-ext-ctl 127.0.0.1:9097";
-      configFile = "/etc/mihomo/config.yaml";
+      configFile = "${prefs.home}/.local/share/io.github.clash-verge-rev.clash-verge-rev/clash-verge.yaml";
     };
 
     grafana = {
