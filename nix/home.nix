@@ -11,7 +11,6 @@ let
   jupyterPkg = pkgs.python3.withPackages (
     ps: with ps; [
       ipykernel
-      jupyter-collaboration
       jupyter-lsp
       jupyterlab
     ]
@@ -471,14 +470,7 @@ let
           "expat"
           "mkcert"
         ])
-        ++ (
-          if prefs.enableHomeManagerJupyter then
-            [
-              jupyterPkg
-            ]
-          else
-            [ ]
-        );
+        ++ (if prefs.enableHomeManagerJupyter then [ jupyterPkg ] else [ ]);
     }
     {
       name = "multimedia";
@@ -1140,6 +1132,7 @@ in
       (
         let
           name = "unison@";
+
         in
         lib.optionalAttrs prefs.enableHomeManagerUnison {
           services.${name} = {
@@ -1609,9 +1602,7 @@ in
                   "JUPYTER_PORT=8899"
                   # JUPYTER_TOKEN=mynotebooktoken
                 ];
-                EnvironmentFile = [
-                  "-%h/.config/${name}/env"
-                ];
+                EnvironmentFile = [ "-%h/.config/${name}/env" ];
               };
           };
         }
@@ -1630,9 +1621,7 @@ in
                 # shellcheck disable=SC2086
                 exec gost $GOST_ARGS
               '';
-              runtimeInputs = [
-                gost
-              ];
+              runtimeInputs = [ gost ];
             };
         in
         lib.optionalAttrs prefs.enableHomeManagerGost {
@@ -1657,9 +1646,7 @@ in
               RestartSteps = 20;
               RestartMaxDelaySec = 3600;
               ExecStart = "${p}/bin/gost";
-              EnvironmentFile = [
-                "-%h/.config/${name}/%i.env"
-              ];
+              EnvironmentFile = [ "-%h/.config/${name}/%i.env" ];
             };
           };
         }
