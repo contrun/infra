@@ -561,7 +561,6 @@ in
             list = [
               ly
 
-              hardinfo
               udiskie
               ydotool
               wev
@@ -630,7 +629,6 @@ in
               blueman
               virt-manager
               fdm
-              notify-osd-customizable
               noti
               gparted
 
@@ -880,7 +878,6 @@ in
         enable = enable;
         package = pkgs.clash-verge-rev;
         autoStart = enable;
-        tunMode = enable;
       };
     sway =
       let
@@ -1070,12 +1067,6 @@ in
       enable = prefs.enableBumblebee;
       connectDisplay = true;
     };
-    pulseaudio = {
-      # Allow VM to override this
-      enable = prefs.enablePulseaudio;
-      package = pkgs.pulseaudioFull;
-      support32Bit = true;
-    };
     bluetooth = {
       enable = prefs.enableBluetooth;
       powerOnBoot = prefs.enableBluetooth;
@@ -1230,6 +1221,12 @@ in
     pcscd.enable = prefs.enablePcscd;
     arbtt = {
       enable = prefs.enableArbtt;
+    };
+    pulseaudio = {
+      # Allow VM to override this
+      enable = prefs.enablePulseaudio;
+      package = pkgs.pulseaudioFull;
+      support32Bit = true;
     };
     compton = {
       enable = prefs.enableCompton;
@@ -3078,7 +3075,6 @@ in
     locate = {
       enable = prefs.enableLocate;
       package = pkgs.mlocate;
-      localuser = null;
       interval = "hourly";
       pruneBindMounts = true;
     };
@@ -3845,9 +3841,6 @@ in
       // lib.optionalAttrs prefs.enableZfs {
         storageDriver = "zfs";
       };
-    anbox = {
-      enable = prefs.enableAnbox;
-    };
     oci-containers =
       let
         timeZone = config.time.timeZone;

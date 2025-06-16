@@ -694,7 +694,6 @@ let
     enablePodman = !self.isMinimalSystem;
     replaceDockerWithPodman = self.isMinimalSystem;
     enableLibvirtd = !self.isMinimalSystem;
-    enableAnbox = false;
     enableUnifi = false;
     enableUdisks2 = !self.isMinimalSystem;
     enableAvahi = !self.isMinimalSystem;
@@ -930,7 +929,6 @@ let
       else if hostname == "uzq" then
         {
           enableHidpi = true;
-          # enableAnbox = true;
           pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
             consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
           };

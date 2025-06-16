@@ -1,8 +1,8 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
-    home-manager.url = "github:nix-community/home-manager/release-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
+    home-manager.url = "github:nix-community/home-manager/release-25.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -417,7 +417,8 @@
                   ++ (builtins.map
                     (name: {
                       inherit name;
-                      pkg = inputs.${name}.defaultPackage.${super.system};
+                      pkg =
+                        inputs.${name}.packages.${super.system}.default or inputs.${name}.defaultPackage.${super.system};
                     })
                     [
                       "aioproxy"
