@@ -90,7 +90,6 @@
   ],
   "agdaMode.connection.agdaLanguageServer": true,
   "window.zoomLevel": 1,
-  "workbench.activityBar.location": "hidden",
   "dart.checkForSdkUpdates": false,
   "search.useGlobalIgnoreFiles": true,
   "search.useParentIgnoreFiles": true,
@@ -198,10 +197,10 @@
   "ipynb.experimental.serialization": true,
   "window.menuBarVisibility": "toggle",
   "window.titleBarStyle": "native",
-  "extensions.experimental.affinity": {
-    "ms-toolsai.jupyter": 1,
-    "ms-toolsai.jupyter-renderers": 1,
-    "ms-python.python": 1,
-    "ms-python.vscode-pylance": 1
-  }
+  "extensions.experimental.affinity": {},
+  "window.commandCenter": false,
+  "workbench.layoutControl.enabled": false,
+  "workbench.activityBar.location": "hidden",
+  "dataWrangler.outputRenderer.pagination.defaultSize": 50,
+  "http.proxy": "http://localhost:7890",
 }
