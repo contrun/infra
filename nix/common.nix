@@ -1383,6 +1383,9 @@ in
     };
     chrony = {
       enable = prefs.enableChrony;
+      extraConfig = ''
+        makestep 0.1 3
+      '';
     };
     ntp = {
       enable = !config.services.chrony.enable;
