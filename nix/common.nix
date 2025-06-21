@@ -372,7 +372,7 @@ in
 
   time = {
     timeZone = "Asia/Shanghai";
-    hardwareClockInLocalTime = true;
+    hardwareClockInLocalTime = false;
   };
 
   environment = {
