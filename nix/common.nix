@@ -848,10 +848,12 @@ in
       enable = prefs.enableNixLd;
       libraries =
         options.programs.nix-ld.libraries.default
+        ++ [ config.hardware.graphics.package ]
+        ++ config.hardware.graphics.extraPackages
         ++ (
-          with pkgs;
-          with cudaPackages;
           if nvidiaEnabled then
+            with pkgs;
+            with cudaPackages;
             [
               cudatoolkit
               cudnn
