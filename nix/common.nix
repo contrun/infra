@@ -1643,6 +1643,9 @@ in
       enable = prefs.enableResolved;
       dnssec = "false";
       extraConfig = builtins.concatStringsSep "\n" [
+        # Disable stub listener so that clash can hajack the dns requests
+        # See https://github.com/nelvko/clash-for-linux-install/issues/108#issuecomment-2800667360
+        "DNSStubListener=no"
         (
           if prefs.enableCorednsForResolved then
             ''
