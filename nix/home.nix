@@ -339,6 +339,7 @@ let
           "rlwrap"
           "git-revise"
           "git-crypt"
+          "git-lfs"
           "gitAndTools.gitFull"
           "gitAndTools.lfs"
           "gitAndTools.git-absorb"
