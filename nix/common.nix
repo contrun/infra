@@ -848,6 +848,7 @@ in
       enable = prefs.enableNixLd;
       libraries =
         options.programs.nix-ld.libraries.default
+        ++ [ pkgs.libglvnd ]
         ++ [ config.hardware.graphics.package ]
         ++ config.hardware.graphics.extraPackages
         ++ (
