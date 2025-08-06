@@ -365,7 +365,7 @@ bindsym $mod+o exec $switch_output_command
 
 set $mode_system (l)ock, r(e)start sway, log(o)ut, reload (c)onfig, (s)uspend, (h)ibernate, (r)eboot, (p)oweroff
 mode "$mode_system" {
-        bindsym l exec swaylock; mode  "default"
+        bindsym l exec swaylock --color 000000; mode  "default"
         bindsym e restart; mode "default"
         bindsym o exec swaymsg exit, mode "default"
         bindsym c exec $reload_command, mode "default"
