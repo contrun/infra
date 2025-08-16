@@ -4,6 +4,7 @@
   lib,
   fetchurl,
   dpkg,
+  autoPatchelfHook,
   nss,
   nspr,
   xorg,
@@ -17,11 +18,13 @@
   xcbutilkeysyms,
   xcbutilrenderutil,
   mesa,
+  libgbm,
   alsa-lib,
   wayland,
   openssl_1_1,
   atk,
-  qt6,
+  qt5,
+  libsForQt5,
   at-spi2-atk,
   at-spi2-core,
   dbus,
@@ -44,17 +47,20 @@
   libva,
   libGL,
   libnotify,
+  libxcrypt-legacy,
+  rdma-core,
+  mpi,
   buildFHSEnv,
   writeShellScript,
 }:
 
 let
   pname = "cmcc-jtydn";
-  version = "2.8.10";
+  version = "2.15.10";
 
   debPkg = fetchurl {
-    url = "https://dl.soho.komect.com/upgrade/download/app/13805f6372ac8bdd";
-    sha256 = "19clnp7kmp6fmmma8lg1xnwf67zrm7gcawan7pb3269ihhrvwa88";
+    url = "https://dl.soho.komect.com/upgrade/download/app/debdfed18cab3e7f";
+    sha256 = "sha256-bMykzAmy4rPFbx82DAmXRKreWhiXx/4MBsn2MuBcWps=";
   };
 
   env = stdenvNoCC.mkDerivation {
@@ -115,6 +121,7 @@ let
     freetype
     fontconfig
     libXrender
+    libXv
     libuuid
     expat
     glib
@@ -125,13 +132,23 @@ let
     pango
     libdrm
     mesa
+    libgbm
     vulkan-loader
     systemd
     wayland
     pulseaudio
-    qt6.qt5compat
     openssl_1_1
     bzip2
+    qt5.qtserialbus
+    qt5.qtsensors
+    qt5.qtlocation
+    qt5.qtvirtualkeyboard
+    qt5.qtwebsockets
+    qt5.qtgamepad
+    libsForQt5.qt3d
+    libxcrypt-legacy
+    rdma-core
+    mpi
   ];
 
   pkg = stdenv.mkDerivation {
@@ -139,8 +156,14 @@ let
 
     src = debPkg;
 
+    # Fix errors like
+    # > ERROR: noBrokenSymlinks: the symlink /nix/store/ppiw94mwbkn3mib8f78nxl008n3dhq1j-cmcc-jtydn-2.15.10/opt/chuanyun-vdi-client/resources/app.asar.unpacked/node_modules/chuanyunAddOn/ccsdk/uos/lib/libmpi_usempi_ignore_tkr.so.40.20.0 points to a missing target: /nix/store/ppiw94mwbkn3mib8f78nxl008n3dhq1j-cmcc-jtydn-2.15.10/opt/chuanyun-vdi-client/resources/app.asar.unpacked/node_modules/chuanyunAddOn/ccsdk/uos/lib/openmpi/lib/libmpi_usempi_ignore_tkr.so.40.20.0
+    dontCheckForBrokenSymlinks = true;
+
     nativeBuildInputs = [
       dpkg
+      autoPatchelfHook
+      qt5.wrapQtAppsHook
     ];
 
     unpackPhase = ''
@@ -148,7 +171,8 @@ let
       dpkg-deb -x $src ./extracted
       sourceRoot=./extracted
     '';
-
+    buildInputs = runtime;
+    # runtimeDependenciesPath = lib.makeLibraryPath runtime;
     installPhase = ''
       mkdir -p $out/bin
       cp -r * $out
@@ -167,7 +191,7 @@ buildFHSEnv {
   inherit (pkg) name meta;
   runScript = writeShellScript "${pname}-launcher" ''
     export QT_QPA_PLATFORM=xcb
-    export LD_LIBRARY_PATH=${lib.makeLibraryPath runtime}
+    # export LD_LIBRARY_PATH=${lib.makeLibraryPath runtime}
     ${pkg.outPath}/opt/chuanyun-vdi-client/launch-app.sh
   '';
   extraInstallCommands = ''
