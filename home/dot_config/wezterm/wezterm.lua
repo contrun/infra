@@ -279,6 +279,29 @@ config.keys = {
   },
 }
 
+-- https://www.reddit.com/r/wezterm/comments/10jda7o/is_there_a_way_not_to_open_urls_on_simple_click/
+-- Disable the default click behavior of clicking on a URL to open it.
+config.mouse_bindings = {
+  -- Disable the default click behavior
+  {
+    event = { Up = { streak = 1, button = "Left" } },
+    mods = "NONE",
+    action = wezterm.action.DisableDefaultAssignment, -- You may want a different option here. See /u/Brian's comment below
+  },
+  -- Ctrl-click will open the link under the mouse cursor
+  {
+    event = { Up = { streak = 1, button = "Left" } },
+    mods = "CTRL",
+    action = wezterm.action.OpenLinkAtMouseCursor,
+  },
+  -- Disable the Ctrl-click down event to stop programs from seeing it when a URL is clicked
+  {
+    event = { Down = { streak = 1, button = "Left" } },
+    mods = "CTRL",
+    action = wezterm.action.Nop,
+  },
+}
+
 config.key_tables = {
   -- Defines the keys that are active in our resize-pane mode.
   -- Since we're likely to want to make multiple adjustments,
