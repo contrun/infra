@@ -819,6 +819,10 @@ in
     java = {
       enable = prefs.enableJava;
     };
+    ydotool = {
+      enable = prefs.enableYdotool;
+      group = "wheel";
+    };
     gnupg.agent = {
       enable = prefs.enableGPGAgent;
       enableExtraSocket = true;
