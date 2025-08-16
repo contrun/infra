@@ -474,90 +474,85 @@ mode "windows" {
         bindsym Escape mode "default"
 }
 
+bindsym $mod+f mode "mouse"
 mode "mouse" {
-# set your three speeds here
-
         set $slow 1
         set $quick 10
         set $fast 50
 
-# Mouse movement (slow/fine-tuned) -- vim keybindings
+        bindsym h exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$slow 0
+        bindsym j exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $slow
+        bindsym k exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$slow
+        bindsym l exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $slow 0
+        bindsym Left exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$slow 0
+        bindsym Down exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $slow
+        bindsym Up exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$slow
+        bindsym Right exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $slow 0
 
-        bindsym h exec ydotool mousemove_relative -- -$slow 0
-        bindsym j exec ydotool mousemove_relative 0 $slow
-        bindsym k exec ydotool mousemove_relative -- 0 -$slow
-        bindsym l exec ydotool mousemove_relative $slow 0
+        bindsym Shift+h exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick 0
+        bindsym Shift+j exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $quick
+        bindsym Shift+k exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$quick
+        bindsym Shift+l exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick 0
+        bindsym Shift+Left exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick 0
+        bindsym Shift+Down exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $quick
+        bindsym Shift+Up exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$quick
+        bindsym Shift+Right exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick 0
+        bindsym Control+h exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick 0
+        bindsym Control+j exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $quick
+        bindsym Control+k exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$quick
+        bindsym Control+l exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick 0
+        bindsym Control+Left exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick 0
+        bindsym Control+Down exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $quick
+        bindsym Control+Up exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$quick
+        bindsym Control+Right exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick 0
 
-# Mouse movement (slow/fine-tuned) -- arrow keys
+        bindsym Shift+Control+h exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$fast 0
+        bindsym Shift+Control+j exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $fast
+        bindsym Shift+Control+k exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$fast
+        bindsym Shift+Control+l exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $fast 0
+        bindsym Shift+Control+Left exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$fast 0
+        bindsym Shift+Control+Down exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 $fast
+        bindsym Shift+Control+Up exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- 0 -$fast
+        bindsym Shift+Control+Right exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $fast 0
 
-        bindsym Left exec ydotool mousemove_relative -- -$slow 0
-        bindsym Down exec ydotool mousemove_relative 0 $slow
-        bindsym Up exec ydotool mousemove_relative -- 0 -$slow
-        bindsym Right exec ydotool mousemove_relative $slow 0
+        # Move in the diagonal directions
+        bindsym r exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $slow -$slow
+        bindsym e exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$slow -$slow
+        bindsym v exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $slow $slow
+        bindsym c exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$slow $slow
+        bindsym Shift+r exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick -$quick
+        bindsym Shift+e exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick -$quick
+        bindsym Shift+v exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick $quick
+        bindsym Shift+c exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick $quick
+        bindsym Control+r exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick -$quick
+        bindsym Control+e exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick -$quick
+        bindsym Control+v exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $quick $quick
+        bindsym Control+c exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$quick $quick
+        bindsym Shift+Control+r exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $fast -$fast
+        bindsym Shift+Control+e exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$fast -$fast
+        bindsym Shift+Control+v exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- $fast $fast
+        bindsym Shift+Control+c exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove -- -$fast $fast
 
-# Mouse movement (quicker) -- vim keybindings
+        # Click (press and release) the mouse buttons
+        bindsym f exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0xC0
+        bindsym d exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0xC1
+        bindsym s exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0xC2
+        bindsym a exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0xC3
 
-        bindsym Shift+h exec ydotool mousemove_relative -- -$quick 0
-        bindsym Shift+j exec ydotool mousemove_relative 0 $quick
-        bindsym Shift+k exec ydotool mousemove_relative -- 0 -$quick
-        bindsym Shift+l exec ydotool mousemove_relative $quick 0
+        # Press the mouse button
+        bindsym Shift+f exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x40
+        bindsym Shift+d exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x41
+        bindsym Shift+s exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x42
+        bindsym Shift+a exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x43
 
-# Mouse movement (quicker) -- arrow keys
-
-        bindsym Shift+Left exec ydotool mousemove_relative -- -$quick 0
-        bindsym Shift+Down exec ydotool mousemove_relative 0 $quick
-        bindsym Shift+Up exec ydotool mousemove_relative -- 0 -$quick
-        bindsym Shift+Right exec ydotool mousemove_relative $quick 0
-
-# Mouse movement (fast) -- vim keybindings
-
-        bindsym Shift+$mod+h exec ydotool mousemove_relative -- -$fast 0
-        bindsym Shift+$mod+j exec ydotool mousemove_relative 0 $fast
-        bindsym Shift+$mod+k exec ydotool mousemove_relative -- 0 -$fast
-        bindsym Shift+$mod+l exec ydotool mousemove_relative $fast 0
-
-# Mouse movement (fast) -- arrow keys
-
-        bindsym Shift+$mod+Left exec ydotool mousemove_relative -- -$fast 0
-        bindsym Shift+$mod+Down exec ydotool mousemove_relative 0 $fast
-        bindsym Shift+$mod+Up exec ydotool mousemove_relative -- 0 -$fast
-        bindsym Shift+$mod+Right exec ydotool mousemove_relative $fast 0
-
-# Mouse movement (special down-right)
-
-        bindsym m exec ydotool mousemove_relative 10 10
-
-# Left Click
-        bindsym f exec ydotool click 1
-
-# Middle Click
-        bindsym d exec ydotool click 2
-
-# Right Click
-        bindsym s exec ydotool click 3
-
-# Left Click-and-drag
-        bindsym Shift+f exec ydotool mousedown 1
-
-# Middle Click-and-drag
-        bindsym Shift+d exec ydotool mousedown 2
-
-# Right Click-and-drag
-        bindsym Shift+s exec ydotool mousedown 3
-
-# Left Drag release
-        bindsym $mod+f exec ydotool mouseup 1
-
-# Middle Drag release
-        bindsym $mod+d exec ydotool mouseup 2
-
-# Right Drag release
-        # bindsym $mod+m exec ydotool mouseup 3
-
-
-# return to normal keybindings -- IMPORTANT!!
+        # Release the mouse button
+        bindsym Control+f exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x80
+        bindsym Control+d exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x81
+        bindsym Control+s exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x82
+        bindsym Control+a exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0x83
 
         bindsym $mod+m mode "$switch_modes"
+        bindsym $mod+f mode "default"
         bindsym Return mode "default"
         bindsym Escape mode "default"
 }
@@ -767,7 +762,7 @@ mode "opener" {
 #    bindsym t exec xvkbd -xsendevent -text '\S\CU'; mode "default"
         bindsym t exec toggleTouchpad.sh tap; mode "default"
         bindsym a exec artpip.sh tap; mode "default"
-        bindsym i exec ydotool getactivewindow getwindowname | xclip; mode "default"
+        bindsym i exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool getactivewindow getwindowname | xclip; mode "default"
         bindsym p exec toggleTouchpad.sh; mode "default"
         bindsym o exec openFileWithCurrentProgram.sh; mode "default"
         bindsym v exec sleep 1 && ydotool type --clearmodifiers `xclip -selection c -out`; mode "default"
