@@ -203,4 +203,5 @@
   "workbench.activityBar.location": "hidden",
   "dataWrangler.outputRenderer.pagination.defaultSize": 50,
   "http.proxy": "http://localhost:7890",
+  "debug.javascript.autoAttachFilter": "onlyWithFlag",
 }
