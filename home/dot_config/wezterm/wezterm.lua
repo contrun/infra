@@ -242,7 +242,18 @@ config.keys = {
     action = wezterm.action.QuickSelectArgs {
       label = 'open url',
       patterns = {
-        'https?://\\S+',
+        -- URLs in parens: (URL)
+        '\\((\\w+://[^\\s\\)]+)(?:\\s+[^\\)]*)?\\)',
+        -- URLs in brackets: [URL]
+        '\\[(\\w+://\\S+?)\\]',
+        -- URLs in curly braces: {URL}
+        '\\{(\\w+://\\S+?)\\}',
+        -- URLs in angle brackets: <URL>
+        '<(\\w+://\\S+?)>',
+        -- URLs not wrapped in brackets
+        '(?<![\\(\\{\\[<])\\b\\w+://\\S+',
+        -- Email addresses
+        '\\b\\w+@[\\w-]+(\\.[\\w-]+)+\\b',
       },
       action = wezterm.action_callback(function(window, pane)
         local url = window:get_selection_text_for_pane(pane)
