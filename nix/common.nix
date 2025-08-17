@@ -809,6 +809,14 @@ in
           };
         }
       ])
+      // (mergeOptionalConfigs [
+        {
+          enable = prefs.enableYdotool;
+          config = {
+            YDOTOOL_SOCKET = "/run/ydotoold/socket";
+          };
+        }
+      ])
     );
   };
 
