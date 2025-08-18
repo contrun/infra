@@ -753,23 +753,18 @@ mode "alternative launcher" {
 
 mode "opener" {
         bindsym f exec $browse_command; mode "default"
-#    bindsym v exec mpv; mode "default"
         bindsym x exec "eval `xclip -selection clipboard -o`"; mode  "default"
-#    bindsym m exec xvkbd -text '\S\CU'; exec mpv.sh $(xclip -selection clipboard -o); mode "default"
         bindsym d exec noDisturb.sh; mode "default"
         bindsym m exec mpvClipboard.sh; mode "default"
         bindsym n exec networkRestart.sh; mode "default"
-#    bindsym t exec xvkbd -xsendevent -text '\S\CU'; mode "default"
         bindsym t exec toggleTouchpad.sh tap; mode "default"
         bindsym a exec artpip.sh tap; mode "default"
-        bindsym i exec env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool getactivewindow getwindowname | xclip; mode "default"
         bindsym p exec toggleTouchpad.sh; mode "default"
         bindsym o exec openFileWithCurrentProgram.sh; mode "default"
         bindsym v exec sleep 1 && ydotool type --clearmodifiers `xclip -selection c -out`; mode "default"
         bindsym s exec stickyWindow.sh; mode "default"
         bindsym e exec spacemacs; mode "default"
         bindsym z exec zeal; mode "default"
-# bindsym z fullscreen disable; floating enable; resize set 422 240; sticky enable; move position 870 25; mode default
 
         bindsym $mod+m mode "$switch_modes"
         bindsym Escape mode "default"
@@ -811,6 +806,11 @@ mode "launcher" {
         bindsym Return mode "default"
 }
 
+
+# https://github.com/ReimuNotMoe/ydotool/issues/158
+input 9011:26214:ydotoold_virtual_device {
+        accel_profile flat
+}
 
 input 1267:12795:ASUE120D:00_04F3:31FB_Touchpad {
         tap enabled
