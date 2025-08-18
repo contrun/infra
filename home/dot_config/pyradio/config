@@ -8,7 +8,7 @@
 # or
 #   player = vlc,mpv, mplayer
 # Default value: mpv,mplayer,vlc
-player = mplayer,vlc,mpv
+player = mpv,mplayer,vlc
 
 # Open last playlist
 # If this option is enabled, the last opened playlist will be opened
