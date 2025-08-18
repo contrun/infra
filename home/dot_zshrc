@@ -173,3 +173,7 @@ if [[ -z "$(find "$history_dir" -newermt '1 day ago' -name "zsh_history*" 2>/dev
 fi
 
 [[ -f ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh
+
+if [[ -n $GHOSTTY_RESOURCES_DIR ]]; then
+  source "$GHOSTTY_RESOURCES_DIR"/shell-integration/zsh/ghostty-integration
+fi
