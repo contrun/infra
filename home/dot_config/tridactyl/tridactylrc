@@ -155,3 +155,7 @@ bind zv composite js document.location.href | exclaim_quiet mpv
 
 " For syntax highlighting see https://github.com/tridactyl/vim-tridactyl
 " vim: set filetype=tridactyl
+
+" Not working currently, seems to be a issue caused by not calculating window decoration size
+" because in full screen this works
+bind ;c hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool mousemove --absolute " + ((pos.x) / window.devicePixelRatio) + " " + ((pos.y) / window.devicePixelRatio) + "; env YDOTOOL_SOCKET=/run/ydotoold/socket ydotool click 0xC1")}
