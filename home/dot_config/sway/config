@@ -484,70 +484,86 @@ mode "mouse" {
         bindsym a mode default, exec 'wl-kbptr-sway-active-win; swaymsg mode Mouse'
         bindsym Shift+a mode default, exec 'wl-kbptr; swaymsg mode Mouse'
 
-        bindsym h seat seat0 cursor move -$slow 0
-        bindsym j seat seat0 cursor move 0 $slow
-        bindsym k seat seat0 cursor move 0 -$slow
-        bindsym l seat seat0 cursor move $slow 0
-        bindsym Left seat seat0 cursor move -$slow 0
-        bindsym Down seat seat0 cursor move 0 $slow
-        bindsym Up seat seat0 cursor move 0 -$slow
-        bindsym Right seat seat0 cursor move $slow 0
+        bindsym h seat - cursor move -$slow 0
+        bindsym j seat - cursor move 0 $slow
+        bindsym k seat - cursor move 0 -$slow
+        bindsym l seat - cursor move $slow 0
+        bindsym Left seat - cursor move -$slow 0
+        bindsym Down seat - cursor move 0 $slow
+        bindsym Up seat - cursor move 0 -$slow
+        bindsym Right seat - cursor move $slow 0
 
-        bindsym $mod+h seat seat0 cursor move -$quick 0
-        bindsym $mod+j seat seat0 cursor move 0 $quick
-        bindsym $mod+k seat seat0 cursor move 0 -$quick
-        bindsym $mod+l seat seat0 cursor move $quick 0
-        bindsym $mod+Left seat seat0 cursor move -$quick 0
-        bindsym $mod+Down seat seat0 cursor move 0 $quick
-        bindsym $mod+Up seat seat0 cursor move 0 -$quick
-        bindsym $mod+Right seat seat0 cursor move $quick 0
-        bindsym Control+h seat seat0 cursor move -$quick 0
-        bindsym Control+j seat seat0 cursor move 0 $quick
-        bindsym Control+k seat seat0 cursor move 0 -$quick
-        bindsym Control+l seat seat0 cursor move $quick 0
-        bindsym Control+Left seat seat0 cursor move -$quick 0
-        bindsym Control+Down seat seat0 cursor move 0 $quick
-        bindsym Control+Up seat seat0 cursor move 0 -$quick
-        bindsym Control+Right seat seat0 cursor move $quick 0
+        bindsym $mod+h seat - cursor move -$quick 0
+        bindsym $mod+j seat - cursor move 0 $quick
+        bindsym $mod+k seat - cursor move 0 -$quick
+        bindsym $mod+l seat - cursor move $quick 0
+        bindsym $mod+Left seat - cursor move -$quick 0
+        bindsym $mod+Down seat - cursor move 0 $quick
+        bindsym $mod+Up seat - cursor move 0 -$quick
+        bindsym $mod+Right seat - cursor move $quick 0
+        bindsym Control+h seat - cursor move -$quick 0
+        bindsym Control+j seat - cursor move 0 $quick
+        bindsym Control+k seat - cursor move 0 -$quick
+        bindsym Control+l seat - cursor move $quick 0
+        bindsym Control+Left seat - cursor move -$quick 0
+        bindsym Control+Down seat - cursor move 0 $quick
+        bindsym Control+Up seat - cursor move 0 -$quick
+        bindsym Control+Right seat - cursor move $quick 0
 
-        bindsym $altmod+h seat seat0 cursor move -$fast 0
-        bindsym $altmod+j seat seat0 cursor move 0 $fast
-        bindsym $altmod+k seat seat0 cursor move 0 -$fast
-        bindsym $altmod+l seat seat0 cursor move $fast 0
-        bindsym $altmod+Left seat seat0 cursor move -$fast 0
-        bindsym $altmod+Down seat seat0 cursor move 0 $fast
-        bindsym $altmod+Up seat seat0 cursor move 0 -$fast
-        bindsym $altmod+Right seat seat0 cursor move $fast 0
+        bindsym $altmod+h seat - cursor move -$fast 0
+        bindsym $altmod+j seat - cursor move 0 $fast
+        bindsym $altmod+k seat - cursor move 0 -$fast
+        bindsym $altmod+l seat - cursor move $fast 0
+        bindsym $altmod+Left seat - cursor move -$fast 0
+        bindsym $altmod+Down seat - cursor move 0 $fast
+        bindsym $altmod+Up seat - cursor move 0 -$fast
+        bindsym $altmod+Right seat - cursor move $fast 0
 
 
         # Move in the diagonal directions
-        bindsym r seat seat0 cursor move $slow -$slow
-        bindsym e seat seat0 cursor move -$slow -$slow
-        bindsym v seat seat0 cursor move $slow $slow
-        bindsym c seat seat0 cursor move -$slow $slow
-        bindsym $mod+r seat seat0 cursor move $quick -$quick
-        bindsym $mod+e seat seat0 cursor move -$quick -$quick
-        bindsym $mod+v seat seat0 cursor move $quick $quick
-        bindsym $mod+c seat seat0 cursor move -$quick $quick
-        bindsym Control+r seat seat0 cursor move $quick -$quick
-        bindsym Control+e seat seat0 cursor move -$quick -$quick
-        bindsym Control+v seat seat0 cursor move $quick $quick
-        bindsym Control+c seat seat0 cursor move -$quick $quick
-        bindsym $altmod+r seat seat0 cursor move $fast -$fast
-        bindsym $altmod+e seat seat0 cursor move -$fast -$fast
-        bindsym $altmod+v seat seat0 cursor move $fast $fast
-        bindsym $altmod+c seat seat0 cursor move -$fast $fast
+        bindsym r seat - cursor move $slow -$slow
+        bindsym e seat - cursor move -$slow -$slow
+        bindsym v seat - cursor move $slow $slow
+        bindsym c seat - cursor move -$slow $slow
+        bindsym $mod+r seat - cursor move $quick -$quick
+        bindsym $mod+e seat - cursor move -$quick -$quick
+        bindsym $mod+v seat - cursor move $quick $quick
+        bindsym $mod+c seat - cursor move -$quick $quick
+        bindsym Control+r seat - cursor move $quick -$quick
+        bindsym Control+e seat - cursor move -$quick -$quick
+        bindsym Control+v seat - cursor move $quick $quick
+        bindsym Control+c seat - cursor move -$quick $quick
+        bindsym $altmod+r seat - cursor move $fast -$fast
+        bindsym $altmod+e seat - cursor move -$fast -$fast
+        bindsym $altmod+v seat - cursor move $fast $fast
+        bindsym $altmod+c seat - cursor move -$fast $fast
 
         # Click (press and release) the mouse buttons
         # Left button
-        bindsym s seat seat0 cursor press button1
-        bindsym --release s seat seat0 cursor release button1
+        bindsym f seat - cursor press button1
+        bindsym --release f seat - cursor release button1
         # Middle button
-        bindsym d seat seat0 cursor press button2
-        bindsym --release d seat seat0 cursor release button2
+        bindsym d seat - cursor press button2
+        bindsym --release d seat - cursor release button2
         # Right button
-        bindsym f seat seat0 cursor press button3
-        bindsym --release f seat seat0 cursor release button3
+        bindsym s seat - cursor press button3
+        bindsym --release s seat - cursor release button3
+
+        # Press the mouse buttons
+        # Left button
+        bindsym Control+f seat - cursor press button1
+        # Middle button
+        bindsym Control+d seat - cursor press button2
+        # Right button
+        bindsym Control+s seat - cursor press button3
+
+        # Release the mouse buttons
+        # Left button
+        bindsym Control+Shift+f seat - cursor release button1
+        # Middle button
+        bindsym Control+Shift+d seat - cursor release button2
+        # Right button
+        bindsym Control+Shift+s seat - cursor release button3
 
         bindsym $mod+m mode "$switch_modes"
         bindsym $mod+f mode "default"
@@ -753,9 +769,8 @@ mode "opener" {
         bindsym d exec noDisturb.sh; mode "default"
         bindsym m exec mpvClipboard.sh; mode "default"
         bindsym n exec networkRestart.sh; mode "default"
-        bindsym t exec toggleTouchpad.sh tap; mode "default"
+        bindsym t exec swaymsg input type:touchpad events toggle; mode "default"
         bindsym a exec artpip.sh tap; mode "default"
-        bindsym p exec toggleTouchpad.sh; mode "default"
         bindsym o exec openFileWithCurrentProgram.sh; mode "default"
         bindsym v exec sleep 1 && ydotool type --clearmodifiers `xclip -selection c -out`; mode "default"
         bindsym s exec stickyWindow.sh; mode "default"
