@@ -1508,6 +1508,7 @@ in
                         pkgs.dunst
                         pkgs.bemenu
                         pkgs.swaybg
+                        pkgs.wlrctl
                         pkgs.i3status-rust
                         pkgs.fcitx5
                       ]

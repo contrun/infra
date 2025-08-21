@@ -924,6 +924,7 @@ in
           swaylock
           swaybg
           swayidle
+          wlrctl
           i3status-rust
           termite
           alacritty

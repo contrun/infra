@@ -538,6 +538,24 @@ mode "mouse" {
         bindsym $altmod+v seat - cursor move $fast $fast
         bindsym $altmod+c seat - cursor move -$fast $fast
 
+        # mouse scrolling
+        bindsym n exec wlrctl pointer scroll 1 0
+        bindsym p exec wlrctl pointer scroll -1 0
+        bindsym u exec wlrctl pointer scroll 0 -1
+        bindsym i exec wlrctl pointer scroll 0 1
+        bindsym $mod+n exec wlrctl pointer scroll 10 0
+        bindsym $mod+p exec wlrctl pointer scroll -10 0
+        bindsym $mod+u exec wlrctl pointer scroll 0 -10
+        bindsym $mod+i exec wlrctl pointer scroll 0 10
+        bindsym Control+n exec wlrctl pointer scroll 10 0
+        bindsym Control+p exec wlrctl pointer scroll -10 0
+        bindsym Control+u exec wlrctl pointer scroll 0 -10
+        bindsym Control+i exec wlrctl pointer scroll 0 10
+        bindsym $altmod+n exec wlrctl pointer scroll 100 0
+        bindsym $altmod+p exec wlrctl pointer scroll -100 0
+        bindsym $altmod+u exec wlrctl pointer scroll 0 -100
+        bindsym $altmod+i exec wlrctl pointer scroll 0 100
+
         # Click (press and release) the mouse buttons
         # Left button
         bindsym f seat - cursor press button1
