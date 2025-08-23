@@ -405,6 +405,8 @@ in
             [metaalt:M-A]
 
             [myspace]
+            w = home
+            s = end
             n = pagedown
             p = pageup
             h = left
@@ -412,6 +414,7 @@ in
             k = up
             l = right
             d = delete
+            i = insert
             b = backspace
             o = enter
             e = escape
