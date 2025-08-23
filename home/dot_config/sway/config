@@ -482,8 +482,8 @@ mode "mouse" {
         set $quick 10
         set $fast 50
 
-        bindsym $altmod+w mode default, exec 'wl-kbptr-sway-active-win; swaymsg mode mouse'
-        bindsym $mod+w mode default, exec 'wl-kbptr; swaymsg mode mouse'
+        bindsym $altmod+g mode default, exec 'wl-kbptr-sway-active-win; swaymsg mode mouse'
+        bindsym $mod+g mode default, exec 'wl-kbptr; swaymsg mode mouse'
 
         bindsym $altmod2+h seat - cursor move -$slow 0
         bindsym $altmod2+j seat - cursor move 0 $slow
@@ -536,10 +536,14 @@ mode "mouse" {
         bindsym $mod+p exec wlrctl pointer scroll -10 0
         bindsym $mod+u exec wlrctl pointer scroll 0 -10
         bindsym $mod+i exec wlrctl pointer scroll 0 10
-        bindsym $altmod+n exec wlrctl pointer scroll 100 0
-        bindsym $altmod+p exec wlrctl pointer scroll -100 0
-        bindsym $altmod+u exec wlrctl pointer scroll 0 -100
-        bindsym $altmod+i exec wlrctl pointer scroll 0 100
+        bindsym $altmod+n exec wlrctl pointer scroll 200 0
+        bindsym $altmod+p exec wlrctl pointer scroll -200 0
+        bindsym $altmod+u exec wlrctl pointer scroll 0 -200
+        bindsym $altmod+i exec wlrctl pointer scroll 0 200
+
+        # For easier single hand operations
+        bindsym $mod+z exec wlrctl pointer scroll 200 0
+        bindsym $altmod+z exec wlrctl pointer scroll -200 0
 
         # Click (press and release) the mouse buttons
         # Left button
@@ -568,8 +572,11 @@ mode "mouse" {
         # Right button
         bindsym $altmod2+a seat - cursor release button3
 
+        # launcher mode is used all too often, so we also bind it to a key here
+        bindsym $mod+x mode "launcher"
         bindsym $mod+m mode "$switch_modes"
-        bindsym $mod+f mode "default"
+
+        bindsym $mod+f exec 'wl-kbptr-sway-active-win -o modes=floating,click -o mode_floating.source=detect; swaymsg mode mouse'
         bindsym $altmod+f mode "default"
 }
 
