@@ -131,8 +131,18 @@ require("lazy").setup({
       config = function() require('plugins.lspconfig') end
     },
 
-    { "williamboman/mason.nvim" },
-    { "williamboman/mason-lspconfig.nvim" },
+    { 
+      "williamboman/mason.nvim",
+      config = function() require('mason') end
+    },
+
+    { 
+      "williamboman/mason-lspconfig.nvim",
+      after = { "mason.nvim", "nvim-lspconfig" },
+      config = function ()
+          require("mason-lspconfig").setup({})
+      end
+    },
 
     { "Hoffs/omnisharp-extended-lsp.nvim" },
     {
@@ -706,8 +716,6 @@ require("lazy").setup({
     },
 
     { 'gennaro-tedesco/nvim-jqx' },
-
-    { 'github/copilot.vim' },
 
     {
       "m00qek/baleia.nvim",

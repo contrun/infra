@@ -7,5 +7,5 @@ require('nvim-treesitter.configs').setup({
     enable = true,
   },
   ensure_installed = "all",
-  ignore_install = { "norg" },
+  ignore_install = { "norg", "ipkg" },
 })
