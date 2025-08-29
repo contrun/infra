@@ -6,7 +6,7 @@ includes = ["*.nix"]
 command = "dprint"
 excludes = ["lazy-lock.json"]
 includes = [".*"]
-options = ["fmt"]
+options = ["fmt", "--allow-no-files"]
 
 # Too many errors. Give up for now.
 # # run shellcheck first
