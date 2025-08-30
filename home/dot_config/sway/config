@@ -546,6 +546,8 @@ mode "mouse" {
         bindsym $altmod+z exec wlrctl pointer scroll -200 0
 
         # Click (press and release) the mouse buttons
+        # TODO: This does not work. Because we are still holding the key,
+        # while the buttons are pressed.
         # Left button
         bindsym $altmod+d seat - cursor press button1
         bindsym --release $altmod+d seat - cursor release button1
@@ -804,7 +806,7 @@ mode "launcher" {
         bindsym f exec pcmanfm; mode "default"
         bindsym z exec zotero; mode "default"
         bindsym q exec qpdfview; mode "default"
-        bindsym s exec screenshot.sh; mode  "default"
+        bindsym s exec screenshot.sh; mode "default"
         bindsym y exec geany; mode "default"
         bindsym l exec calibre; mode "default"
         bindsym g exec logseq; mode "default"
@@ -841,4 +843,4 @@ input 2:7:SynPS\/2_Synaptics_TouchPad {
 
 # Pick up configuration created by nwg-display
 include ~/.config/sway/outputs
-seat * xcursor_theme Bibata-Modern-Amber 32
+seat * xcursor_theme Adwaita 26
