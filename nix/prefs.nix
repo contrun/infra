@@ -1255,9 +1255,6 @@ let
           enabledMicroVmGuests = {
             # graphics = { };
           };
-          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-            kernelPackages = pkgs.linuxPackages_6_14;
-          };
           enableHomeManagerUnison = true;
           enableHomeManagerRcloneBisync = true;
           enableHomeManagerRcloneSync = true;
