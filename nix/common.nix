@@ -5489,6 +5489,12 @@ in
               "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
             ]
             ++ [
+              # This directory lies in /, which should never be snapshotted.
+              # We use this directory to store large files as these files might never be deleted
+              # if they are snapshotted. See also https://serverfault.com/questions/293009/zfs-removing-files-from-snapshots
+              "d /nosnapshot/${prefs.owner} - ${prefs.owner} ${prefs.ownerGroup} -"
+            ]
+            ++ [
               "d /var/data/warehouse - ${prefs.owner} ${prefs.ownerGroup} -"
             ]
             ++ [
