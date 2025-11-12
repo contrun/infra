@@ -490,7 +490,6 @@ let
         # "rhythmbox"
         "mplayer"
         "yewtube"
-        "mpv"
         # "python3Packages.subliminal"
         "sxiv"
         # "vlc"
@@ -859,6 +858,23 @@ in
     direnv = {
       enable = true;
       nix-direnv.enable = true;
+    };
+    mpv = with pkgs; {
+      enable = true;
+      scripts =
+        with mpvScripts;
+        lib.mkIf stdenv.isLinux [
+          autosub
+          autosubsync-mpv
+          mpris
+          mpvacious
+          skipsilence
+          quality-menu
+          reload
+          uosc
+          thumbfast
+          sponsorblock
+        ];
     };
   };
   # programs = lib.optionalAttrs (prefs.enableSmos) {
@@ -1758,17 +1774,16 @@ in
       configPackages = [ pkgs.xdg-desktop-portal-wlr ];
       extraPortals = [ pkgs.xdg-desktop-portal-wlr ];
     };
-    dataFile =
-      {
-        "nix/path/nixpkgs".source = inputs.nixpkgs;
-        "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
-        "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
-        "nix/path/home-manager".source = inputs.home-manager;
-        "nix/path/activeconfig".source = inputs.self;
-      }
-      // lib.optionalAttrs (builtins.pathExists "${prefs.home}/Workspace/infra") {
-        "nix/path/config".source = "${prefs.home}/Workspace/infra";
-        "nix/path/infra".source = "${prefs.home}/Workspace/infra";
-      };
+    dataFile = {
+      "nix/path/nixpkgs".source = inputs.nixpkgs;
+      "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
+      "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
+      "nix/path/home-manager".source = inputs.home-manager;
+      "nix/path/activeconfig".source = inputs.self;
+    }
+    // lib.optionalAttrs (builtins.pathExists "${prefs.home}/Workspace/infra") {
+      "nix/path/config".source = "${prefs.home}/Workspace/infra";
+      "nix/path/infra".source = "${prefs.home}/Workspace/infra";
+    };
   };
 }
