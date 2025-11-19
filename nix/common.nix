@@ -3808,8 +3808,9 @@ in
     })
   ];
 
-  containers = {
-    "wired-${prefs.hostname}" = {
+  containers =
+    let normalizeHostname = hostname: builtins.replaceStrings [ "_" ] [ "-" ] hostname; in {
+    "wired-${normalizeHostname prefs.hostname}" = {
       privateNetwork = true;
       autoStart = prefs.enableContainerWired;
       extraFlags = [
