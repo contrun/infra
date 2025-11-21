@@ -57,7 +57,7 @@ jobs:
               with (builtins.getFlake (builtins.toString ./.)); packages.x86_64-linux.dvm
             experimental: true
           - type: "nixosConfiguration"
-            data: "mdq"
+            data: "aol"
             experimental: true
             free-disk-space: true
           - type: "package"
@@ -73,15 +73,15 @@ jobs:
             data: "pkgs.calibre"
             experimental: false
           - type: "package"
-            data: "pkgs.clash-verge"
+            data: "pkgs.clash-verge-rev"
           - type: "arguments"
-            data: ".#nixosConfigurations.aol.pkgs.clash-verge"
+            data: ".#nixosConfigurations.maximal-x86_64-linux.pkgs.clash-verge-rev"
             experimental: false
           - type: "arguments"
-            data: ".#nixosConfigurations.aol.pkgs.zeal"
+            data: ".#nixosConfigurations.maximal-x86_64-linux.pkgs.zeal"
             experimental: true
           - type: "arguments"
-            data: ".#nixosConfigurations.aol.pkgs.calibre"
+            data: ".#nixosConfigurations.maximal-x86_64-linux.pkgs.calibre"
             experimental: true
           - type: "package"
             data: "pkgs.texlab"
