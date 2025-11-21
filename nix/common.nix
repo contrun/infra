@@ -7212,9 +7212,6 @@ in
           "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
           "/root/.ssh/id_ed25519.pub" = config.sops.secrets."port-forwarding-id_ed25519.pub".path;
         };
-        extraUtilsCommands = ''
-          copy_bin_and_libs ${pkgs.openssh}/bin/ssh
-        '';
         network = {
           enable = true;
           ssh =
