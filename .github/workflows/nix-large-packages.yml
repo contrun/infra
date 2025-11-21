@@ -42,16 +42,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - type: "expression"
-            # TODO: any better way to build overrided virtualbox derivation?
-            data: |
-              with (builtins.getFlake (builtins.toString ./.));
-              let
-                systemPackages = nixosConfigurations.maximal-x86_64-linux.config.environment.systemPackages;
-                packages = builtins.filter (p: builtins.match "virtualbox-.*" p.name != null) systemPackages;
-                package = builtins.elemAt packages 0;
-              in package
-            experimental: true
+          - type: "arguments"
+            data: ".#nixosConfigurations.maximal-x86_64-linux.config.virtualisation.virtualbox.host.package"
+            experimental: false
           - type: "expression"
             data: |
               with (builtins.getFlake (builtins.toString ./.)); packages.x86_64-linux.dvm
