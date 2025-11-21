@@ -7217,11 +7217,6 @@ in
         '';
         network = {
           enable = true;
-          postCommands = ''
-            if [[ -f /bin/hole-puncher ]]; then
-              sh /bin/hole-puncher &
-            fi
-          '';
           ssh =
             let
               f = impure.sshAuthorizedKeys;
