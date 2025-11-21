@@ -1498,7 +1498,7 @@ With arg N, insert N newlines."
 (use-package gitconfig)
 (use-package git-timemachine)
 (use-package github-clone)
-(use-package magithub)
+;; (use-package magithub)
 (use-package magit-gh-pulls)
 (use-package git-link)
 (use-package browse-at-remote)
@@ -1528,11 +1528,6 @@ With arg N, insert N newlines."
   (define-key magit-status-mode-map (kbd "C-M-<up>") 'magit-section-up)
   (fullframe magit-status magit-mode-quit-window)
   ;; (magit-todos-mode)
-  )
-
-(use-package git-commit
-  :hook
-  (git-commit-mode . goto-address-mode)
   )
 
 (use-package webpaste)
@@ -1785,7 +1780,6 @@ With arg N, insert N newlines."
   (lsp-file-watch-threshold 3000))
 
 (use-package lsp-ui :commands lsp-ui-mode)
-(use-package lsp-origami)
 ;; (use-package company-lsp :commands company-lsp)
 (use-package helm-lsp :commands helm-lsp-workspace-symbol)
 (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
@@ -4145,14 +4139,6 @@ With arg N, insert N newlines."
   "Revert buffer without confirmation."
   (interactive) (revert-buffer t t))
 
-(use-package origami
-  :hook
-  (prog-mode-hook . origami-mode)
-  :config
-  (define-key origami-mode-map (kbd "C-c f") 'origami-recursively-toggle-node)
-  (define-key origami-mode-map (kbd "C-c F") 'origami-toggle-all-nodes)
-  )
-
 (use-package matrix-client
   :straight (matrix-client :type git :host github :repo "alphapapa/matrix-client.el"))
 
@@ -4309,18 +4295,7 @@ With arg N, insert N newlines."
 
 (use-package emacsql)
 
-(use-package emacsql-sqlite)
-
 (use-package emacsql-sqlite3)
-
-(use-package emacsql-mysql)
-
-(use-package emacsql-psql)
-
-(use-package wallabag
-  :straight (:host github :repo "chenyanming/wallabag.el" :files ("*.el" "*.alist" "*.css"))
-  :config
-  (setq wallabag-db-file (expand-file-name ".cache/wallabag.sqlite" my/emacs-d)))
 
 (use-package elfeed
   :bind
