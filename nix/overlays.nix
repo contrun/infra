@@ -316,7 +316,7 @@ let
           ];
         makeEmacsPkg =
           emacsPkg:
-          (super.emacsPackagesFor emacsPkg).emacs.pkgs.WithPackages (epkgs: [
+          (super.emacsPackagesFor emacsPkg).emacs.pkgs.withPackages (epkgs: [
             super.mu
             # super.notmuch
           ]);
