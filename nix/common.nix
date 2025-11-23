@@ -864,7 +864,7 @@ in
       libraries =
         options.programs.nix-ld.libraries.default
         ++ (with pkgs; [ libglvnd glib ])
-        ++ [ config.hardware.graphics.package ]
+        ++ (with config.hardware.graphics; if enable then [ package ] else [ ])
         ++ config.hardware.graphics.extraPackages
         ++ (
           if nvidiaEnabled then
