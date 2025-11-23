@@ -8,7 +8,7 @@ HOME ?= $(HOMEDRIVE)$(HOMEPATH)
 USER ?= $(USERNAME)
 
 EXTRANIXFLAGS ?=
-NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going) $(EXTRANIXFLAGS))
+NIXFLAGS = $(strip $(strip $(if $(SYSTEM),--system $(SYSTEM) --extra-extra-platforms $(SYSTEM),) --impure --show-trace --keep-going --print-build-logs) $(EXTRANIXFLAGS))
 
 # Adding `|| true` because https://stackoverflow.com/questions/12989869/calling-command-v-find-from-gnu-makefile
 DEPLOY ?= $(if $(shell command -v deploy || true),deploy,nix run ".$(POUND)deploy-rs" --)
