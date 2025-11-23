@@ -82,10 +82,15 @@ runs:
         EOF
 
         declare -a extra_platforms=($(echo "${{ inputs.extra-platforms }}" | tr ',' '\n' | xargs))
-        extra_platforms+=($(echo "${{ inputs.nix-systems }}" | tr ',' '\n' | xargs))
+        declare -a systems=($(echo "${{ inputs.nix-systems }}" | tr ',' '\n' | xargs))
+        for system in "${systems[@]}"; do
+          if [[ "${{ runner.arch }}" == "X64" ]] && [[ "$system" != "x86_64-linux" ]]; then
+            extra_platforms+=("$system")
+          fi
+        done
         if (( ${#extra_platforms[@]} )); then
           cat <<EOF | tee -a ~/.config/nix/nix.conf
-          extra-platforms = ${extra_platforms[*]}
+        extra-platforms = ${extra_platforms[*]}
         EOF
         fi
 
