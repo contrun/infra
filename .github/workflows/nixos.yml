@@ -1,6 +1,10 @@
 # Taken liberally from https://github.com/malob/nixpkgs/blob/master/.github/workflows/ci.yml
 name: Build nixos profiles
 
+permissions:
+  contents: read
+  id-token: write # This is required for the tailscale action to request a JWT from GitHub
+
 on:
   workflow_call:
     inputs:
@@ -166,3 +170,18 @@ jobs:
           git push --force origin ${{ steps.variables.outputs.branch }}:${{ steps.variables.outputs.branch }}
           git switch -C ${{ steps.variables.outputs.nixSystem }}
           git push --force origin ${{ steps.variables.outputs.nixSystem }}:${{ steps.variables.outputs.nixSystem }}
+
+      - name: Setup tailscale
+        if: ${{ failure() || runner.debug == '1' }}
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TAILSCALE_AUDIENCE }}
+          tags: tag:ci
+
+      - name: Wait for tailscale SSH
+        if: ${{ failure() || runner.debug == '1' }}
+        shell: bash
+        run: |
+          sleep 5m
+          while [[ "$(last | grep '^\(ubuntu\|runner\|root\).*still logged in$')" ]]; do sleep 1m; done
