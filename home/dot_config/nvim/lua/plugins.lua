@@ -131,16 +131,16 @@ require("lazy").setup({
       config = function() require('plugins.lspconfig') end
     },
 
-    { 
+    {
       "williamboman/mason.nvim",
       config = function() require('mason') end
     },
 
-    { 
+    {
       "williamboman/mason-lspconfig.nvim",
       after = { "mason.nvim", "nvim-lspconfig" },
-      config = function ()
-          require("mason-lspconfig").setup({})
+      config = function()
+        require("mason-lspconfig").setup({})
       end
     },
 
@@ -178,7 +178,7 @@ require("lazy").setup({
       config = function() require('plugins.dapconfig') end
     },
 
-    { "rcarriga/nvim-dap-ui",    dependencies = { "mfussenegger/nvim-dap" } },
+    { "rcarriga/nvim-dap-ui",             dependencies = { "mfussenegger/nvim-dap" } },
 
     {
       "theHamsta/nvim-dap-virtual-text",
@@ -274,7 +274,6 @@ require("lazy").setup({
       dependencies = {
         "hrsh7th/cmp-nvim-lsp", "hrsh7th/cmp-buffer",
         "hrsh7th/cmp-path", "hrsh7th/cmp-nvim-lua",
-        "saadparwaiz1/cmp_luasnip"
       },
       config = function() require('plugins.cmp') end
     },
