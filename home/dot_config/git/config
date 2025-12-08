@@ -10,17 +10,20 @@
 
 [pull]
 	rebase = true
-  autosquash = true
-  autostash = true
+	autosquash = true
+	autostash = true
 
 [push]
-  autoSetupRemote = true
+	autoSetupRemote = true
+	default = simple
+	followTags = true
 
 [commit]
-  verbose = true
+	verbose = true
 
 [rerere]
-  enabled = true
+	enabled = true
+	autoupdate = true
 
 [github]
 	user = contrun
@@ -30,6 +33,8 @@
 
 [rebase]
 	autoStash = true
+	autoStash = true
+	updateRefs = true
 
 [init]
 	defaultBranch = main
@@ -56,11 +61,30 @@
 	conflictstyle = diff3
 
 [diff]
+	ui = auto
 	colorMoved = default
+	algorithm = histogram
+	mnemonicPrefix = true
+	renames = true
+
+[protocol "file"]
+	allow = always
+
+[branch]
+	sort = -committerdate
+
+[tag]
+	sort = version:refname
+
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+
+[help]
+	autocorrect = prompt
 
 [include]
 	path = config.sensitive
 	path = config.local
 
-[protocol "file"]
-	allow = always
