@@ -18,6 +18,11 @@
     rclone_executable: "{{ check_rclone_installed.stdout_lines[0] }}"
     rclone_config_base_path: ".config/rclone/rclone.conf"
 
+- name: Make sure rclone base directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/{{ rclone_config_base_path }} | dirname }}"
+    state: directory
+
 - name: Copy rclone config to remote
   copy:
     src: "{{ item }}"
