@@ -2520,7 +2520,7 @@ in
     system-config-printer.enable = prefs.enablePrinting;
     logind = {
       lidSwitchExternalPower = "ignore";
-      extraConfig = ''
+      settings.Login = ''
         HandlePowerKey=suspend
         RuntimeDirectorySize=50%
       '';
@@ -2528,7 +2528,7 @@ in
     postfix = {
       enable = prefs.enablePostfix;
       rootAlias = prefs.owner;
-      extraConfig = ''
+      settings.main = ''
         myhostname = ${prefs.hostname}
         mydomain = localdomain
         mydestination = $myhostname, localhost.$mydomain, localhost
@@ -3441,7 +3441,6 @@ in
     greetd =
       {
         enable = prefs.enableGreetd;
-        vt = 7;
       }
       // lib.optionalAttrs prefs.enableSwayForGreeted {
         settings =
@@ -5476,11 +5475,10 @@ in
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       {
-        extraConfig = ''
+        settings.Manager = ''
           DefaultLimitNOFILE=8192:524288
           DefaultTimeoutStopSec=10s
         '';
-        enableCgroupAccounting = prefs.enableCgroupAccounting;
         tmpfiles = {
           rules =
             [
@@ -7199,7 +7197,7 @@ in
 
       supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
       zfs = {
-        package = lib.mkIf prefs.enableZfsUnstable pkgs.zfsUnstable;
+        package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
       };
       crashDump = {
         enable = prefs.enableCrashDump;

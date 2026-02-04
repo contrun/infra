@@ -263,7 +263,7 @@ let
         "gcc"
         # "glibc"
         "vscodium"
-        "dotty"
+        "scala_3"
         "stdman"
         # "hadoop_3_1"
         # "kubernetes"
