@@ -9,26 +9,26 @@ kill_signal = "SIGINT"
 kill_timeout = "10s"
 
 [env]
-  TAILSCALE_PORT = "41641"
-  # create a reusable auth key and set it:
-  # flyctl secrets set TAILSCALE_AUTH_KEY=tskey-...
-  # ephemeral keys are hardly working for use as exit node as they are ipv6 only
+TAILSCALE_PORT = "41641"
+# create a reusable auth key and set it:
+# flyctl secrets set TAILSCALE_AUTH_KEY=tskey-...
+# ephemeral keys are hardly working for use as exit node as they are ipv6 only
 
 [build]
-  image = "contrun/tailscale:latest"
+image = "contrun/tailscale:latest"
 
 [mounts]
-source="flyingtails"
-destination="/data"
+source = "flyingtails"
+destination = "/data"
 
 [[services]]
-  protocol = "udp"
-  internal_port = 41641
-  processes = ["app"]
+protocol = "udp"
+internal_port = 41641
+processes = ["app"]
 
-  [[services.ports]]
-    port = 41641
-  [services.concurrency]
-    type = "connections"
-    hard_limit = 100
-    soft_limit = 75
+[[services.ports]]
+port = 41641
+[services.concurrency]
+type = "connections"
+hard_limit = 100
+soft_limit = 75

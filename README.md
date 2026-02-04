@@ -31,4 +31,3 @@ make SERVICES=tailscale ansible-deploy
 ```
 make SERVICE=tailscale flyctl-deploy
 ```
-
