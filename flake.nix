@@ -1,8 +1,8 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
-    home-manager.url = "github:nix-community/home-manager/release-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";
+    home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -52,7 +52,6 @@
 
     microvm.url = "github:astro/microvm.nix";
     microvm.inputs.nixpkgs.follows = "nixpkgs";
-    microvm.inputs.flake-utils.follows = "flake-utils";
 
     mycaddy.url = "github:contrun/mycaddy";
     mycaddy.inputs.flake-utils.follows = "flake-utils";
@@ -379,7 +378,8 @@
         overlayList = [
           # inputs.nixpkgs-wayland.overlay
           inputs.emacs-overlay.overlay
-        ] ++ (lib.attrValues self.overlays);
+        ]
+        ++ (lib.attrValues self.overlays);
 
         overlays = (import (getNixConfig "overlays.nix") { inherit inputs; }) // {
           nixpkgsChannelsOverlay = self: super: {
@@ -407,42 +407,41 @@
           myPackagesOverlay = self: super: {
             myPackages =
               let
-                list =
+                list = [
+                  {
+                    name = "firefox";
+                    pkg = inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin or null;
+                  }
+                ]
+                ++ (builtins.map
+                  (name: {
+                    inherit name;
+                    pkg =
+                      inputs.${name}.packages.${super.system}.default or inputs.${name}.defaultPackage.${super.system};
+                  })
                   [
-                    {
-                      name = "firefox";
-                      pkg = inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin or null;
-                    }
+                    "aioproxy"
+                    "deploy-rs"
+                    "home-manager"
+                    "nix-autobahn"
+                    "mycaddy"
                   ]
-                  ++ (builtins.map
-                    (name: {
-                      inherit name;
-                      pkg =
-                        inputs.${name}.packages.${super.system}.default or inputs.${name}.defaultPackage.${super.system};
-                    })
-                    [
-                      "aioproxy"
-                      "deploy-rs"
-                      "home-manager"
-                      "nix-autobahn"
-                      "mycaddy"
-                    ]
-                  )
-                  ++ (builtins.map
-                    (name: {
-                      inherit name;
-                      pkg = inputs.self.packages.${super.system}.${name} or null;
-                    })
-                    [
-                      "magit"
-                      "magitc"
-                      "coredns"
-                      "ssh"
-                      "mosh"
-                      "ssho"
-                      "mosho"
-                    ]
-                  );
+                )
+                ++ (builtins.map
+                  (name: {
+                    inherit name;
+                    pkg = inputs.self.packages.${super.system}.${name} or null;
+                  })
+                  [
+                    "magit"
+                    "magitc"
+                    "coredns"
+                    "ssh"
+                    "mosh"
+                    "ssho"
+                    "mosho"
+                  ]
+                );
                 function =
                   acc: elem:
                   acc
@@ -684,7 +683,8 @@
                 nativeBuildInputs = [
                   omnisharp-roslyn
                   fsautocomplete
-                ] ++ deps;
+                ]
+                ++ deps;
 
                 shellHook = ''
                   DOTNET_ROOT="${dotnetPkg}";
@@ -715,7 +715,8 @@
                 nativeBuildInputs = [
                   omnisharp-roslyn
                   fsautocomplete
-                ] ++ deps;
+                ]
+                ++ deps;
 
               };
 
