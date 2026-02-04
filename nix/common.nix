@@ -219,7 +219,7 @@ in
           ''<luserconf name=".pam_mount.conf.xml" />''
           ''<fusemount>${pkgs.fuse}/bin/mount.fuse %(VOLUME) %(MNTPT) "%(before=\"-o \" OPTIONS)"</fusemount>''
           "<fuseumount>${pkgs.fuse}/bin/fusermount -u %(MNTPT)</fuseumount>"
-          "<path>${pkgs.fuse}/bin:${pkgs.coreutils}/bin:${pkgs.utillinux}/bin:${pkgs.gocryptfs}/bin</path>"
+          "<path>${pkgs.fuse}/bin:${pkgs.coreutils}/bin:${pkgs.util-linux}/bin:${pkgs.gocryptfs}/bin</path>"
         ];
       };
       services = {
@@ -360,7 +360,7 @@ in
               table-others
             ];
             fcitx5.addons = with pkgs; [
-              fcitx5-chinese-addons
+              qt6Packages.fcitx5-chinese-addons
               fcitx5-rime
               fcitx5-table-extra
               fcitx5-table-other
@@ -510,7 +510,7 @@ in
           vim
           libffi
           pciutils
-          utillinux
+          util-linux
           ntfs3g
           gnupg
           pinentry-curses
@@ -639,7 +639,7 @@ in
               dmenu
               alacritty
               # gnome.seahorse
-              pinentry
+              pinentry-curses
               rxvt-unicode
               bluez-tools
               i3blocks
@@ -1025,13 +1025,13 @@ in
         (with pkgs; [
           wqy_microhei
           wqy_zenhei
-          source-han-sans-simplified-chinese
-          source-han-serif-simplified-chinese
+          source-han-sans
+          source-han-serif
           arphic-ukai
           arphic-uming
           noto-fonts-cjk-sans
           inconsolata
-          ubuntu_font_family
+          ubuntu-classic
           hasklig
           fira-code
           fira-code-symbols
@@ -1041,7 +1041,7 @@ in
           source-code-pro
           source-sans-pro
           source-serif-pro
-          noto-fonts-emoji
+          noto-fonts-color-emoji
           lato
           line-awesome
           material-icons
@@ -2519,22 +2519,22 @@ in
     };
     system-config-printer.enable = prefs.enablePrinting;
     logind = {
-      lidSwitchExternalPower = "ignore";
-      settings.Login = ''
-        HandlePowerKey=suspend
-        RuntimeDirectorySize=50%
-      '';
+      settings.Login = {
+        HandleLidSwitchExternalPower = "ignore";
+        HandlePowerKey = "suspend";
+        RuntimeDirectorySize = "50%";
+      };
     };
     postfix = {
       enable = prefs.enablePostfix;
       rootAlias = prefs.owner;
-      settings.main = ''
-        myhostname = ${prefs.hostname}
-        mydomain = localdomain
-        mydestination = $myhostname, localhost.$mydomain, localhost
-        mynetworks_style = host
-        default_transport = error: outside mail is not deliverable
-      '';
+      settings.main = {
+        myhostname = prefs.hostname;
+        mydomain = "localdomain";
+        mydestination = "$myhostname, localhost.$mydomain, localhost";
+        mynetworks_style = "host";
+        default_transport = "error: outside mail is not deliverable";
+      };
     };
     traefik = {
       enable = prefs.enableTraefik;
@@ -3457,7 +3457,7 @@ in
             };
             default_session = {
               user = "greeter";
-              command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
+              command = "${pkgs.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
             };
           };
       };
@@ -3511,14 +3511,12 @@ in
             nowlocker = locker;
           };
         # desktopManager.xfce.enable = true;
-        desktopManager.gnome.enable = prefs.enableGnome;
         # desktopManager.plasma5.enable = true;
         # desktopManager.xfce.enableXfwm = false;
         windowManager =
           {
             i3 = {
               enable = prefs.enableI3;
-              package = pkgs.i3-gaps;
             };
             awesome.enable = prefs.enableAwesome;
           }
@@ -5475,10 +5473,10 @@ in
     in
     (builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       {
-        settings.Manager = ''
-          DefaultLimitNOFILE=8192:524288
-          DefaultTimeoutStopSec=10s
-        '';
+        settings.Manager = {
+          DefaultLimitNOFILE = "8192:524288";
+          DefaultTimeoutStopSec = "10s";
+        };
         tmpfiles = {
           rules =
             [
@@ -6245,7 +6243,7 @@ in
               pkgs.gawk
               pkgs.systemd
               pkgs.iputils
-              pkgs.utillinux
+              pkgs.util-linux
             ] ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
             script = ''
               set -euo pipefail
@@ -6369,7 +6367,7 @@ in
               pkgs.jq
               pkgs.yj
               pkgs.libcap
-              pkgs.utillinux
+              pkgs.util-linux
               pkgs.clash-meta
             ];
             script =
@@ -6812,7 +6810,7 @@ in
                     pkgs.gzip
                     pkgs.systemd
                     pkgs.curl
-                    pkgs.utillinux
+                    pkgs.util-linux
                   ]
                   ++ (lib.optionals (prefs.ociContainerBackend == "docker") [ config.virtualisation.docker.package ])
                   ++ (lib.optionals (prefs.ociContainerBackend == "podman") [ config.virtualisation.podman.package ]);
@@ -6885,7 +6883,7 @@ in
                     pkgs.gzip
                     pkgs.systemd
                     pkgs.curl
-                    pkgs.utillinux
+                    pkgs.util-linux
                   ]
                   ++ (lib.optionals (prefs.ociContainerBackend == "docker") [ config.virtualisation.docker.package ])
                   ++ (lib.optionals (prefs.ociContainerBackend == "podman") [ config.virtualisation.podman.package ]);

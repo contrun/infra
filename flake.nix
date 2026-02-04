@@ -969,7 +969,7 @@
                       cmake
                       curl
                       git
-                      utillinux
+                      util-linux
                     ];
                     buildInputs = with pkgs; [
                       stdenv
@@ -996,7 +996,7 @@
                       gnumake
                       pkgs.gnumake
 
-                      utillinux
+                      util-linux
                       bash
                     ];
 

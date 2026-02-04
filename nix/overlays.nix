@@ -334,16 +334,13 @@ let
             ]
           );
 
-        hunspell =
-          with super;
-          hunspellWithDicts (
-            with hunspellDicts;
-            [
-              en-us
-              fr-any
-              de-de
-            ]
-          );
+        hunspell = super.hunspell.withDicts (
+          di: with di; [
+            en-us
+            fr-any
+            de-de
+          ]
+        );
 
         xmonad = super.xmonad-with-packages.override {
           packages =
@@ -440,7 +437,7 @@ let
 
         pythonPackages = super.python3Packages;
 
-        python = super.python3Full.withPackages getPython3Packages;
+        python = super.python3.withPackages getPython3Packages;
 
         texLive = self.texlive.combine { inherit (self.texlive) scheme-full; };
 

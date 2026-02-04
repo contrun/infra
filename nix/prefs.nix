@@ -718,7 +718,6 @@ let
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all"
     ];
     enableOpenldap = false;
-    enableGnome = false;
     enableGnomeKeyring = false;
     enableOciContainers = !self.isMinimalSystem;
     # https://discourse.nixos.org/t/podman-containers-always-fail-to-start/11908
@@ -1171,7 +1170,7 @@ let
                         rfkill "$action" "$id"
                       '';
                       runtimeInputs = [
-                        utillinux
+                        util-linux
                         coreutils
                       ];
                     };
