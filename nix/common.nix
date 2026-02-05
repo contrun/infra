@@ -7135,6 +7135,8 @@ in
       binary-caches = [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
       binary-cache-public-keys = [ ];
       auto-optimise-store = true;
+      substituters = if config.hardware.nvidia.enabled then [ "https://cache.nixos-cuda.org" ] else [ ];
+      trusted-public-keys = if config.hardware.nvidia.enabled then [ "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" ] else [ ];
     };
     gc = {
       automatic = true;
