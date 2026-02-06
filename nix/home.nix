@@ -425,7 +425,6 @@ let
         # "wine"
         # "winetricks"
         "usbutils"
-        "nethogs"
         "powertop"
         "fail2ban"
         "udisks"

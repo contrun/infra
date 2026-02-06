@@ -539,6 +539,7 @@ in
           htop
           iotop
           iftop
+          nethogs
           iw
           lsof
           age
@@ -584,32 +585,13 @@ in
 
               acpilight
               pulsemixer
-              xbindkeys
-              xcape
-              xautolock
-              xdotool
-              xorg.xmodmap
-              xmacro
               autokey
-              xsel
-              xvkbd
 
               keyd
-              xorg.xev
-              xorg.libX11
-              xorg.libXft
-              xorg.libXpm
-              xorg.libXinerama
-              xorg.libXext
-              xorg.libXrandr
-              xorg.libXrender
-              xorg.xorgproto
-              libxkbcommon
               pixman
               libevdev
 
               lldb
-              sxhkd
 
               (pkgs.myPackages.deploy-rs or null)
               (pkgs.myPackages.nix-autobahn or null)
@@ -699,7 +681,7 @@ in
               # steam-run-native
               # aqemu
               bpftools
-              config.boot.kernelPackages.perf
+              perf
               config.boot.kernelPackages.bpftrace
               config.boot.kernelPackages.bcc
               config.boot.kernelPackages.systemtap
