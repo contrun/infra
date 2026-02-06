@@ -648,7 +648,6 @@ in
       microvmHostConfiguration
       microvmGuestConfiguration
       inputs.home-manager.nixosModules.home-manager
-      homeManagerConfiguration
       miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)
