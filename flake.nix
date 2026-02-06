@@ -136,13 +136,20 @@
         in
         old // { system = old.nixosSystem; };
 
+      nixpkgsConfig = (import (getNixConfig "nixpkgs-config.nix"));
+
       generateHostConfigurations =
         hostname: inputs:
         let
           prefs = getHostPreference hostname;
         in
         import (getNixConfig "generate-nixos-configuration.nix") {
-          inherit self prefs inputs;
+          inherit
+            self
+            prefs
+            inputs
+            nixpkgsConfig
+            ;
         };
 
       generateHomeConfigurations =
@@ -467,11 +474,12 @@
         eachSystem defaultSystems (
           system:
           let
-            config = {
-              android_sdk.accept_license = true;
-              allowUnfree = true;
+            config = nixpkgsConfig;
+
+            pkgs = import nixpkgs {
+              inherit system;
+              config = nixpkgsConfig;
             };
-            pkgs = import nixpkgs { inherit system config; };
 
             pkgsRiscvLinux = import nixpkgs {
               inherit system config;

@@ -5,6 +5,7 @@ in
   self,
   prefs,
   inputs,
+  nixpkgsConfig,
 }:
 let
   nixpkgs = inputs.nixpkgs;
@@ -48,7 +49,7 @@ let
           }.${inputs.self.sourceInfo.shortRev}";
     };
 
-  nixpkgsOverlay =
+  nixpkgsConfiguration =
     {
       config,
       pkgs,
@@ -58,6 +59,7 @@ let
     }:
     {
       nixpkgs.overlays = inputs.self.overlayList;
+      nixpkgs.config = nixpkgsConfig;
     };
 
   # Otherwise error: attribute 'androidSdk' missing
@@ -184,110 +186,110 @@ let
           name = "sops-secrets";
           path = sopsSecretsFile;
         }}";
-        secrets =
-          {
-            clash-env = { };
-            ddns-env = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            code-server-env = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            "id_ed25519.pub" = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            id_ed25519 = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            keeweb-env = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            openldap-root-password = { };
-            vault-ssh-ca-setup-env = { };
-            postgresql-env = { };
-            postgresql-backup-env = { };
-            postgresql-initdb-script = {
-              mode = "0500";
-            };
-            redis-conf = {
-              mode = "0444";
-            };
-            lldap-env = { };
-            authelia-conf = { };
-            authelia-users = { };
-            authelia-local-users-conf = { };
-            authelia-ldap-users-conf = { };
-            authelia-sqlite-conf = { };
-            authelia-postgres-conf = { };
-            authelia-redis-conf = { };
-            etesync-env = { };
-            vaultwarden-env = { };
-            pleroma-env = { };
-            livebook-env = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            joplin-env = { };
-            miniflux-env = { };
-            atuin-env = { };
-            nextcloud-env = { };
-            nextcloud-sqlite-env = { };
-            nextcloud-postgres-env = { };
-            nextcloud-redis-env = { };
-            n8n-env = { };
-            wikijs-env = { };
-            xwiki-env = { };
-            huginn-env = { };
-            wakapi-env = { };
-            gitea-env = { };
-            rss-bridge-whitelist = {
-              mode = "0444";
-            };
-            wallabag-env = { };
-            recipes-env = { };
-            wger-env = { };
-            bookwyrm-env = { };
-            superset-env = { };
-            superset-config = {
-              mode = "0444";
-            };
-            restic-password = { };
-            rclone-config = { };
-            rclone-webui-htpasswd = { };
-            initrd-hole-puncher = { };
-            "port-forwarding-id_ed25519.pub" = {
-              mode = "0444";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            port-forwarding-id_ed25519 = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            initrd_ssh_host_ed25519_key = { };
-            "initrd_ssh_host_ed25519_key.pub" = { };
-            yandex-passwd = {
-              mode = "0400";
-              owner = prefs.owner;
-              group = prefs.ownerGroup;
-            };
-            cfssl-ca-pem = {
-              mode = "0444";
-            };
-          }
-          // builtins.foldl'
+        secrets = {
+          clash-env = { };
+          ddns-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          code-server-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          "id_ed25519.pub" = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          id_ed25519 = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          keeweb-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          openldap-root-password = { };
+          vault-ssh-ca-setup-env = { };
+          postgresql-env = { };
+          postgresql-backup-env = { };
+          postgresql-initdb-script = {
+            mode = "0500";
+          };
+          redis-conf = {
+            mode = "0444";
+          };
+          lldap-env = { };
+          authelia-conf = { };
+          authelia-users = { };
+          authelia-local-users-conf = { };
+          authelia-ldap-users-conf = { };
+          authelia-sqlite-conf = { };
+          authelia-postgres-conf = { };
+          authelia-redis-conf = { };
+          etesync-env = { };
+          vaultwarden-env = { };
+          pleroma-env = { };
+          livebook-env = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          joplin-env = { };
+          miniflux-env = { };
+          atuin-env = { };
+          nextcloud-env = { };
+          nextcloud-sqlite-env = { };
+          nextcloud-postgres-env = { };
+          nextcloud-redis-env = { };
+          n8n-env = { };
+          wikijs-env = { };
+          xwiki-env = { };
+          huginn-env = { };
+          wakapi-env = { };
+          gitea-env = { };
+          rss-bridge-whitelist = {
+            mode = "0444";
+          };
+          wallabag-env = { };
+          recipes-env = { };
+          wger-env = { };
+          bookwyrm-env = { };
+          superset-env = { };
+          superset-config = {
+            mode = "0444";
+          };
+          restic-password = { };
+          rclone-config = { };
+          rclone-webui-htpasswd = { };
+          initrd-hole-puncher = { };
+          "port-forwarding-id_ed25519.pub" = {
+            mode = "0444";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          port-forwarding-id_ed25519 = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          initrd_ssh_host_ed25519_key = { };
+          "initrd_ssh_host_ed25519_key.pub" = { };
+          yandex-passwd = {
+            mode = "0400";
+            owner = prefs.owner;
+            group = prefs.ownerGroup;
+          };
+          cfssl-ca-pem = {
+            mode = "0444";
+          };
+        }
+        //
+          builtins.foldl'
             (
               acc: e:
               let
@@ -446,72 +448,71 @@ let
         users = {
           ${prefs.owner} = {
             _module.args = moduleArgs;
-            imports =
-              [
-                (getNixConfig "/home.nix")
-                (
-                  {
-                    config,
-                    pkgs,
-                    lib,
-                    inputs,
-                    ...
-                  }@args:
-                  {
-                    home = {
-                      activation = {
-                        chezmoi = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-                          oldstate=$(set +o)
-                          set -x +e
-                          if ! [[ -f ~/.dotfiles-initialized ]]; then
-                              PATH="${
-                                lib.makeBinPath [
-                                  pkgs.chezmoi
-                                  pkgs.git
-                                  pkgs.curl
-                                ]
-                              }:$PATH" $DRY_RUN_CMD make --keep-going -C ${inputs.self} home-install deps-install
-                          fi
-                          eval "$oldstate"
-                        '';
-                      };
-                    };
-                  }
-                )
-              ]
-              ++ (lib.optionals prefs.enableAndroidDevEnv [
-                inputs.android-nixpkgs.hmModule
+            imports = [
+              (getNixConfig "/home.nix")
+              (
                 {
-                  home.packages = with pkgs; [
-                    android-studio
-                    flutter
-                  ];
-                  android-sdk.enable = true;
-                  android-sdk.packages =
-                    sdkPkgs:
-                    with sdkPkgs;
-                    [
-                      build-tools-34-0-0
-                      cmdline-tools-latest
-                      ndk-bundle
-                      emulator
-                      platform-tools
-                      tools
-                      platforms-android-34
-                      sources-android-34
-                      cmake-3-22-1
-                    ]
-                    ++ (
-                      if prefs.nixosSystem == "x86_64-linux" then
-                        [
-                          system-images-android-34-default-x86-64
-                        ]
-                      else
-                        [ ]
-                    );
+                  config,
+                  pkgs,
+                  lib,
+                  inputs,
+                  ...
+                }@args:
+                {
+                  home = {
+                    activation = {
+                      chezmoi = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+                        oldstate=$(set +o)
+                        set -x +e
+                        if ! [[ -f ~/.dotfiles-initialized ]]; then
+                            PATH="${
+                              lib.makeBinPath [
+                                pkgs.chezmoi
+                                pkgs.git
+                                pkgs.curl
+                              ]
+                            }:$PATH" $DRY_RUN_CMD make --keep-going -C ${inputs.self} home-install deps-install
+                        fi
+                        eval "$oldstate"
+                      '';
+                    };
+                  };
                 }
-              ])
-              ++ (lib.optionals prefs.enableSmos [ (inputs.smos + "/nix/home-manager-module.nix") ]);
+              )
+            ]
+            ++ (lib.optionals prefs.enableAndroidDevEnv [
+              inputs.android-nixpkgs.hmModule
+              {
+                home.packages = with pkgs; [
+                  android-studio
+                  flutter
+                ];
+                android-sdk.enable = true;
+                android-sdk.packages =
+                  sdkPkgs:
+                  with sdkPkgs;
+                  [
+                    build-tools-34-0-0
+                    cmdline-tools-latest
+                    ndk-bundle
+                    emulator
+                    platform-tools
+                    tools
+                    platforms-android-34
+                    sources-android-34
+                    cmake-3-22-1
+                  ]
+                  ++ (
+                    if prefs.nixosSystem == "x86_64-linux" then
+                      [
+                        system-images-android-34-default-x86-64
+                      ]
+                    else
+                      [ ]
+                  );
+              }
+            ])
+            ++ (lib.optionals prefs.enableSmos [ (inputs.smos + "/nix/home-manager-module.nix") ]);
           };
         };
       };
@@ -636,7 +637,7 @@ in
 
     modules = [
       systemInfo
-      nixpkgsOverlay
+      nixpkgsConfiguration
       androidlNixpkgsOverlay
       hostConfiguration
       hardwareConfiguration
@@ -651,7 +652,8 @@ in
       miscConfiguration
       tmpConfiguration
       (vmConfiguration hostname)
-    ] ++ (readModulesDir (getNixConfig "modules"));
+    ]
+    ++ (readModulesDir (getNixConfig "modules"));
 
     specialArgs = moduleArgs;
   };
