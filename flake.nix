@@ -138,6 +138,14 @@
 
       nixpkgsConfig = (import (getNixConfig "nixpkgs-config.nix"));
 
+      getNixpkgs =
+        system:
+        import nixpkgs {
+          inherit system;
+          config = nixpkgsConfig;
+          overlays = self.overlayList;
+        };
+
       generateHostConfigurations =
         hostname: inputs:
         let
@@ -164,6 +172,7 @@
           home = if (prefs.home == prefs.defaultHome) then "/home/${username}" else prefs.home;
           configName = if (matchResult == null) then "${username}@${hostname}" else name;
           prefs = getHostPreference hostname;
+          pkgs = getNixpkgs prefs.system;
           moduleArgs = {
             inherit inputs hostname prefs;
             inherit (prefs) isMinimalSystem isVirtualMachine system;
@@ -171,7 +180,7 @@
         in
         {
           "${configName}" = inputs.home-manager.lib.homeManagerConfiguration {
-            pkgs = self.pkgsWithOverlays."${prefs.system}";
+            inherit pkgs;
             modules = [
               (
                 { ... }:

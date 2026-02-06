@@ -15,174 +15,18 @@ let
       jupyterlab
     ]
   );
-  brokenPackages =
-    let
-      p = ./broken-packages.nix;
-    in
-    if builtins.pathExists p then (import p) else [ ];
-  linuxOnlyPackages = [ "kdePackages.kdeconnect-kde" ];
-  x86OnlyPackages =
-    let
-      brokenOnArmPackages = [
-        "eclipses.eclipse-java"
-        "ltrace"
-        "brave"
-        "mplayer"
-      ];
-    in
-    brokenOnArmPackages
-    ++ [
-      "wine"
-      "workrave"
-      "lens"
-      "android-file-transfer"
-      "appimage-run"
-      "adbfs-rootless"
-      "mitscheme"
-      "simplescreenrecorder"
-      "syslinux"
-      "git-annex"
-      "myPackages.python"
-      "myPackages.ghc"
-      "vivaldi"
-      "libpng"
-      "cachix"
-      "git-annex"
-      "texlab"
-    ];
-  largePackages = [
-    "jetbrains.idea-ultimate"
-    "jetbrains.clion"
-    "jetbrains.webstorm"
-    "jetbrains.datagrip"
-    "jetbrains.goland"
-    "jetbrains.pycharm-professional"
-    "kubernetes"
-    "minikube"
-    "k3s"
-    "brave"
-    "flink"
-    "myPackages.ghc"
-    "libguestfs-with-appliance"
-    "androidStudioPackages.dev"
-    "confluent-platform"
-    "qemu"
-    "tdesktop"
-    "jitsi-meet-electron"
-    "llvmPackages_latest.clang"
-    "llvmPackages_latest.lld"
-    "llvmPackages_latest.lldb"
-    "clang-analyzer"
-    "racket"
-    "ocaml"
-    "llvmPackages_latest.llvm"
-    "termonad"
-    "steam"
-    "espeak"
-    "vagrant"
-    "firecracker"
-    "code-server"
-    "eclipses.eclipse-java"
-    "myPackages.texLive"
-    "clojure-lsp"
-    "clojure"
-    "coursier"
-    "leiningen"
-    "ammonite"
-    "joplin"
-    "joplin-desktop"
-    "texmacs"
-    # "qute-browser"
-    "vscodium"
-    # "krita"
-    "xmind"
-  ];
-  # To avoid clash within the buildEnv of home-manager
-  overridePkg =
-    pkg: func: if pkg ? overrideAttrs then pkg.overrideAttrs (oldAttrs: func oldAttrs) else pkg;
-  changePkgPriority =
-    pkg: priority:
-    overridePkg pkg (oldAttrs: {
-      meta = {
-        priority = priority;
-      };
-    });
-  getAttr =
+  getPkg =
     attrset: path:
     builtins.foldl' (
       acc: x: if acc ? ${x} then acc.${x} else lib.warn "Package ${path} does not exists" null
     ) attrset (pkgs.lib.splitString "." path);
-  getMyPkg =
-    attrset: path:
-    let
-      pkg =
-        let
-          vanillaPackage = getAttr attrset path;
-          tryNewPath =
-            newPath:
-            if (newPath == path) then
-              null
-            else
-              lib.warn "Package ${path} does not exists, trying ${newPath}" (getAttr attrset newPath);
-          nixpkgsPackage = tryNewPath (builtins.replaceStrings [ "myPackages." ] [ "" ] path);
-          unstablePackage = tryNewPath "unstable.${path}";
-        in
-        if vanillaPackage != null then
-          vanillaPackage
-        else if nixpkgsPackage != null then
-          nixpkgsPackage
-        else if unstablePackage != null then
-          unstablePackage
-        else
-          lib.warn "${path} not found" null;
-
-      # Sometimes packages failed to build. We use this to skip running tests.
-      # Don't use this on normal packages, otherwise we won't be able to downlaod caches from binary caches.
-      dontCheck = false;
-    in
-    if dontCheck then
-      overridePkg pkg (oldAttrs: {
-        # Fuck, why every package has broken tests? I just want to trust the devil.
-        # Fuck, this does not seem to work.
-        doCheck = false;
-      })
-    else
-      pkg;
-
-  # Emits a warning when package does not exist, instead of quitting immediately
-  getPkg =
-    attrset: path:
-    if prefs.hostname == "broken-packages" then
-      (
-        if !builtins.elem path brokenPackages then
-          getMyPkg attrset path
-        else
-          lib.warn "${path} is will not be installed on a broken packages systems (hostname broken-packages)" null
-      )
-    else if builtins.elem path brokenPackages then
-      lib.warn "${path} will not be installed as it is marked as broken" null
-    else if !prefs.useLargePackages && (builtins.elem path largePackages) then
-      lib.info "${path} will not be installed as useLargePackages is ${lib.boolToString prefs.useLargePackages}" null
-    else if
-      !(builtins.elem prefs.nixosSystem [
-        "x86_64-linux"
-        "aarch64-linux"
-      ])
-      && (builtins.elem path linuxOnlyPackages)
-    then
-      lib.info "${path} will not be installed in system ${prefs.nixosSystem}" null
-    else if
-      !(builtins.elem prefs.nixosSystem [ "x86_64-linux" ]) && (builtins.elem path x86OnlyPackages)
-    then
-      lib.info "${path} will not be installed in system ${prefs.nixosSystem}" null
-    else
-      getMyPkg attrset path;
 
   getPackages = list: (builtins.filter (x: x != null) (builtins.map (x: getPkg pkgs x) list));
+
   allPackages = builtins.foldl' (
-    acc: collection:
-    acc ++ (builtins.map (pkg: changePkgPriority pkg collection.priority) collection.packages)
+    acc: collection: acc ++ (builtins.map (pkg: pkg) collection.packages)
   ) [ ] (if prefs.installHomePackages then packageCollection else [ ]);
+
   packageCollection = [
     {
       name = "command line tools (preferred)";
