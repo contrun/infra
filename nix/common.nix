@@ -3443,18 +3443,14 @@ in
       };
     };
     displayManager =
-      let
-        defaultSession = prefs.xDefaultSession;
-        autoLogin = {
-          enable = prefs.enableAutoLogin;
-          user = prefs.owner;
-        };
-      in
       {
         sddm = {
           enable = prefs.enableSddm;
           enableHidpi = prefs.enableHidpi;
           autoNumlock = true;
+        };
+        gdm = {
+          enable = prefs.enableGdm;
         };
       };
     xserver =
@@ -3514,20 +3510,10 @@ in
             };
           });
         displayManager =
-          let
-            defaultSession = prefs.xDefaultSession;
-            autoLogin = {
-              enable = prefs.enableAutoLogin;
-              user = prefs.owner;
-            };
-          in
           {
             sessionCommands = prefs.xSessionCommands;
             startx = {
               enable = prefs.enableStartx;
-            };
-            gdm = {
-              enable = prefs.enableGdm;
             };
             lightdm = {
               enable = prefs.enableLightdm;
