@@ -56,7 +56,8 @@ let
         # "doxygen"
         # "libxslt"
         # "xmlto"
-        "moreutils"
+        # Conflicting with parallel
+        # "moreutils"
         "nnn"
         "glib"
         "broot"
@@ -106,13 +107,10 @@ let
         "gdb"
         "gcc"
         # "glibc"
-        "vscodium"
         "scala_3"
-        "stdman"
         # "hadoop_3_1"
         # "kubernetes"
         "gnumake"
-        "git-sync"
         # "opencl-headers"
       ];
     }
@@ -120,7 +118,7 @@ let
       name = "development tools";
       priority = 40;
       packages =
-        getPackages ([
+        getPackages [
           "gnumake"
           "cmake"
           "meson"
@@ -287,9 +285,9 @@ let
           "tree-sitter"
           "lua-language-server"
           "luaformatter"
-          "nodePackages.dockerfile-language-server"
-          "nodePackages.bash-language-server"
-          "nodePackages.typescript-language-server"
+          "dockerfile-language-server"
+          "bash-language-server"
+          "typescript-language-server"
           "sqlint"
           "sbt-extras"
           # "clojure-lsp"
@@ -308,7 +306,7 @@ let
           "stress-ng"
           "expat"
           "mkcert"
-        ])
+        ]
         ++ (if prefs.enableHomeManagerJupyter then [ jupyterPkg ] else [ ]);
     }
     {
@@ -390,7 +388,6 @@ let
         "geoipWithDatabase"
         "syncthing"
         # "myPackages.wallabag-client"
-        "gupnp-tools"
         "strongswan"
         "stunnel"
         "gost"
@@ -410,7 +407,6 @@ let
         "brotab"
         "buku"
         "sshuttle"
-        "youtube-dl"
         "offlineimap"
       ];
     }
@@ -446,7 +442,6 @@ let
         "gnupg"
         "gptfdisk"
         "at"
-        "git"
         "gitRepo"
         "coreutils-prefixed"
         "sxhkd"
@@ -493,7 +488,6 @@ let
         "bibtool"
         # "calibre"
         "ebook_tools"
-        "coolreader"
         "proselint"
         "myPackages.hunspell"
         "myPackages.aspell"
@@ -635,7 +629,6 @@ let
         "plan9port"
         "pngquant"
         "procps"
-        "psmisc"
         "pv"
         "pwgen"
         "pwsafe"
