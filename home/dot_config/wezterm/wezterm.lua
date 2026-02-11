@@ -408,10 +408,21 @@ config.key_tables = {
   },
 }
 
+local function cmd_exists(cmd)
+  local search_cmd = is_windows and 'where' or 'which'
+  local success, _, _ = wezterm.run_child_process({ search_cmd, cmd })
+  return success
+end
+
 if is_windows then
   config.default_prog = { 'powershell.exe' }
   -- https://github.com/wez/wezterm/discussions/3772#discussioncomment-7201688
   config.ssh_backend = "Ssh2"
+else
+  if cmd_exists('fish') then
+    config.default_prog = { 'fish' }
+  end
 end
+
 
 return config
