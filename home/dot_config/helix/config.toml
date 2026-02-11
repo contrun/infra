@@ -1,6 +1,7 @@
 [editor]
 true-color = true
 auto-save = true
+auto-format = true
 
 [editor.soft-wrap]
 enable = true

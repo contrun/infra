@@ -1,3 +1,6 @@
 [[language]]
 name = "nix"
 language-servers = ["nixd", "nil"]
+formatter = { command = "nixfmt" }
+formatter.args = ["-"]
+auto-format = true
