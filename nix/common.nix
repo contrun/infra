@@ -176,7 +176,7 @@ in
     in
     (builtins.filter (x: builtins.pathExists x) [
       ./machine.nix
-      ./cachix.nix
+      ./cache.nix
     ])
     ++ (lib.optionals prefs.enableSmosServer [ smosConfiguration ]);
   security = {
