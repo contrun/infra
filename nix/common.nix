@@ -254,77 +254,76 @@ in
     rtkit.enable = true;
   };
 
-  networking =
-    {
-      resolvconf = {
-        dnsExtensionMechanism = false;
+  networking = {
+    resolvconf = {
+      dnsExtensionMechanism = false;
+    };
+    useNetworkd = prefs.enableSystemdNetworkd;
+    hostName = prefs.hostname;
+    hostId = prefs.hostId;
+    firewall.enable = prefs.enableFirewall;
+    wg-quick =
+      let
+        peers = with builtins; fromJSON (readFile (./.. + "/fixtures/wireguard.json"));
+        generateConfig = wireguardInstanceIndex: wireguardHostIndex: {
+          inherit peers;
+          address = [ "10.233.0.${builtins.toString wireguardHostIndex}/16" ];
+          listenPort = 51820 + wireguardInstanceIndex;
+          privateKeyFile = "/run/wireguard-private-key";
+          postUp = [ "/run/secrets/wireguard-post-up" ];
+        };
+      in
+      {
+        interfaces = lib.optionalAttrs prefs.enableWireguard {
+          wg0 = generateConfig 0 prefs.wireguardHostIndex;
+        };
       };
-      useNetworkd = prefs.enableSystemdNetworkd;
-      hostName = prefs.hostname;
-      hostId = prefs.hostId;
-      firewall.enable = prefs.enableFirewall;
-      wg-quick =
-        let
-          peers = with builtins; fromJSON (readFile (./.. + "/fixtures/wireguard.json"));
-          generateConfig = wireguardInstanceIndex: wireguardHostIndex: {
-            inherit peers;
-            address = [ "10.233.0.${builtins.toString wireguardHostIndex}/16" ];
-            listenPort = 51820 + wireguardInstanceIndex;
-            privateKeyFile = "/run/wireguard-private-key";
-            postUp = [ "/run/secrets/wireguard-post-up" ];
-          };
-        in
-        {
-          interfaces = lib.optionalAttrs prefs.enableWireguard {
-            wg0 = generateConfig 0 prefs.wireguardHostIndex;
+    proxy.default = prefs.proxy;
+    enableIPv6 = prefs.enableIPv6;
+  }
+  // (mergeOptionalConfigs [
+    {
+      enable = prefs.enableSupplicant;
+      config = {
+        wireless = {
+          enable = true;
+        };
+        supplicant = {
+          "WLAN" = {
+            configFile =
+              let
+                defaultPath = "/etc/wpa_supplicant.conf";
+                path =
+                  if builtins.pathExists impure.wpaSupplicantConfigFile then
+                    impure.wpaSupplicantConfigFile
+                  else
+                    defaultPath;
+              in
+              {
+                # TODO: figure out why this does not work.
+                inherit (path) ;
+                writable = true;
+              };
           };
         };
-      proxy.default = prefs.proxy;
-      enableIPv6 = prefs.enableIPv6;
+      };
     }
-    // (mergeOptionalConfigs [
-      {
-        enable = prefs.enableSupplicant;
-        config = {
-          wireless = {
+    {
+      enable = prefs.enableIwd;
+      config = {
+        wireless = {
+          iwd = {
             enable = true;
-          };
-          supplicant = {
-            "WLAN" = {
-              configFile =
-                let
-                  defaultPath = "/etc/wpa_supplicant.conf";
-                  path =
-                    if builtins.pathExists impure.wpaSupplicantConfigFile then
-                      impure.wpaSupplicantConfigFile
-                    else
-                      defaultPath;
-                in
-                {
-                  # TODO: figure out why this does not work.
-                  inherit (path) ;
-                  writable = true;
-                };
-            };
-          };
-        };
-      }
-      {
-        enable = prefs.enableIwd;
-        config = {
-          wireless = {
-            iwd = {
-              enable = true;
-              settings = {
-                Settings = {
-                  AutoConnect = true;
-                };
+            settings = {
+              Settings = {
+                AutoConnect = true;
               };
             };
           };
         };
-      }
-    ]);
+      };
+    }
+  ]);
 
   console = {
     font =
@@ -336,39 +335,38 @@ in
         "${pkgs.terminus_font}/share/consolefonts/ter-g16n.psf.gz";
   };
 
-  i18n =
+  i18n = {
+    defaultLocale = "de_DE.UTF-8";
+    supportedLocales = [
+      "en_US.UTF-8/UTF-8"
+      "de_DE.UTF-8/UTF-8"
+      "fr_FR.UTF-8/UTF-8"
+      "zh_CN.UTF-8/UTF-8"
+    ];
+  }
+  // (mergeOptionalConfigs [
     {
-      defaultLocale = "de_DE.UTF-8";
-      supportedLocales = [
-        "en_US.UTF-8/UTF-8"
-        "de_DE.UTF-8/UTF-8"
-        "fr_FR.UTF-8/UTF-8"
-        "zh_CN.UTF-8/UTF-8"
-      ];
-    }
-    // (mergeOptionalConfigs [
-      {
-        enable = prefs.enableInputMethods;
-        config = {
-          inputMethod = {
-            enable = true;
-            type = prefs.enabledInputMethod;
-            ibus.engines = with pkgs.ibus-engines; [
-              libpinyin
-              table
-              table-chinese
-              table-others
-            ];
-            fcitx5.addons = with pkgs; [
-              qt6Packages.fcitx5-chinese-addons
-              fcitx5-rime
-              fcitx5-table-extra
-              fcitx5-table-other
-            ];
-          };
+      enable = prefs.enableInputMethods;
+      config = {
+        inputMethod = {
+          enable = true;
+          type = prefs.enabledInputMethod;
+          ibus.engines = with pkgs.ibus-engines; [
+            libpinyin
+            table
+            table-chinese
+            table-others
+          ];
+          fcitx5.addons = with pkgs; [
+            qt6Packages.fcitx5-chinese-addons
+            fcitx5-rime
+            fcitx5-table-extra
+            fcitx5-table-other
+          ];
         };
-      }
-    ]);
+      };
+    }
+  ]);
 
   time = {
     timeZone = "Asia/Shanghai";
@@ -376,82 +374,81 @@ in
   };
 
   environment = {
-    etc =
+    etc = {
+      "nix/path/nixpkgs".source = inputs.nixpkgs;
+      "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
+      "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
+      "nix/path/home-manager".source = inputs.home-manager;
+      "nix/path/activeconfig".source = inputs.self;
+      "davfs2/secrets" = {
+        enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
+        mode = "0600";
+        source = prefs.davfs2Secrets;
+      };
+      "keyd/keyd.conf" = {
+        text = ''
+          [ids]
+          *
+
+          [main]
+          capslock = layer(control)
+          rightalt = layer(alt)
+          leftmeta = layer(metaalt)
+          rightmeta = oneshot(altgr)
+          rightcontrol = layer(meta)
+
+          space = overload(myspace, space)
+
+          [metaalt:M-A]
+
+          [myspace]
+          w = home
+          s = end
+          n = pagedown
+          p = pageup
+          h = left
+          j = down
+          k = up
+          l = right
+          d = delete
+          i = insert
+          b = backspace
+          o = enter
+          e = escape
+          m = menu
+          t = tab
+          c = capslock
+        '';
+        mode = "0644";
+      };
+      hosts.mode = "0644";
+    }
+    // (mergeOptionalConfigs [
       {
-        "nix/path/nixpkgs".source = inputs.nixpkgs;
-        "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
-        "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
-        "nix/path/home-manager".source = inputs.home-manager;
-        "nix/path/activeconfig".source = inputs.self;
-        "davfs2/secrets" = {
-          enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
-          mode = "0600";
-          source = prefs.davfs2Secrets;
+        enable = builtins.pathExists "${prefs.home}/Workspace/infra";
+        config = {
+          "nix/path/config".source = "${prefs.home}/Workspace/infra";
+          "nix/path/infra".source = "${prefs.home}/Workspace/infra";
         };
-        "keyd/keyd.conf" = {
-          text = ''
-            [ids]
-            *
-
-            [main]
-            capslock = layer(control)
-            rightalt = layer(alt)
-            leftmeta = layer(metaalt)
-            rightmeta = oneshot(altgr)
-            rightcontrol = layer(meta)
-
-            space = overload(myspace, space)
-
-            [metaalt:M-A]
-
-            [myspace]
-            w = home
-            s = end
-            n = pagedown
-            p = pageup
-            h = left
-            j = down
-            k = up
-            l = right
-            d = delete
-            i = insert
-            b = backspace
-            o = enter
-            e = escape
-            m = menu
-            t = tab
-            c = capslock
-          '';
-          mode = "0644";
-        };
-        hosts.mode = "0644";
       }
-      // (mergeOptionalConfigs [
-        {
-          enable = builtins.pathExists "${prefs.home}/Workspace/infra";
-          config = {
-            "nix/path/config".source = "${prefs.home}/Workspace/infra";
-            "nix/path/infra".source = "${prefs.home}/Workspace/infra";
+      {
+        enable = prefs.enableCrio && prefs.enableZfs;
+        config = {
+          "crio/crio.conf.d/01-zfs.conf".text = ''
+            [crio]
+            storage_driver = "zfs"
+          '';
+        };
+      }
+      {
+        enable = prefs.enableResolved;
+        config = {
+          "systemd/resolved.conf" = {
+            mode = "0644";
           };
-        }
-        {
-          enable = prefs.enableCrio && prefs.enableZfs;
-          config = {
-            "crio/crio.conf.d/01-zfs.conf".text = ''
-              [crio]
-              storage_driver = "zfs"
-            '';
-          };
-        }
-        {
-          enable = prefs.enableResolved;
-          config = {
-            "systemd/resolved.conf" = {
-              mode = "0644";
-            };
-          };
-        }
-      ]);
+        };
+      }
+    ]);
 
     extraOutputsToInstall = prefs.extraOutputsToInstall;
     systemPackages =
@@ -758,18 +755,17 @@ in
         # pkg-config
         PKG_CONFIG_PATH = pkgconfigPath;
 
-        PATH =
-          [
-            "$HOME/.bin"
-            "$HOME/.local/bin"
-          ]
-          ++ (map (x: x + "/bin") [
-            CABALPATH
-            CARGOPATH
-            GOPATH
-          ])
-          ++ [ "${NODE_PATH}/node_modules/.bin" ]
-          ++ [ "/usr/local/bin" ];
+        PATH = [
+          "$HOME/.bin"
+          "$HOME/.local/bin"
+        ]
+        ++ (map (x: x + "/bin") [
+          CABALPATH
+          CARGOPATH
+          GOPATH
+        ])
+        ++ [ "${NODE_PATH}/node_modules/.bin" ]
+        ++ [ "/usr/local/bin" ];
         LESS = "-x4RFsX";
         PAGER = "less";
         EDITOR = "nvim";
@@ -845,7 +841,10 @@ in
       enable = prefs.enableNixLd;
       libraries =
         options.programs.nix-ld.libraries.default
-        ++ (with pkgs; [ libglvnd glib ])
+        ++ (with pkgs; [
+          libglvnd
+          glib
+        ])
         ++ (with config.hardware.graphics; if enable then [ package ] else [ ])
         ++ config.hardware.graphics.extraPackages
         ++ (
@@ -904,7 +903,8 @@ in
         extraOptions = [
           "--verbose"
           "--debug"
-        ] ++ nvidiaArgs;
+        ]
+        ++ nvidiaArgs;
         extraPackages = with pkgs; [
           swaylock
           swaybg
@@ -1075,132 +1075,131 @@ in
   };
 
   system = {
-    activationScripts =
+    activationScripts = {
+      # Diff system changes on switch. Taken from
+      # https://github.com/luishfonseca/dotfiles/blob/6193dff46ad05eca77dedba9afbc50443a8b3dd1/modules/upgrade-diff.nix
+      diff = {
+        supportsDryActivation = true;
+        text = ''
+          echo ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
+          ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
+        '';
+      };
+      mkCcacheDirs = {
+        text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
+        deps = [ ];
+      };
+      usrlocalbin = {
+        text = "mkdir -m 0755 -p /usr/local/bin";
+        deps = [ ];
+      };
+      local = {
+        text = "mkdir -m 0755 -p /local/bin && mkdir -m 0755 -p /local/lib && mkdir -m 0755 -p /local/jdks";
+        deps = [ ];
+      };
+      cclibs = {
+        text = "cd /local/lib; for i in ${pkgs.gcc.cc.lib}/lib/*; do ln -sfn $i; done";
+        deps = [ "local" ];
+      };
+
+      # Fuck /bin/bash
+      binbash = {
+        text = "ln -sfn ${pkgs.bash}/bin/bash /bin/bash";
+        deps = [ "binsh" ];
+      };
+
+      # I may want to temporarily change /usr/bin/env
+      binenv = {
+        text = "ln -sfn ${pkgs.coreutils}/bin/env /bin/env";
+        deps = [ "binsh" ];
+      };
+
+      # sftpman
+      mntsshfs = {
+        text = "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/sshfs";
+        deps = [ ];
+      };
+
+      # rclone
+      mntrclone = {
+        text = "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/rclone";
+        deps = [ ];
+      };
+
+      # https://github.com/NixOS/nixpkgs/issues/3702
+      linger = {
+        text = ''
+          # remove all existing lingering users
+          rm -r /var/lib/systemd/linger
+          mkdir /var/lib/systemd/linger
+          # enable for the subset of declared users
+          touch /var/lib/systemd/linger/${prefs.owner}
+        '';
+        deps = [ ];
+      };
+
+      # make some symlinks to /bin, just for convenience
+      binShortcuts = {
+        text = ''
+          ln -sfn ${pkgs.neovim}/bin/nvim /usr/local/bin/nv
+        '';
+        deps = [
+          "binsh"
+          "usrlocalbin"
+        ];
+      };
+    }
+    // (mergeOptionalConfigs [
       {
-        # Diff system changes on switch. Taken from
-        # https://github.com/luishfonseca/dotfiles/blob/6193dff46ad05eca77dedba9afbc50443a8b3dd1/modules/upgrade-diff.nix
-        diff = {
-          supportsDryActivation = true;
-          text = ''
-            echo ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
-            ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
-          '';
-        };
-        mkCcacheDirs = {
-          text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
-          deps = [ ];
-        };
-        usrlocalbin = {
-          text = "mkdir -m 0755 -p /usr/local/bin";
-          deps = [ ];
-        };
-        local = {
-          text = "mkdir -m 0755 -p /local/bin && mkdir -m 0755 -p /local/lib && mkdir -m 0755 -p /local/jdks";
-          deps = [ ];
-        };
-        cclibs = {
-          text = "cd /local/lib; for i in ${pkgs.gcc.cc.lib}/lib/*; do ln -sfn $i; done";
-          deps = [ "local" ];
-        };
-
-        # Fuck /bin/bash
-        binbash = {
-          text = "ln -sfn ${pkgs.bash}/bin/bash /bin/bash";
-          deps = [ "binsh" ];
-        };
-
-        # I may want to temporarily change /usr/bin/env
-        binenv = {
-          text = "ln -sfn ${pkgs.coreutils}/bin/env /bin/env";
-          deps = [ "binsh" ];
-        };
-
-        # sftpman
-        mntsshfs = {
-          text = "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/sshfs";
-          deps = [ ];
-        };
-
-        # rclone
-        mntrclone = {
-          text = "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/rclone";
-          deps = [ ];
-        };
-
-        # https://github.com/NixOS/nixpkgs/issues/3702
-        linger = {
-          text = ''
-            # remove all existing lingering users
-            rm -r /var/lib/systemd/linger
-            mkdir /var/lib/systemd/linger
-            # enable for the subset of declared users
-            touch /var/lib/systemd/linger/${prefs.owner}
-          '';
-          deps = [ ];
-        };
-
-        # make some symlinks to /bin, just for convenience
-        binShortcuts = {
-          text = ''
-            ln -sfn ${pkgs.neovim}/bin/nvim /usr/local/bin/nv
-          '';
-          deps = [
-            "binsh"
-            "usrlocalbin"
-          ];
-        };
-      }
-      // (mergeOptionalConfigs [
-        {
-          enable = prefs.enableJava;
-          config =
-            let
-              addjdk =
-                jdk:
-                if pkgs ? jdk then
-                  let
-                    p = pkgs.${jdk}.home;
-                  in
-                  "ln -sfn ${p} /local/jdks/${jdk}"
-                else
-                  lib.warn "jdk ${jdk} does not exists" "";
-            in
-            {
-              jdks = {
-                text = lib.concatMapStringsSep "\n" addjdk prefs.linkedJdks;
-                deps = [ "local" ];
-              };
-            };
-        }
-        {
-          enable = !prefs.enableNixLd;
-          config = {
-            # Fuck pre-built dynamic binaries
-            # copied from https://github.com/NixOS/nixpkgs/pull/69057
-            ldlinux = {
-              text =
-                with lib;
-                concatStrings (
-                  mapAttrsToList
-                    (target: source: ''
-                      mkdir -m 0755 -p $(dirname ${target})
-                      ln -sfn ${escapeShellArg source} ${target}.tmp
-                      mv -f ${target}.tmp ${target} # atomically replace
-                    '')
-                    {
-                      "i686-linux"."/lib/ld-linux.so.2" = "${pkgs.glibc.out}/lib/ld-linux.so.2";
-                      "x86_64-linux"."/lib/ld-linux.so.2" = "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
-                      "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" = "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
-                      "aarch64-linux"."/lib/ld-linux-aarch64.so.1" = "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
-                      "armv7l-linux"."/lib/ld-linux-armhf.so.3" = "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
-                    }
-                    .${pkgs.stdenv.system} or { }
-                );
-              deps = [ ];
+        enable = prefs.enableJava;
+        config =
+          let
+            addjdk =
+              jdk:
+              if pkgs ? jdk then
+                let
+                  p = pkgs.${jdk}.home;
+                in
+                "ln -sfn ${p} /local/jdks/${jdk}"
+              else
+                lib.warn "jdk ${jdk} does not exists" "";
+          in
+          {
+            jdks = {
+              text = lib.concatMapStringsSep "\n" addjdk prefs.linkedJdks;
+              deps = [ "local" ];
             };
           };
-        }
-      ]);
+      }
+      {
+        enable = !prefs.enableNixLd;
+        config = {
+          # Fuck pre-built dynamic binaries
+          # copied from https://github.com/NixOS/nixpkgs/pull/69057
+          ldlinux = {
+            text =
+              with lib;
+              concatStrings (
+                mapAttrsToList
+                  (target: source: ''
+                    mkdir -m 0755 -p $(dirname ${target})
+                    ln -sfn ${escapeShellArg source} ${target}.tmp
+                    mv -f ${target}.tmp ${target} # atomically replace
+                  '')
+                  {
+                    "i686-linux"."/lib/ld-linux.so.2" = "${pkgs.glibc.out}/lib/ld-linux.so.2";
+                    "x86_64-linux"."/lib/ld-linux.so.2" = "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
+                    "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" = "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
+                    "aarch64-linux"."/lib/ld-linux-aarch64.so.1" = "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
+                    "armv7l-linux"."/lib/ld-linux-armhf.so.3" = "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
+                  }
+                  .${pkgs.stdenv.system} or { }
+              );
+            deps = [ ];
+          };
+        };
+      }
+    ]);
   };
 
   services = {
@@ -1302,13 +1301,12 @@ in
                 olcRootPW = {
                   path = "/run/secrets/openldap-root-password";
                 };
-                olcAccess =
-                  [
-                    ''to attrs=userPassword,givenName,sn,photo by self write by anonymous auth by dn.base="cn=Manager,o=localhost" write by * none''
-                  ]
-                  ++ [
-                    ''to * by self read by dn.base="cn=Manager,o=localhost" write by * none''
-                  ];
+                olcAccess = [
+                  ''to attrs=userPassword,givenName,sn,photo by self write by anonymous auth by dn.base="cn=Manager,o=localhost" write by * none''
+                ]
+                ++ [
+                  ''to * by self read by dn.base="cn=Manager,o=localhost" write by * none''
+                ];
               };
             };
             "olcDatabase={2}mdb" = {
@@ -1457,7 +1455,8 @@ in
                 OnCalendar = "00:05";
                 RandomizedDelaySec = 3600 * 8;
               };
-            } // conf;
+            }
+            // conf;
           };
           commonFlags = [
             "-v=3"
@@ -1839,54 +1838,53 @@ in
       };
       provision = {
         enable = true;
-        datasources =
-          [
-            {
-              access = "proxy";
-              url = "\${PROMETHEUS_URL}";
-              basicAuth = true;
-              basicAuthUser = "\${PROMETHEUS_USERNAME}";
-              basicAuthPassword = "\${PROMETHEUS_PASSWORD}";
-              jsonData = {
-                httpMethod = "POST";
-              };
-              name = "Prometheus Remote";
-              type = "prometheus";
-            }
-          ]
-          ++ [
-            {
-              access = "proxy";
-              url = "\${LOKI_URL}";
-              basicAuth = true;
-              basicAuthUser = "\${LOKI_USERNAME}";
-              basicAuthPassword = "\${LOKI_PASSWORD}";
-              jsonData = { };
-              name = "Loki Remote";
-              type = "loki";
-            }
-          ]
-          ++ lib.optionals prefs.enablePrometheus [
-            {
-              access = "proxy";
-              isDefault = true;
-              jsonData = {
-                httpMethod = "POST";
-              };
-              name = "Prometheus";
-              type = "prometheus";
-              url = "http://127.0.0.1:${builtins.toString prefs.prometheusPort}";
-            }
-          ]
-          ++ lib.optionals prefs.enableLoki [
-            {
-              access = "proxy";
-              jsonData = { };
-              name = "Loki";
-              type = "loki";
-              url = "http://127.0.0.1:${builtins.toString prefs.lokiHttpPort}";
-            }
-          ];
+        datasources = [
+          {
+            access = "proxy";
+            url = "\${PROMETHEUS_URL}";
+            basicAuth = true;
+            basicAuthUser = "\${PROMETHEUS_USERNAME}";
+            basicAuthPassword = "\${PROMETHEUS_PASSWORD}";
+            jsonData = {
+              httpMethod = "POST";
+            };
+            name = "Prometheus Remote";
+            type = "prometheus";
+          }
+        ]
+        ++ [
+          {
+            access = "proxy";
+            url = "\${LOKI_URL}";
+            basicAuth = true;
+            basicAuthUser = "\${LOKI_USERNAME}";
+            basicAuthPassword = "\${LOKI_PASSWORD}";
+            jsonData = { };
+            name = "Loki Remote";
+            type = "loki";
+          }
+        ]
+        ++ lib.optionals prefs.enablePrometheus [
+          {
+            access = "proxy";
+            isDefault = true;
+            jsonData = {
+              httpMethod = "POST";
+            };
+            name = "Prometheus";
+            type = "prometheus";
+            url = "http://127.0.0.1:${builtins.toString prefs.prometheusPort}";
+          }
+        ]
+        ++ lib.optionals prefs.enableLoki [
+          {
+            access = "proxy";
+            jsonData = { };
+            name = "Loki";
+            type = "loki";
+            url = "http://127.0.0.1:${builtins.toString prefs.lokiHttpPort}";
+          }
+        ];
       };
     };
 
@@ -1894,7 +1892,8 @@ in
       enable = prefs.enablePrometheus;
       extraFlags = [
         "--enable-feature=expand-external-labels"
-      ] ++ (if prefs.enablePrometheusAgent then [ "--enable-feature=agent" ] else [ ]);
+      ]
+      ++ (if prefs.enablePrometheusAgent then [ "--enable-feature=agent" ] else [ ]);
       port = prefs.prometheusPort;
       exporters = {
         node = {
@@ -2229,115 +2228,115 @@ in
           http_listen_port = prefs.promtailHttpPort;
           grpc_listen_port = prefs.promtailGrpcPort;
         };
-        clients =
-          [ { url = "\${LOKI_URL}"; } ]
-          ++ (lib.optionals prefs.enableLoki [
-            {
-              url = "http://127.0.0.1:${builtins.toString prefs.lokiHttpPort}/loki/api/v1/push";
-            }
-          ]);
+        clients = [
+          { url = "\${LOKI_URL}"; }
+        ]
+        ++ (lib.optionals prefs.enableLoki [
+          {
+            url = "http://127.0.0.1:${builtins.toString prefs.lokiHttpPort}/loki/api/v1/push";
+          }
+        ]);
         positions = {
           "filename" = "/var/cache/promtail/positions.yaml";
         };
-        scrape_configs =
-          [
-            {
-              job_name = "journal";
-              journal = {
-                labels = {
-                  job = "journald";
-                  nodename = prefs.hostname;
-                };
-                max_age = "12h";
+        scrape_configs = [
+          {
+            job_name = "journal";
+            journal = {
+              labels = {
+                job = "journald";
+                nodename = prefs.hostname;
               };
-              relabel_configs = [
-                {
-                  source_labels = [ "__journal__boot_id" ];
-                  target_label = "boot_id";
-                }
-                {
-                  source_labels = [ "__journal__comm" ];
-                  target_label = "command";
-                }
-                {
-                  source_labels = [ "__journal__cmdline" ];
-                  target_label = "command_line";
-                }
-                {
-                  source_labels = [ "__journal__exe" ];
-                  target_label = "executable";
-                }
-                {
-                  source_labels = [ "__journal__hostname" ];
-                  target_label = "nodename";
-                }
-                {
-                  source_labels = [ "__journal__systemd_unit" ];
-                  target_label = "systemd_unit";
-                }
-                {
-                  source_labels = [ "__journal__systemd_user_unit" ];
-                  target_label = "systemd_user_unit";
-                }
-                {
-                  source_labels = [ "__journal__syslog_identifier" ];
-                  target_label = "syslog_identifier";
-                }
-                {
-                  source_labels = [ "__journal_priority" ];
-                  target_label = "journal_priority";
-                }
-                {
-                  source_labels = [ "__journal__transport" ];
-                  target_label = "journal_transport";
-                }
-                {
-                  source_labels = [ "__journal_image_name" ];
-                  target_label = "container_image_name";
-                }
-                {
-                  source_labels = [ "__journal_container_name" ];
-                  target_label = "container_name";
-                }
-                {
-                  source_labels = [ "__journal_container_id" ];
-                  target_label = "container_id";
-                }
-                {
-                  source_labels = [ "__journal_container_tag" ];
-                  target_label = "container_tag";
-                }
-              ];
-            }
-          ]
-          ++ lib.optionals prefs.enableTraefik [
-            {
-              job_name = "traefik";
-              static_configs = [
-                {
-                  targets = [ "localhost" ];
-                  labels = {
-                    __path__ = "/var/log/traefik/log.json";
-                    nodename = prefs.hostname;
-                    job = "traefik";
-                  };
-                }
-              ];
-            }
-            {
-              job_name = "traefik-access";
-              static_configs = [
-                {
-                  targets = [ "localhost" ];
-                  labels = {
-                    __path__ = "/var/log/traefik/access.log.json";
-                    nodename = prefs.hostname;
-                    job = "traefik-access";
-                  };
-                }
-              ];
-            }
-          ];
+              max_age = "12h";
+            };
+            relabel_configs = [
+              {
+                source_labels = [ "__journal__boot_id" ];
+                target_label = "boot_id";
+              }
+              {
+                source_labels = [ "__journal__comm" ];
+                target_label = "command";
+              }
+              {
+                source_labels = [ "__journal__cmdline" ];
+                target_label = "command_line";
+              }
+              {
+                source_labels = [ "__journal__exe" ];
+                target_label = "executable";
+              }
+              {
+                source_labels = [ "__journal__hostname" ];
+                target_label = "nodename";
+              }
+              {
+                source_labels = [ "__journal__systemd_unit" ];
+                target_label = "systemd_unit";
+              }
+              {
+                source_labels = [ "__journal__systemd_user_unit" ];
+                target_label = "systemd_user_unit";
+              }
+              {
+                source_labels = [ "__journal__syslog_identifier" ];
+                target_label = "syslog_identifier";
+              }
+              {
+                source_labels = [ "__journal_priority" ];
+                target_label = "journal_priority";
+              }
+              {
+                source_labels = [ "__journal__transport" ];
+                target_label = "journal_transport";
+              }
+              {
+                source_labels = [ "__journal_image_name" ];
+                target_label = "container_image_name";
+              }
+              {
+                source_labels = [ "__journal_container_name" ];
+                target_label = "container_name";
+              }
+              {
+                source_labels = [ "__journal_container_id" ];
+                target_label = "container_id";
+              }
+              {
+                source_labels = [ "__journal_container_tag" ];
+                target_label = "container_tag";
+              }
+            ];
+          }
+        ]
+        ++ lib.optionals prefs.enableTraefik [
+          {
+            job_name = "traefik";
+            static_configs = [
+              {
+                targets = [ "localhost" ];
+                labels = {
+                  __path__ = "/var/log/traefik/log.json";
+                  nodename = prefs.hostname;
+                  job = "traefik";
+                };
+              }
+            ];
+          }
+          {
+            job_name = "traefik-access";
+            static_configs = [
+              {
+                targets = [ "localhost" ];
+                labels = {
+                  __path__ = "/var/log/traefik/access.log.json";
+                  nodename = prefs.hostname;
+                  job = "traefik-access";
+                };
+              }
+            ];
+          }
+        ];
       };
     };
 
@@ -2519,176 +2518,175 @@ in
               insecureSkipVerify = true;
             };
           };
-          routers =
+          routers = {
+            traefik-dashboard = {
+              rule = "${getTraefikRuleByDomainPrefix "traefik"} && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))";
+              middlewares = [ "authelia@docker" ];
+              entryPoints = [ "websecure" ];
+              service = "api@internal";
+              tls = { };
+            };
+            etesync-pim = {
+              rule = getTraefikRuleByDomainPrefix "etesync-pim";
+              service = "etesync-pim";
+              tls = { };
+            };
+            etesync-notes = {
+              rule = getTraefikRuleByDomainPrefix "etesync-notes";
+              service = "etesync-notes";
+              tls = { };
+            };
+            aria2rpc = {
+              rule = "(${getTraefikRuleByDomainPrefix "aria2"}) && PathPrefix(`/jsonrpc`)";
+              service = "aria2rpc";
+              tls = { };
+            };
+            aria2 = {
+              rule = getTraefikRuleByDomainPrefix "aria2";
+              middlewares = [ "aria2" ];
+              service = "aria2";
+              tls = { };
+            };
+            rclone = {
+              rule = getTraefikRuleByDomainPrefix "rclone";
+              service = "rclone";
+              tls = { };
+            };
+            organice = {
+              rule = getTraefikRuleByDomainPrefix "organice";
+              service = "organice";
+              tls = { };
+            };
+            temp = {
+              rule = getTraefikRuleByDomainPrefix "temp";
+              service = "temp";
+              middlewares = [ ];
+              tls = { };
+            };
+            test = {
+              rule = getTraefikRuleByDomainPrefix "test";
+              service = "test";
+              middlewares = [ ];
+              tls = { };
+            };
+          }
+          // (mergeOptionalConfigs [
             {
-              traefik-dashboard = {
-                rule = "${getTraefikRuleByDomainPrefix "traefik"} && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))";
-                middlewares = [ "authelia@docker" ];
-                entryPoints = [ "websecure" ];
-                service = "api@internal";
-                tls = { };
-              };
-              etesync-pim = {
-                rule = getTraefikRuleByDomainPrefix "etesync-pim";
-                service = "etesync-pim";
-                tls = { };
-              };
-              etesync-notes = {
-                rule = getTraefikRuleByDomainPrefix "etesync-notes";
-                service = "etesync-notes";
-                tls = { };
-              };
-              aria2rpc = {
-                rule = "(${getTraefikRuleByDomainPrefix "aria2"}) && PathPrefix(`/jsonrpc`)";
-                service = "aria2rpc";
-                tls = { };
-              };
-              aria2 = {
-                rule = getTraefikRuleByDomainPrefix "aria2";
-                middlewares = [ "aria2" ];
-                service = "aria2";
-                tls = { };
-              };
-              rclone = {
-                rule = getTraefikRuleByDomainPrefix "rclone";
-                service = "rclone";
-                tls = { };
-              };
-              organice = {
-                rule = getTraefikRuleByDomainPrefix "organice";
-                service = "organice";
-                tls = { };
-              };
-              temp = {
-                rule = getTraefikRuleByDomainPrefix "temp";
-                service = "temp";
-                middlewares = [ ];
-                tls = { };
-              };
-              test = {
-                rule = getTraefikRuleByDomainPrefix "test";
-                service = "test";
-                middlewares = [ ];
-                tls = { };
+              enable = prefs.ociContainers.enableHomer;
+              config = {
+                homer = {
+                  rule = getTraefikBareDomainRule;
+                  service = "homer@docker";
+                  tls = { };
+                };
               };
             }
-            // (mergeOptionalConfigs [
-              {
-                enable = prefs.ociContainers.enableHomer;
-                config = {
-                  homer = {
-                    rule = getTraefikBareDomainRule;
-                    service = "homer@docker";
-                    tls = { };
-                  };
+            {
+              enable = prefs.enableCodeServer;
+              config = {
+                codeserver = {
+                  rule = getTraefikRuleByDomainPrefix "codeserver";
+                  service = "codeserver";
+                  middlewares = [ ];
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableCodeServer;
-                config = {
-                  codeserver = {
-                    rule = getTraefikRuleByDomainPrefix "codeserver";
-                    service = "codeserver";
-                    middlewares = [ ];
-                    tls = { };
-                  };
+              };
+            }
+            {
+              enable = prefs.enableWstunnel;
+              config = {
+                wstunnel-with-auth = {
+                  rule = "(${getTraefikRuleByDomainPrefix "wstunnel"}) && !PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
+                  middlewares = [
+                    "authelia@docker"
+                    "wstunnel"
+                  ];
+                  service = "dummy";
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableWstunnel;
-                config = {
-                  wstunnel-with-auth = {
-                    rule = "(${getTraefikRuleByDomainPrefix "wstunnel"}) && !PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
-                    middlewares = [
-                      "authelia@docker"
-                      "wstunnel"
-                    ];
-                    service = "dummy";
-                    tls = { };
-                  };
+              };
+            }
+            {
+              enable = prefs.enableWstunnel;
+              config = {
+                wstunnel = {
+                  rule = "(${getTraefikRuleByDomainPrefix "wstunnel"}) && PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
+                  service = "wstunnel";
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableWstunnel;
-                config = {
-                  wstunnel = {
-                    rule = "(${getTraefikRuleByDomainPrefix "wstunnel"}) && PathPrefix(`/{{ env `WSTUNNEL_PATH` }}`)";
-                    service = "wstunnel";
-                    tls = { };
-                  };
+              };
+            }
+            {
+              enable = prefs.enableSyncthing;
+              config = {
+                syncthing = {
+                  rule = getTraefikRuleByDomainPrefix "syncthing";
+                  service = "syncthing";
+                  middlewares = [
+                    "authelia@docker"
+                    "syncthing"
+                  ];
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableSyncthing;
-                config = {
-                  syncthing = {
-                    rule = getTraefikRuleByDomainPrefix "syncthing";
-                    service = "syncthing";
-                    middlewares = [
-                      "authelia@docker"
-                      "syncthing"
-                    ];
-                    tls = { };
-                  };
+              };
+            }
+            {
+              enable = prefs.enableGrafana;
+              config = {
+                grafana = {
+                  rule = getTraefikRuleByDomainPrefix "grafana";
+                  service = "grafana";
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableGrafana;
-                config = {
-                  grafana = {
-                    rule = getTraefikRuleByDomainPrefix "grafana";
-                    service = "grafana";
-                    tls = { };
-                  };
+              };
+            }
+            {
+              enable = prefs.enableJupyter;
+              config = {
+                jupyter = {
+                  rule = getTraefikRuleByDomainPrefix "jupyter";
+                  service = "jupyter";
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableJupyter;
-                config = {
-                  jupyter = {
-                    rule = getTraefikRuleByDomainPrefix "jupyter";
-                    service = "jupyter";
-                    tls = { };
-                  };
+              };
+            }
+            # {
+            #   enable = prefs.enableSmosServer;
+            #   config = {
+            #     smos = {
+            #       rule = getTraefikRuleByDomainPrefix "smos";
+            #       service = "smos";
+            #       tls = { };
+            #     };
+            #     smos-api = {
+            #       rule = getTraefikRuleByDomainPrefix "smos-api";
+            #       service = "smos-api";
+            #       tls = { };
+            #     };
+            #   };
+            # }
+            {
+              enable = prefs.enableActivityWatch;
+              config = {
+                activitywatch = {
+                  rule = getTraefikRuleByDomainPrefix "activitywatch";
+                  service = "activitywatch";
+                  middlewares = [ "authelia@docker" ];
+                  tls = { };
                 };
-              }
-              # {
-              #   enable = prefs.enableSmosServer;
-              #   config = {
-              #     smos = {
-              #       rule = getTraefikRuleByDomainPrefix "smos";
-              #       service = "smos";
-              #       tls = { };
-              #     };
-              #     smos-api = {
-              #       rule = getTraefikRuleByDomainPrefix "smos-api";
-              #       service = "smos-api";
-              #       tls = { };
-              #     };
-              #   };
-              # }
-              {
-                enable = prefs.enableActivityWatch;
-                config = {
-                  activitywatch = {
-                    rule = getTraefikRuleByDomainPrefix "activitywatch";
-                    service = "activitywatch";
-                    middlewares = [ "authelia@docker" ];
-                    tls = { };
-                  };
+              };
+            }
+            {
+              enable = prefs.enableTtyd;
+              config = {
+                ttyd = {
+                  rule = getTraefikRuleByDomainPrefix "ttyd";
+                  service = "ttyd";
+                  tls = { };
                 };
-              }
-              {
-                enable = prefs.enableTtyd;
-                config = {
-                  ttyd = {
-                    rule = getTraefikRuleByDomainPrefix "ttyd";
-                    service = "ttyd";
-                    tls = { };
-                  };
-                };
-              }
-            ]);
+              };
+            }
+          ]);
           middlewares = {
             aria2 = {
               replacePathRegex = {
@@ -2726,177 +2724,176 @@ in
               };
             };
           };
-          services =
+          services = {
+            # Dummy service to satisfy traefik (each route requires a service).
+            dummy = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [ { url = "https://${prefs.getFullDomainName "dummy"}"; } ];
+              };
+            };
+            etesync-pim = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [ { url = "https://pim.etesync.com/"; } ];
+              };
+            };
+            etesync-notes = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [ { url = "https://notes.etesync.com/"; } ];
+              };
+            };
+            aria2rpc = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [ { url = "http://localhost:6800/"; } ];
+              };
+            };
+            aria2 = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [ { url = "https://ziahamza.github.io/webui-aria2/"; } ];
+              };
+            };
+            rclone = {
+              loadBalancer = {
+                passHostHeader = true;
+                servers = [ { url = "http://localhost:5572/"; } ];
+              };
+            };
+            organice = {
+              loadBalancer = {
+                passHostHeader = false;
+                servers = [ { url = "https://organice.200ok.ch/"; } ];
+              };
+            };
+            temp = {
+              loadBalancer = {
+                servers = [ { url = "http://127.0.0.1:7080/"; } ];
+              };
+            };
+            test = {
+              loadBalancer = {
+                servers = [ { url = "http://127.0.0.1:7081/"; } ];
+              };
+            };
+          }
+          // (mergeOptionalConfigs [
             {
-              # Dummy service to satisfy traefik (each route requires a service).
-              dummy = {
-                loadBalancer = {
-                  passHostHeader = false;
-                  servers = [ { url = "https://${prefs.getFullDomainName "dummy"}"; } ];
-                };
-              };
-              etesync-pim = {
-                loadBalancer = {
-                  passHostHeader = false;
-                  servers = [ { url = "https://pim.etesync.com/"; } ];
-                };
-              };
-              etesync-notes = {
-                loadBalancer = {
-                  passHostHeader = false;
-                  servers = [ { url = "https://notes.etesync.com/"; } ];
-                };
-              };
-              aria2rpc = {
-                loadBalancer = {
-                  passHostHeader = false;
-                  servers = [ { url = "http://localhost:6800/"; } ];
-                };
-              };
-              aria2 = {
-                loadBalancer = {
-                  passHostHeader = false;
-                  servers = [ { url = "https://ziahamza.github.io/webui-aria2/"; } ];
-                };
-              };
-              rclone = {
-                loadBalancer = {
-                  passHostHeader = true;
-                  servers = [ { url = "http://localhost:5572/"; } ];
-                };
-              };
-              organice = {
-                loadBalancer = {
-                  passHostHeader = false;
-                  servers = [ { url = "https://organice.200ok.ch/"; } ];
-                };
-              };
-              temp = {
-                loadBalancer = {
-                  servers = [ { url = "http://127.0.0.1:7080/"; } ];
-                };
-              };
-              test = {
-                loadBalancer = {
-                  servers = [ { url = "http://127.0.0.1:7081/"; } ];
+              enable = prefs.enableCodeServer;
+              config = {
+                codeserver = {
+                  loadBalancer = {
+                    servers = [ { url = "http://127.0.0.1:4050/"; } ];
+                  };
                 };
               };
             }
-            // (mergeOptionalConfigs [
-              {
-                enable = prefs.enableCodeServer;
-                config = {
-                  codeserver = {
-                    loadBalancer = {
-                      servers = [ { url = "http://127.0.0.1:4050/"; } ];
-                    };
+            {
+              enable = prefs.enableWstunnel;
+              config = {
+                wstunnel = {
+                  loadBalancer = {
+                    servers = [
+                      {
+                        url = "http://127.0.0.1:${builtins.toString prefs.wstunnelPort}/";
+                      }
+                    ];
                   };
                 };
-              }
-              {
-                enable = prefs.enableWstunnel;
-                config = {
-                  wstunnel = {
-                    loadBalancer = {
-                      servers = [
-                        {
-                          url = "http://127.0.0.1:${builtins.toString prefs.wstunnelPort}/";
-                        }
-                      ];
-                    };
+              };
+            }
+            {
+              enable = prefs.enableSyncthing;
+              config = {
+                syncthing = {
+                  loadBalancer = {
+                    passHostHeader = false;
+                    servers = [ { url = "http://127.0.0.1:8384/"; } ];
                   };
                 };
-              }
-              {
-                enable = prefs.enableSyncthing;
-                config = {
-                  syncthing = {
-                    loadBalancer = {
-                      passHostHeader = false;
-                      servers = [ { url = "http://127.0.0.1:8384/"; } ];
-                    };
+              };
+            }
+            {
+              enable = prefs.enableGrafana;
+              config = {
+                grafana = {
+                  loadBalancer = {
+                    servers = [
+                      {
+                        url = "http://127.0.0.1:${toString config.services.grafana.port}";
+                      }
+                    ];
                   };
                 };
-              }
-              {
-                enable = prefs.enableGrafana;
-                config = {
-                  grafana = {
-                    loadBalancer = {
-                      servers = [
-                        {
-                          url = "http://127.0.0.1:${toString config.services.grafana.port}";
-                        }
-                      ];
-                    };
+              };
+            }
+            {
+              enable = prefs.enableJupyter;
+              config = {
+                jupyter = {
+                  loadBalancer = {
+                    servers = [
+                      {
+                        url = "http://127.0.0.1:${toString config.services.jupyterhub.port}";
+                      }
+                    ];
                   };
                 };
-              }
-              {
-                enable = prefs.enableJupyter;
-                config = {
-                  jupyter = {
-                    loadBalancer = {
-                      servers = [
-                        {
-                          url = "http://127.0.0.1:${toString config.services.jupyterhub.port}";
-                        }
-                      ];
-                    };
+              };
+            }
+            # {
+            #   enable = prefs.enableSmosServer;
+            #   config = {
+            #     smos = {
+            #       loadBalancer = {
+            #         servers = [{
+            #           url = "http://localhost:${
+            #           builtins.toString
+            #           config.services.smos.production.web-server.port
+            #         }/";
+            #         }];
+            #       };
+            #     };
+            #     smos-api = {
+            #       loadBalancer = {
+            #         servers = [{
+            #           url = "http://localhost:${
+            #           builtins.toString
+            #           config.services.smos.production.api-server.port
+            #         }/";
+            #         }];
+            #       };
+            #     };
+            #   };
+            # }
+            {
+              enable = prefs.enableActivityWatch;
+              config = {
+                activitywatch = {
+                  loadBalancer = {
+                    servers = [ { url = "http://localhost:5600/"; } ];
                   };
                 };
-              }
-              # {
-              #   enable = prefs.enableSmosServer;
-              #   config = {
-              #     smos = {
-              #       loadBalancer = {
-              #         servers = [{
-              #           url = "http://localhost:${
-              #           builtins.toString
-              #           config.services.smos.production.web-server.port
-              #         }/";
-              #         }];
-              #       };
-              #     };
-              #     smos-api = {
-              #       loadBalancer = {
-              #         servers = [{
-              #           url = "http://localhost:${
-              #           builtins.toString
-              #           config.services.smos.production.api-server.port
-              #         }/";
-              #         }];
-              #       };
-              #     };
-              #   };
-              # }
-              {
-                enable = prefs.enableActivityWatch;
-                config = {
-                  activitywatch = {
-                    loadBalancer = {
-                      servers = [ { url = "http://localhost:5600/"; } ];
-                    };
+              };
+            }
+            {
+              enable = prefs.enableTtyd;
+              config = {
+                ttyd = {
+                  loadBalancer = {
+                    passHostHeader = true;
+                    servers = [
+                      {
+                        url = "http://localhost:${builtins.toString config.services.ttyd.port}/";
+                      }
+                    ];
                   };
                 };
-              }
-              {
-                enable = prefs.enableTtyd;
-                config = {
-                  ttyd = {
-                    loadBalancer = {
-                      passHostHeader = true;
-                      servers = [
-                        {
-                          url = "http://localhost:${builtins.toString config.services.ttyd.port}/";
-                        }
-                      ];
-                    };
-                  };
-                };
-              }
-            ]);
+              };
+            }
+          ]);
         };
         tcp = {
           routers = {
@@ -2991,26 +2988,25 @@ in
             entryPoint = "metrics";
           };
         };
-        providers =
+        providers = {
+          docker = {
+            defaultRule = getTraefikRuleByDomainPrefix "{{ (or (index .Labels `domainprefix`) .Name) | normalize }}";
+            endpoint =
+              if (prefs.ociContainerBackend == "docker") then
+                "unix:///var/run/docker.sock"
+              else
+                "unix:///var/run/podman/podman.sock";
+            network = "${prefs.ociContainerNetwork}";
+          };
+        }
+        // (mergeOptionalConfigs [
           {
-            docker = {
-              defaultRule = getTraefikRuleByDomainPrefix "{{ (or (index .Labels `domainprefix`) .Name) | normalize }}";
-              endpoint =
-                if (prefs.ociContainerBackend == "docker") then
-                  "unix:///var/run/docker.sock"
-                else
-                  "unix:///var/run/podman/podman.sock";
-              network = "${prefs.ociContainerNetwork}";
+            enable = (prefs.enableK3s);
+            config = {
+              kubernetesIngress = { };
             };
           }
-          // (mergeOptionalConfigs [
-            {
-              enable = (prefs.enableK3s);
-              config = {
-                kubernetesIngress = { };
-              };
-            }
-          ]);
+        ]);
       };
     };
     clickhouse = {
@@ -3295,23 +3291,22 @@ in
       caKey = "file:/run/secrets/cfssl-ca-key-pem";
     };
 
-    sslh =
-      {
-        enable = prefs.enableSslh;
-        port = prefs.sslhPort;
-        settings = {
-          verbose-connections = true;
-          transparent = false;
-        };
+    sslh = {
+      enable = prefs.enableSslh;
+      port = prefs.sslhPort;
+      settings = {
+        verbose-connections = true;
+        transparent = false;
+      };
+    }
+    // (
+      let
+        p = impure.sslhConfigFile;
+      in
+      lib.optionalAttrs (builtins.pathExists p) {
+        settings = (builtins.readFile p);
       }
-      // (
-        let
-          p = impure.sslhConfigFile;
-        in
-        lib.optionalAttrs (builtins.pathExists p) {
-          settings = (builtins.readFile p);
-        }
-      );
+    );
 
     unifi.enable = prefs.enableUnifi;
 
@@ -3412,29 +3407,28 @@ in
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;
 
-    greetd =
-      {
-        enable = prefs.enableGreetd;
-      }
-      // lib.optionalAttrs prefs.enableSwayForGreeted {
-        settings =
-          let
-            swayCommand = "systemd-cat -t sway sway";
-          in
-          {
-            initial_session = {
-              # Example of debugging sway.
-              # user = "fallback";
-              # command = "env SWAY_SKIP_SETTING_ENV=1 WLR_RENDERER=vulkan ${swayCommand}";
-              user = prefs.owner;
-              command = swayCommand;
-            };
-            default_session = {
-              user = "greeter";
-              command = "${pkgs.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
-            };
+    greetd = {
+      enable = prefs.enableGreetd;
+    }
+    // lib.optionalAttrs prefs.enableSwayForGreeted {
+      settings =
+        let
+          swayCommand = "systemd-cat -t sway sway";
+        in
+        {
+          initial_session = {
+            # Example of debugging sway.
+            # user = "fallback";
+            # command = "env SWAY_SKIP_SETTING_ENV=1 WLR_RENDERER=vulkan ${swayCommand}";
+            user = prefs.owner;
+            command = swayCommand;
           };
-      };
+          default_session = {
+            user = "greeter";
+            command = "${pkgs.tuigreet}/bin/tuigreet --time --debug --cmd '${swayCommand}'";
+          };
+        };
+    };
     libinput = {
       enable = prefs.enableLibInput;
       touchpad = {
@@ -3442,87 +3436,83 @@ in
         disableWhileTyping = true;
       };
     };
-    displayManager =
-      {
-        sddm = {
-          enable = prefs.enableSddm;
-          enableHidpi = prefs.enableHidpi;
-          autoNumlock = true;
+    displayManager = {
+      sddm = {
+        enable = prefs.enableSddm;
+        enableHidpi = prefs.enableHidpi;
+        autoNumlock = true;
+      };
+      gdm = {
+        enable = prefs.enableGdm;
+      };
+    };
+    xserver = {
+      enable = prefs.enableXserver;
+      verbose = lib.mkForce 7;
+      autorun = true;
+      exportConfiguration = true;
+      xkb = {
+        layout = "us";
+      };
+      dpi = prefs.dpi;
+      # videoDrivers = [ "dummy" ] ++ [ "intel" ];
+      virtualScreen = {
+        x = 1200;
+        y = 1920;
+      };
+      xautolock =
+        let
+          locker = "${pkgs.i3lock}/bin/i3lock";
+          killer = "${pkgs.systemd}/bin/systemctl suspend";
+          notifier = ''${pkgs.libnotify}/bin/notify-send "Locking in 10 seconds"'';
+        in
+        {
+          inherit locker killer notifier;
+          enable = prefs.enableXautolock;
+          enableNotifier = true;
+          nowlocker = locker;
         };
-        gdm = {
-          enable = prefs.enableGdm;
+      # desktopManager.xfce.enable = true;
+      # desktopManager.plasma5.enable = true;
+      # desktopManager.xfce.enableXfwm = false;
+      windowManager = {
+        i3 = {
+          enable = prefs.enableI3;
+        };
+        awesome.enable = prefs.enableAwesome;
+      }
+      // (lib.optionalAttrs prefs.enableXmonad {
+        xmonad = {
+          enable = true;
+          enableContribAndExtras = true;
+          extraPackages =
+            haskellPackages: with haskellPackages; [
+              xmobar
+              # taffybar
+              xmonad-contrib
+              xmonad-extras
+              xmonad-utils
+              # xmonad-windownames
+              # xmonad-entryhelper
+              yeganesh
+              libmpd
+              dbus
+            ];
+        };
+      });
+      displayManager = {
+        sessionCommands = prefs.xSessionCommands;
+        startx = {
+          enable = prefs.enableStartx;
+        };
+        lightdm = {
+          enable = prefs.enableLightdm;
         };
       };
-    xserver =
-      {
-        enable = prefs.enableXserver;
-        verbose = lib.mkForce 7;
-        autorun = true;
-        exportConfiguration = true;
-        xkb = {
-          layout = "us";
-        };
-        dpi = prefs.dpi;
-        # videoDrivers = [ "dummy" ] ++ [ "intel" ];
-        virtualScreen = {
-          x = 1200;
-          y = 1920;
-        };
-        xautolock =
-          let
-            locker = "${pkgs.i3lock}/bin/i3lock";
-            killer = "${pkgs.systemd}/bin/systemctl suspend";
-            notifier = ''${pkgs.libnotify}/bin/notify-send "Locking in 10 seconds"'';
-          in
-          {
-            inherit locker killer notifier;
-            enable = prefs.enableXautolock;
-            enableNotifier = true;
-            nowlocker = locker;
-          };
-        # desktopManager.xfce.enable = true;
-        # desktopManager.plasma5.enable = true;
-        # desktopManager.xfce.enableXfwm = false;
-        windowManager =
-          {
-            i3 = {
-              enable = prefs.enableI3;
-            };
-            awesome.enable = prefs.enableAwesome;
-          }
-          // (lib.optionalAttrs prefs.enableXmonad {
-            xmonad = {
-              enable = true;
-              enableContribAndExtras = true;
-              extraPackages =
-                haskellPackages: with haskellPackages; [
-                  xmobar
-                  # taffybar
-                  xmonad-contrib
-                  xmonad-extras
-                  xmonad-utils
-                  # xmonad-windownames
-                  # xmonad-entryhelper
-                  yeganesh
-                  libmpd
-                  dbus
-                ];
-            };
-          });
-        displayManager =
-          {
-            sessionCommands = prefs.xSessionCommands;
-            startx = {
-              enable = prefs.enableStartx;
-            };
-            lightdm = {
-              enable = prefs.enableLightdm;
-            };
-          };
-      }
-      // (lib.optionalAttrs (prefs.videoDrivers != null) {
-        inherit (prefs) videoDrivers;
-      });
+    }
+    // (lib.optionalAttrs (prefs.videoDrivers != null) {
+      inherit (prefs) videoDrivers;
+    });
   };
 
   xdg = {
@@ -3766,29 +3756,32 @@ in
   ];
 
   containers =
-    let normalizeHostname = hostname: builtins.replaceStrings [ "_" ] [ "-" ] hostname; in {
-    "wired-${normalizeHostname prefs.hostname}" = {
-      privateNetwork = true;
-      autoStart = prefs.enableContainerWired;
-      extraFlags = [
-        "--network-zone=wired"
-      ];
-      config = {
-        services = {
-          netbird = {
-            enable = prefs.enableNetbird;
-          };
-        };
-        systemd.network.enable = prefs.enableSystemdNetworkd;
-        networking.useHostResolvConf = false;
-        services.resolved.fallbackDns = [
-          "223.6.6.6"
-          "119.29.29.29"
+    let
+      normalizeHostname = hostname: builtins.replaceStrings [ "_" ] [ "-" ] hostname;
+    in
+    {
+      "wired-${normalizeHostname prefs.hostname}" = {
+        privateNetwork = true;
+        autoStart = prefs.enableContainerWired;
+        extraFlags = [
+          "--network-zone=wired"
         ];
-        system.stateVersion = prefs.systemStateVersion;
+        config = {
+          services = {
+            netbird = {
+              enable = prefs.enableNetbird;
+            };
+          };
+          systemd.network.enable = prefs.enableSystemdNetworkd;
+          networking.useHostResolvConf = false;
+          services.resolved.fallbackDns = [
+            "223.6.6.6"
+            "119.29.29.29"
+          ];
+          system.stateVersion = prefs.systemStateVersion;
+        };
       };
     };
-  };
 
   virtualisation = {
     libvirtd = {
@@ -3810,20 +3803,19 @@ in
       dockerCompat = prefs.replaceDockerWithPodman;
       extraPackages = if (prefs.enableZfs) then [ pkgs.zfs ] else [ ];
     };
-    docker =
-      {
-        enable = prefs.enableDocker && !prefs.replaceDockerWithPodman;
-        extraOptions = builtins.concatStringsSep " " (
-          [ "--experimental" ]
-          ++ (lib.optionals prefs.enableDockerMetrics [
-            "--metrics-addr=127.0.0.1:${builtins.toString prefs.dockerMetricsPort}"
-          ])
-        );
-        autoPrune.enable = true;
-      }
-      // lib.optionalAttrs prefs.enableZfs {
-        storageDriver = "zfs";
-      };
+    docker = {
+      enable = prefs.enableDocker && !prefs.replaceDockerWithPodman;
+      extraOptions = builtins.concatStringsSep " " (
+        [ "--experimental" ]
+        ++ (lib.optionals prefs.enableDockerMetrics [
+          "--metrics-addr=127.0.0.1:${builtins.toString prefs.dockerMetricsPort}"
+        ])
+      );
+      autoPrune.enable = true;
+    }
+    // lib.optionalAttrs prefs.enableZfs {
+      storageDriver = "zfs";
+    };
     oci-containers =
       let
         timeZone = config.time.timeZone;
@@ -4333,9 +4325,10 @@ in
                 "freeipa.home.arpa"
                 "--realm=HOME.ARPA"
               ];
-              volumes =
-                [ "/var/data/freeipa:/data:Z" ]
-                ++ (if prefs.ociContainerBackend == "docker" then [ "/sys/fs/cgroup:/sys/fs/cgroup:ro" ] else [ ]);
+              volumes = [
+                "/var/data/freeipa:/data:Z"
+              ]
+              ++ (if prefs.ociContainerBackend == "docker" then [ "/sys/fs/cgroup:/sys/fs/cgroup:ro" ] else [ ]);
               traefikForwardingPort = 443;
             };
           }
@@ -4835,15 +4828,16 @@ in
                   prefs.getFullDomainNames "nextcloud"
                 )}";
               };
-              environmentFiles =
-                [ "/run/secrets/nextcloud-env" ]
-                ++ (
-                  if prefs.ociContainers.enablePostgresql then
-                    [ "/run/secrets/nextcloud-postgres-env" ]
-                  else
-                    [ "/run/secrets/nextcloud-sqlite-env" ]
-                )
-                ++ (lib.optionals prefs.ociContainers.enableRedis [ "/run/secrets/nextcloud-redis-env" ]);
+              environmentFiles = [
+                "/run/secrets/nextcloud-env"
+              ]
+              ++ (
+                if prefs.ociContainers.enablePostgresql then
+                  [ "/run/secrets/nextcloud-postgres-env" ]
+                else
+                  [ "/run/secrets/nextcloud-sqlite-env" ]
+              )
+              ++ (lib.optionals prefs.ociContainers.enableRedis [ "/run/secrets/nextcloud-redis-env" ]);
               traefikForwardingPort = 80;
             };
           }
@@ -5438,100 +5432,99 @@ in
           DefaultTimeoutStopSec = "10s";
         };
         tmpfiles = {
-          rules =
-            [
-              "d /root/.cache/trash - root root 30d"
-              "d /root/.local/share/Trash - root root 30d"
-              "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-              "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
-            ]
-            ++ [
-              # This directory lies in /, which should never be snapshotted.
-              # We use this directory to store large files as these files might never be deleted
-              # if they are snapshotted. See also https://serverfault.com/questions/293009/zfs-removing-files-from-snapshots
-              "d /nosnapshot/${prefs.owner} - ${prefs.owner} ${prefs.ownerGroup} -"
-            ]
-            ++ [
-              "d /var/data/warehouse - ${prefs.owner} ${prefs.ownerGroup} -"
-            ]
-            ++ [
-              # Otherwise the parent directory's owner is root.
-              # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
-              "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
-              "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
-              "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
-            ]
-            ++ (mergeOptionalLists [
-              {
-                enable = prefs.ociContainers.enableSuperset;
-                list = [
-                  "d /var/data/superset - 1000 1000 -"
-                  "d /var/data/superset/pythonpath - 1000 1000 -"
-                  "d /var/data/superset/home - 1000 1000 -"
-                ];
-              }
-              {
-                enable = prefs.ociContainers.enablePerkeep;
-                list = [
-                  "d /var/data/perkeep - 1000 1000 -"
-                ];
-              }
-              {
-                enable = prefs.ociContainers.enableHomer;
-                list = [
-                  "d /var/data/homer - 1000 1000 -"
-                ];
-              }
-              {
-                enable = prefs.ociContainers.enableLldap;
-                list = [
-                  "d /var/data/lldap - 33 33 -"
-                ];
-              }
-              {
-                enable = prefs.ociContainers.enableSftpgo;
-                list = [
-                  "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
-                  "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
-                  "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
-                  "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
-                ];
-              }
-              {
-                enable = prefs.ociContainers.enableEtesync;
-                list = [
-                  "d /var/data/etesync - 373 373 -"
-                  "d /var/data/etesync/media - 373 373 -"
-                ];
-              }
-              {
-                enable = prefs.ociContainers.enableEtesyncDav;
-                list = [ "d /var/data/etesync-dav - 1000 1000 -" ];
-              }
-              {
-                enable = prefs.ociContainers.enableTrilium;
-                list = [ "d /var/data/trilium - 1000 1000 -" ];
-              }
-              {
-                enable = prefs.ociContainers.enableTiddlyWiki;
-                list = [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ];
-              }
-              {
-                enable = prefs.ociContainers.enablePleroma;
-                list = [ "d /var/data/pleroma - 100 0 -" ];
-              }
-              {
-                enable = prefs.ociContainers.enableFilestash;
-                list = [ "d /var/data/filestash - 1000 1000 -" ];
-              }
-              {
-                enable = prefs.ociContainers.enableGitea;
-                list = [
-                  "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
-                  "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
-                ];
-              }
-            ]);
+          rules = [
+            "d /root/.cache/trash - root root 30d"
+            "d /root/.local/share/Trash - root root 30d"
+            "d ${prefs.home}/.cache/trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+            "d ${prefs.home}/.local/share/Trash - ${prefs.owner} ${prefs.ownerGroup} 30d"
+          ]
+          ++ [
+            # This directory lies in /, which should never be snapshotted.
+            # We use this directory to store large files as these files might never be deleted
+            # if they are snapshotted. See also https://serverfault.com/questions/293009/zfs-removing-files-from-snapshots
+            "d /nosnapshot/${prefs.owner} - ${prefs.owner} ${prefs.ownerGroup} -"
+          ]
+          ++ [
+            "d /var/data/warehouse - ${prefs.owner} ${prefs.ownerGroup} -"
+          ]
+          ++ [
+            # Otherwise the parent directory's owner is root.
+            # https://stackoverflow.com/questions/66362660/docker-volume-mount-giving-root-ownership-of-parent-directory
+            "d ${prefs.nextcloudContainerDataDirectory} - 33 33 -"
+            "f ${prefs.nextcloudContainerDataDirectory}/.ocdata - 33 33 -"
+            "d ${prefs.nextcloudContainerDataDirectory}/e - 33 33 -"
+          ]
+          ++ (mergeOptionalLists [
+            {
+              enable = prefs.ociContainers.enableSuperset;
+              list = [
+                "d /var/data/superset - 1000 1000 -"
+                "d /var/data/superset/pythonpath - 1000 1000 -"
+                "d /var/data/superset/home - 1000 1000 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enablePerkeep;
+              list = [
+                "d /var/data/perkeep - 1000 1000 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableHomer;
+              list = [
+                "d /var/data/homer - 1000 1000 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableLldap;
+              list = [
+                "d /var/data/lldap - 33 33 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableSftpgo;
+              list = [
+                "d /var/data/sftpgo - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/sftpgo/backups - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/sftpgo/config - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/sftpgo/data - ${prefs.owner} ${prefs.ownerGroup} -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableEtesync;
+              list = [
+                "d /var/data/etesync - 373 373 -"
+                "d /var/data/etesync/media - 373 373 -"
+              ];
+            }
+            {
+              enable = prefs.ociContainers.enableEtesyncDav;
+              list = [ "d /var/data/etesync-dav - 1000 1000 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableTrilium;
+              list = [ "d /var/data/trilium - 1000 1000 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableTiddlyWiki;
+              list = [ "d /var/data/tiddlywiki - ${prefs.owner} ${prefs.ownerGroup} -" ];
+            }
+            {
+              enable = prefs.ociContainers.enablePleroma;
+              list = [ "d /var/data/pleroma - 100 0 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableFilestash;
+              list = [ "d /var/data/filestash - 1000 1000 -" ];
+            }
+            {
+              enable = prefs.ociContainers.enableGitea;
+              list = [
+                "d /var/data/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
+                "d /var/data/gitea/gitea - ${prefs.owner} ${prefs.ownerGroup} -"
+              ];
+            }
+          ]);
         };
       }
 
@@ -6005,24 +5998,23 @@ in
               enable = prefs.enableTraefik;
               config = {
                 "traefik" = {
-                  serviceConfig =
-                    {
-                      LogsDirectory = "traefik";
-                      EnvironmentFile = [ "/run/secrets/traefik-env" ];
-                      SupplementaryGroups = "keys acme";
-                    }
-                    // (lib.optionalAttrs (prefs.ociContainerBackend == "docker") {
-                      SupplementaryGroups = "keys acme docker";
-                    })
-                    // (lib.optionalAttrs (prefs.ociContainerBackend == "podman") {
-                      User = lib.mkForce "root";
-                    })
-                    // (lib.optionalAttrs (prefs.enableK3s) {
-                      # TODO: Use a less privileged kube config.
-                      Environment = "KUBECONFIG=/kubeconfig.yaml";
-                      ExecStartPre = "+${pkgs.acl}/bin/setfacl -m 'u:traefik:r--' /kubeconfig.yaml";
-                      BindPaths = "/etc/rancher/k3s/k3s.yaml:/kubeconfig.yaml";
-                    });
+                  serviceConfig = {
+                    LogsDirectory = "traefik";
+                    EnvironmentFile = [ "/run/secrets/traefik-env" ];
+                    SupplementaryGroups = "keys acme";
+                  }
+                  // (lib.optionalAttrs (prefs.ociContainerBackend == "docker") {
+                    SupplementaryGroups = "keys acme docker";
+                  })
+                  // (lib.optionalAttrs (prefs.ociContainerBackend == "podman") {
+                    User = lib.mkForce "root";
+                  })
+                  // (lib.optionalAttrs (prefs.enableK3s) {
+                    # TODO: Use a less privileged kube config.
+                    Environment = "KUBECONFIG=/kubeconfig.yaml";
+                    ExecStartPre = "+${pkgs.acl}/bin/setfacl -m 'u:traefik:r--' /kubeconfig.yaml";
+                    BindPaths = "/etc/rancher/k3s/k3s.yaml:/kubeconfig.yaml";
+                  });
                 };
               };
             }
@@ -6204,7 +6196,8 @@ in
               pkgs.systemd
               pkgs.iputils
               pkgs.util-linux
-            ] ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
+            ]
+            ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
             script = ''
               set -euo pipefail
 
@@ -6764,16 +6757,15 @@ in
                   "network-online.target"
                   "${nextcloudUnitName}.service"
                 ];
-                path =
-                  [
-                    pkgs.coreutils
-                    pkgs.gzip
-                    pkgs.systemd
-                    pkgs.curl
-                    pkgs.util-linux
-                  ]
-                  ++ (lib.optionals (prefs.ociContainerBackend == "docker") [ config.virtualisation.docker.package ])
-                  ++ (lib.optionals (prefs.ociContainerBackend == "podman") [ config.virtualisation.podman.package ]);
+                path = [
+                  pkgs.coreutils
+                  pkgs.gzip
+                  pkgs.systemd
+                  pkgs.curl
+                  pkgs.util-linux
+                ]
+                ++ (lib.optionals (prefs.ociContainerBackend == "docker") [ config.virtualisation.docker.package ])
+                ++ (lib.optionals (prefs.ociContainerBackend == "podman") [ config.virtualisation.podman.package ]);
                 serviceConfig = {
                   Type = "oneshot";
                   ExecStart = "${maintain-script}";
@@ -6837,16 +6829,15 @@ in
                 onFailure = [
                   "notify-systemd-unit-failures@${postgresqlBackupUnitName}.service"
                 ];
-                path =
-                  [
-                    pkgs.coreutils
-                    pkgs.gzip
-                    pkgs.systemd
-                    pkgs.curl
-                    pkgs.util-linux
-                  ]
-                  ++ (lib.optionals (prefs.ociContainerBackend == "docker") [ config.virtualisation.docker.package ])
-                  ++ (lib.optionals (prefs.ociContainerBackend == "podman") [ config.virtualisation.podman.package ]);
+                path = [
+                  pkgs.coreutils
+                  pkgs.gzip
+                  pkgs.systemd
+                  pkgs.curl
+                  pkgs.util-linux
+                ]
+                ++ (lib.optionals (prefs.ociContainerBackend == "docker") [ config.virtualisation.docker.package ])
+                ++ (lib.optionals (prefs.ociContainerBackend == "podman") [ config.virtualisation.podman.package ]);
                 serviceConfig = {
                   Type = "oneshot";
                   ExecStart = "${backup-script}";
@@ -7096,7 +7087,11 @@ in
       binary-cache-public-keys = [ ];
       auto-optimise-store = true;
       substituters = if config.hardware.nvidia.enabled then [ "https://cache.nixos-cuda.org" ] else [ ];
-      trusted-public-keys = if config.hardware.nvidia.enabled then [ "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" ] else [ ];
+      trusted-public-keys =
+        if config.hardware.nvidia.enabled then
+          [ "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" ]
+        else
+          [ ];
     };
     gc = {
       automatic = true;
@@ -7128,76 +7123,75 @@ in
     };
   };
 
-  boot =
-    {
-      binfmt = { inherit (prefs) emulatedSystems; };
-      kernel.sysctl = prefs.kernelSysctl;
-      loader = {
-        generationsDir = {
-          enable = prefs.enableGenerationsDir;
-          copyKernels = true;
-        };
-        efi = {
-          canTouchEfiVariables = prefs.efiCanTouchEfiVariables;
-        };
-        grub = {
-          enable = prefs.enableGrub;
-          copyKernels = true;
-          efiSupport = true;
-          efiInstallAsRemovable = !prefs.efiCanTouchEfiVariables;
-          enableCryptodisk = true;
-          useOSProber = true;
-          zfsSupport = prefs.enableZfs;
-        };
-        systemd-boot = {
-          enable = prefs.enableSystemdBoot;
-          configurationLimit = 25;
-        };
+  boot = {
+    binfmt = { inherit (prefs) emulatedSystems; };
+    kernel.sysctl = prefs.kernelSysctl;
+    loader = {
+      generationsDir = {
+        enable = prefs.enableGenerationsDir;
+        copyKernels = true;
       };
-
-      supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
-      zfs = {
-        package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
+      efi = {
+        canTouchEfiVariables = prefs.efiCanTouchEfiVariables;
       };
-      crashDump = {
-        enable = prefs.enableCrashDump;
+      grub = {
+        enable = prefs.enableGrub;
+        copyKernels = true;
+        efiSupport = true;
+        efiInstallAsRemovable = !prefs.efiCanTouchEfiVariables;
+        enableCryptodisk = true;
+        useOSProber = true;
+        zfsSupport = prefs.enableZfs;
       };
-      initrd = {
-        kernelModules = prefs.initrdKernelModules;
-        availableKernelModules = prefs.initrdAvailableKernelModules;
-        secrets = {
-          "/bin/hole-puncher" = config.sops.secrets.initrd-hole-puncher.path;
-          "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
-          "/root/.ssh/id_ed25519.pub" = config.sops.secrets."port-forwarding-id_ed25519.pub".path;
-        };
-        network = {
-          enable = true;
-          ssh =
-            let
-              f = impure.sshAuthorizedKeys;
-              authorizedKeys =
-                prefs.authorizedKeys
-                ++ (lib.optionals (builtins.pathExists f) (
-                  builtins.filter (x: x != "") (pkgs.lib.splitString "\n" (builtins.readFile f))
-                ));
-              hostKeys = builtins.filter (x: builtins.pathExists x) [ /run/secrets/initrd_ssh_host_ed25519_key ];
-            in
-            {
-              inherit authorizedKeys hostKeys;
-              enable = prefs.enableBootSSH && authorizedKeys != [ ] && hostKeys != [ ];
-            };
-        };
+      systemd-boot = {
+        enable = prefs.enableSystemdBoot;
+        configurationLimit = 25;
       };
-    }
-    # microvm use its own kernel config.
-    // lib.optionalAttrs (!prefs.enableMicrovmGuest) {
-      inherit (prefs)
-        kernelParams
-        extraModulePackages
-        kernelModules
-        kernelPatches
-        kernelPackages
-        blacklistedKernelModules
-        ;
     };
+
+    supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
+    zfs = {
+      package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
+    };
+    crashDump = {
+      enable = prefs.enableCrashDump;
+    };
+    initrd = {
+      kernelModules = prefs.initrdKernelModules;
+      availableKernelModules = prefs.initrdAvailableKernelModules;
+      secrets = {
+        "/bin/hole-puncher" = config.sops.secrets.initrd-hole-puncher.path;
+        "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
+        "/root/.ssh/id_ed25519.pub" = config.sops.secrets."port-forwarding-id_ed25519.pub".path;
+      };
+      network = {
+        enable = true;
+        ssh =
+          let
+            f = impure.sshAuthorizedKeys;
+            authorizedKeys =
+              prefs.authorizedKeys
+              ++ (lib.optionals (builtins.pathExists f) (
+                builtins.filter (x: x != "") (pkgs.lib.splitString "\n" (builtins.readFile f))
+              ));
+            hostKeys = builtins.filter (x: builtins.pathExists x) [ /run/secrets/initrd_ssh_host_ed25519_key ];
+          in
+          {
+            inherit authorizedKeys hostKeys;
+            enable = prefs.enableBootSSH && authorizedKeys != [ ] && hostKeys != [ ];
+          };
+      };
+    };
+  }
+  # microvm use its own kernel config.
+  // lib.optionalAttrs (!prefs.enableMicrovmGuest) {
+    inherit (prefs)
+      kernelParams
+      extraModulePackages
+      kernelModules
+      kernelPatches
+      kernelPackages
+      blacklistedKernelModules
+      ;
+  };
 }
