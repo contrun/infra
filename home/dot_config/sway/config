@@ -766,7 +766,7 @@ mode "alternative launcher" {
         bindsym o exec $terminal_with_title 'floating fzf files' -e fzfLauncher.sh; mode "default"
         # bindsym z exec $terminal_with_title 'floating zotero files' -e zoteroOpen.sh; mode "default"
         bindsym e exec $terminal_with_title 'floating files' -e ranger; mode "default"
-        bindsym p exec $terminal_with_title 'floating pronounce.sh' -e pronounce.sh; mode "default"
+        bindsym p exec goldendict --main-window "$(wl-paste)"; mode "default"
 
         bindsym $mod+m mode "$switch_modes"
         bindsym Escape mode "default"
