@@ -6,3 +6,8 @@
 # Rotate the currently open image by 90 degrees by pressing 'R'
 <Shift+R> = exec mogrify -rotate 90 "$imv_current_file"
 
+<Shift+C> = exec mogrify -resize 90% "$imv_current_file"
+
+<Shift+Y> = exec sh -c 'wl-copy <<< "$imv_current_file"'
+
+<Shift+P> = exec rsync -aqz "$imv_current_file" /tmp/imv/
