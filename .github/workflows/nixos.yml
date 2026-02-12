@@ -130,7 +130,7 @@ jobs:
 
       - name: Import vault token
         if: steps.variables.outputs.shouldDeployToNode == 'yes'
-        uses: hashicorp/vault-action@v2.7.4
+        uses: hashicorp/vault-action@v3.0.0
         with:
           method: "approle"
           url: "${{ secrets.VAULT_ADDR }}"
