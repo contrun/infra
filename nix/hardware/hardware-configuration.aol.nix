@@ -76,7 +76,7 @@
   # networking.interfaces.eno2.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  services.xserver.videoDrivers = [ "modesetting" "displaylink" "nvidia" ];
 
   powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
 
