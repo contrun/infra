@@ -9,7 +9,7 @@
     - name: Add wireguard IP addresses from host configuration
       lineinfile:
         dest: /etc/hosts
-        line: "{{ hostvars[item].wireguard_address | ansible.netcommon.ipaddr('address') }} {{ hostvars[item].inventory_hostname_short }}"
+        line: "{{ hostvars[item].wireguard_address | ansible.utils.ipaddr('address') }} {{ hostvars[item].inventory_hostname_short }}"
         state: present
       when:
         - hostvars[item].wireguard_address is defined
@@ -20,7 +20,7 @@
     - name: Add wireguard IP addresses from unmanaged peers configuration
       lineinfile:
         dest: /etc/hosts
-        line: "{{ item.allowed_ips | ansible.netcommon.ipaddr('address') }} {{ item.hostnames | join(' ') }}"
+        line: "{{ item.allowed_ips | ansible.utils.ipaddr('address') }} {{ item.hostnames | join(' ') }}"
         state: present
       when: item.hostnames is defined
       with_items: "{{ wireguard_unmanaged_peers.values() | list }}"
