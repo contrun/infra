@@ -1878,6 +1878,7 @@ in
         proxies = lib.genAttrs servers mkProxy;
         proxyNames = builtins.map mkProxyName servers;
         defaultProxyName = builtins.elemAt proxyNames 0;
+        tsCfg = config.services.tailscale;
       in
       {
         enable = prefs.enableSingBox;
@@ -1906,6 +1907,7 @@ in
                 "::/1"
                 "8000::/1"
               ];
+              exclude_interface = lib.mkIf tsCfg.enable [ tsCfg.interfaceName ];
               platform = {
                 http_proxy = {
                   enabled = true;
@@ -1922,6 +1924,13 @@ in
               type = "direct";
             }
           ]
+          ++ (lib.optionals tsCfg.enable [
+            {
+              tag = "ts-if-direct";
+              type = "direct";
+              bind_interface = tsCfg.interfaceName;
+            }
+          ])
           ++ (lib.attrValues proxies)
           ++ [
             {
@@ -1950,58 +1959,76 @@ in
             }
           ];
           dns = {
-            servers = [
-              {
-                tag = "local";
-                type = "udp";
-                server = "223.5.5.5";
-              }
-              {
-                tag = "public";
-                type = "https";
-                server = "dns.alidns.com";
-                domain_resolver = "local";
-              }
-              {
-                tag = "foreign";
-                type = "https";
-                server = "8.8.8.8";
-                detour = "auto";
-              }
-              {
-                tag = "fakeip";
-                type = "fakeip";
-                inet4_range = "198.18.0.0/15";
-                inet6_range = "fc00::/18";
-              }
-            ];
+            servers =
+              (lib.optionals tsCfg.enable [
+                {
+                  tag = "ts-if-dns";
+                  type = "udp";
+                  server = "100.100.100.100";
+                  bind_interface = tsCfg.interfaceName;
+                }
+              ])
+              ++ [
+                {
+                  tag = "local";
+                  type = "udp";
+                  server = "223.5.5.5";
+                }
+                {
+                  tag = "public";
+                  type = "https";
+                  server = "dns.alidns.com";
+                  domain_resolver = "local";
+                }
+                {
+                  tag = "foreign";
+                  type = "https";
+                  server = "8.8.8.8";
+                  detour = "auto";
+                }
+                {
+                  tag = "fakeip";
+                  type = "fakeip";
+                  inet4_range = "198.18.0.0/15";
+                  inet6_range = "fc00::/18";
+                }
+              ];
 
-            rules = [
-              {
-                clash_mode = "direct";
-                server = "local";
-              }
-              {
-                clash_mode = "global";
-                server = "fakeip";
-              }
-              {
-                rule_set = "geosite-cn";
-                server = "local";
-              }
-              {
-                query_type = "HTTPS";
-                action = "reject";
-              }
-              {
-                query_type = [
-                  "A"
-                  "AAAA"
-                ];
-                server = "fakeip";
-                rewrite_ttl = 1;
-              }
-            ];
+            rules =
+              (lib.optionals tsCfg.enable [
+                {
+                  action = "route";
+                  server = "ts-if-dns";
+                  domain_suffix = "ts.net";
+                  ip_accept_any = true;
+                }
+              ])
+              ++ [
+                {
+                  clash_mode = "direct";
+                  server = "local";
+                }
+                {
+                  clash_mode = "global";
+                  server = "fakeip";
+                }
+                {
+                  rule_set = "geosite-cn";
+                  server = "local";
+                }
+                {
+                  query_type = "HTTPS";
+                  action = "reject";
+                }
+                {
+                  query_type = [
+                    "A"
+                    "AAAA"
+                  ];
+                  server = "fakeip";
+                  rewrite_ttl = 1;
+                }
+              ];
             final = "foreign";
             client_subnet = "223.5.5.0/24";
             strategy = "prefer_ipv4";
@@ -2014,62 +2041,69 @@ in
             default_domain_resolver = {
               server = "public";
             };
-            rules = [
-              {
-                action = "sniff";
-                sniffer = [
-                  "http"
-                  "tls"
-                  "quic"
-                  "dns"
-                ];
-              }
-              {
-                type = "logical";
-                mode = "or";
-                rules = [
-                  {
-                    port = 53;
-                  }
-                  {
-                    protocol = "dns";
-                  }
-                ];
-                action = "hijack-dns";
-              }
-              {
-                outbound = "direct";
-                ip_is_private = true;
-              }
-              {
-                outbound = "direct";
-                rule_set = "geoip-cn";
-              }
-              {
-                outbound = "direct";
-                rule_set = "geosite-cn";
-              }
-              {
-                outbound = "direct";
-                type = "logical";
-                mode = "or";
-                rules = (
-                  builtins.map (rs: { rule_set = rs; }) [
-                    "geosite-bank-cn"
-                    "geosite-education-cn"
-                    "geosite-bilibili"
-                    "geosite-chaoxing"
-                  ]
-                );
-              }
-              {
-                action = "reject";
-                rule_set = "geosite-ads";
-              }
-              {
-                action = "resolve";
-              }
-            ];
+            rules =
+              (lib.optionals tsCfg.enable [
+                {
+                  outbound = "ts-if-direct";
+                  ip_cidr = "100.64.0.0/10";
+                }
+              ])
+              ++ [
+                {
+                  action = "sniff";
+                  sniffer = [
+                    "http"
+                    "tls"
+                    "quic"
+                    "dns"
+                  ];
+                }
+                {
+                  type = "logical";
+                  mode = "or";
+                  rules = [
+                    {
+                      port = 53;
+                    }
+                    {
+                      protocol = "dns";
+                    }
+                  ];
+                  action = "hijack-dns";
+                }
+                {
+                  outbound = "direct";
+                  ip_is_private = true;
+                }
+                {
+                  outbound = "direct";
+                  rule_set = "geoip-cn";
+                }
+                {
+                  outbound = "direct";
+                  rule_set = "geosite-cn";
+                }
+                {
+                  outbound = "direct";
+                  type = "logical";
+                  mode = "or";
+                  rules = (
+                    builtins.map (rs: { rule_set = rs; }) [
+                      "geosite-bank-cn"
+                      "geosite-education-cn"
+                      "geosite-bilibili"
+                      "geosite-chaoxing"
+                    ]
+                  );
+                }
+                {
+                  action = "reject";
+                  rule_set = "geosite-ads";
+                }
+                {
+                  action = "resolve";
+                }
+              ];
             rule_set =
               let
                 mkGeoip = tag: rule-set: {
