@@ -2092,19 +2092,6 @@ in
                   rule_set = "geosite-cn";
                 }
                 {
-                  outbound = "direct";
-                  type = "logical";
-                  mode = "or";
-                  rules = (
-                    builtins.map (rs: { rule_set = rs; }) [
-                      "geosite-bank-cn"
-                      "geosite-education-cn"
-                      "geosite-bilibili"
-                      "geosite-chaoxing"
-                    ]
-                  );
-                }
-                {
                   action = "reject";
                   rule_set = "geosite-ads";
                 }
@@ -2114,30 +2101,29 @@ in
               ];
             rule_set =
               let
+                geoipBaseUrl = "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geoip";
+                geositeBaseUrl = "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geosite";
                 mkGeoip = tag: rule-set: {
-                  tag = "geoip-cn";
-                  type = "local";
+                  inherit tag;
+                  type = "remote";
                   format = "binary";
-                  path = "${pkgs.sing-geoip}/share/sing-box/rule-set/${rule-set}.srs";
+                  url = "${geoipBaseUrl}/${rule-set}.srs";
+                  download_detour = "auto";
                 };
                 mkGeosite = tag: rule-set: {
                   inherit tag;
-                  type = "local";
+                  type = "remote";
                   format = "binary";
-                  path = "${pkgs.sing-geosite}/share/sing-box/rule-set/${rule-set}.srs";
+                  url = "${geositeBaseUrl}/${rule-set}.srs";
+                  download_detour = "auto";
                 };
               in
               (lib.mapAttrsToList mkGeoip {
-                geoip-cn = "geoip-cn";
+                geoip-cn = "cn";
               })
               ++ (lib.mapAttrsToList mkGeosite {
-                geosite-cn = "geosite-cn";
-                geosite-ads = "geosite-category-ads-all";
-                geosite-bank-cn = "geosite-category-bank-cn";
-                geosite-education-cn = "geosite-category-education-cn";
-                geosite-bilibili = "geosite-bilibili";
-                geosite-mozilla = "geosite-mozilla";
-                geosite-chaoxing = "geosite-chaoxing";
+                geosite-cn = "cn";
+                geosite-ads = "category-ads";
               });
           };
         };
