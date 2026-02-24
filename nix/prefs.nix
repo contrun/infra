@@ -448,7 +448,8 @@ let
     buildCores = 0;
     maxJobs = "auto";
     proxy = null;
-    enableMihomo = !self.isMinimalSystem;
+    enableMihomo = false;
+    enableSingBox = !self.isMinimalSystem;
     enableClashVerge = false;
     enableClashRedir = false;
     enableClashRedirWatchdog = false;

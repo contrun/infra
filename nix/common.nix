@@ -1827,6 +1827,280 @@ in
       configFile = "${prefs.home}/.local/share/io.github.clash-verge-rev.clash-verge-rev/clash-verge.yaml";
     };
 
+    sing-box =
+      let
+        inherit (config.sops) secrets;
+
+        getShadowsocksServer =
+          name:
+          let
+            result = builtins.match "shadowsocks-server-(.*?)-address" name;
+          in
+          if result == null then null else builtins.elemAt result 0;
+
+        servers = builtins.filter (x: x != null) (
+          builtins.map getShadowsocksServer (lib.attrNames secrets)
+        );
+        mkSecret =
+          server: k:
+          let
+            # We can't properly handle non string value in secret yet.
+            # We will have the following error if we use secret for numbers.
+            # outbounds[1].server_port: json: cannot unmarshal string into Go value of type uint16
+            isPort = k == "server_port";
+            nonPortSecret =
+              let
+                kk = if k == "server" then "address" else k;
+                key = "shadowsocks-server-${server}-${kk}";
+              in
+              {
+                _secret = secrets."${key}".path;
+              };
+            # Our servers currectly only use this port.
+            portSecret = 3333;
+          in
+          if isPort then portSecret else nonPortSecret;
+        mkProxyName = server: "proxy_${server}";
+        mkProxy =
+          server:
+          lib.mergeAttrsList [
+            {
+              type = "shadowsocks";
+              tag = mkProxyName server;
+            }
+            (lib.genAttrs [
+              "server"
+              "server_port"
+              "password"
+              "method"
+            ] (k: mkSecret server k))
+          ];
+        proxies = lib.genAttrs servers mkProxy;
+        proxyNames = builtins.map mkProxyName servers;
+        defaultProxyName = builtins.elemAt proxyNames 0;
+      in
+      {
+        enable = prefs.enableSingBox;
+        settings = {
+          log.level = "warn";
+          inbounds = [
+            {
+              type = "mixed";
+              listen = "::";
+              listen_port = 7890;
+            }
+            {
+              type = "tun";
+              tag = "tun-in";
+              interface_name = "singtun";
+              address = [
+                "172.19.0.1/30"
+                "fdfe:dcba:9876::1/126"
+              ];
+              mtu = 9000;
+              auto_route = true;
+              auto_redirect = true;
+              route_address = [
+                "0.0.0.0/1"
+                "128.0.0.0/1"
+                "::/1"
+                "8000::/1"
+              ];
+              platform = {
+                http_proxy = {
+                  enabled = true;
+                  server = "127.0.0.1";
+                  server_port = 7890;
+                };
+              };
+              stack = "mixed";
+            }
+          ];
+          outbounds = [
+            {
+              tag = "direct";
+              type = "direct";
+            }
+          ]
+          ++ (lib.attrValues proxies)
+          ++ [
+            {
+              type = "urltest";
+              tag = "auto";
+              outbounds = proxyNames;
+            }
+          ]
+          ++ [
+            {
+              type = "selector";
+              tag = "proxy";
+              outbounds = proxyNames ++ [ "auto" ];
+              default = defaultProxyName;
+            }
+          ]
+          ++ [
+            {
+              type = "selector";
+              tag = "final";
+              outbounds = proxyNames ++ [
+                "auto"
+                "direct"
+              ];
+              default = defaultProxyName;
+            }
+          ];
+          dns = {
+            servers = [
+              {
+                tag = "local";
+                type = "udp";
+                server = "223.5.5.5";
+              }
+              {
+                tag = "public";
+                type = "https";
+                server = "dns.alidns.com";
+                domain_resolver = "local";
+              }
+              {
+                tag = "foreign";
+                type = "https";
+                server = "8.8.8.8";
+                detour = "auto";
+              }
+              {
+                tag = "fakeip";
+                type = "fakeip";
+                inet4_range = "198.18.0.0/15";
+                inet6_range = "fc00::/18";
+              }
+            ];
+
+            rules = [
+              {
+                clash_mode = "direct";
+                server = "local";
+              }
+              {
+                clash_mode = "global";
+                server = "fakeip";
+              }
+              {
+                rule_set = "geosite-cn";
+                server = "local";
+              }
+              {
+                query_type = "HTTPS";
+                action = "reject";
+              }
+              {
+                query_type = [
+                  "A"
+                  "AAAA"
+                ];
+                server = "fakeip";
+                rewrite_ttl = 1;
+              }
+            ];
+            final = "foreign";
+            client_subnet = "223.5.5.0/24";
+            strategy = "prefer_ipv4";
+            independent_cache = true;
+            reverse_mapping = true;
+          };
+          route = {
+            auto_detect_interface = true;
+            final = "final";
+            default_domain_resolver = {
+              server = "public";
+            };
+            rules = [
+              {
+                action = "sniff";
+                sniffer = [
+                  "http"
+                  "tls"
+                  "quic"
+                  "dns"
+                ];
+              }
+              {
+                type = "logical";
+                mode = "or";
+                rules = [
+                  {
+                    port = 53;
+                  }
+                  {
+                    protocol = "dns";
+                  }
+                ];
+                action = "hijack-dns";
+              }
+              {
+                outbound = "direct";
+                ip_is_private = true;
+              }
+              {
+                outbound = "direct";
+                rule_set = "geoip-cn";
+              }
+              {
+                outbound = "direct";
+                rule_set = "geosite-cn";
+              }
+              {
+                outbound = "direct";
+                type = "logical";
+                mode = "or";
+                rules = (
+                  builtins.map (rs: { rule_set = rs; }) [
+                    "geosite-bank-cn"
+                    "geosite-education-cn"
+                    "geosite-bilibili"
+                    "geosite-chaoxing"
+                  ]
+                );
+              }
+              {
+                action = "reject";
+                rule_set = "geosite-ads";
+              }
+              {
+                action = "resolve";
+              }
+            ];
+            rule_set =
+              let
+                mkGeoip = tag: rule-set: {
+                  tag = "geoip-cn";
+                  type = "local";
+                  format = "binary";
+                  path = "${pkgs.sing-geoip}/share/sing-box/rule-set/${rule-set}.srs";
+                };
+                mkGeosite = tag: rule-set: {
+                  inherit tag;
+                  type = "local";
+                  format = "binary";
+                  path = "${pkgs.sing-geosite}/share/sing-box/rule-set/${rule-set}.srs";
+                };
+              in
+              (lib.mapAttrsToList mkGeoip {
+                geoip-cn = "geoip-cn";
+              })
+              ++ (lib.mapAttrsToList mkGeosite {
+                geosite-cn = "geosite-cn";
+                geosite-ads = "geosite-category-ads-all";
+                geosite-bank-cn = "geosite-category-bank-cn";
+                geosite-education-cn = "geosite-category-education-cn";
+                geosite-bilibili = "geosite-bilibili";
+                geosite-mozilla = "geosite-mozilla";
+                geosite-chaoxing = "geosite-chaoxing";
+              });
+          };
+        };
+      };
+
     grafana = {
       enable = prefs.enableGrafana;
       settings = {
