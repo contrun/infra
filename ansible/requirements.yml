@@ -9,9 +9,6 @@ roles:
     src: https://github.com/ajaykumar4/ansible-role-zerotier.git
     version: 2386e44142c723c6d67b5206164aec071255c240
   - name: nginxinc.nginx_config
-  - name: ansible-community.ansible-vault
-    src: https://github.com/ansible-community/ansible-vault.git
-    version: v3.3.2
   - name: stefangweichinger.ansible_rclone
   - name: diademiemi.syncthing
 

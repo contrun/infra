@@ -14,7 +14,6 @@
       promtail: servers
       jupyterhub: localhost
       cockroachdb: localhost
-      vault-ssh-host: servers
       systemd-resolved: overlay_nodes
       ssh-port-forwarding: servers
       rclone: servers
