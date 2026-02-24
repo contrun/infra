@@ -154,5 +154,8 @@ ansible-deploy-services:
 ansible-configure-hosts:
 	cd ansible && ansible-playbook hosts.yml --extra-vars services=$(SERVICES) --extra-vars hsts=$(HOSTS)
 
+ansible-generate-lock:
+	cd ansible && ./generate-lock.sh
+
 flyctl-deploy:
 	flyctl deploy -c fly/$(SERVICE)/fly.toml 

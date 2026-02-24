@@ -1,7 +1,6 @@
 ---
 roles:
   - name: aisbergg.systemd_resolved
-  - name: artis3n.tailscale
   - name: githubixx.ansible_role_wireguard
   - name: hugoprudente.envoyproxy
     version: v0.1.3
@@ -20,3 +19,4 @@ collections:
   - name: community.general
   - name: community.kubernetes
   - name: nginxinc.nginx_core
+  - name: artis3n.tailscale
