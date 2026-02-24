@@ -1883,7 +1883,14 @@ in
       {
         enable = prefs.enableSingBox;
         settings = {
-          log.level = "warn";
+          log.level = "debug";
+          experimental = {
+            clash_api = {
+              external_controller = "127.0.0.1:9090";
+              external_ui = "ui";
+              external_ui_download_detour = "auto";
+            };
+          };
           inbounds = [
             {
               type = "mixed";
