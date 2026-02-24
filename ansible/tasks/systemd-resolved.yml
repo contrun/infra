@@ -3,7 +3,7 @@
   block:
     - name: Configure systemd-resolved
       include_role:
-        name: aisbergg.systemd-resolved
+        name: aisbergg.systemd_resolved
       vars:
         systemd_resolved_config:
           LLMNR: yes
