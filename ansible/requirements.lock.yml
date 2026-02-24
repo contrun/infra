@@ -1,23 +1,21 @@
 # Auto-generated lock file - do not edit manually
-# Generated on: 2026-02-24T08:08:52Z
+# Generated on: 2026-02-24T08:14:25Z
 ---
 roles:
-  - name: nginxinc.nginx_config
-    version: "0.7.1"
-  - name: ajaykumar4.zerotier
-    version: "2386e44142c723c6d67b5206164aec071255c240"
-  - name: githubixx.ansible_role_wireguard
-    version: "19.1.0"
-  - name: hugoprudente.envoyproxy
-    version: "v0.1.3"
   - name: diademiemi.syncthing
     version: "main"
   - name: patrickjahns.promtail
     version: "1.31.0"
+  - name: githubixx.ansible_role_wireguard
+    version: "19.1.0"
   - name: aisbergg.systemd_resolved
     version: "v2.1.0"
+  - name: hugoprudente.envoyproxy
+    version: "v0.1.3"
   - name: stefangweichinger.ansible_rclone
     version: "0.2.5"
+  - name: nginxinc.nginx_config
+    version: "0.7.1"
 collections:
   - name: artis3n.tailscale
     version: "1.2.1"

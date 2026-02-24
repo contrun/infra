@@ -5,7 +5,6 @@
     service_groups:
       server: servers
       tailscale: overlay_nodes
-      zerotier: overlay_nodes
       wireguard: overlay_nodes
       gost: edge_proxies
       phantun: edge_proxies
