@@ -1958,11 +1958,12 @@ in
             {
               type = "selector";
               tag = "final";
-              outbounds = proxyNames ++ [
+              outbounds = [
+                "proxy"
                 "auto"
                 "direct"
-              ];
-              default = defaultProxyName;
+              ] ++ proxyNames;
+              default = "proxy";
             }
           ];
           dns = {
