@@ -152,7 +152,7 @@ ansible-deploy-services:
 	cd ansible && ansible-playbook services.yml --extra-vars services=$(SERVICES)
 
 ansible-configure-hosts:
-	cd ansible && ansible-playbook hosts.yml --extra-vars hosts=$(HOSTS)
+	cd ansible && ansible-playbook hosts.yml --extra-vars services=$(SERVICES) --extra-vars hsts=$(HOSTS)
 
 flyctl-deploy:
 	flyctl deploy -c fly/$(SERVICE)/fly.toml 
