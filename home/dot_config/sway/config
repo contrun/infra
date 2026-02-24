@@ -358,7 +358,7 @@ bindsym $altmod+F2    move container to workspace next
 bindsym $altmod+Shift+d output $laptop_output toggle
 bindsym $altmod+Shift+c exec $reload_command
 
-bindsym $mod+o exec $switch_output_command
+bindsym $mod+s exec $switch_output_command
 
 # See Screen won't turn on after resume from sleep https://github.com/swaywm/sway/issues/7228
 # bindswitch --reload --locked lid:on output $laptop_output disable
@@ -689,7 +689,7 @@ bindsym Mod5+F6 exec xbacklight -dec 10
 
 # rofi bindings
 bindsym Mod1+space exec rofi -show drun
-bindsym $mod+s exec rofi -show search -modi search:rofi-web-search.py -i -p "Search: "
+bindsym $mod+o exec rofi -show search -modi search:rofi-web-search.py -i -p "Search: "
 # bindsym $mod+f exec bemenu-run
 
 # move any window to the current workspace
