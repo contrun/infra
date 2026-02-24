@@ -136,7 +136,7 @@ nixos-update-channels:
 nixos-vagrant-box:
 	$(GENERATE) -f vagrant-virtualbox --flake ".#dbx"
 
-ansible-requirements:
+ansible-install-requirements:
 	cd ansible && ansible-galaxy collection install -p galaxy-collections -r requirements.yml && ansible-galaxy role install -p galaxy-roles -r requirements.yml
 
 ansible-diff-inventory-hosts:
@@ -148,8 +148,11 @@ ansible-view-inventory-hosts:
 ansible-edit-inventory-hosts:
 	cd ansible && ansible-vault edit inventory/hosts.yml
 
-ansible-deploy:
+ansible-deploy-services:
 	cd ansible && ansible-playbook services.yml --extra-vars services=$(SERVICES)
+
+ansible-configure-hosts:
+	cd ansible && ansible-playbook hosts.yml --extra-vars hosts=$(HOSTS)
 
 flyctl-deploy:
 	flyctl deploy -c fly/$(SERVICE)/fly.toml 
