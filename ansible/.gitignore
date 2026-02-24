@@ -1,0 +1,7 @@
+# .gitignore - exclude Galaxy downloads
+galaxy-roles/
+galaxy-collections/
+*.retry
+
+# Keep the requirements file
+!requirements.yml

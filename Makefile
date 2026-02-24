@@ -137,7 +137,7 @@ nixos-vagrant-box:
 	$(GENERATE) -f vagrant-virtualbox --flake ".#dbx"
 
 ansible-requirements:
-	cd ansible && ansible-galaxy install -r requirements.yml
+	cd ansible && ansible-galaxy collection install -p galaxy-collections -r requirements.yml && ansible-galaxy role install -p galaxy-roles -r requirements.yml
 
 ansible-diff-inventory-hosts:
 	cd ansible && diff <(git cat-file blob HEAD:ansible/inventory/hosts.yml | ansible-vault view -) <(ansible-vault view inventory/hosts.yml)
