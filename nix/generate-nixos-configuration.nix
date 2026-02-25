@@ -428,27 +428,6 @@ let
                   glusterfs-cert-key = { };
                 };
               }
-              {
-                enable = prefs.enableSingBox;
-                config = {
-                  shadowsocks-server-ste-address = { };
-                  shadowsocks-server-ste-port = { };
-                  shadowsocks-server-ste-password = { };
-                  shadowsocks-server-ste-method = { };
-                  shadowsocks-server-rkn-address = { };
-                  shadowsocks-server-rkn-port = { };
-                  shadowsocks-server-rkn-password = { };
-                  shadowsocks-server-rkn-method = { };
-                  shadowsocks-server-pkn-address = { };
-                  shadowsocks-server-pkn-port = { };
-                  shadowsocks-server-pkn-password = { };
-                  shadowsocks-server-pkn-method = { };
-                  shadowsocks-server-njn-address = { };
-                  shadowsocks-server-njn-port = { };
-                  shadowsocks-server-njn-password = { };
-                  shadowsocks-server-njn-method = { };
-                };
-              }
             ];
       };
     };
