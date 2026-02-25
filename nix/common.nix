@@ -6620,6 +6620,24 @@ in
         };
       }
 
+      {
+        services = lib.optionalAttrs prefs.enableSingBox {
+          sing-box = {
+            serviceConfig = {
+              ExecStartPre =
+                let
+                  script = pkgs.writeShellScript "sing-box-pre-start-bind-mount" ''
+                    ${pkgs.coreutils}/bin/mkdir -p /run/sing-box
+                    ${pkgs.coreutils}/bin/mkdir -p /etc/sing-box-config
+                    ${pkgs.util-linux}/bin/mount --bind /etc/sing-box-config /run/sing-box
+                  '';
+                in
+                lib.mkForce "+${script}";
+            };
+          };
+        };
+      }
+
       ({
         services = lib.optionalAttrs prefs.ociContainers.enableHledger {
           "${prefs.ociContainerBackend}-hledger-init" = {
