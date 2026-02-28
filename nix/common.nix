@@ -572,7 +572,6 @@ in
               (pkgs.waylandPkgs.wlvncc or null)
               brightnessctl
               wl-clipboard
-              # wlsunset
               wlroots
               wayland
               wayland-protocols
@@ -910,6 +909,7 @@ in
           swaybg
           swayidle
           wlrctl
+          wlsunset
           i3status-rust
           termite
           alacritty
