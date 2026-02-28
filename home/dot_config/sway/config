@@ -57,19 +57,14 @@ client.background       #FFFFFF
 # startup applications
 exec dunst
 exec wlsunset -l 39.9 -L 116.4
-exec aw-server
-exec aw-watcher-afk
-exec aw-watcher-window
-exec_always systemctl --user import-environment DISPLAY WAYLAND_DISPLAY
+exec kdeconnectd
+exec fcitx5 -d --replace
+exec copyq
+exec_always systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 # WAYLAND_DISPLAY XDG_CURRENT_DESKTOP requried to share screen
 # https://github.com/emersion/xdg-desktop-portal-wlr/wiki/%22It-doesn't-work%22-Troubleshooting-Checklist
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
-exec_always systemctl --user start foot || foot --server
-exec_always "$(dirname "$(dirname "$(realpath $(which kdeconnect-cli))")")/libexec/kdeconnectd"
-exec_always fcitx5 -d --replace
-exec_always copyq
-exec_always swaybg -m fill -i "$(shuf -n1 -e ~/Storage/wallpapers/*)"
-# exec libinput-gestures-setup start
+exec_always dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+exec_always pkill swaybg; find ~/Storage/muzei -type f -name 'artwork.*' | shuf -n1 | xargs --no-run-if-empty swaybg -m fit -i
 
 # move specific application to specific workspace
 for_window [class="Pale moon" window_role="^(?!GtkFileChooserDialog)"] floating enable
