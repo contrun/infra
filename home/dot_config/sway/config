@@ -470,57 +470,62 @@ mode "windows" {
         bindsym Escape mode "default"
 }
 
+set $scroll_speed_very_slow 1
+set $scroll_speed_slow 10
+set $scroll_speed_fast 50
+bindsym $altmod2+n exec wlrctl pointer scroll $scroll_speed_fast 0
+bindsym $altmod2+p exec wlrctl pointer scroll -$scroll_speed_fast 0
+bindsym $altmod2+u exec wlrctl pointer scroll 0 -$scroll_speed_fast
+bindsym $altmod2+i exec wlrctl pointer scroll 0 $scroll_speed_fast
 bindsym $mod+f exec wl-kbptr-sway-active-win -o modes=floating','click -o mode_floating.source=detect
+bindsym $altmod2+f exec 'wl-kbptr-sway-active-win -o modes=floating -o mode_floating.source=detect; swaymsg mode mouse'
 bindsym $altmod+f mode "mouse"
 mode "mouse" {
-        set $slow 1
-        set $quick 10
-        set $fast 50
 
         bindsym $altmod+g mode default, exec 'wl-kbptr-sway-active-win; swaymsg mode mouse'
         bindsym $mod+g mode default, exec 'wl-kbptr; swaymsg mode mouse'
 
-        bindsym $altmod2+h seat - cursor move -$slow 0
-        bindsym $altmod2+j seat - cursor move 0 $slow
-        bindsym $altmod2+k seat - cursor move 0 -$slow
-        bindsym $altmod2+l seat - cursor move $slow 0
-        bindsym $altmod2+Left seat - cursor move -$slow 0
-        bindsym $altmod2+Down seat - cursor move 0 $slow
-        bindsym $altmod2+Up seat - cursor move 0 -$slow
-        bindsym $altmod2+Right seat - cursor move $slow 0
+        bindsym $altmod2+h seat - cursor move -$scroll_speed_very_slow 0
+        bindsym $altmod2+j seat - cursor move 0 $scroll_speed_very_slow
+        bindsym $altmod2+k seat - cursor move 0 -$scroll_speed_very_slow
+        bindsym $altmod2+l seat - cursor move $scroll_speed_very_slow 0
+        bindsym $altmod2+Left seat - cursor move -$scroll_speed_very_slow 0
+        bindsym $altmod2+Down seat - cursor move 0 $scroll_speed_very_slow
+        bindsym $altmod2+Up seat - cursor move 0 -$scroll_speed_very_slow
+        bindsym $altmod2+Right seat - cursor move $scroll_speed_very_slow 0
 
-        bindsym $mod+h seat - cursor move -$quick 0
-        bindsym $mod+j seat - cursor move 0 $quick
-        bindsym $mod+k seat - cursor move 0 -$quick
-        bindsym $mod+l seat - cursor move $quick 0
-        bindsym $mod+Left seat - cursor move -$quick 0
-        bindsym $mod+Down seat - cursor move 0 $quick
-        bindsym $mod+Up seat - cursor move 0 -$quick
-        bindsym $mod+Right seat - cursor move $quick 0
+        bindsym $mod+h seat - cursor move -$scroll_speed_fast 0
+        bindsym $mod+j seat - cursor move 0 $scroll_speed_fast
+        bindsym $mod+k seat - cursor move 0 -$scroll_speed_fast
+        bindsym $mod+l seat - cursor move $scroll_speed_fast 0
+        bindsym $mod+Left seat - cursor move -$scroll_speed_fast 0
+        bindsym $mod+Down seat - cursor move 0 $scroll_speed_fast
+        bindsym $mod+Up seat - cursor move 0 -$scroll_speed_fast
+        bindsym $mod+Right seat - cursor move $scroll_speed_fast 0
 
-        bindsym $altmod+h seat - cursor move -$fast 0
-        bindsym $altmod+j seat - cursor move 0 $fast
-        bindsym $altmod+k seat - cursor move 0 -$fast
-        bindsym $altmod+l seat - cursor move $fast 0
-        bindsym $altmod+Left seat - cursor move -$fast 0
-        bindsym $altmod+Down seat - cursor move 0 $fast
-        bindsym $altmod+Up seat - cursor move 0 -$fast
-        bindsym $altmod+Right seat - cursor move $fast 0
+        bindsym $altmod+h seat - cursor move -$scroll_speed_slow 0
+        bindsym $altmod+j seat - cursor move 0 $scroll_speed_slow
+        bindsym $altmod+k seat - cursor move 0 -$scroll_speed_slow
+        bindsym $altmod+l seat - cursor move $scroll_speed_slow 0
+        bindsym $altmod+Left seat - cursor move -$scroll_speed_slow 0
+        bindsym $altmod+Down seat - cursor move 0 $scroll_speed_slow
+        bindsym $altmod+Up seat - cursor move 0 -$scroll_speed_slow
+        bindsym $altmod+Right seat - cursor move $scroll_speed_slow 0
 
 
         # Move in the diagonal directions
-        bindsym $altmod2+r seat - cursor move $slow -$slow
-        bindsym $altmod2+e seat - cursor move -$slow -$slow
-        bindsym $altmod2+v seat - cursor move $slow $slow
-        bindsym $altmod2+c seat - cursor move -$slow $slow
-        bindsym $mod+r seat - cursor move $quick -$quick
-        bindsym $mod+e seat - cursor move -$quick -$quick
-        bindsym $mod+v seat - cursor move $quick $quick
-        bindsym $mod+c seat - cursor move -$quick $quick
-        bindsym $altmod+r seat - cursor move $fast -$fast
-        bindsym $altmod+e seat - cursor move -$fast -$fast
-        bindsym $altmod+v seat - cursor move $fast $fast
-        bindsym $altmod+c seat - cursor move -$fast $fast
+        bindsym $altmod2+r seat - cursor move $scroll_speed_very_slow -$scroll_speed_very_slow
+        bindsym $altmod2+e seat - cursor move -$scroll_speed_very_slow -$scroll_speed_very_slow
+        bindsym $altmod2+v seat - cursor move $scroll_speed_very_slow $scroll_speed_very_slow
+        bindsym $altmod2+c seat - cursor move -$scroll_speed_very_slow $scroll_speed_very_slow
+        bindsym $mod+r seat - cursor move $scroll_speed_fast -$scroll_speed_fast
+        bindsym $mod+e seat - cursor move -$scroll_speed_fast -$scroll_speed_fast
+        bindsym $mod+v seat - cursor move $scroll_speed_fast $scroll_speed_fast
+        bindsym $mod+c seat - cursor move -$scroll_speed_fast $scroll_speed_fast
+        bindsym $altmod+r seat - cursor move $scroll_speed_slow -$scroll_speed_slow
+        bindsym $altmod+e seat - cursor move -$scroll_speed_slow -$scroll_speed_slow
+        bindsym $altmod+v seat - cursor move $scroll_speed_slow $scroll_speed_slow
+        bindsym $altmod+c seat - cursor move -$scroll_speed_slow $scroll_speed_slow
 
         # mouse scrolling
         bindsym $altmod2+n exec wlrctl pointer scroll 1 0
@@ -540,41 +545,43 @@ mode "mouse" {
         bindsym $mod+z exec wlrctl pointer scroll 200 0
         bindsym $altmod+z exec wlrctl pointer scroll -200 0
 
-        # Click (press and release) the mouse buttons
-        # TODO: This does not work. Because we are still holding the key,
-        # while the buttons are pressed.
-        # Left button
-        bindsym $altmod+d seat - cursor press button1
-        bindsym --release $altmod+d seat - cursor release button1
-        # Middle button
-        bindsym $altmod+s seat - cursor press button2
-        bindsym --release $altmod+s seat - cursor release button2
-        # Right button
-        bindsym $altmod+a seat - cursor press button3
-        bindsym --release $altmod+a seat - cursor release button3
-
-        # Press the mouse buttons
-        # Left button
-        bindsym $mod+d seat - cursor press button1
-        # Middle button
-        bindsym $mod+s seat - cursor press button2
-        # Right button
-        bindsym $mod+a seat - cursor press button3
-
-        # Release the mouse buttons
-        # Left button
-        bindsym $altmod2+d seat - cursor release button1
-        # Middle button
-        bindsym $altmod2+s seat - cursor release button2
-        # Right button
-        bindsym $altmod2+a seat - cursor release button3
+        # Note only single key shortcuts are working, because key events with
+        # modifier keys holding with also be sent to the application.
+        bindsym a exec wlrctl pointer click left
+        bindsym s exec wlrctl pointer click middle
+        bindsym d exec wlrctl pointer click right
+        # To applications, it is actually control+mouse click as the control key is held.
+        bindsym Control+a exec wlrctl pointer click left
+        bindsym Control+s exec wlrctl pointer click middle
+        bindsym Control+d exec wlrctl pointer click right
+        bindsym Shift+a exec wlrctl pointer click left
+        bindsym Shift+s exec wlrctl pointer click middle
+        bindsym Shift+d exec wlrctl pointer click right
+        bindsym mod1+a exec wlrctl pointer click left
+        bindsym mod1+s exec wlrctl pointer click middle
+        bindsym mod1+d exec wlrctl pointer click right
+        bindsym Control+Shift+a exec wlrctl pointer click left
+        bindsym Control+Shift+s exec wlrctl pointer click middle
+        bindsym Control+Shift+d exec wlrctl pointer click right
+        bindsym Control+mod1+a exec wlrctl pointer click left
+        bindsym Control+mod1+s exec wlrctl pointer click middle
+        bindsym Control+mod1+d exec wlrctl pointer click right
+        bindsym mod1+Shift+a exec wlrctl pointer click left
+        bindsym mod1+Shift+s exec wlrctl pointer click middle
+        bindsym mod1+Shift+d exec wlrctl pointer click right
+        bindsym Control+mod1+Shift+a exec wlrctl pointer click left
+        bindsym Control+mod1+Shift+s exec wlrctl pointer click middle
+        bindsym Control+mod1+Shift+d exec wlrctl pointer click right
 
         # launcher mode is used all too often, so we also bind it to a key here
         bindsym $mod+x mode "launcher"
         bindsym $mod+m mode "$switch_modes"
 
-        bindsym $mod+f exec 'wl-kbptr-sway-active-win -o modes=floating,click -o mode_floating.source=detect; swaymsg mode mouse'
+        bindsym $mod+f exec wl-kbptr-sway-active-win -o modes=floating,click -o mode_floating.source=detect
+        bindsym $altmod2+f exec wl-kbptr-sway-active-win -o modes=floating -o mode_floating.source=detect
         bindsym $altmod+f mode "default"
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
 }
 
 # this serves as the exhaustive collection of things one can do with workspaces
