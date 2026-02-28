@@ -10,6 +10,7 @@ generated.*
 prefs.*.json
 *.log
 /result
+/result-*
 tmp/
 temp.nix
 .direnv/
