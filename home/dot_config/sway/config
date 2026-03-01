@@ -354,6 +354,8 @@ bindsym $altmod+Shift+d output $laptop_output toggle
 bindsym $altmod+Shift+c exec $reload_command
 
 bindsym $mod+grave exec $switch_output_command
+# zw-type failed with error: ImeUnavailable
+bindsym $altmod2+v exec zw-type "$(wl-paste)" || wlrctl keyboard type "$(wl-paste)"
 
 # See Screen won't turn on after resume from sleep https://github.com/swaywm/sway/issues/7228
 # bindswitch --reload --locked lid:on output $laptop_output disable
