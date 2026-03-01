@@ -3411,6 +3411,10 @@ in
 
     # yandex-disk = { enable = prefs.enableYandexDisk; } // yandexConfig;
 
+    seatd = {
+      enable = prefs.enableSeatd;
+      user = prefs.owner;
+    };
     greetd = {
       enable = prefs.enableGreetd;
     }

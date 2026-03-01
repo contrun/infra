@@ -630,6 +630,7 @@ let
     yandexWhat = "https://webdav.yandex.com/sync/";
     enableXserver = !self.isMinimalSystem && self.displayManager != null;
     enableGreetd = true;
+    enableSeatd = !self.isMinimalSystem;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
     # enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
