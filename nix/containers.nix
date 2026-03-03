@@ -46,7 +46,6 @@
                 "s3"
                 "webdav"
                 "restic"
-                "files"
                 "public"
               ];
           appendCommand =
@@ -66,10 +65,6 @@
                 else if name == "restic" then
                   ''
                     ${rcCommand} serve/start type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
-                  ''
-                else if name == "files" then
-                  ''
-                    ${rcCommand} serve/start type=http fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
                   ''
                 else if name == "public" then
                   ''
