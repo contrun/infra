@@ -779,7 +779,7 @@ in
             inherit name;
             text = ''
               set -euo pipefail
-              bws secret get cd2dd09a-285e-4605-92d0-b20a0104fbf4 | jq -r '.value' > "$RCLONE_CONFIG"
+              bws secret get f9876fcd-2545-43d4-be09-b401012a679a | jq -r '.value' > "$RCLONE_CONFIG"
             '';
             runtimeInputs = [
               bws
