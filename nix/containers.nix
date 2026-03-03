@@ -214,7 +214,7 @@
           export RCLONE_PASSWORD_COMMAND="${getSecretName} 3b3ca859-97eb-486b-829b-b20a010a7747"
           rclone_user="$(${getSecretName} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
           rclone_pass="$(${getSecretName} f360f175-7e38-4ac8-9e53-b40101250a36)"
-          RCLONE_RC_USER="$rclone_user" RCLONE_RC_PASS="$rclone_pass" rclone rcd --rc-addr :${builtins.toString rcdPort} --rc-baseurl ${rcdBaseUrl} --rc-web-gui --rc-web-gui-no-open-browser &
+          RCLONE_RC_USER="$rclone_user" RCLONE_RC_PASS="$rclone_pass" rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString rcdPort} --rc-baseurl ${rcdBaseUrl} --rc-web-gui --rc-web-gui-no-open-browser &
           curl --retry 20 --retry-delay 1 --retry-connrefused http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl}
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl} serve/start type=s3 fs=root: addr=:${builtins.toString s3Port} baseurl=${s3BaseUrl} auth_key="$rclone_user,$rclone_pass"
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl} serve/start type=webdav fs=root: addr=:${builtins.toString webdavPort} baseurl=${webdavBaseUrl} realm=${webdavBaseUrl} user="$rclone_user" pass="$rclone_pass"
@@ -267,6 +267,7 @@
           "${builtins.toString envoyAdminPort}/tcp" = { };
           "${builtins.toString envoyPort}/tcp" = { };
         };
+        WorkingDir = "/data";
         Volumes = {
           "/data" = { };
         };
