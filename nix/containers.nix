@@ -27,16 +27,28 @@
   rclone =
     with pkgs;
     let
-      rcdPort = 5572;
-      rcdBaseUrl = "rclone";
-      s3Port = 5573;
-      s3BaseUrl = "s3";
-      webdavPort = 5574;
-      webdavBaseUrl = "webdav";
-      httpPort = 5575;
-      httpBaseUrl = "files";
-      httpPublicPort = 5576;
-      httpPublicBaseUrl = "public";
+      services =
+        let
+          initPort = 5572;
+          list =
+            lib.imap0
+              (x: name: {
+                name = name;
+                value = {
+                  name = name;
+                  port = initPort + x;
+                  url = name;
+                };
+              })
+              [
+                "rclone"
+                "s3"
+                "webdav"
+                "files"
+                "public"
+              ];
+        in
+        builtins.listToAttrs list;
       envoyAdminPort = 9901;
       envoyPort = 10000;
       envoyConfig =
@@ -81,33 +93,9 @@
                 route = mkRoute url name;
                 cluster = mkCluster name port;
               };
-              routesAndClusters = builtins.map (x: mkRouteAndCluster x.name x.url x.port) [
-                {
-                  name = rcdBaseUrl;
-                  url = rcdBaseUrl;
-                  port = rcdPort;
-                }
-                {
-                  name = s3BaseUrl;
-                  url = s3BaseUrl;
-                  port = s3Port;
-                }
-                {
-                  name = webdavBaseUrl;
-                  url = webdavBaseUrl;
-                  port = webdavPort;
-                }
-                {
-                  name = httpBaseUrl;
-                  url = httpBaseUrl;
-                  port = httpPort;
-                }
-                {
-                  name = httpPublicBaseUrl;
-                  url = httpPublicBaseUrl;
-                  port = httpPublicPort;
-                }
-              ];
+              routesAndClusters = builtins.map (value: mkRouteAndCluster value.name value.url value.port) (
+                builtins.attrValues services
+              );
               routes = builtins.map (x: x.route) routesAndClusters;
               clusters = builtins.map (x: x.cluster) routesAndClusters;
             in
@@ -214,12 +202,12 @@
           export RCLONE_PASSWORD_COMMAND="${getSecretName} 3b3ca859-97eb-486b-829b-b20a010a7747"
           rclone_user="$(${getSecretName} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
           rclone_pass="$(${getSecretName} f360f175-7e38-4ac8-9e53-b40101250a36)"
-          RCLONE_RC_USER="$rclone_user" RCLONE_RC_PASS="$rclone_pass" rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString rcdPort} --rc-baseurl ${rcdBaseUrl} --rc-web-gui --rc-web-gui-no-open-browser &
-          curl --retry 20 --retry-delay 1 --retry-connrefused http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl}
-          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl} serve/start type=s3 fs=root: addr=:${builtins.toString s3Port} baseurl=${s3BaseUrl} auth_key="$rclone_user,$rclone_pass"
-          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl} serve/start type=webdav fs=root: addr=:${builtins.toString webdavPort} baseurl=${webdavBaseUrl} realm=${webdavBaseUrl} user="$rclone_user" pass="$rclone_pass"
-          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl} serve/start type=http fs=root: addr=:${builtins.toString httpPort} baseurl=${httpBaseUrl} realm=${httpBaseUrl} user="$rclone_user" pass="$rclone_pass"
-          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://localhost:${builtins.toString rcdPort}/${rcdBaseUrl} serve/start type=http fs=public: addr=:${builtins.toString httpPublicPort} baseurl=${httpPublicBaseUrl}
+          RCLONE_RC_USER="$rclone_user" RCLONE_RC_PASS="$rclone_pass" rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString services.rclone.port} --rc-baseurl ${services.rclone.url} --rc-web-gui --rc-web-gui-no-open-browser &
+          curl --retry 20 --retry-delay 1 --retry-connrefused http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url}
+          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=s3 fs=root: addr=:${builtins.toString services.s3.port} baseurl=${services.s3.url} auth_key="$rclone_user,$rclone_pass"
+          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=webdav fs=root: addr=:${builtins.toString services.webdav.port} baseurl=${services.webdav.url} realm=${services.webdav.name} user="$rclone_user" pass="$rclone_pass"
+          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=root: addr=:${builtins.toString services.files.port} baseurl=${services.files.url} realm=${services.files.name} user="$rclone_user" pass="$rclone_pass"
+          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=public: addr=:${builtins.toString services.public.port} baseurl=${services.public.url}
           envoy -c "${envoyConfig}" &
           wait -n
         '';
