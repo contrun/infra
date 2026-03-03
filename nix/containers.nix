@@ -30,48 +30,114 @@
       exposedPort = 10000;
       services =
         let
-          initPort = 5572;
+          rclonePort = 5572;
+          rcloneUrl = "rclone";
           list =
-            lib.imap0
+            lib.imap1
               (x: name: {
                 name = name;
                 value = {
                   name = name;
-                  port = initPort + x;
+                  port = rclonePort + x;
                   url = name;
                 };
               })
               [
-                "rclone"
                 "s3"
                 "webdav"
                 "restic"
                 "files"
                 "public"
               ];
+          appendCommand =
+            name: attrs:
+            let
+              inherit (attrs) port url;
+              rcCommand = "/bin/rclone rc --url http://127.0.0.1:${builtins.toString rclonePort}/${rcloneUrl}";
+              command =
+                if name == "s3" then
+                  ''
+                    ${rcCommand} serve/start type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} auth_key="$RCLONE_RC_USER,$RCLONE_RC_PASS"
+                  ''
+                else if name == "webdav" then
+                  ''
+                    ${rcCommand} serve/start type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                  ''
+                else if name == "restic" then
+                  ''
+                    ${rcCommand} serve/start type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                  ''
+                else if name == "files" then
+                  ''
+                    ${rcCommand} serve/start type=http fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                  ''
+                else if name == "public" then
+                  ''
+                    ${rcCommand} serve/start type=http fs=public: addr=:${builtins.toString port} baseurl=${url}
+                  ''
+                else
+                  builtins.throw "Unknown service ${name}";
+            in
+            attrs // { inherit command; };
+          services = builtins.mapAttrs appendCommand (builtins.listToAttrs list);
         in
-        builtins.listToAttrs list;
+        {
+          "rclone" = {
+            name = "rclone";
+            port = rclonePort;
+            url = rcloneUrl;
+            command = null;
+          };
+        }
+        // services;
+
       serviceList = builtins.attrValues services;
       nginxConfig =
         let
-          mkUpstream = name: port: ''
+          mkUpstream = name: port: command: ''
             upstream ${name} {
                 balancer_by_lua_block {
                     local balancer = require "ngx.balancer"
+                    local command = ${
+                      if command == null then "nil" else lib.strings.escapeShellArg (lib.strings.trim command)
+                    };
 
-                    local shared = ngx.shared.server_info
-                    local start_time = shared:get("start_time")
-                    local uptime = ngx.now() - start_time
+                    if command ~= nil then
+                        local ngx = require "ngx"
+                        local ngx_pipe = require "ngx.pipe"
 
-                    -- Upstream may not be ready yet. We want to retry
-                    -- if we have not ran for a long time.
-                    if uptime < 60 then
-                        local ok, err = balancer.set_more_tries(1)
-                        if not ok then
-                            ngx.log(ngx.ERR, "Failed to set more tries: ", err)
+                        local shared = ngx.shared.server_info
+                        local key = "is_${name}_initialized"
+
+                        if not shared:get(key) then
+                            ngx.ctx.time_of_starting_command = ngx.now()
+                            local opts = {
+                                merge_stderr = true,
+                                buffer_size = 256,
+                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
+                            }
+                            local proc, err = ngx_pipe.spawn(command, opts)
+                            if not proc then
+                                ngx.log(ngx.ERR, "Failed to initialized ${name}: ", err)
+                                ngx.say("An internal error happened")
+                                return ngx.exit(500)
+                            else
+                                ngx.log(ngx.INFO, "Successfully initialized ${name}")
+                                shared:set(key, true)
+                            end
+                        end
+                        if ngx.ctx.time_of_starting_command ~= nil then
+                            local running_time = ngx.now() - ngx.ctx.time_of_starting_command
+                            if running_time < 60 then
+                                local ok, err = balancer.set_more_tries(1)
+                                if not ok then
+                                    ngx.log(ngx.ERR, "Failed to set more tries: ", err)
+                                end
+                            else
+                                ngx.log(ngx.ERR, "Command does not seem to succeed after 60 seconds: ", command)
+                            end
                         end
                     end
-
                     local host = "127.0.0.1"
                     local port = ${builtins.toString port}
 
@@ -83,7 +149,9 @@
                 }
             }
           '';
-          upstreams = lib.strings.concatMapStringsSep "\n" (x: mkUpstream x.name x.port) serviceList;
+          upstreams = lib.strings.concatMapStringsSep "\n" (
+            x: mkUpstream x.name x.port x.command
+          ) serviceList;
           mkLocation = name: url: ''
             location /${url} {
                 proxy_pass http://${name};
@@ -94,8 +162,11 @@
           config = ''
             daemon off;
             user nobody nobody;
-            error_log /dev/stderr info;
+            error_log stderr info;
             pid /dev/null;
+            env RCLONE_RC_USER;
+            env RCLONE_RC_PASS;
+            env RCLONE_PASSWORD_COMMAND;
 
             events {}
 
@@ -109,7 +180,7 @@
                 ${upstreams}
 
                 # Define a shared dictionary to store the start time
-                lua_shared_dict server_info 1k;
+                lua_shared_dict server_info 12k;
 
                 init_by_lua_block {
                     -- Capture the start time globally once
@@ -149,27 +220,32 @@
           jq
         ];
       };
+      getSecretCommand = "/bin/${getSecretName}";
+      getPasswordName = "get-password";
+      getPassword = writeShellApplication {
+        name = getPasswordName;
+        text = ''
+          set -euo pipefail
+          ${getSecretName} 3b3ca859-97eb-486b-829b-b20a010a7747
+        '';
+        runtimeInputs = [
+          getSecret
+        ];
+      };
+      passwordCommand="/bin/${getPasswordName}";
       entrypointName = "container-entrypoint";
       entrypoint = writeShellApplication {
         name = entrypointName;
         text = ''
           set -euo pipefail
           export RCLONE_CONFIG="/tmp/rclone.conf"
-          ${getSecretName} f9876fcd-2545-43d4-be09-b401012a679a > "$RCLONE_CONFIG"
-          export RCLONE_PASSWORD_COMMAND="${getSecretName} 3b3ca859-97eb-486b-829b-b20a010a7747"
-          rclone_user="$(${getSecretName} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
-          rclone_pass="$(${getSecretName} f360f175-7e38-4ac8-9e53-b40101250a36)"
-          RCLONE_RC_USER="$rclone_user" RCLONE_RC_PASS="$rclone_pass" rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString services.rclone.port} --rc-baseurl ${services.rclone.url} --rc-web-gui-no-open-browser &
-          export rclone_user rclone_pass
-          (
-            curl --retry 20 --retry-delay 1 --retry-connrefused http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url}
-            rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=s3 fs=root: addr=:${builtins.toString services.s3.port} baseurl=${services.s3.url} auth_key="$rclone_user,$rclone_pass" _async=true &
-            rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=webdav fs=root: addr=:${builtins.toString services.webdav.port} baseurl=${services.webdav.url} realm=${services.webdav.name} user="$rclone_user" pass="$rclone_pass" _async=true &
-            rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=restic fs=restic: addr=:${builtins.toString services.restic.port} baseurl=${services.restic.url} realm=${services.restic.name} user="$rclone_user" pass="$rclone_pass" _async=true &
-            rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=root: addr=:${builtins.toString services.files.port} baseurl=${services.files.url} realm=${services.files.name} user="$rclone_user" pass="$rclone_pass" _async=true &
-            rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=public: addr=:${builtins.toString services.public.port} baseurl=${services.public.url} _async=true &
-          )
-          unset rclone_user rclone_pass
+          ${getSecretCommand} f9876fcd-2545-43d4-be09-b401012a679a > "$RCLONE_CONFIG"
+          export RCLONE_PASSWORD_COMMAND="${passwordCommand}"
+          RCLONE_RC_USER="$(${getSecretCommand} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
+          RCLONE_RC_PASS="$(${getSecretCommand} f360f175-7e38-4ac8-9e53-b40101250a36)"
+          export RCLONE_RC_USER RCLONE_RC_PASS
+          rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString services.rclone.port} --rc-baseurl ${services.rclone.url} --rc-web-gui --rc-web-gui-no-open-browser &
+          curl --retry 30 --retry-delay 1 --retry-connrefused http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url}
           nginx -c "${nginxConfig}" &
           wait -n
         '';
@@ -205,6 +281,7 @@
         curl
 
         getSecret
+        getPassword
         entrypoint
       ];
 
