@@ -27,6 +27,7 @@
   rclone =
     with pkgs;
     let
+      exposedPort = 10000;
       services =
         let
           initPort = 5572;
@@ -49,137 +50,49 @@
               ];
         in
         builtins.listToAttrs list;
-      envoyAdminPort = 9901;
-      envoyPort = 10000;
-      envoyConfig =
+      serviceList = builtins.attrValues services;
+      nginxConfig =
         let
-          format = formats.json { };
-          config =
-            let
-              mkRoute = baseUrl: serviceName: {
-                match = {
-                  prefix = "/${baseUrl}";
-                };
-                route = {
-                  cluster = serviceName;
-                };
-              };
-              mkCluster = name: port: {
-                inherit name;
-                connect_timeout = "0.25s";
-                type = "STATIC";
-                lb_policy = "ROUND_ROBIN";
-                load_assignment = {
-                  cluster_name = name;
-                  endpoints = [
-                    {
-                      lb_endpoints = [
-                        {
-                          endpoint = {
-                            address = {
-                              socket_address = {
-                                address = "127.0.0.1";
-                                port_value = port;
-                              };
-                            };
-                          };
-                        }
-                      ];
-                    }
-                  ];
-                };
-              };
-              mkRouteAndCluster = name: url: port: {
-                route = mkRoute url name;
-                cluster = mkCluster name port;
-              };
-              routesAndClusters = builtins.map (value: mkRouteAndCluster value.name value.url value.port) (
-                builtins.attrValues services
-              );
-              routes = builtins.map (x: x.route) routesAndClusters;
-              clusters = builtins.map (x: x.cluster) routesAndClusters;
-            in
-            {
-              admin = {
-                address = {
-                  socket_address = {
-                    address = "0.0.0.0";
-                    port_value = envoyAdminPort;
-                  };
-                };
-              };
+          mkUpstream = name: port: ''
+            upstream ${name} {
+                server 127.0.0.1:${builtins.toString port};
+            }
+          '';
+          upstreams = lib.strings.concatMapStringsSep "\n" (x: mkUpstream x.name x.port) serviceList;
+          mkLocation = name: url: ''
+            location /${url} {
+                proxy_pass http://${name};
+            }
+          '';
+          locations = lib.strings.concatMapStringsSep "\n" (x: mkLocation x.name x.url) serviceList;
+          config = ''
+            daemon off;
+            user nobody nobody;
+            error_log /dev/stderr info;
+            pid /dev/null;
 
-              overload_manager = {
-                resource_monitors = [
-                  {
-                    name = "envoy.resource_monitors.global_downstream_max_connections";
-                    typed_config = {
-                      "@type" =
-                        "type.googleapis.com/envoy.extensions.resource_monitors.downstream_connections.v3.DownstreamConnectionsConfig";
-                      max_active_downstream_connections = 50000;
-                    };
-                  }
-                ];
-              };
+            events {}
 
-              static_resources = {
-                listeners = [
-                  {
-                    name = "listener_0";
-                    address = {
-                      socket_address = {
-                        address = "0.0.0.0";
-                        port_value = envoyPort;
-                      };
-                    };
-                    filter_chains = [
-                      {
-                        filters = [
-                          {
-                            name = "envoy.filters.network.http_connection_manager";
-                            typed_config = {
-                              "@type" =
-                                "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager";
-                              stat_prefix = "ingress_http";
-                              codec_type = "AUTO";
-                              route_config = {
-                                name = "local_route";
-                                virtual_hosts = [
-                                  {
-                                    name = "local_service";
-                                    domains = [ "*" ];
-                                    inherit routes;
-                                  }
-                                ];
-                              };
-                              http_filters = [
-                                {
-                                  name = "envoy.filters.http.router";
-                                  typed_config = {
-                                    "@type" = "type.googleapis.com/envoy.extensions.filters.http.router.v3.Router";
-                                  };
-                                }
-                              ];
-                            };
-                          }
-                        ];
-                      }
-                    ];
-                  }
-                ];
+            http {
+                sendfile on;
+                tcp_nopush on;
+                tcp_nodelay on;
+                keepalive_timeout 65;
+                access_log /dev/stdout;
 
-                inherit clusters;
-              };
-            };
-          configFile = format.generate "envoy.json" config;
-          validateConfig =
-            file:
-            runCommand "validate-envoy-conf" { } ''
-              ${envoy-bin}/bin/envoy --log-level error --mode validate -c "${file}"
-              cp "${file}" "$out"
-            '';
+
+                ${upstreams}
+
+                server {
+                    listen ${builtins.toString exposedPort};
+                    server_name _;
+
+                    ${locations}
+                }
+            }
+          '';
         in
-        validateConfig configFile;
+        writers.writeNginxConfig "nginx.conf" config;
       getSecretName = "get-secret";
       getSecret = writeShellApplication {
         name = getSecretName;
@@ -208,7 +121,7 @@
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=webdav fs=root: addr=:${builtins.toString services.webdav.port} baseurl=${services.webdav.url} realm=${services.webdav.name} user="$rclone_user" pass="$rclone_pass"
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=root: addr=:${builtins.toString services.files.port} baseurl=${services.files.url} realm=${services.files.name} user="$rclone_user" pass="$rclone_pass"
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=public: addr=:${builtins.toString services.public.port} baseurl=${services.public.url}
-          envoy -c "${envoyConfig}" &
+          nginx -e stderr -c "${nginxConfig}" &
           wait -n
         '';
       };
@@ -225,7 +138,7 @@
 
         tini
 
-        envoy-bin
+        openresty
 
         iptables
         procps
@@ -252,8 +165,7 @@
 
       config = {
         ExposedPorts = {
-          "${builtins.toString envoyAdminPort}/tcp" = { };
-          "${builtins.toString envoyPort}/tcp" = { };
+          "${builtins.toString exposedPort}/tcp" = { };
         };
         WorkingDir = "/data";
         Volumes = {
