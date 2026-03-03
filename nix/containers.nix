@@ -45,6 +45,7 @@
                 "rclone"
                 "s3"
                 "webdav"
+                "restic"
                 "files"
                 "public"
               ];
@@ -119,6 +120,7 @@
           curl --retry 20 --retry-delay 1 --retry-connrefused http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url}
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=s3 fs=root: addr=:${builtins.toString services.s3.port} baseurl=${services.s3.url} auth_key="$rclone_user,$rclone_pass"
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=webdav fs=root: addr=:${builtins.toString services.webdav.port} baseurl=${services.webdav.url} realm=${services.webdav.name} user="$rclone_user" pass="$rclone_pass"
+          rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=restic fs=restic: addr=:${builtins.toString services.restic.port} baseurl=${services.restic.url} realm=${services.restic.name} user="$rclone_user" pass="$rclone_pass"
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=root: addr=:${builtins.toString services.files.port} baseurl=${services.files.url} realm=${services.files.name} user="$rclone_user" pass="$rclone_pass"
           rclone rc --user "$rclone_user" --pass "$rclone_pass" --url http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url} serve/start type=http fs=public: addr=:${builtins.toString services.public.port} baseurl=${services.public.url}
           nginx -e stderr -c "${nginxConfig}" &
