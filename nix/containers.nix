@@ -85,7 +85,7 @@
                 ${upstreams}
 
                 server {
-                    listen ${builtins.toString exposedPort};
+                    listen *:${builtins.toString exposedPort};
                     server_name _;
 
                     ${locations}
