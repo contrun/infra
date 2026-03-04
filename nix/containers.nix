@@ -56,19 +56,19 @@
               command =
                 if name == "s3" then
                   ''
-                    ${rcCommand} serve/start type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} auth_key="$RCLONE_RC_USER,$RCLONE_RC_PASS"
+                    ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} auth_key="$RCLONE_RC_USER,$RCLONE_RC_PASS"
                   ''
                 else if name == "webdav" then
                   ''
-                    ${rcCommand} serve/start type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                    ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
                   ''
                 else if name == "restic" then
                   ''
-                    ${rcCommand} serve/start type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                    ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
                   ''
                 else if name == "public" then
                   ''
-                    ${rcCommand} serve/start type=http fs=public: addr=:${builtins.toString port} baseurl=${url}
+                    ${rcCommand} serve/start vfs_cache_mode=full type=http fs=public: addr=:${builtins.toString port} baseurl=${url}
                   ''
                 else
                   builtins.throw "Unknown service ${name}";
@@ -227,7 +227,7 @@
           getSecret
         ];
       };
-      passwordCommand="/bin/${getPasswordName}";
+      passwordCommand = "/bin/${getPasswordName}";
       entrypointName = "container-entrypoint";
       entrypoint = writeShellApplication {
         name = entrypointName;
