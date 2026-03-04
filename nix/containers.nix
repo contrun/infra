@@ -102,27 +102,45 @@
                         local ngx_pipe = require "ngx.pipe"
 
                         local shared = ngx.shared.server_info
-                        local key = "is_${name}_initialized"
+                        local key = "${name}_initializing_time"
+                        local now = ngx.now()
+                        local initializing_time = shared:get(key)
+                        local waiting_time = 60
 
-                        if not shared:get(key) then
-                            ngx.ctx.time_of_starting_command = ngx.now()
-                            local opts = {
-                                merge_stderr = true,
-                                buffer_size = 256,
-                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
-                            }
-                            local proc, err = ngx_pipe.spawn(command, opts)
-                            if not proc then
-                                ngx.log(ngx.ERR, "Failed to initialized ${name}: ", err)
-                                ngx.say("An internal error happened")
-                                return ngx.exit(500)
-                            else
-                                ngx.log(ngx.INFO, "Successfully initialized ${name}")
-                                shared:set(key, true)
+                        -- Even if we have tried to initialize the handler by running the command,
+                        -- we may still unable to serve other requests that require the command to
+                        -- be successfully finished. Ideally we should have a shared semaphore,
+                        -- and make the first request handler acquire and release the semaphore,
+                        -- while keep other request handlers to wait for its release.
+                        -- This will make the code more complicated. But our commands are idempotent,
+                        -- which is guaranteed by the os wouldn't let any other process to listen to
+                        -- the same port twice. So we can just run the command many times.
+                        -- One more problem is that we don't want the commands to run indefinitely,
+                        -- because they may have some permanant failure. So we only run the commands
+                        -- for a short period of time (i.e. not after the waiting time here).
+                        if not initializing_time or now - initializing_time < waiting_time then
+                            -- Run command only if local worker has not ran the command yet.
+                            local is_first_run = ngx.ctx.time_of_starting_command == nil
+                            if is_first_run then
+                                ngx.ctx.time_of_starting_command = now
+                                if not initializing_time then
+                                    shared:set(key, now)
+                                end
+                                local opts = {
+                                    merge_stderr = true,
+                                    buffer_size = 256,
+                                    environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
+                                }
+                                local proc, err = ngx_pipe.spawn(command, opts)
+                                if not proc then
+                                    ngx.log(ngx.ERR, "Failed to initialized ${name}: ", err)
+                                    ngx.say("An internal error happened")
+                                    return ngx.exit(500)
+                                else
+                                    ngx.log(ngx.INFO, "Successfully initialized ${name}")
+                                end
                             end
-                        end
-                        if ngx.ctx.time_of_starting_command ~= nil then
-                            local running_time = ngx.now() - ngx.ctx.time_of_starting_command
+                            local running_time = now - ngx.ctx.time_of_starting_command
                             if running_time < 60 then
                                 local ok, err = balancer.set_more_tries(1)
                                 if not ok then
