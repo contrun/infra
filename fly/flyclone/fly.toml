@@ -4,6 +4,7 @@
 
 app = 'flyclone'
 primary_region = 'sin'
+swap_size_mb = 2048
 
 [build]
   image = 'contrun/rclone:latest'
