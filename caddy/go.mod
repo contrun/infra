@@ -3,7 +3,9 @@ module github.com/contrun/infra/caddy
 go 1.25.3
 
 require (
+	github.com/caddy-dns/cloudflare v0.2.3
 	github.com/caddyserver/caddy/v2 v2.11.1
+	github.com/caddyserver/replace-response v0.0.0-20250618171559-80962887e4c6
 	github.com/greenpau/caddy-security v1.1.36
 	github.com/mholt/caddy-l4 v0.0.0-20260303160051-86ea3cdf5c8c
 	github.com/tailscale/caddy-tailscale v0.0.0-20260106222316-bb080c4414ac
@@ -76,6 +78,7 @@ require (
 	github.com/greenpau/versioned v1.0.30 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
+	github.com/icholy/replace v0.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
@@ -85,6 +88,7 @@ require (
 	github.com/jsimonetti/rtnetlink v1.4.0 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+	github.com/libdns/cloudflare v0.2.2 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect

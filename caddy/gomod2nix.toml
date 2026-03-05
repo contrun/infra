@@ -77,6 +77,10 @@ schema = 3
     version = 'v1.0.1'
     hash = 'sha256-h75GUqfwJKngCJQVE5Ao5wnO3cfKD9lSIteoLp/3xJ4='
 
+  [mod.'github.com/caddy-dns/cloudflare']
+    version = 'v0.2.3'
+    hash = 'sha256-/FB0a/Ja4kDSw9SlNiusi6w7r87xHXafzEOQqLbTsyA='
+
   [mod.'github.com/caddyserver/caddy/v2']
     version = 'v2.11.1'
     hash = 'sha256-6ae8znKXtQNm+V0eQGdZfRscgTmXfoq8JCVN7FWqALw='
@@ -84,6 +88,10 @@ schema = 3
   [mod.'github.com/caddyserver/certmagic']
     version = 'v0.25.2'
     hash = 'sha256-g/0w1YGigyfrPTbN4Cmn9F2+OqwMTkIuAiQxtbgmJOc='
+
+  [mod.'github.com/caddyserver/replace-response']
+    version = 'v0.0.0-20250618171559-80962887e4c6'
+    hash = 'sha256-UIalegvdLVfeOQrjH4DDq9mSmAxjhdUkoKH34uyEPIU='
 
   [mod.'github.com/caddyserver/zerossl']
     version = 'v0.1.5'
@@ -273,6 +281,10 @@ schema = 3
     version = 'v1.5.0'
     hash = 'sha256-q4F/rzbWMDmOVv07RVApdpfIsRNRByfOUQPEKsTq5BM='
 
+  [mod.'github.com/icholy/replace']
+    version = 'v0.6.0'
+    hash = 'sha256-tXSquEOLmfv62h1jFefqBzu7m408l2ECyNg9f5Yo3CE='
+
   [mod.'github.com/inconshreveable/mousetrap']
     version = 'v1.1.0'
     hash = 'sha256-XWlYH0c8IcxAwQTnIi6WYqq44nOKUylSWxWO/vi+8pE='
@@ -308,6 +320,10 @@ schema = 3
   [mod.'github.com/klauspost/cpuid/v2']
     version = 'v2.3.0'
     hash = 'sha256-50JhbQyT67BK38HIdJihPtjV7orYp96HknI2VP7A9Yc='
+
+  [mod.'github.com/libdns/cloudflare']
+    version = 'v0.2.2'
+    hash = 'sha256-S7CVVegBZuNYDNlhO3rhJSugYUhR7/TUdjdMBUlkGsw='
 
   [mod.'github.com/libdns/libdns']
     version = 'v1.1.1'
