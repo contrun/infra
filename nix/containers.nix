@@ -28,67 +28,83 @@
     with pkgs;
     let
       exposedPort = 10000;
-      services =
-        let
-          rclonePort = 5572;
-          rcloneUrl = "rclone";
-          list =
-            lib.imap1
-              (x: name: {
-                name = name;
-                value = {
-                  name = name;
-                  port = rclonePort + x;
-                  url = name;
-                };
-              })
-              [
-                "s3"
-                "webdav"
-                "restic"
-                "public"
-              ];
-          appendCommand =
-            name: attrs:
-            let
-              inherit (attrs) port url;
-              rcCommand = "/bin/rclone rc --url http://127.0.0.1:${builtins.toString rclonePort}/${rcloneUrl}";
-              command =
-                if name == "s3" then
-                  ''
-                    ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} auth_key="$RCLONE_RC_USER,$RCLONE_RC_PASS"
-                  ''
-                else if name == "webdav" then
-                  ''
-                    ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
-                  ''
-                else if name == "restic" then
-                  ''
-                    ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
-                  ''
-                else if name == "public" then
-                  ''
-                    ${rcCommand} serve/start vfs_cache_mode=full type=http fs=public: addr=:${builtins.toString port} baseurl=${url}
-                  ''
-                else
-                  builtins.throw "Unknown service ${name}";
-            in
-            attrs // { inherit command; };
-          services = builtins.mapAttrs appendCommand (builtins.listToAttrs list);
-        in
-        {
-          "rclone" = {
-            name = "rclone";
-            port = rclonePort;
-            url = rcloneUrl;
-            command = null;
-          };
-        }
-        // services;
-
-      serviceList = builtins.attrValues services;
+      rclonePort = 5572;
+      rcloneUrl = "rclone";
       nginxConfig =
         let
+          services =
+            let
+              list =
+                lib.imap1
+                  (x: name: {
+                    name = name;
+                    value = {
+                      name = name;
+                      port = rclonePort + x;
+                      url = name;
+                    };
+                  })
+                  [
+                    "s3"
+                    "webdav"
+                    "restic"
+                    "public"
+                  ];
+              mkCommand =
+                name: attrs:
+                let
+                  inherit (attrs) port url;
+                  checkRcdOnlineCommand = ''
+                    /bin/curl --retry 300 --retry-delay 0.1 --retry-connrefused http://127.0.0.1:${builtins.toString rclonePort}/${rcloneUrl}
+                  '';
+                  rcCommand = "/bin/rclone rc --url http://127.0.0.1:${builtins.toString rclonePort}/${rcloneUrl}";
+                  commands =
+                    if name == "s3" then
+                      [
+                        checkRcdOnlineCommand
+                        ''
+                          ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} auth_key="$RCLONE_RC_USER,$RCLONE_RC_PASS"
+                        ''
+                      ]
+                    else if name == "webdav" then
+                      [
+                        checkRcdOnlineCommand
+                        ''
+                          ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                        ''
+                      ]
+                    else if name == "restic" then
+                      [
+                        checkRcdOnlineCommand
+                        ''
+                          ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                        ''
+                      ]
+                    else if name == "public" then
+                      [
+                        checkRcdOnlineCommand
+                        ''
+                          ${rcCommand} serve/start vfs_cache_mode=full type=http fs=public: addr=:${builtins.toString port} baseurl=${url}
+                        ''
+                      ]
+                    else
+                      builtins.throw "Unknown service ${name}";
+                  command = with lib.strings; concatMapStringsSep " && " (command: trim command) commands;
+                in
+                attrs // { inherit command; };
+              services = builtins.mapAttrs mkCommand (builtins.listToAttrs list);
+            in
+            {
+              "rclone" = {
+                name = "rclone";
+                port = rclonePort;
+                url = rcloneUrl;
+                command = null;
+              };
+            }
+            // services;
+
+          serviceList = builtins.attrValues services;
           mkUpstream = name: port: ''
             upstream ${name} {
               server 127.0.0.1:${builtins.toString port};
@@ -102,9 +118,6 @@
                 if command == null then
                   ""
                 else
-                  let
-                    cmd = lib.strings.escapeShellArg (lib.strings.trim command);
-                  in
                   ''
                     access_by_lua_block {
                         local ngx = require "ngx"
@@ -130,7 +143,7 @@
                                 buffer_size = 256,
                                 environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
                             }
-                            local proc, err = ngx_pipe.spawn(${cmd}, opts)
+                            local proc, err = ngx_pipe.spawn(${lib.strings.escapeShellArg command}, opts)
                             if not proc then
                                 ngx.log(ngx.ERR, "Failed to run command ${name}: ", err)
                                 ngx.say("An internal error happened")
@@ -243,8 +256,7 @@
           RCLONE_RC_USER="$(${getSecretCommand} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
           RCLONE_RC_PASS="$(${getSecretCommand} f360f175-7e38-4ac8-9e53-b40101250a36)"
           export RCLONE_RC_USER RCLONE_RC_PASS
-          rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString services.rclone.port} --rc-baseurl ${services.rclone.url} --rc-web-gui --rc-web-gui-no-open-browser &
-          curl --retry 30 --retry-delay 1 --retry-connrefused http://127.0.0.1:${builtins.toString services.rclone.port}/${services.rclone.url}
+          rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser &
           nginx -c "${nginxConfig}" &
           wait -n
         '';
