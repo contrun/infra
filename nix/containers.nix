@@ -89,23 +89,29 @@
       serviceList = builtins.attrValues services;
       nginxConfig =
         let
-          mkUpstream = name: port: command: ''
+          mkUpstream = name: port: ''
             upstream ${name} {
-                balancer_by_lua_block {
-                    local balancer = require "ngx.balancer"
-                    local command = ${
-                      if command == null then "nil" else lib.strings.escapeShellArg (lib.strings.trim command)
-                    };
-
-                    if command ~= nil then
+              server 127.0.0.1:${builtins.toString port};
+            }
+          '';
+          upstreams = lib.strings.concatMapStringsSep "\n" (x: mkUpstream x.name x.port) serviceList;
+          mkLocation =
+            name: url: command:
+            let
+              access =
+                if command == null then
+                  ""
+                else
+                  let
+                    cmd = lib.strings.escapeShellArg (lib.strings.trim command);
+                  in
+                  ''
+                    access_by_lua_block {
                         local ngx = require "ngx"
-                        local ngx_pipe = require "ngx.pipe"
 
                         local shared = ngx.shared.server_info
                         local key = "${name}_initializing_time"
-                        local now = ngx.now()
                         local initializing_time = shared:get(key)
-                        local waiting_time = 60
 
                         -- Even if we have tried to initialize the handler by running the command,
                         -- we may still unable to serve other requests that require the command to
@@ -115,63 +121,45 @@
                         -- This will make the code more complicated. But our commands are idempotent,
                         -- which is guaranteed by the os wouldn't let any other process to listen to
                         -- the same port twice. So we can just run the command many times.
-                        -- One more problem is that we don't want the commands to run indefinitely,
-                        -- because they may have some permanant failure. So we only run the commands
-                        -- for a short period of time (i.e. not after the waiting time here).
-                        if not initializing_time or now - initializing_time < waiting_time then
+                        if not initializing_time then
+                            ngx.log(ngx.INFO, "Trying to initialize ${name}")
+                            local ngx_pipe = require "ngx.pipe"
                             -- Run command only if local worker has not ran the command yet.
-                            local is_first_run = ngx.ctx.time_of_starting_command == nil
-                            if is_first_run then
-                                ngx.ctx.time_of_starting_command = now
-                                if not initializing_time then
-                                    shared:set(key, now)
-                                end
-                                local opts = {
-                                    merge_stderr = true,
-                                    buffer_size = 256,
-                                    environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
-                                }
-                                local proc, err = ngx_pipe.spawn(command, opts)
-                                if not proc then
-                                    ngx.log(ngx.ERR, "Failed to initialized ${name}: ", err)
-                                    ngx.say("An internal error happened")
-                                    return ngx.exit(500)
-                                else
-                                    ngx.log(ngx.INFO, "Successfully initialized ${name}")
-                                end
+                            local opts = {
+                                merge_stderr = true,
+                                buffer_size = 256,
+                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
+                            }
+                            local proc, err = ngx_pipe.spawn(${cmd}, opts)
+                            if not proc then
+                                ngx.log(ngx.ERR, "Failed to run command ${name}: ", err)
+                                ngx.say("An internal error happened")
+                                return ngx.exit(500)
                             end
-                            local running_time = now - ngx.ctx.time_of_starting_command
-                            if running_time < 60 then
-                                local ok, err = balancer.set_more_tries(1)
-                                if not ok then
-                                    ngx.log(ngx.ERR, "Failed to set more tries: ", err)
-                                end
-                            else
-                                ngx.log(ngx.ERR, "Command does not seem to succeed after 60 seconds: ", command)
+                            local waiting_time_seconds = 60
+                            local waiting_time_mili_seconds = waiting_time_seconds * 1000
+                            proc:set_timeouts(waiting_time_mili_seconds)
+                            local ok, reason, status = proc:wait()
+                            -- It is OK that the command fails because, as explained above,
+                            -- we may run the command a few time. All that we want is
+                            -- the command exits.
+                            if not ok then
+                                ngx.log(ngx.ERR, "Failed to wait for process of ${name}: ", reason, status)
                             end
+                            ngx.log(ngx.INFO, "Successfully initialized ${name}")
+                            local now = ngx.now()
+                            shared:set(key, now)
                         end
-                    end
-                    local host = "127.0.0.1"
-                    local port = ${builtins.toString port}
-
-                    local ok, err = balancer.set_current_peer(host, port)
-                    if not ok then
-                        ngx.log(ngx.ERR, "Failed to set the current peer: ", err)
-                        return ngx.exit(500)
-                    end
-                }
-            }
-          '';
-          upstreams = lib.strings.concatMapStringsSep "\n" (
-            x: mkUpstream x.name x.port x.command
-          ) serviceList;
-          mkLocation = name: url: ''
-            location /${url} {
-                proxy_pass http://${name};
-                proxy_next_upstream error timeout invalid_header http_502;
-            }
-          '';
-          locations = lib.strings.concatMapStringsSep "\n" (x: mkLocation x.name x.url) serviceList;
+                    }
+                  '';
+            in
+            ''
+              location /${url} {
+                  ${access}
+                  proxy_pass http://${name};
+              }
+            '';
+          locations = lib.strings.concatMapStringsSep "\n" (x: mkLocation x.name x.url x.command) serviceList;
           config = ''
             daemon off;
             user nobody nobody;
@@ -192,11 +180,9 @@
 
                 ${upstreams}
 
-                # Define a shared dictionary to store the start time
                 lua_shared_dict server_info 12k;
 
                 init_by_lua_block {
-                    -- Capture the start time globally once
                     local shared = ngx.shared.server_info
                     shared:set("start_time", ngx.now())
                 }
