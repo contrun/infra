@@ -1097,11 +1097,6 @@
                   nativeBuildInputs = [ pkgs.musl ];
 
                   CGO_ENABLED = 0;
-
-                  ldflags = [
-                    "-linkmode external"
-                    "-extldflags '-static -L${pkgs.musl}/lib'"
-                  ];
                 };
               };
           }
