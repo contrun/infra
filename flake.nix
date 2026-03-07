@@ -418,52 +418,7 @@
           mozillaOverlay = import inputs.nixpkgs-mozilla;
 
           myPackagesOverlay = self: super: {
-            myPackages =
-              let
-                list = [
-                ]
-                ++ (builtins.map
-                  (name: {
-                    inherit name;
-                    pkg =
-                      inputs.${name}.packages.${super.system}.default or inputs.${name}.defaultPackage.${super.system};
-                  })
-                  [
-                    "aioproxy"
-                    "deploy-rs"
-                    "home-manager"
-                    "nix-autobahn"
-                    "mycaddy"
-                  ]
-                )
-                ++ (builtins.map
-                  (name: {
-                    inherit name;
-                    pkg = inputs.self.packages.${super.system}.${name} or null;
-                  })
-                  [
-                    "magit"
-                    "magitc"
-                    "coredns"
-                    "ssh"
-                    "mosh"
-                    "ssho"
-                    "mosho"
-                  ]
-                );
-                function =
-                  acc: elem:
-                  acc
-                  // (
-                    if (elem.pkg != null) then
-                      {
-                        ${elem.name} = elem.pkg;
-                      }
-                    else
-                      { }
-                  );
-              in
-              (builtins.foldl' function { } list) // (super.myPackages or { });
+            myPackages = inputs.self.packages.${super.system} // (super.myPackages or { });
           };
         };
 
@@ -752,334 +707,353 @@
             defaultApp = apps.run;
 
             packages =
-              let
-                start-agent-script = ''
-                  GPG_SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket || true)"
+              (
+                with builtins;
+                listToAttrs (
+                  map
+                    (name: {
+                      inherit name;
+                      value = inputs.${name}.packages.${system}.default or inputs.${name}.defaultPackage.${system};
+                    })
+                    [
+                      "aioproxy"
+                      "deploy-rs"
+                      "home-manager"
+                      "nix-autobahn"
+                      "mycaddy"
+                    ]
+                )
+              )
+              // (
+                let
+                  start-agent-script = ''
+                    GPG_SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket || true)"
 
-                  try_use_gpg_ssh_agent() {
-                    MESSAGE="$(LC_ALL=en_US.UTF-8 SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK" ssh-add -L 2>&1)"
-                    if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
-                      [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
-                      [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]] || \
-                      [[ "$MESSAGE" == 'The agent has no identities.' ]]; then
-                      return 1
-                    fi
-                    GPG_TTY="$(tty)"
-                    export GPG_TTY="$GPG_TTY" SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK"
-                  }
-
-                  try_start_ssh_agent() {
-                    : "''${SSH_AUTH_SOCK:=''${HOME}/.ssh/ssh_auth_sock}"
-                    # We will not be able to add identities to gpg ssh agent.
-                    if [[ "$SSH_AUTH_SOCK" == "$GPG_SSH_AUTH_SOCK" ]]; then
-                       SSH_AUTH_SOCK="''${HOME}/.ssh/ssh_auth_sock"
-                    fi
-                    export SSH_AUTH_SOCK
-
-                    MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
-                    if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
-                      [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
-                      [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]]; then
-                      rm -f "$SSH_AUTH_SOCK"
-                      ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
-                      ssh-add
-                    elif [[ "$MESSAGE" == 'The agent has no identities.' ]]; then
-                      ssh-add
-                    fi
-                  }
-
-                  try_use_gpg_ssh_agent || try_start_ssh_agent || true
-                '';
-
-                magitf =
-                  console: name:
-                  let
-                    consoleArgs = if console then [ "-nw" ] else [ ];
-                    defaultArgs = [
-                      "-q"
-                      "-l"
-                      "magit"
-                      "-f"
-                      "magit"
-                      "--eval"
-                      ''"(local-set-key \"q\" #'kill-emacs)"''
-                      "-f"
-                      "delete-other-windows"
-                    ];
-                    emacsCommand = builtins.concatStringsSep " " ([ "emacs" ] ++ consoleArgs ++ defaultArgs);
-                  in
-                  with pkgs;
-                  writeShellApplication {
-                    inherit name;
-                    text = ''
-                      function usage() {
-                          cat <<EOF
-                      ${name} [EMACS_OPTIONS] [PATH]
-                      If the last arguments is a valid directory, then run magit within it,
-                      else all arguments are passed to emacs.
-                      Run emacs --help to see emacs options.
-                      EOF
-                      }
-
-                      for i in "$@" ; do
-                          if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
-                              usage
-                              exit
-                          fi
-                      done
-
-                      emacs_arguments=( "''${@}" )
-
-                      if [[ $# -gt 0 ]]; then
-                          path="''${*: -1}"
-                          if [[ -d "$path" ]]; then
-                              cd "$path"
-                              emacs_arguments=( "''${@:1: (( $# -1 )) }" )
-                          fi
+                    try_use_gpg_ssh_agent() {
+                      MESSAGE="$(LC_ALL=en_US.UTF-8 SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK" ssh-add -L 2>&1)"
+                      if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
+                        [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
+                        [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]] || \
+                        [[ "$MESSAGE" == 'The agent has no identities.' ]]; then
+                        return 1
                       fi
+                      GPG_TTY="$(tty)"
+                      export GPG_TTY="$GPG_TTY" SSH_AUTH_SOCK="$GPG_SSH_AUTH_SOCK"
+                    }
 
-                      ${emacsCommand} "''${emacs_arguments[@]}"
-                    '';
-                    runtimeInputs = [
-                      git
-                      (emacs.pkgs.withPackages (epkgs: [ epkgs.magit ]))
-                    ];
-                  };
-              in
-              {
-                nixos-generators = {
-                  vbox = inputs.nixos-generators.nixosGenerate {
-                    system = "x86_64-linux";
-                    format = "virtualbox";
-                  };
-                  qcow = inputs.nixos-generators.nixosGenerate {
-                    system = "x86_64-linux";
-                    format = "vagrant-virtualbox";
-                  };
-                  vagrant = inputs.nixos-generators.nixosGenerate {
-                    system = "x86_64-linux";
-                    format = "vagrant-virtualbox";
-                  };
-                };
-
-                cmcc-jtydn = with pkgs; callPackage ./nix/packages/cmcc-jtydn/default.nix { };
-
-                containers =
-                  let
-                    genContainers = import ./nix/containers.nix;
-                  in
-                  genContainers { inherit pkgs; };
-
-                run =
-                  with pkgs;
-                  writeShellApplication {
-                    name = "run";
-                    text = ''
-                      make -C "${lib.cleanSource ./.}" "$@"
-                    '';
-                    runtimeInputs = [
-                      gnumake
-                      nixUnstable
-                      jq
-                      coreutils
-                      findutils
-                      home-manager
-                    ];
-                  };
-
-                ssh =
-                  with pkgs;
-                  writeShellApplication {
-                    name = "ssh";
-                    text = ''
-                      ${start-agent-script}
-                      if [[ "$TERM" == foot ]]; then
-                        export TERM=xterm-256color
+                    try_start_ssh_agent() {
+                      : "''${SSH_AUTH_SOCK:=''${HOME}/.ssh/ssh_auth_sock}"
+                      # We will not be able to add identities to gpg ssh agent.
+                      if [[ "$SSH_AUTH_SOCK" == "$GPG_SSH_AUTH_SOCK" ]]; then
+                         SSH_AUTH_SOCK="''${HOME}/.ssh/ssh_auth_sock"
                       fi
-                      ssh "$@"
-                    '';
-                    runtimeInputs = [
-                      coreutils
-                      gnupg
-                      openssh
-                    ];
-                  };
+                      export SSH_AUTH_SOCK
 
-                mosh =
-                  with pkgs;
-                  writeShellApplication {
-                    name = "mosh";
-                    text = ''
-                      ${start-agent-script}
-                      # See https://github.com/termux/termux-packages/issues/288
-                      LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
-                    '';
-                    runtimeInputs = [
-                      coreutils
-                      gnupg
-                      openssh
-                      mosh
-                    ];
-                  };
-
-                ssho =
-                  with pkgs;
-                  writeShellApplication {
-                    name = "ssho";
-                    text = ''
-                      if [[ "$TERM" == foot ]]; then
-                        export TERM=xterm-256color
+                      MESSAGE=$(LC_ALL=en_US.UTF-8 ssh-add -L 2>&1)
+                      if [[ "$MESSAGE" == 'Could not open a connection to your authentication agent.' ]] || \
+                        [[ "$MESSAGE" == 'Error connecting to agent: Connection refused' ]] || \
+                        [[ "$MESSAGE" == 'Error connecting to agent: No such file or directory' ]]; then
+                        rm -f "$SSH_AUTH_SOCK"
+                        ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+                        ssh-add
+                      elif [[ "$MESSAGE" == 'The agent has no identities.' ]]; then
+                        ssh-add
                       fi
-                      ssh "$@"
-                    '';
-                    runtimeInputs = [
-                      coreutils
-                      gnupg
-                      openssh
-                    ];
+                    }
+
+                    try_use_gpg_ssh_agent || try_start_ssh_agent || true
+                  '';
+
+                  magitf =
+                    console: name:
+                    let
+                      consoleArgs = if console then [ "-nw" ] else [ ];
+                      defaultArgs = [
+                        "-q"
+                        "-l"
+                        "magit"
+                        "-f"
+                        "magit"
+                        "--eval"
+                        ''"(local-set-key \"q\" #'kill-emacs)"''
+                        "-f"
+                        "delete-other-windows"
+                      ];
+                      emacsCommand = builtins.concatStringsSep " " ([ "emacs" ] ++ consoleArgs ++ defaultArgs);
+                    in
+                    with pkgs;
+                    writeShellApplication {
+                      inherit name;
+                      text = ''
+                        function usage() {
+                            cat <<EOF
+                        ${name} [EMACS_OPTIONS] [PATH]
+                        If the last arguments is a valid directory, then run magit within it,
+                        else all arguments are passed to emacs.
+                        Run emacs --help to see emacs options.
+                        EOF
+                        }
+
+                        for i in "$@" ; do
+                            if [[ "$i" == "--help" ]] || [[ "$i" == "-h" ]]; then
+                                usage
+                                exit
+                            fi
+                        done
+
+                        emacs_arguments=( "''${@}" )
+
+                        if [[ $# -gt 0 ]]; then
+                            path="''${*: -1}"
+                            if [[ -d "$path" ]]; then
+                                cd "$path"
+                                emacs_arguments=( "''${@:1: (( $# -1 )) }" )
+                            fi
+                        fi
+
+                        ${emacsCommand} "''${emacs_arguments[@]}"
+                      '';
+                      runtimeInputs = [
+                        git
+                        (emacs.pkgs.withPackages (epkgs: [ epkgs.magit ]))
+                      ];
+                    };
+                in
+                {
+                  nixos-generators = {
+                    vbox = inputs.nixos-generators.nixosGenerate {
+                      system = "x86_64-linux";
+                      format = "virtualbox";
+                    };
+                    qcow = inputs.nixos-generators.nixosGenerate {
+                      system = "x86_64-linux";
+                      format = "vagrant-virtualbox";
+                    };
+                    vagrant = inputs.nixos-generators.nixosGenerate {
+                      system = "x86_64-linux";
+                      format = "vagrant-virtualbox";
+                    };
                   };
 
-                mosho =
-                  with pkgs;
-                  writeShellApplication {
-                    name = "mosho";
-                    text = ''
-                      # See https://github.com/termux/termux-packages/issues/288
-                      LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
-                    '';
-                    runtimeInputs = [
-                      coreutils
-                      gnupg
-                      openssh
-                      mosh
-                    ];
-                  };
+                  cmcc-jtydn = with pkgs; callPackage ./nix/packages/cmcc-jtydn/default.nix { };
 
-                dvm =
-                  let
-                    inherit (self.nixosConfigurations.dvm) config;
-                    # quickly build with another hypervisor if this MicroVM is built as a package
-                    hypervisor = "qemu";
-                  in
-                  config.microvm.runner.${hypervisor};
+                  containers =
+                    let
+                      genContainers = import ./nix/containers.nix;
+                    in
+                    genContainers { inherit pkgs; };
 
-                magit = magitf false "magit";
-
-                magitc = magitf true "magitc";
-
-                riscv-gnu-toolchain-shell =
-                  with pkgs;
-                  with stdenv;
-                  with stdenv.lib;
-                  pkgs.mkShell {
-                    name = "riscv-shell";
-                    nativeBuildInputs = with pkgs.buildPackages; [
-                      bash
-                      gnumake
-                      cmake
-                      curl
-                      git
-                      util-linux
-                    ];
-                    buildInputs = with pkgs; [
-                      stdenv
-                      binutils
-                      cmake
-                      pkg-config
-                      curl
-                      autoconf
-                      automake
-                      python3
-                      libmpc
-                      mpfr
-                      gmp
-                      gawk
-                      bison
-                      flex
-                      texinfo
-                      gperf
-                      libtool
-                      patchutils
-                      bc
-                      libdeflate
-                      expat
-                      gnumake
-                      pkgs.gnumake
-
-                      util-linux
-                      bash
-                    ];
-
-                    hardeningDisable = [ "all" ];
-                  };
-
-                riscv-gnu-toolchain =
-                  with pkgs;
-                  stdenv.mkDerivation rec {
-                    pname = "riscv-gnu-toolchain";
-                    version = "2024.03.01";
-
-                    src = fetchFromGitHub {
-                      owner = "riscv-collab";
-                      repo = "riscv-gnu-toolchain";
-                      rev = "${version}";
-                      sha256 = "sha256-X3EkqHyp2NykFbP3fLMrTLFYd+/JgfxomtsHp742ipI=";
-                      leaveDotGit = true;
+                  run =
+                    with pkgs;
+                    writeShellApplication {
+                      name = "run";
+                      text = ''
+                        make -C "${lib.cleanSource ./.}" "$@"
+                      '';
+                      runtimeInputs = [
+                        gnumake
+                        nixUnstable
+                        jq
+                        coreutils
+                        findutils
+                        home-manager
+                      ];
                     };
 
-                    postPatch = ''
-                      # hack for unknown issue in fetchgit
-                      git reset --hard
-                      patchShebangs ./scripts
-                    '';
+                  ssh =
+                    with pkgs;
+                    writeShellApplication {
+                      name = "ssh";
+                      text = ''
+                        ${start-agent-script}
+                        if [[ "$TERM" == foot ]]; then
+                          export TERM=xterm-256color
+                        fi
+                        ssh "$@"
+                      '';
+                      runtimeInputs = [
+                        coreutils
+                        gnupg
+                        openssh
+                      ];
+                    };
 
-                    nativeBuildInputs = [
-                      python3
-                      util-linux
-                      git
-                      cacert
-                      autoconf
-                      automake
-                      curl
-                      python3
-                      gawk
-                      bison
-                      flex
-                      texinfo
-                      gperf
-                      bc
-                    ];
+                  mosh =
+                    with pkgs;
+                    writeShellApplication {
+                      name = "mosh";
+                      text = ''
+                        ${start-agent-script}
+                        # See https://github.com/termux/termux-packages/issues/288
+                        LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
+                      '';
+                      runtimeInputs = [
+                        coreutils
+                        gnupg
+                        openssh
+                        mosh
+                      ];
+                    };
 
-                    buildInputs = [
-                      libmpc
-                      mpfr
-                      gmp
-                      zlib
-                      expat
-                    ];
+                  ssho =
+                    with pkgs;
+                    writeShellApplication {
+                      name = "ssho";
+                      text = ''
+                        if [[ "$TERM" == foot ]]; then
+                          export TERM=xterm-256color
+                        fi
+                        ssh "$@"
+                      '';
+                      runtimeInputs = [
+                        coreutils
+                        gnupg
+                        openssh
+                      ];
+                    };
 
-                    configureFlags = [ "--enable-llvm" ];
+                  mosho =
+                    with pkgs;
+                    writeShellApplication {
+                      name = "mosho";
+                      text = ''
+                        # See https://github.com/termux/termux-packages/issues/288
+                        LC_ALL="''${LC_ALL:-en_US.UTF-8}" mosh "$@"
+                      '';
+                      runtimeInputs = [
+                        coreutils
+                        gnupg
+                        openssh
+                        mosh
+                      ];
+                    };
 
-                    makeFlags = [
-                      "newlib"
-                      "linux"
-                    ];
+                  dvm =
+                    let
+                      inherit (self.nixosConfigurations.dvm) config;
+                      # quickly build with another hypervisor if this MicroVM is built as a package
+                      hypervisor = "qemu";
+                    in
+                    config.microvm.runner.${hypervisor};
 
-                    hardeningDisable = [ "format" ];
+                  magit = magitf false "magit";
 
-                    enableParallelBuilding = true;
+                  magitc = magitf true "magitc";
 
-                    __noChroot = true;
+                  riscv-gnu-toolchain-shell =
+                    with pkgs;
+                    with stdenv;
+                    with stdenv.lib;
+                    pkgs.mkShell {
+                      name = "riscv-shell";
+                      nativeBuildInputs = with pkgs.buildPackages; [
+                        bash
+                        gnumake
+                        cmake
+                        curl
+                        git
+                        util-linux
+                      ];
+                      buildInputs = with pkgs; [
+                        stdenv
+                        binutils
+                        cmake
+                        pkg-config
+                        curl
+                        autoconf
+                        automake
+                        python3
+                        libmpc
+                        mpfr
+                        gmp
+                        gawk
+                        bison
+                        flex
+                        texinfo
+                        gperf
+                        libtool
+                        patchutils
+                        bc
+                        libdeflate
+                        expat
+                        gnumake
+                        pkgs.gnumake
+
+                        util-linux
+                        bash
+                      ];
+
+                      hardeningDisable = [ "all" ];
+                    };
+
+                  riscv-gnu-toolchain =
+                    with pkgs;
+                    stdenv.mkDerivation rec {
+                      pname = "riscv-gnu-toolchain";
+                      version = "2024.03.01";
+
+                      src = fetchFromGitHub {
+                        owner = "riscv-collab";
+                        repo = "riscv-gnu-toolchain";
+                        rev = "${version}";
+                        sha256 = "sha256-X3EkqHyp2NykFbP3fLMrTLFYd+/JgfxomtsHp742ipI=";
+                        leaveDotGit = true;
+                      };
+
+                      postPatch = ''
+                        # hack for unknown issue in fetchgit
+                        git reset --hard
+                        patchShebangs ./scripts
+                      '';
+
+                      nativeBuildInputs = [
+                        python3
+                        util-linux
+                        git
+                        cacert
+                        autoconf
+                        automake
+                        curl
+                        python3
+                        gawk
+                        bison
+                        flex
+                        texinfo
+                        gperf
+                        bc
+                      ];
+
+                      buildInputs = [
+                        libmpc
+                        mpfr
+                        gmp
+                        zlib
+                        expat
+                      ];
+
+                      configureFlags = [ "--enable-llvm" ];
+
+                      makeFlags = [
+                        "newlib"
+                        "linux"
+                      ];
+
+                      hardeningDisable = [ "format" ];
+
+                      enableParallelBuilding = true;
+
+                      __noChroot = true;
+                    };
+
+                  coredns = pkgsToBuildLocalPackages.buildGoApplication {
+                    pname = "coredns";
+                    version = "latest";
+                    goPackagePath = "github.com/contrun/infra/coredns";
+                    src = ./coredns;
+                    modules = ./coredns/gomod2nix.toml;
                   };
-
-                coredns = pkgsToBuildLocalPackages.buildGoApplication {
-                  pname = "coredns";
-                  version = "latest";
-                  goPackagePath = "github.com/contrun/infra/coredns";
-                  src = ./coredns;
-                  modules = ./coredns/gomod2nix.toml;
-                };
-              };
+                }
+              );
           }
         )
       )
