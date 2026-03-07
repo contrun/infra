@@ -623,7 +623,7 @@ in
               i3blocks
               i3lock
               i3status-rust
-              firefox
+              firefox-devedition
               termite
               foot
             ];
@@ -935,7 +935,7 @@ in
             # export WLR_RENDERER=vulkan
 
             export TERMINAL="alacritty"
-            export BROWSER="firefox"
+            export BROWSER="firefox-devedition"
 
             export _JAVA_AWT_WM_NONREPARENTING=1
             export QT_AUTO_SCREEN_SCALE_FACTOR=1
@@ -3527,7 +3527,7 @@ in
     mime = {
       enable = true;
       addedAssociations = {
-        "application/pdf" = "firefox.desktop";
+        "application/pdf" = "firefox-devedition.desktop";
         "text/xml" = [
           "nvim.desktop"
           "codium.desktop"
