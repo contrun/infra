@@ -455,4 +455,115 @@ in
         ];
       };
     };
+
+  zotero =
+    with pkgs;
+    let
+      zotero = packages.zotero;
+      nginxConfig =
+        let
+          config = ''
+            daemon off;
+            user nobody nobody;
+            error_log stderr info;
+            pid /dev/null;
+
+            events {}
+
+            http {
+                sendfile on;
+                client_max_body_size 0;
+                tcp_nopush on;
+                tcp_nodelay on;
+                keepalive_timeout 65;
+                access_log /dev/stdout;
+
+                server {
+                    listen *:24119;
+                    server_name _;
+                    location / {
+                        proxy_pass http://127.0.0.1:23119;
+                    }
+                }
+            }
+          '';
+        in
+        writers.writeNginxConfig "nginx.conf" config;
+      userjs = ''
+        user_pref("extensions.enabledScopes", 15);
+        user_pref("extensions.zotero.debug-bridge.token", "def");
+        user_pref("extensions.zotero.httpServer.localAPI.enabled", true);
+        user_pref("xpinstall.signatures.required", false);
+        user_pref("xpinstall.whitelist.required", false);
+      '';
+      entrypoint = writeShellScriptBin "container-entrypoint" ''
+        #!/bin/sh
+        set -eu
+        zotero --headless --createprofile managed
+        cd .zotero/zotero/*.managed
+        [ -f user.js ] || cat > user.js <<EOF
+        ${userjs}
+        EOF
+        mkdir -p "extensions"
+        cd "extensions"
+        if ! [ -f debug-bridge@iris-advies.com.xpi ]; then
+          curl --output debug-bridge@iris-advies.com.xpi https://gitee.com/zotero-chinese-x/zotero-plugins/raw/gh-pages/xpi/345808170.xpi
+        fi
+        if ! [ -f notero@vanoni.dev.xpi ]; then
+          curl --output notero@vanoni.dev.xpi https://gitee.com/zotero-chinese-x/zotero-plugins/raw/gh-pages/xpi/334239694.xpi
+        fi
+        if ! [ -f zoplicate@chenglongma.com.xpi ]; then
+          curl --output zoplicate@chenglongma.com.xpi https://gitee.com/zotero-chinese-x/zotero-plugins/raw/gh-pages/xpi/345120805.xpi
+        fi
+        zotero -P managed --headless &
+        curl --retry 300 --retry-delay 0.1 --retry-connrefused http://127.0.0.1:23119
+        nginx -c "${nginxConfig}" &
+        wait -n
+      '';
+    in
+    dockerTools.buildLayeredImage {
+      name = "zotero";
+      tag = "latest";
+      maxLayers = 10;
+      contents = with pkgs.dockerTools; [
+        usrBinEnv
+        binSh
+        caCertificates
+        fakeNss
+
+        tini
+        coreutils
+        curl
+        nginx
+        zotero
+
+        entrypoint
+      ];
+
+      extraCommands = ''
+        mkdir -p -m 1777 ./tmp
+      '';
+
+      config = {
+        Volumes = {
+          "/data" = { };
+        };
+        ExposedPorts = {
+          "24119/tcp" = { };
+        };
+        WorkingDir = "/data";
+        Entrypoint = [
+          "tini"
+          "--"
+        ];
+        Cmd = [
+          "${lib.getExe entrypoint}"
+        ];
+        Env = [
+          "HOME=/data"
+          # $PATH seems to be unset in fly.io
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ];
+      };
+    };
 }

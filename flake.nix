@@ -837,6 +837,8 @@
 
                   cmcc-jtydn = with pkgs; callPackage ./nix/packages/cmcc-jtydn/default.nix { };
 
+                  zotero = with pkgsUnstable; zotero;
+
                   containers =
                     let
                       genContainers = import ./nix/containers.nix;
