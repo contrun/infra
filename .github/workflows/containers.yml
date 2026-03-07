@@ -54,6 +54,8 @@ jobs:
             kind: "flake_container"
           - path: "rclone"
             kind: "flake_container"
+          - path: "caddy"
+            kind: "flake_container"
           # Images not working for now.
           # - path: "DeviaVir/zenbot"
           #   kind: "github_repository"

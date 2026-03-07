@@ -399,4 +399,59 @@ in
         ];
       };
     };
+
+  caddy =
+    with pkgs;
+    let
+      caddy = packages.mycaddy;
+      entrypoint = writeShellApplication {
+        name = "container-entrypoint";
+        text = ''
+          set -euo pipefail
+
+          fetchConfig() {
+            config="$(${lib.getExe getSecret} 2d60eed9-6d84-4a61-a3b2-b406008fcbde)" || return 1
+            printf '%s' "$config" > ./Caddyfile
+          }
+          if [ -f ./Caddyfile ]; then
+            caddy run --config ./Caddyfile &
+            if fetchConfig; then
+              caddy reload --config ./Caddyfile
+            fi
+          else
+            fetchConfig
+            caddy run --config ./Caddyfile &
+          fi
+          wait -n
+        '';
+      };
+    in
+    dockerTools.buildLayeredImage {
+      name = "caddy";
+      tag = "latest";
+      maxLayers = 10;
+      contents = with pkgs.dockerTools; [
+        usrBinEnv
+        binSh
+        caCertificates
+        fakeNss
+
+        caddy
+        entrypoint
+      ];
+
+      config = {
+        Volumes = {
+          "/data" = { };
+        };
+        WorkingDir = "/data";
+        Entrypoint = [
+          "${lib.getExe entrypoint}"
+        ];
+        Env = [
+          # $PATH seems to be unset in fly.io
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ];
+      };
+    };
 }
