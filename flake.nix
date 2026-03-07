@@ -1079,18 +1079,6 @@
                   src = ./coredns;
                   modules = ./coredns/gomod2nix.toml;
                 };
-
-                # Todo: gomod2nix failed
-                caddy = pkgsToBuildLocalPackages.buildGoApplication {
-                  pname = "caddy";
-                  version = "latest";
-                  goPackagePath = "github.com/contrun/infra/caddy";
-                  src = ./caddy;
-                  modules = ./caddy/gomod2nix.toml;
-                  nativeBuildInputs = [ pkgs.musl ];
-
-                  CGO_ENABLED = 0;
-                };
               };
           }
         )
