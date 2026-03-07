@@ -1258,6 +1258,9 @@ let
           enableHomeManagerRcloneMount = true;
           enableHomeManagerRcloneServe = true;
           enableHomeManagerAutossh = true;
+          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
+            kernelPackages = pkgs.linuxPackages_6_18;
+          };
         }
       else if hostname == "madbox" then
         {

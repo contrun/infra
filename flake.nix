@@ -78,9 +78,6 @@
 
     emacs-overlay.url = "github:nix-community/emacs-overlay";
 
-    flake-firefox-nightly.url = "github:colemickens/flake-firefox-nightly";
-    flake-firefox-nightly.inputs.nixpkgs.follows = "nixpkgs";
-
     nixpkgs-mozilla = {
       url = "github:mozilla/nixpkgs-mozilla";
       flake = false;
@@ -424,10 +421,6 @@
             myPackages =
               let
                 list = [
-                  {
-                    name = "firefox";
-                    pkg = inputs.flake-firefox-nightly.packages."${super.system}".firefox-nightly-bin or null;
-                  }
                 ]
                 ++ (builtins.map
                   (name: {
