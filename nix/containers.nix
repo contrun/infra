@@ -1,4 +1,7 @@
-{ pkgs }:
+{ pkgs, packages }:
+let
+  inherit (packages) getSecret;
+in
 {
   texlive =
     with pkgs;
@@ -221,41 +224,17 @@
           '';
         in
         writers.writeNginxConfig "nginx.conf" config;
-      getSecretName = "get-secret";
-      getSecret = writeShellApplication {
-        name = getSecretName;
-        text = ''
-          set -euo pipefail
-          bws secret get "$1" | jq -r '.value'
-        '';
-        runtimeInputs = [
-          bws
-          jq
-        ];
-      };
-      getSecretCommand = "/bin/${getSecretName}";
-      getPasswordName = "get-password";
-      getPassword = writeShellApplication {
-        name = getPasswordName;
-        text = ''
-          set -euo pipefail
-          ${getSecretName} 3b3ca859-97eb-486b-829b-b20a010a7747
-        '';
-        runtimeInputs = [
-          getSecret
-        ];
-      };
-      passwordCommand = "/bin/${getPasswordName}";
+      getSecretPath = lib.getExe getSecret;
       entrypointName = "container-entrypoint";
       entrypoint = writeShellApplication {
         name = entrypointName;
         text = ''
           set -euo pipefail
           export RCLONE_CONFIG="/tmp/rclone.conf"
-          ${getSecretCommand} f9876fcd-2545-43d4-be09-b401012a679a > "$RCLONE_CONFIG"
-          export RCLONE_PASSWORD_COMMAND="${passwordCommand}"
-          RCLONE_RC_USER="$(${getSecretCommand} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
-          RCLONE_RC_PASS="$(${getSecretCommand} f360f175-7e38-4ac8-9e53-b40101250a36)"
+          ${getSecretPath} f9876fcd-2545-43d4-be09-b401012a679a > "$RCLONE_CONFIG"
+          export RCLONE_PASSWORD_COMMAND="${getSecretPath} 3b3ca859-97eb-486b-829b-b20a010a7747"
+          RCLONE_RC_USER="$(${getSecretPath} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
+          RCLONE_RC_PASS="$(${getSecretPath} f360f175-7e38-4ac8-9e53-b40101250a36)"
           export RCLONE_RC_USER RCLONE_RC_PASS
           rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser &
           nginx -c "${nginxConfig}" &
@@ -293,7 +272,6 @@
         curl
 
         getSecret
-        getPassword
         entrypoint
       ];
 

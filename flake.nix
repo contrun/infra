@@ -841,7 +841,21 @@
                     let
                       genContainers = import ./nix/containers.nix;
                     in
-                    genContainers { inherit pkgs; };
+                    genContainers { inherit pkgs packages; };
+
+                  getSecret =
+                    with pkgs;
+                    writeShellApplication {
+                      name = "get-secret";
+                      text = ''
+                        set -euo pipefail
+                        bws secret get "$1" | jq -r '.value'
+                      '';
+                      runtimeInputs = [
+                        bws
+                        jq
+                      ];
+                    };
 
                   run =
                     with pkgs;
