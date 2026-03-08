@@ -645,7 +645,6 @@ in
         usrBinEnv
         binSh
         caCertificates
-        fakeNss
 
         tini
         coreutils
@@ -661,14 +660,29 @@ in
         mkdir -p -m 1777 ./tmp
       '';
 
+      enableFakechroot = true;
+      # We simulate the host paths and host environment so that we can copy existing zotero files and
+      # run the container directly. This is required because certain things are hard coded with home directory path.
+      # E.g. the path of Zotero folder is written to prefs.js as $HOME/Zotero.
+      # With the container image below. I can just copy the files with
+      # rsync -avz --progress -h --recursive --include='Zotero' --include='Zotero/**' --include='.zotero' --include='.zotero/**' --exclude='**' --exclude=Zotero/storage ~/ ~/.local/cache/podman-zotero-volume/
+      # The run the container with
+      # podman run -it --userns=keep-id --rm --name zotero -v ~/.local/cache/podman-zotero-volume:/home/e -p 24119:24119 localhost/zotero
+      fakeRootCommands = ''
+        ${dockerTools.shadowSetup}
+        groupadd -r -g 100 users
+        useradd -r -g 100 -u 1000 --home-dir /home/e --create-home e
+      '';
+
       config = {
+        User = "1000:100";
         Volumes = {
-          "/data" = { };
+          "/home/e" = { };
         };
         ExposedPorts = {
           "24119/tcp" = { };
         };
-        WorkingDir = "/data";
+        WorkingDir = "/home/e";
         Entrypoint = [
           "tini"
           "--"
@@ -677,7 +691,7 @@ in
           "${lib.getExe entrypoint}"
         ];
         Env = [
-          "HOME=/data"
+          "HOME=/home/e"
           # $PATH seems to be unset in fly.io
           "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         ];
