@@ -620,16 +620,18 @@ in
       entrypoint = writeShellScriptBin "container-entrypoint" ''
         #!/bin/sh
         set -eu
-        zotero --headless --createprofile managed
-        cd .zotero/zotero/*.managed
-        if ! [ -d extensions ]; then
-          mkdir -p extensions
-          cp /lib/distribution/*.xpi extensions
-        fi
-        [ -f user.js ] || cat > user.js <<EOF
-        ${userjs}
+        if ! [ -d .zotero ]; then
+          zotero --headless --createprofile managed
+          cd .zotero/zotero/*.managed
+          if ! [ -d extensions ]; then
+            mkdir -p extensions
+            cp /lib/distribution/*.xpi extensions
+          fi
+          [ -f user.js ] || cat > user.js <<EOF
+          ${userjs}
         EOF
-        zotero -P managed --headless &
+        fi
+        zotero --headless &
         curl --retry 300 --retry-delay 0.1 --retry-connrefused http://127.0.0.1:23119
         nginx -c "${nginxConfig}" &
         wait -n
