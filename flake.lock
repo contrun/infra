@@ -1497,7 +1497,8 @@
         "old-ghc-nix": "old-ghc-nix",
         "smos": "smos",
         "sops-nix": "sops-nix",
-        "wallabag-client": "wallabag-client"
+        "wallabag-client": "wallabag-client",
+        "zotero-plugins": "zotero-plugins"
       }
     },
     "safe-coloured-text": {
@@ -1880,6 +1881,23 @@
       "original": {
         "owner": "NorfairKing",
         "repo": "yesod-static-remote",
+        "type": "github"
+      }
+    },
+    "zotero-plugins": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772923641,
+        "narHash": "sha256-dFSwsI57zwU2VzVguVAg86bLP790g7v0y+hKsYynvfU=",
+        "owner": "zotero-chinese",
+        "repo": "zotero-plugins",
+        "rev": "8a57cb651d57173655fd5dcffd076ff61d0e202b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "zotero-chinese",
+        "ref": "gh-pages",
+        "repo": "zotero-plugins",
         "type": "github"
       }
     }

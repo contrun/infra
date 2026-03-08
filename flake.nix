@@ -63,6 +63,11 @@
 
     nur-no-pkgs.url = "github:nix-community/NUR";
 
+    zotero-plugins = {
+      url = "github:zotero-chinese/zotero-plugins/gh-pages";
+      flake = false;
+    };
+
     wallabag-client = {
       url = "github:artur-shaik/wallabag-client";
       flake = false;
@@ -114,6 +119,7 @@
       flake-utils,
       gomod2nix,
       nix-on-droid,
+      zotero-plugins,
       ...
     }@inputs:
     let
@@ -843,7 +849,7 @@
                     let
                       genContainers = import ./nix/containers.nix;
                     in
-                    genContainers { inherit pkgs packages; };
+                    genContainers { inherit pkgs packages zotero-plugins; };
 
                   getSecret =
                     with pkgs;
