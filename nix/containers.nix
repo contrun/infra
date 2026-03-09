@@ -664,6 +664,7 @@ in
         tini
         coreutils
         curl
+        rsync
         nginx
         zotero
         plugins
