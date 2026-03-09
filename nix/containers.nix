@@ -684,6 +684,17 @@ in
       # rsync -avz --progress -h --recursive --exclude='*.bak' --include='Zotero' --exclude=Zotero/storage --include='Zotero/**' --include='.zotero' --include='.zotero/**' --exclude='**' ~/ ~/.local/cache/podman-zotero-volume/
       # The run the container with
       # podman run -it --userns=keep-id --rm --name zotero -v ~/.local/cache/podman-zotero-volume:/home/e -p 24119:24119 localhost/zotero
+      # We can also use rsync to sync local zotero files to a fly machine.
+      # 1. Issue a ssh certificate to log into fly machine, we can save it to id_fly.io
+      # flyctl ssh issue
+      # 2. Forward local traffic to remote machine
+      # flyctl proxy 10022:22
+      # Use rsync to sync local files to remote
+      # 3. rsync -e "ssh -p 10022 -i $HOME/.ssh/id_fly.io" --chown 1000:100 -avz --progress -h --recursive --exclude='*.bak' --include='Zotero' --exclude=Zotero/storage --include='Zotero/**' --include='.zotero' --include='.zotero/**' --exclude='**' ~/ root@127.0.0.1:/home/e/
+      # We can also restore the zotero files with
+      # rsync -e "ssh -p 10022 -i $HOME/.ssh/id_fly.io" -avz --progress -h --recursive root@127.0.0.1:/home/e/ ~/.local/cache/zotero/
+      # We may need to update the zotero preferences after a while because we change the preferences locally.
+      # rsync -e "ssh -p 10022 -i $HOME/.ssh/id_fly.io" --chown 1000:100 -avz --progress -h ~/.zotero/ root@127.0.0.1:/home/e/.zotero/
       fakeRootCommands = ''
         ${dockerTools.shadowSetup}
         groupadd -r -g 100 users
