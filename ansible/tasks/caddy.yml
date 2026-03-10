@@ -51,3 +51,38 @@
           - "latest_version in caddy_new_version.stdout"
         fail_msg: "Install failed! Expected {{ latest_version }} but got {{ caddy_new_version.stdout }}"
         success_msg: "Caddy successfully updated to {{ latest_version }} ({{ caddy_arch }})"
+
+- name: Configure Caddy
+  vars:
+    caddy_file_definitions:
+      - src: caddy.config.json.j2
+        dest: /etc/caddy/config.json
+      - src: caddy.service.j2
+        dest: /usr/local/lib/systemd/system/caddy.service
+  block:
+    - name: Ensure configuration directories exist
+      ansible.builtin.file:
+        path: "{{ caddy_item.dest | dirname }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ caddy_file_definitions }}"
+      loop_control:
+        loop_var: caddy_item
+
+    - name: Copy Caddy configuration and systemd unit
+      ansible.builtin.template:
+        src: "{{ caddy_item.src }}"
+        dest: "{{ caddy_item.dest }}"
+        mode: "0644"
+      loop: "{{ caddy_file_definitions }}"
+      loop_control:
+        loop_var: caddy_item
+      register: caddy_unit
+
+    - name: Start/reload Caddy
+      ansible.builtin.systemd:
+        name: caddy
+        state: restarted
+        daemon_reload: yes
+        enabled: yes
+      when: caddy_unit.changed
