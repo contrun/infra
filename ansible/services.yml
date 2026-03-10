@@ -17,6 +17,7 @@
       ssh-port-forwarding: servers
       rclone: servers
       syncthing: sync_servers
+      caddy: servers
   tasks:
     - set_fact:
         group: "{{ service_groups[services] }}"

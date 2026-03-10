@@ -1,0 +1,53 @@
+- name: Get all releases from GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/contrun/mycaddy/releases
+    return_content: true
+  register: caddy_releases
+
+- name: Map architecture and select release
+  ansible.builtin.set_fact:
+    # Map Ansible architecture names to GitHub asset names
+    caddy_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}"
+    # Filter for first release starting with 'v'
+    target_release: "{{ caddy_releases.json | selectattr('tag_name', 'match', '^v') | first }}"
+
+- name: Set version and architecture-specific download URL
+  ansible.builtin.set_fact:
+    latest_version: "{{ target_release.tag_name | replace('v', '') }}"
+    # Search for a file containing both 'linux' and our mapped architecture (e.g., linux-arm64)
+    download_url: >-
+      {{
+        target_release.assets
+        | selectattr('name', 'search', 'linux')
+        | selectattr('name', 'search', caddy_arch)
+        | map(attribute='browser_download_url')
+        | first
+      }}
+
+- name: Check current Caddy version
+  ansible.builtin.command: caddy version
+  register: caddy_old_version
+  failed_when: false
+  changed_when: false
+
+- name: Update and Verify Caddy
+  when: latest_version not in caddy_old_version.stdout
+  block:
+    - name: Download and install the new binary
+      ansible.builtin.get_url:
+        url: "{{ download_url }}"
+        dest: /usr/local/bin/caddy
+        mode: '0755'
+        force: true
+
+    - name: Run version check after installation
+      ansible.builtin.command: /usr/local/bin/caddy version
+      register: caddy_new_version
+      changed_when: false
+
+    - name: Assert the version is correct
+      ansible.builtin.assert:
+        that:
+          - "latest_version in caddy_new_version.stdout"
+        fail_msg: "Install failed! Expected {{ latest_version }} but got {{ caddy_new_version.stdout }}"
+        success_msg: "Caddy successfully updated to {{ latest_version }} ({{ caddy_arch }})"
