@@ -1,0 +1,37 @@
+- name: Installing aria2
+  package:
+    name: "aria2"
+    state: present
+
+- name: Configure aria2
+  vars:
+    aria2_file_definitions:
+      - src: aria2.service.j2
+        dest: /usr/local/lib/systemd/system/aria2.service
+  block:
+    - name: Ensure configuration directories exist
+      ansible.builtin.file:
+        path: "{{ aria2_item.dest | dirname }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ aria2_file_definitions }}"
+      loop_control:
+        loop_var: aria2_item
+
+    - name: Copy aria2 files
+      ansible.builtin.template:
+        src: "{{ aria2_item.src }}"
+        dest: "{{ aria2_item.dest }}"
+        mode: "0644"
+      loop: "{{ aria2_file_definitions }}"
+      loop_control:
+        loop_var: aria2_item
+      register: aria2_unit
+
+    - name: Start/reload aria2
+      ansible.builtin.systemd:
+        name: aria2
+        state: restarted
+        daemon_reload: yes
+        enabled: yes
+      when: aria2_unit.changed

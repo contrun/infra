@@ -1,0 +1,18 @@
+[Unit]
+After=network.target
+Description=aria2 Service
+
+[Service]
+DynamicUser=yes
+User=aria2
+Group=aria2
+UMask=0022
+ConfigurationDirectory=aria2
+StateDirectory=aria2
+Environment=ARIA2_RPC_SECRET={{ aria2_rpc_secret | default("token_nekot") }}
+ExecReload=/usr/bin/kill -HUP $MAINPID
+ExecStart=/usr/bin/aria2c --dir=${STATE_DIRECTORY}/Downloads --save-session=${STATE_DIRECTORY}/aria2.session --listen-port=6881-6999 --enable-rpc=true --rpc-listen-port=6800 --rpc-secret=${ARIA2_RPC_SECRET}
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
