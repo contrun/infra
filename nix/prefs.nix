@@ -1234,7 +1234,6 @@ let
           enableCadvisor = false;
           enablePromtail = false;
           enableWstunnel = false;
-          enableAria2 = false;
           enableAioproxy = false;
           enableEternalTerminal = false;
           enableTtyd = false;
