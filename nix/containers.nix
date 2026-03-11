@@ -730,6 +730,19 @@ in
       home = "/data";
       userHtpasswdPath = "/tmp/user.htpasswd";
       adminHtpasswdPath = "/tmp/admin.htpasswd";
+      frontend =
+        let
+          source = fetchTarball {
+            url = "https://github.com/owntracks/frontend/releases/download/v2.15.3/v2.15.3-dist.zip";
+            sha256 = "sha256:1a9qphygid1rajgn5mifp5y2wz13bsym329wjpv3yf6w4chv4bwb";
+          };
+        in
+        pkgs.runCommand "frontend" { } ''
+          set -x
+          mkdir -p $out/config/
+          cp ${source}/config/config.example.js $out/config/config.js
+          cp -r ${source}/. $out
+        '';
       # Username: user, password: xC7hWHAkh7dcQeK94Zq7WjgY
       defaultHtpasswd = ''
         user:$apr1$9YuHKers$6vgXSay0To.p4f1CuOB9//
@@ -742,7 +755,6 @@ in
             pid /dev/null;
 
             events {}
-
 
             http {
                 sendfile on;
@@ -759,6 +771,14 @@ in
                 server {
                     listen *:8080;
                     server_name _;
+                    gzip on;
+                    gzip_vary on;
+                    gzip_proxied any;
+                    gzip_comp_level 6;
+                    gzip_buffers 16 8k;
+                    gzip_http_version 1.1;
+                    gzip_types text/plain text/css application/json application/javascript text/javascript;
+                    proxy_read_timeout 600;
 
                     # OwnTracks Recorder Views (requires /view, /static, /utils)
                     location /view/ {
@@ -804,6 +824,17 @@ in
                         proxy_set_header Host $host;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                         proxy_set_header X-Real-IP $remote_addr;
+                    }
+
+                    location = /frontend {
+                        return 301 $scheme://$http_host/frontend/;
+                    }
+                    location /frontend/ {
+                        auth_basic "Administrator’s Area";
+                        auth_basic_user_file ${adminHtpasswdPath};
+                        alias ${frontend}/;
+                        autoindex off;
+                        include ${nginx}/conf/mime.types;
                     }
 
                     location / {
