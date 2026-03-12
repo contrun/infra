@@ -34,6 +34,7 @@ in
   rclone =
     with pkgs;
     let
+      home = "/data";
       exposedPort = 10000;
       rclonePort = 5572;
       rcloneUrl = "rclone";
@@ -240,7 +241,7 @@ in
           RCLONE_RC_USER="$(${getSecretPath} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
           RCLONE_RC_PASS="$(${getSecretPath} f360f175-7e38-4ac8-9e53-b40101250a36)"
           export RCLONE_RC_USER RCLONE_RC_PASS
-          rclone rcd --cache-dir /data/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser &
+          rclone rcd --cache-dir ${home}/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser &
           nginx -c "${nginxConfig}" &
           wait -n
         '';
@@ -279,20 +280,34 @@ in
         entrypoint
       ];
 
-      extraCommands = ''
-        mkdir -p -m 1777 ./tmp
-      '';
+      extraCommands =
+        let
+          version = "2.0.5";
+          source = fetchTarball {
+            url = "https://github.com/rclone/rclone-webui-react/releases/download/v${version}/currentbuild.zip";
+            sha256 = "sha256:05qggiqg9lskna5zsjrayzx8ngkfx80cn2qdly6y5vza4vrx62nz";
+          };
+        in
+        ''
+          mkdir -p -m 1777 ./tmp
+          mkdir -p -m 1755 ./data/cache/webgui/current/build/
+          # Docker volume mount may shadow this directory,
+          # but this is our best take because rclone does not accept
+          # a parameter to specify the web gui path.
+          cp -r ${source}/. ./data/cache/webgui/current/build
+          printf '%s' 'v${version}' > ./data/cache/webgui/tag
+        '';
 
       config = {
         ExposedPorts = {
           "${builtins.toString exposedPort}/tcp" = { };
         };
-        WorkingDir = "/data";
+        WorkingDir = "${home}";
         Volumes = {
-          "/data" = { };
+          "${home}" = { };
         };
         Entrypoint = [
-          "tini"
+          "${lib.getExe tini}"
           "--"
         ];
         Cmd = [
@@ -307,7 +322,7 @@ in
 
   tailscale =
     with pkgs;
-    dockerTools.buildLayeredImage rec {
+    dockerTools.buildLayeredImage {
       name = "tailscale";
       tag = "latest";
       maxLayers = 10;
