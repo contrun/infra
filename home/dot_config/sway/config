@@ -88,7 +88,7 @@ for_window [class="vlc"] move --no-auto-back-and-forth to workspace v
 for_window [app_id="mpv"] move --no-auto-back-and-forth to workspace v
 # for_window [app_id="org.pwmt.zathura"] move --no-auto-back-and-forth to workspace r
 for_window [app_id="calibre-gui"] move --no-auto-back-and-forth to workspace r
-for_window [app_id="org.zealdocs.Zeal"] move --no-auto-back-and-forth to workspace d
+for_window [app_id="org.zealdocs.Zeal"] move --no-auto-back-and-forth to workspace r
 for_window [app_id="org.keepassxc.KeePassXC"] move --no-auto-back-and-forth to workspace p
 for_window [class="mpv"] exec wmctrl -r mpv -b remove,demands_attention
 for_window [class="^floating-.*$"] floating enable
@@ -292,8 +292,6 @@ bindsym $mod+w    workspace w
 bindsym $mod+r    workspace r
 # e for editor
 bindsym $mod+e    workspace e
-# d for documentation
-bindsym $mod+d    workspace d
 # q for quick workspace
 bindsym $mod+q    workspace q
 # i for ide
@@ -334,8 +332,6 @@ bindsym $altmod+w    move container to workspace w
 bindsym $altmod+r    move container to workspace r
 # e for editor
 bindsym $altmod+e    move container to workspace e
-# d for documentation
-bindsym $altmod+d    move container to workspace d
 # q for quick workspace
 bindsym $altmod+q    move container to workspace q
 # i for ide
