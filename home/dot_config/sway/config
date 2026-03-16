@@ -477,6 +477,10 @@ set $move_speed_slow 1
 set $move_speed_normal 10
 set $move_speed_fast 50
 
+bindsym $mod+d exec dunstctl history-pop
+bindsym $altmod+d exec dunstctl context
+bindsym $altmod2+d exec dunstctl close
+
 bindsym $altmod3+n exec wlrctl pointer scroll $scroll_speed_normal 0
 bindsym $altmod3+p exec wlrctl pointer scroll -$scroll_speed_normal 0
 bindsym $altmod3+u exec wlrctl pointer scroll 0 -$scroll_speed_normal
@@ -799,7 +803,7 @@ mode "alternative launcher" {
 mode "opener" {
         bindsym f exec $browse_command; mode "default"
         bindsym x exec "eval `xclip -selection clipboard -o`"; mode  "default"
-        bindsym d exec noDisturb.sh; mode "default"
+        bindsym d exec "dunstctl is-paused | grep true && (dunstctl set-paused toggle; dunstify --expire-time=10000 --wait 'no disturb mode' disabled) || (dunstify --expire-time=10000 --wait 'no disturb mode' enabled; dunstctl set-paused toggle)"; mode "default"
         bindsym m exec mpvClipboard.sh; mode "default"
         bindsym n exec networkRestart.sh; mode "default"
         bindsym t exec swaymsg input type:touchpad events toggle; mode "default"
