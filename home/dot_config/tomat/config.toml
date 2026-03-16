@@ -1,0 +1,21 @@
+[notification]
+enabled = true        # Enable desktop notifications
+icon = "auto"         # Icon mode: "auto" (embedded), "theme" (system), or "/path/to/icon.png"
+timeout = 5000        # Notification timeout in milliseconds
+urgency = "normal"    # Urgency level: "low", "normal", "critical"
+# Optional: Custom notification messages
+# work_message = "Break time! Take a short rest ☕"
+# break_message = "Back to work! Let's focus 🍅"
+# long_break_message = "Long break time! Take a well-deserved rest 🏖️"
+
+# Display formatting
+[display]
+text_format = "{icon} {time} {state}"  # Text display template
+
+[hooks.on_work_start]
+cmd = "dunstctl"
+args = ["set-paused true"]
+
+[hooks.on_break_start]
+cmd = "dunstctl"
+args = ["set-paused false"]

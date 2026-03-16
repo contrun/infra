@@ -33,9 +33,18 @@ missing_format = ""
 full_format = ""
 
 [[block]]
-block = "pomodoro"
-notify_cmd = "notify-send $msg"
-blocking_cmd = false
+block = "custom"
+command = "tomat status --output i3status-rs"
+interval = 1
+json = true
+
+[[block.click]]
+button = "left"
+cmd = "tomat toggle"
+
+[[block.click]]
+button = "right"
+cmd = "tomat skip"
 
 [[block]]
 block = "time"

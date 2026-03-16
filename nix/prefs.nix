@@ -395,6 +395,12 @@ let
     enableI3 = !self.isMinimalSystem;
     enableAwesome = !self.isMinimalSystem;
     enableSway = !self.isMinimalSystem;
+    enableTomat =
+      !self.isMinimalSystem
+      && (builtins.elem self.nixosSystem [
+        "aarch64-linux"
+        "x86_64-linux"
+      ]);
     enableKdeConnect =
       !self.isMinimalSystem
       && (builtins.elem self.nixosSystem [
