@@ -20,7 +20,7 @@ primary_region = 'nrt'
 [mounts]
 source = 'bib'
 destination = '/home/e'
-initial_size = "2gb"
+initial_size = '1gb'
 
 [[vm]]
   memory = '1gb'
