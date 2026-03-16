@@ -34,7 +34,7 @@ full_format = ""
 
 [[block]]
 block = "pomodoro"
-notify_cmd = "notify-send $msg"
+notify_cmd = "dunstify --appname pomodoro 'pomodoro' '{msg}'"
 blocking_cmd = false
 
 [[block]]

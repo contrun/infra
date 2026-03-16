@@ -166,6 +166,18 @@
     foreground = "#ffffff"
     timeout = 0
 
+[wm]
+    appname = wm
+    override_pause_level = 100
+
+[no_disturb_mode]
+    appname = no-disturb-mode
+    override_pause_level = 100
+
+[pomodoro]
+    appname = pomodoro
+    override_pause_level = 100
+
 
 # Every section that isn't one of the above is interpreted as a rules to
 # override settings for certain messages.

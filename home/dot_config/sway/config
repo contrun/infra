@@ -8,11 +8,12 @@ set $altmod3 $mod+Control+Shift
 set $terminal wezterm
 set $terminal_with_app_id foot -a
 set $terminal_with_title foot -T
-set $reload_command swaymsg reload
+set $reload_command "dunstify --app-name wm 'reloading sway'; swaymsg reload"
 set $browser_command env MOZ_ENABLE_WAYLAND=1 firefox
 set $scratchpad_terminal_name scratchpad_terminal
 set $switch_output_command swaymsg -r -t get_workspaces | jq -r 'map(select(.visible == true) | select(.focused == false))[0].output' | xargs -n 1 -t -r swaymsg focus output
 set $laptop_output eDP-1
+set $toggle_no_disturb_command "pause_level=$(dunstctl get-pause-level); dunstctl set-pause-level $(( $pause_level ? 0 : 50 )); dunstify --app-name no-disturb-mode 'no disturb mode' $(dunstctl is-paused | grep -q true && printf enabled || printf disabled)"
 
 # https://i3wm.org/docs/userguide.html#_focus_wrapping
 focus_wrapping yes
@@ -347,7 +348,7 @@ bindsym $altmod+v    move container to workspace v
 bindsym $altmod+F1    move container to workspace prev
 bindsym $altmod+F2    move container to workspace next
 
-bindsym $altmod3+d output $laptop_output toggle
+bindsym $altmod3+s output $laptop_output toggle
 bindsym $altmod3+c exec $reload_command
 
 bindsym $mod+grave exec $switch_output_command
@@ -480,6 +481,7 @@ set $move_speed_fast 50
 bindsym $mod+d exec dunstctl history-pop
 bindsym $altmod+d exec dunstctl context
 bindsym $altmod2+d exec dunstctl close
+bindsym $altmod3+d exec $toggle_no_disturb_command
 
 bindsym $altmod3+n exec wlrctl pointer scroll $scroll_speed_normal 0
 bindsym $altmod3+p exec wlrctl pointer scroll -$scroll_speed_normal 0
@@ -803,7 +805,7 @@ mode "alternative launcher" {
 mode "opener" {
         bindsym f exec $browse_command; mode "default"
         bindsym x exec "eval `xclip -selection clipboard -o`"; mode  "default"
-        bindsym d exec "dunstctl is-paused | grep true && (dunstctl set-paused toggle; dunstify --expire-time=10000 --wait 'no disturb mode' disabled) || (dunstify --expire-time=10000 --wait 'no disturb mode' enabled; dunstctl set-paused toggle)"; mode "default"
+        bindsym d exec $toggle_no_disturb_command; mode "default"
         bindsym m exec mpvClipboard.sh; mode "default"
         bindsym n exec networkRestart.sh; mode "default"
         bindsym t exec swaymsg input type:touchpad events toggle; mode "default"
