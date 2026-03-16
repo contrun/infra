@@ -725,9 +725,6 @@ in
   # };
 
   services = {
-    tomat = {
-      enable = prefs.enableTomat;
-    };
     kdeconnect = {
       enable = prefs.enableKdeConnect;
     };
