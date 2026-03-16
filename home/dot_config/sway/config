@@ -2,6 +2,7 @@
 set $mod mod1+mod4
 set $altmod $mod+Control
 set $altmod2 $mod+Shift
+set $altmod3 $mod+Control+Shift
 
 # TODO: `footclient htop` does not worki
 set $terminal wezterm
@@ -211,10 +212,10 @@ bindsym $altmod+Left move left
 bindsym $altmod+Down move down
 bindsym $altmod+Up move up
 bindsym $altmod+Right move right
-bindsym $altmod+Shift+Left move output left
-bindsym $altmod+Shift+Down move output down
-bindsym $altmod+Shift+Up move output up
-bindsym $altmod+Shift+Right move output right
+bindsym $altmod3+Left move output left
+bindsym $altmod3+Down move output down
+bindsym $altmod3+Up move output up
+bindsym $altmod3+Right move output right
 
 # move workspace
 bindsym $mod+F1 workspace prev
@@ -350,8 +351,8 @@ bindsym $altmod+v    move container to workspace v
 bindsym $altmod+F1    move container to workspace prev
 bindsym $altmod+F2    move container to workspace next
 
-bindsym $altmod+Shift+d output $laptop_output toggle
-bindsym $altmod+Shift+c exec $reload_command
+bindsym $altmod3+d output $laptop_output toggle
+bindsym $altmod3+c exec $reload_command
 
 bindsym $mod+grave exec $switch_output_command
 # zw-type failed with error: ImeUnavailable
@@ -472,29 +473,50 @@ mode "windows" {
         bindsym Escape mode "default"
 }
 
-set $scroll_speed_very_slow 1
-set $scroll_speed_slow 10
+set $scroll_speed_slow 1
+set $scroll_speed_normal 10
 set $scroll_speed_fast 50
+
+set $move_speed_slow 1
+set $move_speed_normal 10
+set $move_speed_fast 50
+
+bindsym $altmod3+n exec wlrctl pointer scroll $scroll_speed_normal 0
+bindsym $altmod3+p exec wlrctl pointer scroll -$scroll_speed_normal 0
+bindsym $altmod3+u exec wlrctl pointer scroll 0 -$scroll_speed_normal
+bindsym $altmod3+i exec wlrctl pointer scroll 0 $scroll_speed_normal
+
 bindsym $altmod2+n exec wlrctl pointer scroll $scroll_speed_fast 0
 bindsym $altmod2+p exec wlrctl pointer scroll -$scroll_speed_fast 0
 bindsym $altmod2+u exec wlrctl pointer scroll 0 -$scroll_speed_fast
 bindsym $altmod2+i exec wlrctl pointer scroll 0 $scroll_speed_fast
+
+bindsym $altmod3+h seat - cursor move -$scroll_speed_slow 0
+bindsym $altmod3+j seat - cursor move 0 $scroll_speed_slow
+bindsym $altmod3+k seat - cursor move 0 -$scroll_speed_slow
+bindsym $altmod3+l seat - cursor move $scroll_speed_slow 0
+
+bindsym $altmod2+h seat - cursor move -$scroll_speed_normal 0
+bindsym $altmod2+j seat - cursor move 0 $scroll_speed_normal
+bindsym $altmod2+k seat - cursor move 0 -$scroll_speed_normal
+bindsym $altmod2+l seat - cursor move $scroll_speed_normal 0
+
 bindsym $mod+f exec wl-kbptr-sway-active-win -o modes=floating','click -o mode_floating.source=detect
 bindsym $altmod2+f exec 'wl-kbptr-sway-active-win -o modes=floating -o mode_floating.source=detect; swaymsg mode mouse'
 bindsym $altmod+f mode "mouse"
-mode "mouse" {
 
+mode "mouse" {
         bindsym $altmod+g mode default, exec 'wl-kbptr-sway-active-win; swaymsg mode mouse'
         bindsym $mod+g mode default, exec 'wl-kbptr; swaymsg mode mouse'
 
-        bindsym $altmod2+h seat - cursor move -$scroll_speed_very_slow 0
-        bindsym $altmod2+j seat - cursor move 0 $scroll_speed_very_slow
-        bindsym $altmod2+k seat - cursor move 0 -$scroll_speed_very_slow
-        bindsym $altmod2+l seat - cursor move $scroll_speed_very_slow 0
-        bindsym $altmod2+Left seat - cursor move -$scroll_speed_very_slow 0
-        bindsym $altmod2+Down seat - cursor move 0 $scroll_speed_very_slow
-        bindsym $altmod2+Up seat - cursor move 0 -$scroll_speed_very_slow
-        bindsym $altmod2+Right seat - cursor move $scroll_speed_very_slow 0
+        bindsym $altmod2+h seat - cursor move -$scroll_speed_slow 0
+        bindsym $altmod2+j seat - cursor move 0 $scroll_speed_slow
+        bindsym $altmod2+k seat - cursor move 0 -$scroll_speed_slow
+        bindsym $altmod2+l seat - cursor move $scroll_speed_slow 0
+        bindsym $altmod2+Left seat - cursor move -$scroll_speed_slow 0
+        bindsym $altmod2+Down seat - cursor move 0 $scroll_speed_slow
+        bindsym $altmod2+Up seat - cursor move 0 -$scroll_speed_slow
+        bindsym $altmod2+Right seat - cursor move $scroll_speed_slow 0
 
         bindsym $mod+h seat - cursor move -$scroll_speed_fast 0
         bindsym $mod+j seat - cursor move 0 $scroll_speed_fast
@@ -505,29 +527,29 @@ mode "mouse" {
         bindsym $mod+Up seat - cursor move 0 -$scroll_speed_fast
         bindsym $mod+Right seat - cursor move $scroll_speed_fast 0
 
-        bindsym $altmod+h seat - cursor move -$scroll_speed_slow 0
-        bindsym $altmod+j seat - cursor move 0 $scroll_speed_slow
-        bindsym $altmod+k seat - cursor move 0 -$scroll_speed_slow
-        bindsym $altmod+l seat - cursor move $scroll_speed_slow 0
-        bindsym $altmod+Left seat - cursor move -$scroll_speed_slow 0
-        bindsym $altmod+Down seat - cursor move 0 $scroll_speed_slow
-        bindsym $altmod+Up seat - cursor move 0 -$scroll_speed_slow
-        bindsym $altmod+Right seat - cursor move $scroll_speed_slow 0
+        bindsym $altmod+h seat - cursor move -$scroll_speed_normal 0
+        bindsym $altmod+j seat - cursor move 0 $scroll_speed_normal
+        bindsym $altmod+k seat - cursor move 0 -$scroll_speed_normal
+        bindsym $altmod+l seat - cursor move $scroll_speed_normal 0
+        bindsym $altmod+Left seat - cursor move -$scroll_speed_normal 0
+        bindsym $altmod+Down seat - cursor move 0 $scroll_speed_normal
+        bindsym $altmod+Up seat - cursor move 0 -$scroll_speed_normal
+        bindsym $altmod+Right seat - cursor move $scroll_speed_normal 0
 
 
         # Move in the diagonal directions
-        bindsym $altmod2+r seat - cursor move $scroll_speed_very_slow -$scroll_speed_very_slow
-        bindsym $altmod2+e seat - cursor move -$scroll_speed_very_slow -$scroll_speed_very_slow
-        bindsym $altmod2+v seat - cursor move $scroll_speed_very_slow $scroll_speed_very_slow
-        bindsym $altmod2+c seat - cursor move -$scroll_speed_very_slow $scroll_speed_very_slow
+        bindsym $altmod2+r seat - cursor move $scroll_speed_slow -$scroll_speed_slow
+        bindsym $altmod2+e seat - cursor move -$scroll_speed_slow -$scroll_speed_slow
+        bindsym $altmod2+v seat - cursor move $scroll_speed_slow $scroll_speed_slow
+        bindsym $altmod2+c seat - cursor move -$scroll_speed_slow $scroll_speed_slow
         bindsym $mod+r seat - cursor move $scroll_speed_fast -$scroll_speed_fast
         bindsym $mod+e seat - cursor move -$scroll_speed_fast -$scroll_speed_fast
         bindsym $mod+v seat - cursor move $scroll_speed_fast $scroll_speed_fast
         bindsym $mod+c seat - cursor move -$scroll_speed_fast $scroll_speed_fast
-        bindsym $altmod+r seat - cursor move $scroll_speed_slow -$scroll_speed_slow
-        bindsym $altmod+e seat - cursor move -$scroll_speed_slow -$scroll_speed_slow
-        bindsym $altmod+v seat - cursor move $scroll_speed_slow $scroll_speed_slow
-        bindsym $altmod+c seat - cursor move -$scroll_speed_slow $scroll_speed_slow
+        bindsym $altmod+r seat - cursor move $scroll_speed_normal -$scroll_speed_normal
+        bindsym $altmod+e seat - cursor move -$scroll_speed_normal -$scroll_speed_normal
+        bindsym $altmod+v seat - cursor move $scroll_speed_normal $scroll_speed_normal
+        bindsym $altmod+c seat - cursor move -$scroll_speed_normal $scroll_speed_normal
 
         # mouse scrolling
         bindsym $altmod2+n exec wlrctl pointer scroll 1 0
@@ -546,6 +568,9 @@ mode "mouse" {
         # For easier single hand operations
         bindsym $mod+z exec wlrctl pointer scroll 200 0
         bindsym $altmod+z exec wlrctl pointer scroll -200 0
+
+        # Shortcut to select word and look up the word from goldendict
+        bindsym p exec 'swaymsg mode default; wlrctl pointer click left; wlrctl pointer click left; sleep 0.01; goldendict --main-window "$(wl-paste --primary)"'
 
         # Note only single key shortcuts are working, because key events with
         # modifier keys holding with also be sent to the application.
@@ -582,8 +607,6 @@ mode "mouse" {
         bindsym $mod+f exec wl-kbptr-sway-active-win -o modes=floating,click -o mode_floating.source=detect
         bindsym $altmod2+f exec wl-kbptr-sway-active-win -o modes=floating -o mode_floating.source=detect
         bindsym $altmod+f mode "default"
-        bindsym Return mode "default"
-        bindsym Escape mode "default"
 }
 
 # this serves as the exhaustive collection of things one can do with workspaces
