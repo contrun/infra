@@ -408,6 +408,9 @@ config.key_tables = {
   },
 }
 
+config.scrollback_lines = 100000
+config.enable_scroll_bar = true
+
 local function cmd_exists(cmd)
   local search_cmd = is_windows and 'where' or 'which'
   local success, _, _ = wezterm.run_child_process({ search_cmd, cmd })
