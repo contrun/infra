@@ -795,7 +795,8 @@ mode "alternative launcher" {
         bindsym o exec $terminal_with_title 'floating fzf files' -e fzfLauncher.sh; mode "default"
         # bindsym z exec $terminal_with_title 'floating zotero files' -e zoteroOpen.sh; mode "default"
         bindsym e exec $terminal_with_title 'floating files' -e ranger; mode "default"
-        bindsym p exec goldendict --main-window "$(wl-paste)"; mode "default"
+        bindsym p exec goldendict --main-window "$(wl-paste --primary)"; mode "default"
+        bindsym Shift+p exec goldendict --main-window "$(wl-paste)"; mode "default"
 
         bindsym $mod+m mode "$switch_modes"
         bindsym Escape mode "default"
@@ -839,7 +840,6 @@ mode "launcher" {
         bindsym y exec geany; mode "default"
         bindsym l exec calibre; mode "default"
         bindsym g exec logseq; mode "default"
-        bindsym u exec logseq; mode "default"
         # bindsym v exec vlc; mode "default"
         bindsym k exec keepassxc; mode "default"
         bindsym v exec copyq show; mode "default"
