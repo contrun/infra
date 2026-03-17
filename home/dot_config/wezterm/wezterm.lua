@@ -75,57 +75,44 @@ end
 
 local config = wezterm.config_builder()
 
+-- Note that all regexes here should not contain capturing group as they are shared
+-- between hyperlink rules and quick select patterns.
 local common_regexs = {
   -- Matches: a URL in parens: (URL)
-  -- Markdown: [text](URL title)
-  '\\((\\w+://[^\\s\\)]+)(?:\\s+[^\\)]*)?\\)',
+  '(?:\\()(\\w+:[/]*[^\\s\\(]+)(?:\\))',
   -- Matches: a URL in brackets: [URL]
-  '\\[(\\w+://[^\\s\\]]+)\\]',
+  '(?:\\[)(\\w+:[/]*[^\\s\\]]+)(?:\\])',
   -- Matches: a URL in curly braces: {URL}
-  '\\{(\\w+://[^\\s\\}]+)\\}',
+  '(?:\\{)(\\w+:[/]*[^\\s\\}]+)(?:\\})',
   -- Matches: a URL in angle brackets: <URL>
-  '<(\\w+://[^\\s>]+)>',
+  '(?:<)(\\w+:[/]*[^\\s>]+)(?:>)',
   -- Matches: a URL in double quotes: "URL"
-  '"(\\w+://[^\\s"]+)"',
+  '(?:")(\\w+:[/]*[^\\s"]+)(?:")',
   -- Matches: a URL in single quotes: 'URL'
-  "'(\\w+://[^\\s']+)'",
+  "(?:')(\\w+:[/]*[^\\s']+)(?:')",
+  -- Matches: a URL with optional common punctuation
+  '(?:\\b)(\\w+:[/]*[^\\s]+)(?:[.,:;]?\\b)',
 }
 
--- [default hyperlink_rules is wrong for Markdown link format · Issue #3803 · wezterm/wezterm](https://github.com/wezterm/wezterm/issues/3803)
--- For all regex in common_regexs, we need to add
--- `format = '$1'` and `highlight = 1` to the table.
 config.hyperlink_rules = {}
 for _, regex in ipairs(common_regexs) do
   table.insert(config.hyperlink_rules, {
     regex = regex,
-    format = '$1',
-    highlight = 1,
-  })
-end
-
-local special_regexs = {
-  -- Then handle URLs not wrapped in brackets, quotes, or other delimiters
-  -- Stop at common punctuation that typically ends URLs in text
-  {
-    regex = '(?<![\\(\\{\\[<"])\\b\\w+://[^\\s\\)\\]\\}>",:;]+',
     format = '$0',
-  },
-  -- implicit mailto link
-  {
-    regex = '\\b\\w+@[\\w-]+(\\.[\\w-]+)+\\b',
-    format = 'mailto:$0',
-  },
-}
-
-for _, regex in ipairs(special_regexs) do
-  -- For all regex in special_regexs, we need to add
-  -- `format = '$0'` and `highlight = 1` to the table.
-  table.insert(config.hyperlink_rules, {
-    regex = regex.regex,
-    format = regex.format,
-    highlight = 1,
   })
 end
+
+local quick_select_url_patterns = {}
+for _, pattern in ipairs(common_regexs) do
+  table.insert(quick_select_url_patterns, pattern)
+end
+
+config.quick_select_patterns = {}
+for _, pattern in ipairs(quick_select_url_patterns) do
+  table.insert(config.quick_select_patterns, pattern)
+end
+local email_regex = '(?:\\b)(\\w+@[\\w-]+(?:\\.[\\w-]+)+)(?:\\b)'
+table.insert(config.quick_select_patterns, email_regex)
 
 config.tls_clients = {}
 
@@ -214,20 +201,6 @@ config.launch_menu = {
   table.unpack(generate_launch_menu(sshmux_domain)),
   table.unpack(generate_launch_menu(tlsssh_domain))
 }
-
-local quick_select_url_patterns = {}
-for _, pattern in ipairs(common_regexs) do
-  table.insert(quick_select_url_patterns, pattern)
-end
-local special_url_patterns = {
-  -- URLs not wrapped in brackets
-  '(?<![\\(\\{\\[<])\\b\\w+://\\S+',
-  -- Email addresses
-  '\\b\\w+@[\\w-]+(\\.[\\w-]+)+\\b',
-}
-for _, pattern in ipairs(special_url_patterns) do
-  table.insert(quick_select_url_patterns, pattern)
-end
 
 -- timeout_milliseconds defaults to 1000 and can be omitted
 config.leader = { key = 'Space', mods = 'CTRL|SHIFT', timeout_milliseconds = 1000 }
