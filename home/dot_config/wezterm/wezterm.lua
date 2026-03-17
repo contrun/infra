@@ -21,6 +21,43 @@ local function strip_sshmux_prefix(domain_name)
   return domain_name:gsub('^SSH[MUX]*:', '')
 end
 
+local function spawn_editor(window, pane, path)
+  if path:sub(1, 1) == "~" then
+    path = wezterm.home_dir .. path:sub(2)
+  end
+
+  local file, line, column = path:match("^([^:]+):?(%d*):?(%d*)")
+
+  if not file or file == "" then
+    wezterm.log_error("Failed to open editor: no valid path matched from " .. tostring(path))
+    return
+  end
+
+  local editor = os.getenv('EDITOR') or 'vim'
+  local editor_bin = editor:match("([^\\]+)$") or editor
+  local args = {}
+
+  if editor_bin == 'code' or editor_bin == 'code-insiders' then
+    -- VS Code supports file:line:col
+    local location = file .. (line and ":" .. line or "") .. (column ~= "" and (":" .. column) or "")
+    args = { editor, '--goto', location }
+  elseif editor_bin == 'hx' or editor_bin == 'subl' then
+    -- Helix and Sublime support file:line:col
+    local location = file .. (line and ":" .. line or "") .. (column ~= "" and (":" .. column) or "")
+    args = { editor, location }
+  else
+    -- Vim, Neovim, Nano, Emacs: editor +line file
+    args = { editor, '+' .. (line or "1"), file }
+  end
+
+  window:perform_action(
+    wezterm.action.SpawnCommandInNewTab {
+      args = args,
+    },
+    pane
+  )
+end
+
 wezterm.on('update-status', function(window)
   -- Grab the utf8 character for the "powerline" left facing
   -- solid arrow.
@@ -243,12 +280,29 @@ config.keys = {
       patterns = quick_select_url_patterns,
       action = wezterm.action_callback(function(window, pane)
         local url = window:get_selection_text_for_pane(pane)
-        wezterm.log_info('opening: ' .. url)
+        wezterm.log_info('opening url: ' .. url)
         wezterm.open_with(url)
       end),
     },
   },
-
+  {
+    key = 'e',
+    mods = 'CTRL|ALT',
+    action = wezterm.action.QuickSelectArgs {
+      label = 'Open File at Line',
+      patterns = {
+        -- TODO: fix windows path
+        -- Copied from https://github.com/wezterm/wezterm/blob/05343b387085842b434d267f91b6b0ec157e4331/wezterm-gui/src/overlay/quickselect.rs#L38
+        -- with support for line and column number
+        '(?:[.\\w\\-@~]+)?(?:/+[.\\w\\-@]+)+(?::\\d+)*',
+      },
+      action = wezterm.action_callback(function(window, pane)
+        local file = window:get_selection_text_for_pane(pane)
+        wezterm.log_info('editing file: ' .. file)
+        spawn_editor(window, pane, file)
+      end),
+    },
+  },
   {
     key = 't',
     mods = 'CTRL|ALT',
