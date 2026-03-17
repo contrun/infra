@@ -574,6 +574,13 @@ mode "mouse" {
         # Shortcut to select word and look up the word from goldendict
         bindsym p exec 'swaymsg mode default; wlrctl pointer click left; wlrctl pointer click left; sleep 0.01; goldendict --main-window "$(wl-paste --primary)"'
 
+        bindsym z exec ydotool click 0x40
+        bindsym x exec ydotool click 0x42
+        bindsym c exec ydotool click 0x41
+        bindsym q exec ydotool click 0x80
+        bindsym w exec ydotool click 0x82
+        bindsym e exec ydotool click 0x81
+
         # Note only single key shortcuts are working, because key events with
         # modifier keys holding with also be sent to the application.
         bindsym a exec wlrctl pointer click left
