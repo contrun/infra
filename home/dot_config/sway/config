@@ -718,11 +718,9 @@ bindsym Mod5+F6 exec xbacklight -dec 10
 
 # rofi bindings
 bindsym Mod1+space exec rofi -show drun
-bindsym $mod+s exec rofi -show search -modi search:rofi-web-search.py -i -p "Search: "
-# bindsym $mod+f exec bemenu-run
-
-# move any window to the current workspace
-# bindsym F8 exec python ~/.config/i3/quickswitch.py
+bindsym $mod+s exec rofi -show web-search -i
+bindsym $altmod+s exec rofi -show web-search -i -filter "$(wl-paste --primary)"
+bindsym $altmod2+s exec rofi -show web-search -i -filter "$(wl-paste)"
 
 mode "output" {
         bindsym Left exec swaymsg move workspace to output left
