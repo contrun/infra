@@ -505,7 +505,7 @@ bindsym $altmod2+l seat - cursor move $scroll_speed_normal 0
 
 bindsym $mod+f exec wl-kbptr-sway-active-win -o modes=floating','click -o mode_floating.source=detect
 bindsym $altmod2+f exec 'wl-kbptr-sway-active-win -o modes=floating -o mode_floating.source=detect; swaymsg mode mouse'
-bindsym $altmod+f mode "mouse"
+bindsym $altmod+f exec 'wl-find-cursor; swaymsg mode mouse'
 
 mode "mouse" {
         bindsym $altmod+g mode default, exec 'wl-kbptr-sway-active-win; swaymsg mode mouse'
@@ -573,6 +573,8 @@ mode "mouse" {
 
         # Shortcut to select word and look up the word from goldendict
         bindsym p exec 'swaymsg mode default; wlrctl pointer click left; wlrctl pointer click left; sleep 0.01; goldendict --main-window "$(wl-paste --primary)"'
+
+        bindsym m exec wl-find-cursor
 
         bindsym z exec ydotool click 0x40
         bindsym x exec ydotool click 0x42
