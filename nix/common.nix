@@ -258,6 +258,9 @@ in
     resolvconf = {
       dnsExtensionMechanism = false;
     };
+    nftables = {
+      enable = true;
+    };
     useNetworkd = prefs.enableSystemdNetworkd;
     hostName = prefs.hostname;
     hostId = prefs.hostId;
@@ -3802,7 +3805,6 @@ in
     };
     waydroid = {
       enable = prefs.enableWaydroid;
-      package = pkgs.waydroid-nftables;
     };
     containerd = {
       enable = prefs.enableContainerd;
