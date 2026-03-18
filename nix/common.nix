@@ -3800,6 +3800,10 @@ in
       enableExtensionPack = prefs.enableVirtualboxHost;
       # enableHardening = false;
     };
+    waydroid = {
+      enable = prefs.enableWaydroid;
+      package = pkgs.waydroid-nftables;
+    };
     containerd = {
       enable = prefs.enableContainerd;
     };

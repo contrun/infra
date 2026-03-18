@@ -600,6 +600,7 @@ let
     enableGlusterfs = !self.isMinimalSystem;
     enableSamba = !self.isMinimalSystem;
     enableContainerd = false;
+    enableWaydroid = false;
     enableCrio = false;
     enableK3s = false;
     enableNomad = false;
@@ -1234,6 +1235,7 @@ let
           enableCadvisor = false;
           enablePromtail = false;
           enableWstunnel = false;
+          enableWaydroid = true;
           enableAioproxy = false;
           enableEternalTerminal = false;
           enableTtyd = false;
