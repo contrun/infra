@@ -8,6 +8,17 @@ import { join } from "https://deno.land/std@0.224.0/path/mod.ts";
 const DEFAULT_SEARCH = "https://duckduckgo.com/?q=";
 const BANG_DATA_URL = "https://duckduckgo.com/bang.js";
 
+
+const MY_BANG_DATA = [{
+  "c": "Research",
+  "d": "annas-archive.gd",
+  "r": 0,
+  "s": "Annas Archive",
+  "sc": "Academic",
+  "t": "annas",
+  "u": "https://annas-archive.gd/search?q={{{s}}}"
+}];
+
 function getOpener(): string {
   switch (Deno.build.os) {
     case "darwin":
@@ -54,6 +65,9 @@ async function getBangLookup(
 
   const lookup: Record<string, string> = {};
   data.forEach((entry) => {
+    lookup[entry.t] = entry.u;
+  });
+  MY_BANG_DATA.forEach((entry) => {
     lookup[entry.t] = entry.u;
   });
   return lookup;
