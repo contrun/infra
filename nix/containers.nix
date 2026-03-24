@@ -38,6 +38,18 @@ in
       exposedPort = 10000;
       rclonePort = 5572;
       rcloneUrl = "rclone";
+      downloadHtpasswd =
+        component:
+        let
+          prefix = "/tmp/rclone.htpasswd";
+          htpasswdFile = "${prefix}.${component}";
+        in
+        {
+          inherit htpasswdFile;
+          downloadCommand = ''
+            /bin/curl -sS --get --create-dirs --output "${htpasswdFile}" -d htpasswd=${component} "$RCLONE_HTPASSWD_URL"
+          '';
+        };
       nginxConfig =
         let
           services =
@@ -60,6 +72,7 @@ in
                   ];
               mkCommand =
                 name: attrs:
+                with (downloadHtpasswd name);
                 let
                   inherit (attrs) port url;
                   checkRcdOnlineCommand = ''
@@ -69,23 +82,26 @@ in
                   commands =
                     if name == "s3" then
                       [
+                        downloadCommand
                         checkRcdOnlineCommand
                         ''
-                          ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} htpasswd="$RCLONE_HTPASSWD"
+                          ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} htpasswd="${htpasswdFile}"
                         ''
                       ]
                     else if name == "webdav" then
                       [
+                        downloadCommand
                         checkRcdOnlineCommand
                         ''
-                          ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="$RCLONE_HTPASSWD"
+                          ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="${htpasswdFile}"
                         ''
                       ]
                     else if name == "restic" then
                       [
+                        downloadCommand
                         checkRcdOnlineCommand
                         ''
-                          ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="$RCLONE_HTPASSWD"
+                          ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="${htpasswdFile}"
                         ''
                       ]
                     else if name == "public" then
@@ -149,7 +165,7 @@ in
                             local opts = {
                                 merge_stderr = true,
                                 buffer_size = 256,
-                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_HTPASSWD=" .. os.getenv("RCLONE_HTPASSWD")}
+                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_HTPASSWD_URL=" .. os.getenv("RCLONE_HTPASSWD_URL")}
                             }
                             local proc, err = ngx_pipe.spawn(${lib.strings.escapeShellArg command}, opts)
                             if not proc then
@@ -186,7 +202,7 @@ in
             user nobody nobody;
             error_log stderr info;
             pid /dev/null;
-            env RCLONE_HTPASSWD;
+            env RCLONE_HTPASSWD_URL;
             env RCLONE_RC_USER;
             env RCLONE_RC_PASS;
 
@@ -232,19 +248,23 @@ in
       entrypointName = "container-entrypoint";
       entrypoint = writeShellApplication {
         name = entrypointName;
-        text = ''
+        text = with (downloadHtpasswd "rcd"); ''
           export RCLONE_CONFIG="/tmp/rclone.conf"
-          export RCLONE_HTPASSWD="/tmp/rclone.htpasswd"
+          rclone copyurl "$RCLONE_CONFIG_URL" "$RCLONE_CONFIG"
+          export RCLONE_HTPASSWD_URL="''${RCLONE_HTPASSWD_URL:-$RCLONE_CONFIG_URL}"
+
+          ${downloadCommand}
+          RCLONE_RCD_HTPASSWD="${htpasswdFile}"
+
           # Additional random user to control the rcd instance
           export RCLONE_RC_USER=userforlocalrcdaccess
           RCLONE_RC_PASS=
           RCLONE_RC_PASS="$(openssl rand -base64 20)"
           export RCLONE_RC_PASS
-          rclone copyurl "$RCLONE_CONFIG_URL" "$RCLONE_CONFIG"
-          rclone copyurl "$RCLONE_HTPASSWD_URL" "$RCLONE_HTPASSWD"
-          echo >> "$RCLONE_HTPASSWD"
-          echo "$RCLONE_RC_USER:$(openssl passwd -apr1 "$RCLONE_RC_PASS")" >> "$RCLONE_HTPASSWD"
-          rclone rcd --cache-dir ${home}/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser --rc-htpasswd "$RCLONE_HTPASSWD" &
+          echo >> "$RCLONE_RCD_HTPASSWD"
+          echo "$RCLONE_RC_USER:$(openssl passwd -apr1 "$RCLONE_RC_PASS")" >> "$RCLONE_RCD_HTPASSWD"
+
+          rclone rcd --cache-dir ${home}/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser --rc-htpasswd "$RCLONE_RCD_HTPASSWD" &
           nginx -c "${nginxConfig}" &
           wait -n
         '';
