@@ -944,24 +944,49 @@ in
             Install = {
               WantedBy = [ "default.target" ];
             };
-            Service = {
-              TimeoutStartSec = "infinity";
-              Restart = "always";
-              # Exponential backoff for the restart.
-              RestartSteps = 20;
-              RestartMaxDelaySec = 3600;
-              Type = "notify";
-              ExecStart = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy run --config %h/.config/caddy/%i.Caddyfile --adapter caddyfile
-              '';
-              ExecReload = ''
-                ${pkgs.myPackages.mycaddy}/bin/caddy reload --config %h/.config/caddy/%i.Caddyfile --adapter caddyfile
-              '';
-              EnvironmentFile = [
-                "-%h/.config/caddy/env"
-                "-%h/.config/caddy/%i.env"
-              ];
-            };
+            Service =
+              let
+                config = {
+                  admin = {
+                    listen = "\${ADMIN_LISTEN_ADDR}";
+                    config = {
+                      load = {
+                        module = "http";
+                        url = "\${CADDY_CONFIG_URL}";
+                      };
+                    };
+                  };
+                };
+                configText = builtins.toJSON config;
+                configFile = "%t/caddy.%i.json";
+              in
+              {
+                TimeoutStartSec = "infinity";
+                Restart = "always";
+                # Exponential backoff for the restart.
+                RestartSteps = 20;
+                RestartMaxDelaySec = 3600;
+                Type = "notify";
+                ExecStartPre =
+                  let
+                    generateConfig = pkgs.writeShellScript "generateConfig" ''
+                      ${pkgs.gettext}/bin/envsubst <<< "$1" > "$2"
+                    '';
+                  in
+                  ''
+                    ${generateConfig} ${lib.escapeShellArg configText} "${configFile}"
+                  '';
+                ExecStart = ''
+                  ${pkgs.myPackages.mycaddy}/bin/caddy run --config "${configFile}"
+                '';
+                ExecReload = ''
+                  ${pkgs.myPackages.mycaddy}/bin/caddy reload --config "${configFile}"
+                '';
+                EnvironmentFile = [
+                  "-%h/.config/caddy/env"
+                  "-%h/.config/caddy/%i.env"
+                ];
+              };
           };
         }
       )
