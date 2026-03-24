@@ -71,21 +71,21 @@ in
                       [
                         checkRcdOnlineCommand
                         ''
-                          ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} auth_key="$RCLONE_RC_USER,$RCLONE_RC_PASS"
+                          ${rcCommand} serve/start vfs_cache_mode=full type=s3 fs=root: addr=:${builtins.toString port} baseurl=${url} htpasswd="$RCLONE_HTPASSWD"
                         ''
                       ]
                     else if name == "webdav" then
                       [
                         checkRcdOnlineCommand
                         ''
-                          ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                          ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=root: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="$RCLONE_HTPASSWD"
                         ''
                       ]
                     else if name == "restic" then
                       [
                         checkRcdOnlineCommand
                         ''
-                          ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} user="$RCLONE_RC_USER" pass="$RCLONE_RC_PASS"
+                          ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="$RCLONE_HTPASSWD"
                         ''
                       ]
                     else if name == "public" then
@@ -149,7 +149,7 @@ in
                             local opts = {
                                 merge_stderr = true,
                                 buffer_size = 256,
-                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_PASSWORD_COMMAND=" .. os.getenv("RCLONE_PASSWORD_COMMAND")}
+                                environ = {"RCLONE_RC_USER=" .. os.getenv("RCLONE_RC_USER"), "RCLONE_RC_PASS=" .. os.getenv("RCLONE_RC_PASS"), "RCLONE_HTPASSWD=" .. os.getenv("RCLONE_HTPASSWD")}
                             }
                             local proc, err = ngx_pipe.spawn(${lib.strings.escapeShellArg command}, opts)
                             if not proc then
@@ -186,9 +186,9 @@ in
             user nobody nobody;
             error_log stderr info;
             pid /dev/null;
+            env RCLONE_HTPASSWD;
             env RCLONE_RC_USER;
             env RCLONE_RC_PASS;
-            env RCLONE_PASSWORD_COMMAND;
 
             events {}
 
@@ -229,19 +229,22 @@ in
           '';
         in
         writers.writeNginxConfig "nginx.conf" config;
-      getSecretPath = lib.getExe getSecret;
       entrypointName = "container-entrypoint";
       entrypoint = writeShellApplication {
         name = entrypointName;
         text = ''
-          set -euo pipefail
           export RCLONE_CONFIG="/tmp/rclone.conf"
-          ${getSecretPath} f9876fcd-2545-43d4-be09-b401012a679a > "$RCLONE_CONFIG"
-          export RCLONE_PASSWORD_COMMAND="${getSecretPath} 3b3ca859-97eb-486b-829b-b20a010a7747"
-          RCLONE_RC_USER="$(${getSecretPath} 4615a562-2a50-4a71-adc5-b4010124ddeb)"
-          RCLONE_RC_PASS="$(${getSecretPath} f360f175-7e38-4ac8-9e53-b40101250a36)"
-          export RCLONE_RC_USER RCLONE_RC_PASS
-          rclone rcd --cache-dir ${home}/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser &
+          export RCLONE_HTPASSWD="/tmp/rclone.htpasswd"
+          # Additional random user to control the rcd instance
+          export RCLONE_RC_USER=userforlocalrcdaccess
+          RCLONE_RC_PASS=
+          RCLONE_RC_PASS="$(openssl rand -base64 20)"
+          export RCLONE_RC_PASS
+          rclone copyurl "$RCLONE_CONFIG_URL" "$RCLONE_CONFIG"
+          rclone copyurl "$RCLONE_HTPASSWD_URL" "$RCLONE_HTPASSWD"
+          echo >> "$RCLONE_HTPASSWD"
+          echo "$RCLONE_RC_USER:$(openssl passwd -apr1 "$RCLONE_RC_PASS")" >> "$RCLONE_HTPASSWD"
+          rclone rcd --cache-dir ${home}/cache --rc-addr :${builtins.toString rclonePort} --rc-baseurl ${rcloneUrl} --rc-web-gui --rc-web-gui-no-open-browser --rc-htpasswd "$RCLONE_HTPASSWD" &
           nginx -c "${nginxConfig}" &
           wait -n
         '';
@@ -254,29 +257,18 @@ in
       contents = with pkgs.dockerTools; [
         usrBinEnv
         binSh
+        bash
         caCertificates
         fakeNss
+        coreutils
+        openssl
 
         tini
 
         openresty
-
-        iptables
-        procps
-        kmod
-
-        coreutils
-        findutils
-        gnugrep
-        gnused
-        gawk
-        bash
-
-        socat
-        rclone
         curl
+        rclone
 
-        getSecret
         entrypoint
       ];
 
