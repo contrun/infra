@@ -37,8 +37,9 @@ ProtectHome=true
 ProtectSystem=full
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 Environment=HOSTNAME=%H
-Environment=XDG_CONFIG_HOME=/var/lib/caddy/.config
-Environment=XDG_DATA_HOME=/var/lib/caddy/.local/share
+Environment=XDG_CONFIG_HOME=%S/caddy/.config
+Environment=XDG_DATA_HOME=%S/caddy/.local/share
+EnvironmentFile=/etc/caddy/env
 
 [Install]
 WantedBy=multi-user.target

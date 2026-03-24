@@ -57,6 +57,8 @@
     caddy_file_definitions:
       - src: caddy.config.json.j2
         dest: /etc/caddy/config.json
+      - src: caddy.env.j2
+        dest: /etc/caddy/env
       - src: caddy.service.j2
         dest: /usr/local/lib/systemd/system/caddy.service
   block:
