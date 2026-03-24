@@ -3,14 +3,12 @@
     name: githubixx.ansible_role_wireguard
 
 - name: Configure /etc/hosts
-  when:
-    - configure_etc_hosts_for_wireguard
   block:
     - name: Add wireguard IP addresses from host configuration
       lineinfile:
         dest: /etc/hosts
         line: "{{ hostvars[item].wireguard_address | ansible.utils.ipaddr('address') }} {{ hostvars[item].inventory_hostname_short }}"
-        state: present
+        state: "{{ configure_etc_hosts_for_wireguard | ternary('present', 'absent') }}"
       when:
         - hostvars[item].wireguard_address is defined
         - hostvars[item].inventory_hostname_short is defined
@@ -21,6 +19,6 @@
       lineinfile:
         dest: /etc/hosts
         line: "{{ item.allowed_ips | ansible.utils.ipaddr('address') }} {{ item.hostnames | join(' ') }}"
-        state: present
+        state: "{{ configure_etc_hosts_for_wireguard | ternary('present', 'absent') }}"
       when: item.hostnames is defined
       with_items: "{{ wireguard_unmanaged_peers.values() | list }}"
