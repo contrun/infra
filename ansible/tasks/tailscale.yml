@@ -1,6 +1,4 @@
 - name: Install tailscale
-  when:
-    - use_tailscale
   become: true
   block:
     - set_fact:

@@ -6,8 +6,6 @@
     port_mappings: "{{ edge_proxy_port_mappings }}"
 
 - name: Install and configure nginx
-  when:
-    - use_nginx
   block:
     - name: Install nginx
       include_role:

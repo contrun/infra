@@ -6,8 +6,6 @@
     port_mappings: "{{ edge_proxy_port_mappings }}"
 
 - name: Install and configure envoy
-  when:
-    - use_envoy
   block:
     - name: Add envoy gpg key
       when: ansible_facts['os_family'] == "Debian"

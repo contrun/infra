@@ -4,14 +4,11 @@
 # I commented below out because, the variables defined in the inventory hosts
 # have lower priority than playbook groups_vars
 
-# use_tailscale: true
 # configure_systemd_resolved: true
 # edge_proxy_tcp_forwarding_ports: [80, 2022, 2122, 2222, 443, 4443, 4000, 5678, 8080]
 # edge_proxy_udp_forwarding_ports: [80, 2022, 2122, 2222, 443, 4443, 4000, 5678, 8080]
 # edge_proxy_resolvers: ["127.0.0.53"]
 # edge_proxy_port_mappings: {}
-# use_nginx: true
-# use_envoy: false
 # enable_promtail: true
 # use_cockroachdb: true
 # edge_proxy_backend_ip_addresses: ""
