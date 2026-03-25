@@ -3,9 +3,6 @@
   packages,
   zotero-plugins,
 }:
-let
-  inherit (packages) getSecret;
-in
 {
   texlive =
     with pkgs;
@@ -435,27 +432,19 @@ in
     with pkgs;
     let
       caddy = packages.mycaddy;
-      entrypoint = writeShellScriptBin {
-        name = "container-entrypoint";
-        text = ''
-          #!/bin/sh
-          set -eu
-
-          fetchConfig() {
-            config="$(${lib.getExe getSecret} 2d60eed9-6d84-4a61-a3b2-b406008fcbde)" || return 1
-            printf '%s' "$config" > ./Caddyfile
-          }
-          if [ -f ./Caddyfile ]; then
-            caddy run --config ./Caddyfile &
-            if fetchConfig; then
-              caddy reload --config ./Caddyfile
-            fi
-          else
-            fetchConfig
-            caddy run --config ./Caddyfile &
-          fi
-          wait -n
-        '';
+      caddyConfigFile = pkgs.writeTextFile {
+        name = "caddy.config.json";
+        text = builtins.toJSON {
+          admin = {
+            listen = "{env.ADMIN_LISTEN_ADDR}";
+            config = {
+              load = {
+                module = "http";
+                url = "{env.CADDY_CONFIG_URL}";
+              };
+            };
+          };
+        };
       };
     in
     dockerTools.buildLayeredImage {
@@ -467,9 +456,9 @@ in
         binSh
         caCertificates
         fakeNss
+        tini
 
         caddy
-        entrypoint
       ];
 
       config = {
@@ -478,9 +467,21 @@ in
         };
         WorkingDir = "/data";
         Entrypoint = [
-          "${lib.getExe entrypoint}"
+          "${lib.getExe tini}"
+          "--"
+        ];
+        Cmd = [
+          "${lib.getExe caddy}"
+          "run"
+          "--config"
+          "${caddyConfigFile}"
         ];
         Env = [
+          # XDG_CONFIG_HOME and XDG_DATA_HOME are used by some of the
+          # caddy modules, e.g. caddy-tailscale
+          "XDG_CONFIG_HOME=/data/.config"
+          "XDG_DATA_HOME=/data/.local/share"
+          "ADMIN_LISTEN_ADDR=:2019"
           # $PATH seems to be unset in fly.io
           "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         ];
