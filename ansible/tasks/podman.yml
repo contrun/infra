@@ -1,4 +1,9 @@
+# Our distro is too old, we want to install the latest podman
+# - name: Installing podman
+#   package:
+#     name: "podman"
+#     state: absent
+
 - name: Installing podman
-  package:
-    name: "podman"
-    state: present
+  ansible.builtin.include_role:
+    name: alvistack.podman
