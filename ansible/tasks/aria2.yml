@@ -1,37 +1,38 @@
-- name: Installing aria2
-  package:
-    name: "aria2"
+- name: Create a temporary directory for staging
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _quadlet_staging
+  register: staging_dir
+
+- name: Set root directory
+  set_fact:
+    # Basename of directory is used as app name, so we append a name here
+    root_dir: "{{ staging_dir.path }}/aria2"
+    raw_template: "{{ lookup('template', 'aria2.quadlets.j2') }}"
+
+- name: Ensure root directory exists
+  file:
+    path: "{{ root_dir }}"
+    recurse: true
+    state: directory
+
+- name: Create individual files from stanzas
+  ansible.builtin.copy:
+    dest: "{{ root_dir }}/{{ file.split('\n')[0] | trim }}"
+    content: "{{ file.split('\n')[1:] | join('\n') | trim }}"
+    mode: '0644'
+  loop: "{{ raw_template.split('---') | map('trim') | select() | list }}"
+  loop_control:
+    loop_var: file
+    label: "File: {{ file.splitlines()[0] | default('unknown') | trim }}"
+
+- name: Apply Podman Quadlet (Daemon Reload & Start)
+  containers.podman.podman_quadlet:
     state: present
+    src: "{{ root_dir }}"
 
-- name: Configure aria2
-  vars:
-    aria2_file_definitions:
-      - src: aria2.service.j2
-        dest: /usr/local/lib/systemd/system/aria2.service
-  block:
-    - name: Ensure configuration directories exist
-      ansible.builtin.file:
-        path: "{{ aria2_item.dest | dirname }}"
-        state: directory
-        mode: '0755'
-      loop: "{{ aria2_file_definitions }}"
-      loop_control:
-        loop_var: aria2_item
-
-    - name: Copy aria2 files
-      ansible.builtin.template:
-        src: "{{ aria2_item.src }}"
-        dest: "{{ aria2_item.dest }}"
-        mode: "0644"
-      loop: "{{ aria2_file_definitions }}"
-      loop_control:
-        loop_var: aria2_item
-      register: aria2_unit
-
-    - name: Start/reload aria2
-      ansible.builtin.systemd:
-        name: aria2
-        state: restarted
-        daemon_reload: yes
-        enabled: yes
-      when: aria2_unit.changed
+- name: Cleanup the temporary staging directory
+  ansible.builtin.file:
+    path: "{{ staging_dir.path }}"
+    force: true
+    state: absent

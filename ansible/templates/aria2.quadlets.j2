@@ -1,0 +1,29 @@
+--- aria2.container
+[Unit]
+Description=aria2
+
+[Container]
+Image=docker.io/contrun/aria2:latest
+Volume=%C/aria2:/data
+PublishPort=6800:10000
+AddDevice=/dev/fuse:/dev/fuse:rwm
+AddCapability=SYS_ADMIN
+UserNS=keep-id
+Environment=RCLONE_CONFIG_URL={{ rclone_config_url }}
+Environment=RCLONE_REMOTE=downloads:
+Environment=ARIA2_RPC_SECRET={{ aria2_rpc_secret }}
+
+[Service]
+Type=notify
+StateDirectory=aria2
+CacheDirectory=aria2
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+AmbientCapabilities=SYS_ADMIN
+
+[Install]
+WantedBy=default.target
