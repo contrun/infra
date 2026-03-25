@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/alvistack/ansible-role-podman
+	branch = master
+	commit = c895e0a3dddbd9ce478c1d0bd4ffa98be9415410
+	parent = 385f95a101de28298b649f00042abd586ff08bf5
+	method = merge
+	cmdver = 0.4.9
