@@ -1,0 +1,11 @@
+[Unit]
+Description=caddy socket activation
+
+[Socket]
+ListenStream=[::]:80
+ListenStream=[::]:443
+ListenDatagram=[::]:443
+BindIPv6Only=both
+
+[Install]
+WantedBy=sockets.target

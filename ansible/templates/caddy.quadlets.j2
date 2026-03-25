@@ -1,0 +1,31 @@
+--- caddy.container
+[Unit]
+Description=caddy
+After=caddy.socket
+Requires=caddy.socket
+
+[Container]
+Image=docker.io/contrun/caddy:latest
+Volume=%S/caddy:/data
+ReadOnly=true
+ReloadCmd=/bin/caddy reload
+Network=host
+Environment=HOSTNAME=%H
+Environment=CADDY_CONFIG_URL={{ caddy_config_url }}
+{% for key, value in caddy_env.items() %}
+Environment={{ key }}={{ value | string | quote }}
+{% endfor %}
+
+[Service]
+Type=notify
+StateDirectory=caddy
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=default.target

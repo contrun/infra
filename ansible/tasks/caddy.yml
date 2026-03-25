@@ -1,90 +1,75 @@
-- name: Get all releases from GitHub
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/contrun/mycaddy/releases
-    return_content: true
-  register: caddy_releases
+- name: Create a temporary directory for staging
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _quadlet_staging
+  register: staging_dir
 
-- name: Map architecture and select release
-  ansible.builtin.set_fact:
-    # Map Ansible architecture names to GitHub asset names
-    caddy_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}"
-    # Filter for first release starting with 'v'
-    target_release: "{{ caddy_releases.json | selectattr('tag_name', 'match', '^v') | first }}"
+- name: Set root directory
+  set_fact:
+    # Basename of directory is used as app name, so we append a name here
+    root_dir: "{{ staging_dir.path }}/caddy"
+    raw_template: "{{ lookup('template', 'caddy.quadlets.j2') }}"
 
-- name: Set version and architecture-specific download URL
-  ansible.builtin.set_fact:
-    latest_version: "{{ target_release.tag_name | replace('v', '') }}"
-    # Search for a file containing both 'linux' and our mapped architecture (e.g., linux-arm64)
-    download_url: >-
-      {{
-        target_release.assets
-        | selectattr('name', 'search', 'linux')
-        | selectattr('name', 'search', caddy_arch)
-        | map(attribute='browser_download_url')
-        | first
-      }}
+- name: Ensure root directory exists
+  file:
+    path: "{{ root_dir }}"
+    recurse: true
+    state: directory
 
-- name: Check current Caddy version
-  ansible.builtin.command: caddy version
-  register: caddy_old_version
-  failed_when: false
-  changed_when: false
+- name: Create individual files from stanzas
+  ansible.builtin.copy:
+    dest: "{{ root_dir }}/{{ file.split('\n')[0] | trim }}"
+    content: "{{ file.split('\n')[1:] | join('\n') | trim }}"
+    mode: '0644'
+  loop: "{{ raw_template.split('---') | map('trim') | select() | list }}"
+  loop_control:
+    loop_var: file
+    label: "File: {{ file.splitlines()[0] | default('unknown') | trim }}"
 
-- name: Update and Verify Caddy
-  when: latest_version not in caddy_old_version.stdout
-  block:
-    - name: Download and install the new binary
-      ansible.builtin.get_url:
-        url: "{{ download_url }}"
-        dest: /usr/local/bin/caddy
-        mode: '0755'
-        force: true
+- name: Apply Podman Quadlet (Daemon Reload & Start)
+  containers.podman.podman_quadlet:
+    state: present
+    src: "{{ root_dir }}"
+  register: podman_quadlet
 
-    - name: Run version check after installation
-      ansible.builtin.command: /usr/local/bin/caddy version
-      register: caddy_new_version
-      changed_when: false
+- name: Cleanup the temporary staging directory
+  ansible.builtin.file:
+    path: "{{ staging_dir.path }}"
+    force: true
+    state: absent
 
-    - name: Assert the version is correct
-      ansible.builtin.assert:
-        that:
-          - "latest_version in caddy_new_version.stdout"
-        fail_msg: "Install failed! Expected {{ latest_version }} but got {{ caddy_new_version.stdout }}"
-        success_msg: "Caddy successfully updated to {{ latest_version }} ({{ caddy_arch }})"
-
-- name: Configure Caddy
+- name: Configure socket activation
   vars:
-    caddy_file_definitions:
-      - src: caddy.config.json.j2
-        dest: /etc/caddy/config.json
-      - src: caddy.env.j2
-        dest: /etc/caddy/env
-      - src: caddy.service.j2
-        dest: /usr/local/lib/systemd/system/caddy.service
+    templates:
+      - src: caddy.socket.j2
+        dest: /usr/local/lib/systemd/system/caddy.socket
   block:
     - name: Ensure configuration directories exist
       ansible.builtin.file:
-        path: "{{ caddy_item.dest | dirname }}"
+        path: "{{ template.dest | dirname }}"
         state: directory
         mode: '0755'
-      loop: "{{ caddy_file_definitions }}"
+      loop: "{{ templates }}"
       loop_control:
-        loop_var: caddy_item
+        loop_var: template
 
     - name: Copy Caddy configuration and systemd unit
       ansible.builtin.template:
-        src: "{{ caddy_item.src }}"
-        dest: "{{ caddy_item.dest }}"
+        src: "{{ template.src }}"
+        dest: "{{ template.dest }}"
         mode: "0644"
-      loop: "{{ caddy_file_definitions }}"
+      loop: "{{ templates }}"
       loop_control:
-        loop_var: caddy_item
-      register: caddy_unit
+        loop_var: template
+      register: systemd_unit
 
-    - name: Start/reload Caddy
+    - name: Start/reload unit
       ansible.builtin.systemd:
-        name: caddy
+        name: "{{ template.dest | basename }}"
         state: restarted
         daemon_reload: yes
         enabled: yes
-      when: caddy_unit.changed
+      when: systemd_unit.changed or podman_quadlet.changed
+      loop: "{{ templates }}"
+      loop_control:
+        loop_var: template
