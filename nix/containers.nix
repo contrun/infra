@@ -432,9 +432,9 @@
     with pkgs;
     let
       caddy = packages.mycaddy;
-      caddyConfigFile = pkgs.writeTextFile {
-        name = "caddy.config.json";
-        text = builtins.toJSON {
+      caddyConfigPath = "/etc/caddy/config.json";
+      caddyConfig = pkgs.writeTextDir caddyConfigPath (
+        builtins.toJSON {
           admin = {
             listen = "{env.ADMIN_LISTEN_ADDR}";
             config = {
@@ -444,8 +444,8 @@
               };
             };
           };
-        };
-      };
+        }
+      );
     in
     dockerTools.buildLayeredImage {
       name = "caddy";
@@ -459,6 +459,7 @@
         tini
 
         caddy
+        caddyConfig
       ];
 
       config = {
@@ -474,7 +475,7 @@
           "${lib.getExe caddy}"
           "run"
           "--config"
-          "${caddyConfigFile}"
+          "${caddyConfigPath}"
         ];
         Env = [
           # XDG_CONFIG_HOME and XDG_DATA_HOME are used by some of the
