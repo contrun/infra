@@ -948,17 +948,19 @@ in
               let
                 config = {
                   admin = {
-                    listen = "\${ADMIN_LISTEN_ADDR}";
+                    listen = "{env.ADMIN_LISTEN_ADDR}";
                     config = {
                       load = {
                         module = "http";
-                        url = "\${CADDY_CONFIG_URL}";
+                        url = "{env.CADDY_CONFIG_URL}";
                       };
                     };
                   };
                 };
-                configText = builtins.toJSON config;
-                configFile = "%t/caddy.%i.json";
+                configFile = pkgs.writeTextFile {
+                  name = "caddy.config.json";
+                  text = builtins.toJSON config;
+                };
               in
               {
                 TimeoutStartSec = "infinity";
@@ -967,15 +969,6 @@ in
                 RestartSteps = 20;
                 RestartMaxDelaySec = 3600;
                 Type = "notify";
-                ExecStartPre =
-                  let
-                    generateConfig = pkgs.writeShellScript "generateConfig" ''
-                      ${pkgs.gettext}/bin/envsubst <<< "$1" > "$2"
-                    '';
-                  in
-                  ''
-                    ${generateConfig} ${lib.escapeShellArg configText} "${configFile}"
-                  '';
                 ExecStart = ''
                   ${pkgs.myPackages.mycaddy}/bin/caddy run --config "${configFile}"
                 '';
