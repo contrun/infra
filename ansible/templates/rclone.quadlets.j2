@@ -1,0 +1,24 @@
+--- rclone.container
+[Unit]
+Description=rclone
+
+[Container]
+Image=docker.io/contrun/rclone:latest
+Volume=%C/rclone:/data
+PublishPort=5572:10000
+Environment=RCLONE_CONFIG_URL={{ rclone_config_url }}
+
+[Service]
+Type=notify
+StateDirectory=rclone
+CacheDirectory=rclone
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+AmbientCapabilities=
+
+[Install]
+WantedBy=default.target

@@ -1,45 +1,38 @@
-- name: Install rclone
-  include_role:
-    role: stefangweichinger.ansible_rclone
+- name: Create a temporary directory for staging
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _quadlet_staging
+  register: staging_dir
 
-- name: Check rclone installed
-  shell: |
-    command -v rclone
-  register: check_rclone_installed
+- name: Set root directory
+  set_fact:
+    # Basename of directory is used as app name, so we append a name here
+    root_dir: "{{ staging_dir.path }}/rclone"
+    raw_template: "{{ lookup('template', 'rclone.quadlets.j2') }}"
 
-- name: Set rclone_executable fact
-  ansible.builtin.set_fact:
-    rclone_executable: "{{ check_rclone_installed.stdout | trim }}"
+- name: Ensure root directory exists
+  file:
+    path: "{{ root_dir }}"
+    recurse: true
+    state: directory
 
-- name: Configure rclone
-  vars:
-    rclone_file_definitions:
-      - src: rclone.service.j2
-        dest: /usr/local/lib/systemd/system/rclone.service
-  block:
-    - name: Ensure configuration directories exist
-      ansible.builtin.file:
-        path: "{{ rclone_item.dest | dirname }}"
-        state: directory
-        mode: '0755'
-      loop: "{{ rclone_file_definitions }}"
-      loop_control:
-        loop_var: rclone_item
+- name: Create individual files from stanzas
+  ansible.builtin.copy:
+    dest: "{{ root_dir }}/{{ file.split('\n')[0] | trim }}"
+    content: "{{ file.split('\n')[1:] | join('\n') | trim }}"
+    mode: '0644'
+  loop: "{{ raw_template.split('---') | map('trim') | select() | list }}"
+  loop_control:
+    loop_var: file
+    label: "File: {{ file.splitlines()[0] | default('unknown') | trim }}"
 
-    - name: Copy rclone configuration and systemd unit
-      ansible.builtin.template:
-        src: "{{ rclone_item.src }}"
-        dest: "{{ rclone_item.dest }}"
-        mode: "0644"
-      loop: "{{ rclone_file_definitions }}"
-      loop_control:
-        loop_var: rclone_item
-      register: rclone_unit
+- name: Apply Podman Quadlet (Daemon Reload & Start)
+  containers.podman.podman_quadlet:
+    state: present
+    src: "{{ root_dir }}"
 
-    - name: Start/reload rclone
-      ansible.builtin.systemd:
-        name: rclone
-        state: restarted
-        daemon_reload: yes
-        enabled: yes
-      when: rclone_unit.changed
+- name: Cleanup the temporary staging directory
+  ansible.builtin.file:
+    path: "{{ staging_dir.path }}"
+    force: true
+    state: absent
