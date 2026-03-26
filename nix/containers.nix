@@ -333,11 +333,14 @@
     with pkgs;
     let
       home = "/data";
+      uid = 1000;
+      gid = 100;
+      ugid = "${builtins.toString uid}:${builtins.toString gid}";
       exposedPort = 10000;
       basicAuthRealm = "aria2";
       webdavPort = 5573;
       aria2Port = 6800;
-      mntPath = "/tmp/mnt";
+      mntPath = "/mnt/aria2";
       ui =
         let
           version = "1.3.13";
@@ -414,7 +417,7 @@
           rclone --config "${configFile}" mount --vfs-cache-mode=full "$RCLONE_REMOTE" "${mntPath}" &
           rclone --config "${configFile}" serve webdav --addr=":${builtins.toString webdavPort}" --baseurl=webdav --realm="${basicAuthRealm}" --htpasswd="${htpasswdFile}" "${mntPath}" &
           aria2c --conf-path="${aria2Config}" --rpc-listen-port="${builtins.toString aria2Port}" --dir="${mntPath}" --rpc-secret="$ARIA2_RPC_SECRET" --daemon=false &
-          nginx -e stderr -p . -c "${nginxConfig}" -g 'daemon off; pid /tmp/nginx.pid; error_log stderr info; user nobody nobody;' &
+          nginx -e stderr -p . -c "${nginxConfig}" -g 'daemon off; pid /tmp/nginx.pid; error_log stderr info;' &
           wait -n
         '';
       };
@@ -441,24 +444,41 @@
       ];
 
       enableFakechroot = true;
-      fakeRootCommands = ''
-        ${dockerTools.shadowSetup}
-        groupadd -r -g 100 users
-        useradd -r -g 100 -u 1000 --home-dir ${home} --create-home user
-        groupadd -g 65534 nobody
-        useradd -u 65534 -g nobody -s /sbin/nologin -d /var/empty nobody
-        mkdir -p "${mntPath}"
-        chown 1000:100 "${mntPath}"
-        mkdir -p /tmp/nginx_client_body
-        chown -R 65534:65534 /tmp/nginx_client_body
-        chmod -R 755 /tmp/nginx_client_body
-      '';
+      fakeRootCommands =
+        let
+          paths = [
+            mntPath
+          ]
+          ++ [
+            # Paths obtained from
+            # strings ./result/bin/nginx | grep '/tmp'
+            "/tmp/nginx_client_body"
+            "/tmp/nginx_proxy"
+            "/tmp/nginx_fastcgi"
+            "/tmp/nginx_uwsgi"
+            "/tmp/nginx_scgi"
+          ];
+          mkPath = path: ''
+            mkdir -p "${path}"
+            chown -R "${ugid}" "${path}"
+            chmod -R 755 "${path}"
+          '';
+          fixPathsCmd = lib.concatMapStringsSep "\n" mkPath paths;
+        in
+        ''
+          ${dockerTools.shadowSetup}
+          groupadd -r -g "${builtins.toString gid}" users
+          useradd -r -g "${builtins.toString gid}" -u "${builtins.toString uid}" --home-dir ${home} --create-home user
+          ${fixPathsCmd}
+        '';
 
       extraCommands = ''
         mkdir -p -m 1777 ./tmp
+        mkdir -p -m 1777 ./mnt
       '';
 
       config = {
+        User = ugid;
         ExposedPorts = {
           "${builtins.toString exposedPort}/tcp" = { };
         };
