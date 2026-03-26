@@ -339,7 +339,7 @@
       exposedPort = 10000;
       basicAuthRealm = "aria2";
       webdavPort = 5573;
-      aria2Port = 6800;
+      aria2Port = 6801;
       mntPath = "/mnt/aria2";
       ui =
         let
