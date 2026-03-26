@@ -4,19 +4,29 @@ Description=aria2
 
 [Container]
 Image=docker.io/contrun/aria2:latest
-Volume=%C/aria2:/data
+# TODO: Make cache non-volatile.
+# Below does not work because of file system permission
+# Volume=%C/aria2:/data
 PublishPort=6800:10000
 AddDevice=/dev/fuse:/dev/fuse:rwm
 AddCapability=SYS_ADMIN
-UserNS=keep-id
+UserNS=keep-id:uid=1000,gid=100
+# Don't know which permission is requried to run
+# But we are able to run it locally with above options.
+# According to https://github.com/containers/podman/issues/22487
+# PodmanArgs=--privileged is equivalent to
+# Unmask=all
+# SecurityLabelDisable=true
+# AddCapability=all
+# SeccompProfile=unconfined
+PodmanArgs=--privileged
 Environment=RCLONE_CONFIG_URL={{ rclone_config_url }}
 Environment=RCLONE_REMOTE=downloads:
 Environment=ARIA2_RPC_SECRET={{ aria2_rpc_secret }}
 
 [Service]
 Type=notify
-StateDirectory=aria2
-CacheDirectory=aria2
+# CacheDirectory=aria2
 TimeoutStopSec=5s
 LimitNOFILE=1048576
 PrivateTmp=true
