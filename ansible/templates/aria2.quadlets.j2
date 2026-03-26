@@ -7,7 +7,6 @@ Image=docker.io/contrun/aria2:latest
 # TODO: Make cache non-volatile.
 # Below does not work because of file system permission
 # Volume=%C/aria2:/data
-PublishPort=6800:10000
 AddDevice=/dev/fuse:/dev/fuse:rwm
 AddCapability=SYS_ADMIN
 UserNS=keep-id:uid=1000,gid=100
@@ -26,6 +25,7 @@ Environment=ARIA2_RPC_SECRET={{ aria2_rpc_secret }}
 
 [Service]
 Type=notify
+Environment=NGINX=3;
 # CacheDirectory=aria2
 TimeoutStopSec=5s
 LimitNOFILE=1048576

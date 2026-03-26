@@ -36,3 +36,39 @@
     path: "{{ staging_dir.path }}"
     force: true
     state: absent
+
+- name: Configure socket activation
+  vars:
+    templates:
+      - src: aria2.socket.j2
+        dest: /usr/local/lib/systemd/system/aria2.socket
+  block:
+    - name: Ensure configuration directories exist
+      ansible.builtin.file:
+        path: "{{ template.dest | dirname }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ templates }}"
+      loop_control:
+        loop_var: template
+
+    - name: Copy configuration and systemd unit
+      ansible.builtin.template:
+        src: "{{ template.src }}"
+        dest: "{{ template.dest }}"
+        mode: "0644"
+      loop: "{{ templates }}"
+      loop_control:
+        loop_var: template
+      register: systemd_unit
+
+    - name: Start/reload unit
+      ansible.builtin.systemd:
+        name: "{{ template.dest | basename }}"
+        state: restarted
+        daemon_reload: yes
+        enabled: yes
+      when: systemd_unit.changed or podman_quadlet.changed
+      loop: "{{ templates }}"
+      loop_control:
+        loop_var: template
