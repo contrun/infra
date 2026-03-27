@@ -11,3 +11,16 @@
 - name: Installing podman
   ansible.builtin.include_role:
     name: alvistack.podman
+
+# TODO: There is currently a problem with podman which makes container port publishing unusable.
+# We use pasta to circumvent this.
+# See https://github.com/containers/podman/issues/27516
+# Podman fails to clean dnat rules for restarted/recreated containers · Issue #27516 · containers/podman
+- name: Set pasta as the default rootless network command
+  ansible.builtin.ini_file:
+    path: /etc/containers/containers.conf
+    section: network
+    option: default_network
+    value: '"pasta"'
+    mode: '0644'
+    create: yes
