@@ -24,35 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - path: "containers/superset"
-            kind: "local_directory"
           - path: "containers/archvnc"
             kind: "local_directory"
-          - path: "contrun/kosyncsrv"
-            kind: "github_repository"
           - path: "contrun/eudyptula"
             kind: "github_repository"
-          - path: "bookwyrm-social/bookwyrm"
-            kind: "github_repository"
-          # TODO: add this back when https://github.com/200ok-ch/organice/issues/909 closed
-          # - path: "200ok-ch/organice"
-          #   kind: "github_repository"
-          - path: "elasticdog/tiddlywiki-docker"
-            kind: "github_repository"
           - path: "logseq/logseq"
-            kind: "github_repository"
-          - path: "karlicoss/promnesia"
-            kind: "github_repository"
-          # TODO: repo moved to https://gitlab.com/banderovets/docker-perkeep
-          # - path: "mkorenkov/docker-perkeep"
-          #   kind: "github_repository"
-          # TODO: add this back when https://github.com/unigraph-dev/unigraph-dev/issues/461 closed
-          # - path: "unigraph-dev/unigraph-dev"
-          #   kind: "github_repository"
-          # Images not working for now.
-          # - path: "DeviaVir/zenbot"
-          #   kind: "github_repository"
-          - path: "contrun/gitpod-nix"
             kind: "github_repository"
 
     steps:
