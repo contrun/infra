@@ -81,16 +81,17 @@ for_window [title=".*mpsyt$" class="^Xfce4-terminal$"] move --no-auto-back-and-f
 for_window [app_id="(?i)scratchpad.*"] exec swaymsg mark "$(swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused==true).app_id')", floating enable, move to scratchpad, scratchpad show
 
 # specific window settings
-for_window [class="Firefox"] move --no-auto-back-and-forth to workspace w
-for_window [class="Nightly"] move --no-auto-back-and-forth to workspace w
-for_window [app_id="firefox"] move --no-auto-back-and-forth to workspace w
-for_window [class="Zotero"] move --no-auto-back-and-forth to workspace r
-for_window [class="vlc"] move --no-auto-back-and-forth to workspace v
-for_window [app_id="mpv"] move --no-auto-back-and-forth to workspace v
+for_window [class="wechat" tiling] move --no-auto-back-and-forth to workspace c
+for_window [class="Firefox" tiling] move --no-auto-back-and-forth to workspace w
+for_window [class="Nightly" tiling] move --no-auto-back-and-forth to workspace w
+for_window [app_id="firefox" tiling] move --no-auto-back-and-forth to workspace w
+for_window [class="vlc" tiling] move --no-auto-back-and-forth to workspace v
+for_window [app_id="mpv" tiling] move --no-auto-back-and-forth to workspace v
 # for_window [app_id="org.pwmt.zathura"] move --no-auto-back-and-forth to workspace r
-for_window [app_id="calibre-gui"] move --no-auto-back-and-forth to workspace r
-for_window [app_id="org.zealdocs.Zeal"] move --no-auto-back-and-forth to workspace r
-for_window [app_id="org.keepassxc.KeePassXC"] move --no-auto-back-and-forth to workspace p
+for_window [app_id="calibre-gui" tiling] move --no-auto-back-and-forth to workspace r
+for_window [app_id="org.zealdocs.Zeal" tiling] move --no-auto-back-and-forth to workspace r
+for_window [app_id="Zotero" tiling] move --no-auto-back-and-forth to workspace r
+for_window [app_id="org.keepassxc.KeePassXC" tiling] move --no-auto-back-and-forth to workspace p
 for_window [class="mpv"] exec wmctrl -r mpv -b remove,demands_attention
 for_window [class="^floating-.*$"] floating enable
 for_window [class="Nemo" instance="^desktop_window$"] floating disable
