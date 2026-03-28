@@ -1,7 +1,7 @@
 - name: Set base User SSH public key path if not defined
   delegate_to: localhost
   ansible.builtin.set_fact:
-    force_sign: "{{ force_sign | default(False) }}"
+    user_force_sign: "{{ user_force_sign | default(False) }}"
     user_ssh_pub_path: "{{ user_ssh_pub_path | default('~/.ssh/id_ed25519.pub') | expanduser }}"
 
 - name: Derive Certificate path from the public key path
@@ -34,11 +34,11 @@
     path: "{{ user_ssh_cert_path }}"
   register: user_cert_stat
 
-- name: Assert user certificate non-existent if not force_sign
+- name: Assert user certificate non-existent if not user_force_sign
   ansible.builtin.assert:
     that:
-      - (not user_cert_stat.stat.exists) or (force_sign | bool)
-    fail_msg: "User certificate already exists and force_sign is False"
+      - (not user_cert_stat.stat.exists) or (user_force_sign | bool)
+    fail_msg: "User certificate already exists and user_force_sign is False"
 
 - name: Extract User CA Pub Key from PKCS11 token
   delegate_to: localhost

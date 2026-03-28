@@ -1,6 +1,6 @@
 - name: Set base SSH private key path if not defined
   ansible.builtin.set_fact:
-    force_sign: "{{ force_sign | default(False) }}"
+    host_force_sign: "{{ host_force_sign | default(False) }}"
     host_ssh_key_path: "{{ host_ssh_key_path | default('/etc/ssh/ssh_host_ed25519_key') }}"
 
 - name: Derive Public Key and Certificate paths from the private key path
@@ -75,10 +75,10 @@
   when: cert_file.stat.exists
   changed_when: false
 
-- name: Assert certificate non-existent if not force_sign
+- name: Assert certificate non-existent if not host_force_sign
   ansible.builtin.assert:
     that:
-      - (not cert_file.stat.exists) or (force_sign | bool)
+      - (not cert_file.stat.exists) or (host_force_sign | bool)
     fail_msg: "Host key certificate exists but we are not force signing"
 
 - name: Fetch the remote host public key

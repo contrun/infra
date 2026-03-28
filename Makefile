@@ -156,11 +156,11 @@ ansible-configure-hosts:
 
 ansible-configure-ssh-host-ca-yubikey: FORCE_SIGN ?= false
 ansible-configure-ssh-host-ca-yubikey:
-	cd ansible && SSH_ASKPASS="$$(nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass" ansible-playbook hosts.yml --extra-vars services=ssh-host-ca --extra-vars pkcs11_library_path="$$(nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so" --extra-vars force_sign=$(FORCE_SIGN) --extra-vars hsts=$(HOSTS)
+	cd ansible && SSH_ASKPASS="$$(nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass" ansible-playbook hosts.yml --extra-vars services=ssh-host-ca --extra-vars pkcs11_library_path="$$(nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so" --extra-vars host_force_sign=$(FORCE_SIGN) --extra-vars hsts=$(HOSTS)
 
 ansible-configure-ssh-user-ca-yubikey: FORCE_SIGN ?= false
 ansible-configure-ssh-user-ca-yubikey:
-	cd ansible && SSH_ASKPASS="$$(nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass" ansible-playbook hosts.yml --extra-vars services=ssh-user-ca --extra-vars pkcs11_library_path="$$(nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so" --extra-vars force_sign=$(FORCE_SIGN) --extra-vars hsts=$(HOSTS)
+	cd ansible && SSH_ASKPASS="$$(nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass" ansible-playbook hosts.yml --extra-vars services=ssh-user-ca --extra-vars pkcs11_library_path="$$(nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so" --extra-vars user_force_sign=$(FORCE_SIGN) --extra-vars hsts=$(HOSTS)
 
 ansible-generate-lock:
 	cd ansible && ./generate-lock.sh
