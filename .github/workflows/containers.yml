@@ -18,7 +18,7 @@ on:
       - "nix/containers/"
 
 jobs:
-  container:
+  docker-container:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -49,20 +49,6 @@ jobs:
           # TODO: add this back when https://github.com/unigraph-dev/unigraph-dev/issues/461 closed
           # - path: "unigraph-dev/unigraph-dev"
           #   kind: "github_repository"
-          - path: "texlive"
-            kind: "flake_container"
-          - path: "tailscale"
-            kind: "flake_container"
-          - path: "rclone"
-            kind: "flake_container"
-          - path: "caddy"
-            kind: "flake_container"
-          - path: "zotero"
-            kind: "flake_container"
-          - path: "aria2"
-            kind: "flake_container"
-          - path: "owntracks"
-            kind: "flake_container"
           # Images not working for now.
           # - path: "DeviaVir/zenbot"
           #   kind: "github_repository"
@@ -81,21 +67,12 @@ jobs:
         if: matrix.kind != 'github_repository'
         uses: actions/checkout@v4
 
-      - name: Setup nix
-        if: matrix.kind == 'flake_container'
-        uses: ./
-        with:
-          setup-cachix: true
-          setup-qemu: true
-
       - name: Get docker environment
         id: variables
         run: |
           set -xeuo pipefail
 
-          if [[ "${{ matrix.kind }}" != "flake_container" ]]; then
-              cd "${{ matrix.path }}"
-          fi
+          cd "${{ matrix.path }}"
 
           set_output() {
               for v in "$@"; do
@@ -152,7 +129,6 @@ jobs:
           set_output github_username docker_hub_username docker_image_cache docker_tags
 
       - name: Patch source files
-        if: matrix.kind != 'flake_container'
         working-directory: ${{ steps.variables.outputs.directory }}
         run: |
           case "${{ steps.variables.outputs.repository }}" in
@@ -173,7 +149,6 @@ jobs:
           esac
 
       - name: Set up docker buildx
-        if: matrix.kind != 'flake_container'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to DockerHub
@@ -194,7 +169,6 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build and push
-        if: matrix.kind != 'flake_container'
         id: docker_build
         uses: docker/build-push-action@v5
         with:
@@ -206,15 +180,81 @@ jobs:
           cache-from: ${{ steps.variables.outputs.docker_image_cache }}
           cache-to: ${{ steps.variables.outputs.docker_image_cache }}
 
-      - name: Push container built by nix
-        if: matrix.kind == 'flake_container'
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup nix
+        uses: ./
+        with:
+          setup-cachix: false
+          setup-qemu: false
+      - id: set-matrix
+        run: |
+          DYNAMIC_FLAKE="$(nix eval .#containers --apply "builtins.attrNames" --json | jq -c 'map({path: .})')"
+          echo "matrix=$DYNAMIC_FLAKE" >> $GITHUB_OUTPUT
+
+  flake-container:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup nix
+        uses: ./
+        with:
+          setup-cachix: true
+          setup-qemu: true
+
+      - name: Get docker environment
+        id: variables
         run: |
           set -xeuo pipefail
+
+          set_output() {
+              for v in "$@"; do
+                  echo "${v}=${!v}" >> $GITHUB_OUTPUT
+              done
+          }
+          name="${{ matrix.path }}"
+          github_username="${{ github.repository_owner }}"
+          : "${docker_hub_username:=$github_username}"
+          docker_hub_url="docker.io/$docker_hub_username/$name"
+          github_container_registry_url="ghcr.io/$github_username/$name"
+          git_commit_id="$(git log --format="%H" -n 1)"
+          docker_tags="$(echo {$docker_hub_url,$github_container_registry_url}:{latest,$git_commit_id} | tr ' ' ',' | xargs)"
+          docker_image_cache="$github_container_registry_url:cache"
+          set_output name github_username docker_hub_username docker_image_cache docker_tags
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ steps.variables.outputs.docker_hub_username }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ steps.variables.outputs.github_username }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push container built by nix
+        run: |
+          set -xeuo pipefail
+
           nix profile install .#skopeo
 
           tar="$(nix build --print-out-paths .#containers.${{ matrix.path }})"
-          
+
           echo "${{ steps.variables.outputs.docker_tags }}" | tr ',' '\n' | while read tag; do
             skopeo copy "docker-archive:$tar" "docker://$tag"
           done
-
