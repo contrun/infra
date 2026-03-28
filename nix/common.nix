@@ -13,7 +13,6 @@ let
   unstable = pkgs.unstable;
   impure = {
     mitmproxyCAFile = "${prefs.home}/.mitmproxy/mitmproxy-ca.pem";
-    wpaSupplicantConfigFile = "${prefs.home}/.config/wpa_supplicant/wpa_supplicant.conf";
     sslhConfigFile = "${prefs.home}/.config/sslh/sslh.conf";
     sshAuthorizedKeys = "${prefs.home}/.ssh/authorized_keys";
   };
@@ -224,17 +223,7 @@ in
         supplicant = {
           "WLAN" = {
             configFile =
-              let
-                defaultPath = "/etc/wpa_supplicant.conf";
-                path =
-                  if builtins.pathExists impure.wpaSupplicantConfigFile then
-                    impure.wpaSupplicantConfigFile
-                  else
-                    defaultPath;
-              in
               {
-                # TODO: figure out why this does not work.
-                inherit (path) ;
                 writable = true;
               };
           };
@@ -1151,12 +1140,6 @@ in
     };
     compton = {
       enable = prefs.enableCompton;
-    };
-    connman = {
-      enable = prefs.enableConnman;
-      extraConfig = prefs.connmanExtraConfig;
-      networkInterfaceBlacklist = prefs.connmanNetworkInterfaceBlacklist;
-      extraFlags = prefs.connmanExtraFlags;
     };
     aria2 = {
       enable = prefs.enableAria2;
