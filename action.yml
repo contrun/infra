@@ -160,3 +160,13 @@ runs:
     - name: Install qemu
       if: format('{0}', inputs.setup-qemu) == 'true' && runner.os == 'Linux'
       uses: docker/setup-qemu-action@v3
+
+    # We have added a sshd config to include all files under the sshd_config.d
+    # Nix building of the ssh unit will test if sshd config actually works.
+    # But we have no permission to read existing files.
+    # We may fail with check-sshd-config> /etc/ssh/sshd_config.d/50-cloud-init.conf: Permission denied
+    - name: Remove old sshd_config
+      shell: bash
+      run: |
+        set -xeuo pipefail
+        sudo rm -rf /etc/ssh/sshd_config.d/
