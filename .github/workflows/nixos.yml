@@ -18,11 +18,6 @@ on:
         type: string
         required: true
         default: "x86_64-linux"
-      deploy-to-node:
-        description: "deploy to nodes"
-        type: boolean
-        default: false
-        required: false
       free-disk-space:
         description: "free disk space"
         type: boolean
@@ -115,10 +110,6 @@ jobs:
               echo "shouldPushUpdates=yes" >> $GITHUB_OUTPUT
           fi
 
-          if [[ "${{ inputs.deploy-to-node }}" == "true" ]]; then
-              echo "shouldDeployToNode=yes" >> $GITHUB_OUTPUT
-          fi
-
       - name: Build profile for ${{ steps.variables.outputs.host }}
         if: steps.variables.outputs.shouldBuildNixos == 'yes'
         run: |
@@ -127,38 +118,6 @@ jobs:
               sudo du -h -x --exclude=/tmp --threshold=10M --max-depth=3 / | sort -k1 -h
               exit 1
           fi
-
-      - name: Import vault token
-        if: steps.variables.outputs.shouldDeployToNode == 'yes'
-        uses: hashicorp/vault-action@v2.7.4
-        with:
-          method: "approle"
-          url: "${{ secrets.VAULT_ADDR }}"
-          roleId: "${{ secrets.VAULT_ROLE_ID }}"
-          secretId: "${{ secrets.VAULT_SECRET_ID }}"
-          exportToken: true
-          exportEnv: true
-          secrets: |
-            ssh-host-signer/config/ca public_key | SSH_CA_PUBLIC_KEY ;
-
-      - name: Deploy to node
-        if: steps.variables.outputs.shouldDeployToNode == 'yes'
-        env:
-          VAULT_ADDR: "${{ secrets.VAULT_ADDR }}"
-          SSH_CONFIG: "${{ secrets.SSH_CONFIG }}"
-        run: |
-          set -euo pipefail
-          nix profile install -f . vault wstunnel openssh
-          echo y | ssh-keygen -f $HOME/.ssh/id_ed25519 -t ed25519 -P ""
-          vault write -field=signed_key ssh-client-signer/sign/ssh-deployment public_key=@$HOME/.ssh/id_ed25519.pub > $HOME/.ssh/id_ed25519-cert.pub
-          echo "$SSH_CONFIG" >> ~/.ssh/config
-          echo "@cert-authority * $SSH_CA_PUBLIC_KEY" >> ~/.ssh/known_hosts
-
-          # Following step require this.
-          find ~ -wholename '*/dist/main/push-paths.sh'
-          find ~ -wholename '*/dist/main/push-paths.sh' -exec {} "$HOME/.nix-profile/bin/cachix" "${{ github.repository_owner }}" "clion|webstorm|idea-ultimate|goland|pycharm-professional|datagrip|android-studio-dev|graalvm11-ce|lock$|-source$" \;
-
-          make NOFASTCONNECTION=y EXTRADEPLOYFLAGS="--ssh-user=$(ssh-keygen -Lf $HOME/.ssh/id_ed25519-cert.pub | awk '/Principals:/ {getline; print $1}')" HOST="${{ steps.variables.outputs.host }}" nixos-deploy
 
       - name: Push commit with updated inputs
         if: steps.variables.outputs.shouldPushUpdates == 'yes'
