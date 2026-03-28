@@ -213,7 +213,6 @@ let
             owner = prefs.owner;
             group = prefs.ownerGroup;
           };
-          openldap-root-password = { };
           postgresql-env = { };
           postgresql-backup-env = { };
           postgresql-initdb-script = {

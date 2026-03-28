@@ -652,7 +652,6 @@ let
     privilegedKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL9rXlWqIfjVL5fB2kVzN0SQO472HzUugvZGa7Q/MLk2 root@all"
     ];
-    enableOpenldap = false;
     enableGnomeKeyring = false;
     emulatedSystems =
       if (self.nixosSystem == "x86_64-linux") then
