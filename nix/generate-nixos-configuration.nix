@@ -171,12 +171,6 @@ let
           path = sopsSecretsFile;
         }}";
         secrets = {
-          clash-env = { };
-          ddns-env = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
           code-server-env = {
             mode = "0400";
             owner = prefs.owner;
@@ -191,82 +185,6 @@ let
             mode = "0400";
             owner = prefs.owner;
             group = prefs.ownerGroup;
-          };
-          keeweb-env = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
-          postgresql-env = { };
-          postgresql-backup-env = { };
-          postgresql-initdb-script = {
-            mode = "0500";
-          };
-          redis-conf = {
-            mode = "0444";
-          };
-          lldap-env = { };
-          authelia-conf = { };
-          authelia-users = { };
-          authelia-local-users-conf = { };
-          authelia-ldap-users-conf = { };
-          authelia-sqlite-conf = { };
-          authelia-postgres-conf = { };
-          authelia-redis-conf = { };
-          etesync-env = { };
-          pleroma-env = { };
-          livebook-env = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
-          joplin-env = { };
-          miniflux-env = { };
-          atuin-env = { };
-          nextcloud-env = { };
-          nextcloud-sqlite-env = { };
-          nextcloud-postgres-env = { };
-          nextcloud-redis-env = { };
-          n8n-env = { };
-          wikijs-env = { };
-          xwiki-env = { };
-          huginn-env = { };
-          wakapi-env = { };
-          gitea-env = { };
-          rss-bridge-whitelist = {
-            mode = "0444";
-          };
-          wallabag-env = { };
-          recipes-env = { };
-          wger-env = { };
-          bookwyrm-env = { };
-          superset-env = { };
-          superset-config = {
-            mode = "0444";
-          };
-          restic-password = { };
-          rclone-config = { };
-          rclone-webui-htpasswd = { };
-          initrd-hole-puncher = { };
-          "port-forwarding-id_ed25519.pub" = {
-            mode = "0444";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
-          port-forwarding-id_ed25519 = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
-          initrd_ssh_host_ed25519_key = { };
-          "initrd_ssh_host_ed25519_key.pub" = { };
-          yandex-passwd = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
-          cfssl-ca-pem = {
-            mode = "0444";
           };
         }
         //

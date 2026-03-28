@@ -2686,10 +2686,6 @@ in
     initrd = {
       kernelModules = prefs.initrdKernelModules;
       availableKernelModules = prefs.initrdAvailableKernelModules;
-      secrets = {
-        "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
-        "/root/.ssh/id_ed25519.pub" = config.sops.secrets."port-forwarding-id_ed25519.pub".path;
-      };
       network = {
         enable = true;
         ssh =
