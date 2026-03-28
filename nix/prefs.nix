@@ -514,43 +514,6 @@ let
       excludes = "";
       user = self.owner;
     };
-    acmeEmail =
-      if self.mainDomain == "" then "tobeoverridden@example.com" else "webmaster@${self.mainDomain}";
-    domainPrefixes =
-      let
-        originalPrefix = (builtins.replaceStrings [ "_" ] [ "" ] self.hostname);
-      in
-      (if originalPrefix == self.hostAliases.hub then [ "hub" ] else [ ])
-      ++ [
-        originalPrefix
-        "local"
-      ];
-    domainPrefix = builtins.elemAt self.domainPrefixes 0;
-    domains = builtins.map (prefix: internalGetSubDomain prefix self.mainDomain) self.domainPrefixes;
-    domain = internalGetSubDomain self.domainPrefix self.mainDomain;
-    getFullDomainName = x: internalGetSubDomain x self.domain;
-    getFullDomainNames = prefix: builtins.map (domain: internalGetSubDomain prefix domain) self.domains;
-    mainDomain = "cont.run";
-    enableAcme = self.enableTraefik;
-    acmeCerts =
-      if self.enableAcme then
-        {
-          "${self.mainDomain}" = {
-            domain = self.mainDomain;
-            extraDomainNames = [
-              "*.${self.mainDomain}"
-              "*.local.${self.mainDomain}"
-            ]
-            ++ (self.getFullDomainNames "*");
-            # May spurious dns propagation failures.
-            # dnsPropagationCheck = false;
-            dnsProvider = "cloudflare";
-            dnsResolver = "223.6.6.6:53";
-            credentialsFile = "/run/secrets/acme-env";
-          };
-        }
-      else
-        { };
     enableYandexDisk = false;
     yandexExcludedDirs = [
       "docs/org-mode/roam/.emacs.d"
@@ -558,8 +521,6 @@ let
       ".stversions"
       ".stfolder"
     ];
-    enableTraefik = false;
-    traefikMetricsPort = 8082;
     enableGrafana = false;
     grafanaPort = 2342;
     enablePrometheus = false;
@@ -599,7 +560,6 @@ let
     enableContainerd = false;
     enableWaydroid = false;
     enableCrio = false;
-    enableK3s = false;
     enableNomad = false;
     nomadSettings = {
       # A minimal config example:
@@ -717,58 +677,6 @@ let
     ];
     enableOpenldap = false;
     enableGnomeKeyring = false;
-    enableOciContainers = !self.isMinimalSystem;
-    # https://discourse.nixos.org/t/podman-containers-always-fail-to-start/11908
-    ociContainerBackend = "docker";
-    ociContainerNetwork = "bus";
-    enableAllOciContainers = false;
-    enableVaultSshCa = false;
-    ociContainers = {
-      enablePostgresql = self.enableAllOciContainers;
-      enableRedis = self.enableAllOciContainers;
-      enableKosyncsrv = self.enableAllOciContainers;
-      enableCloudBeaver = self.enableAllOciContainers && (self.nixosSystem == "x86_64-linux");
-      enableAuthelia = self.enableAllOciContainers || self.enableTraefik;
-      enableAutheliaLocalUsers = true;
-      enableFreeipa = false;
-      enableKeeweb = self.enableAllOciContainers;
-      enableHledger = self.enableAllOciContainers && (self.nixosSystem == "x86_64-linux");
-      enableSearx = self.enableAllOciContainers;
-      enableVault = self.enableAllOciContainers;
-      enableRssBridge = self.enableAllOciContainers;
-      enableWallabag = self.enableAllOciContainers;
-      enableCodeServer = self.enableAllOciContainers && !self.enableCodeServer;
-      enableRecipes = self.enableAllOciContainers;
-      enableBookwyrm = self.enableAllOciContainers;
-      enableSuperset = false;
-      enableWger = self.enableAllOciContainers && (self.nixosSystem == "x86_64-linux");
-      enableEtesync = self.enableAllOciContainers;
-      enableEtesyncDav = self.enableAllOciContainers && (self.nixosSystem == "x86_64-linux");
-      enableN8n = self.enableAllOciContainers;
-      enableGitea = self.enableAllOciContainers;
-      enableYacd = self.enableClashRedir;
-      enableWikijs = false;
-      enableXwiki = false;
-      enableHuginn = self.enableAllOciContainers;
-      enableWakapi = self.enableAllOciContainers;
-      enableTiddlyWiki = self.enableAllOciContainers;
-      enableUnigraph = false;
-      enableGrocy = self.enableAllOciContainers;
-      enableLldap = self.enableAllOciContainers;
-      enableCalibreWeb = self.enableAllOciContainers;
-      enableDokuwiki = self.enableAllOciContainers;
-      enableTrilium = self.enableAllOciContainers;
-      enableHomer = self.enableAllOciContainers || self.enableTraefik;
-      enablePerkeep = self.enableAllOciContainers;
-      enablePleroma = self.enableAllOciContainers;
-      enableLivebook = self.enableAllOciContainers;
-      enableJoplin = self.enableAllOciContainers;
-      enableMiniflux = self.enableAllOciContainers;
-      enableAtuin = self.enableAllOciContainers;
-      enableNextcloud = false;
-      enableSftpgo = self.enableAllOciContainers;
-      enableFilestash = self.enableAllOciContainers && (self.nixosSystem == "x86_64-linux");
-    };
     emulatedSystems =
       if (self.nixosSystem == "x86_64-linux") then
         [
@@ -885,7 +793,6 @@ let
             if isForCiCd then
               {
                 enableEmacs = true;
-                enableAcme = true;
               }
               // (
                 if nixosSystem == "x86_64-linux" then
@@ -907,11 +814,8 @@ let
               {
                 isMaximalSystem = true;
                 isMinimalSystem = false;
-                enableAllOciContainers = true;
-                enableTraefik = true;
                 enablePrometheus = true;
                 enablePromtail = true;
-                enableAcme = true;
                 enableSmosServer = true;
                 enableVirtualboxHost = true;
                 enableZerotierone = true;
@@ -1003,19 +907,14 @@ let
           maxJobs = 6;
           smartctlExporterDevices = [ "/dev/nvme0n1" ];
           enableCfssl = true;
-          # enableK3s = true;
           enablePrometheus = true;
           enablePromtail = true;
           enableWireless = true;
-          enableAcme = true;
           pkgsRelatedPrefs =
             super.pkgsRelatedPrefs
             // (with super.pkgsRelatedPrefs; {
               consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
             });
-          enableTraefik = true;
-          enableAllOciContainers = false;
-          ociContainers = super.ociContainers // { };
         }
       else if hostname == "jxt" then
         {
@@ -1035,15 +934,11 @@ let
             "10.10.61.128"
             "10.10.61.129"
           ];
-          enableTraefik = true;
-          ociContainers = super.ociContainers // { };
         }
       else if hostname == "shl" then
         {
           enableXserver = false;
           enableAria2 = true;
-          enableTraefik = true;
-          enableAllOciContainers = false;
           installHomePackages = false; # Too slow.
           kernelParams = super.kernelParams ++ [
             "cgroup_enable=cpuset"
@@ -1056,7 +951,6 @@ let
           pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
             kernelPackages = pkgs.linuxPackages_rpi4;
           };
-          enableAcme = true;
           enableZerotierone = false;
           enableTailScale = false;
           enableVirtualboxHost = false;
@@ -1083,7 +977,6 @@ let
             "/dev/sda"
             "/dev/sdb"
           ];
-          enableAllOciContainers = true;
           enableClashRedirWatchdog = true;
           enableNetworkWatchdog = true;
           enableSyncoid = true;
@@ -1142,10 +1035,8 @@ let
               ];
             };
           };
-          enableTraefik = true;
           enablePrometheus = true;
           enablePromtail = true;
-          enableAcme = true;
           enableSmosServer = true;
           initrdKernelModules = super.initrdKernelModules ++ [ "r8169" ];
           pkgsRelatedPrefs =
@@ -1224,7 +1115,6 @@ let
           homeManagerStateVersion = "22.05";
           installHomePackages = true;
           enableGlusterfs = false;
-          enableTraefik = false;
           enablePrometheus = false;
           enablePrometheusAgent = false;
           enablePrometheusExporters = false;
@@ -1235,13 +1125,7 @@ let
           enableAioproxy = false;
           enableEternalTerminal = false;
           enableTtyd = false;
-          enableAcme = false;
           enableSmosServer = false;
-          ociContainers = super.ociContainers // {
-            enableCalibreWeb = false;
-            enableKeeweb = false;
-          };
-          enableAllOciContainers = false;
           enableWireguard = false;
           enableContainerWired = false;
           enableFallbackAccount = true;

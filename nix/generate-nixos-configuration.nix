@@ -214,7 +214,6 @@ let
             group = prefs.ownerGroup;
           };
           openldap-root-password = { };
-          vault-ssh-ca-setup-env = { };
           postgresql-env = { };
           postgresql-backup-env = { };
           postgresql-initdb-script = {
@@ -311,25 +310,9 @@ let
                 };
               }
               {
-                enable = prefs.enableAcme;
-                config = {
-                  acme-env = {
-                    mode = "0400";
-                    owner = "acme";
-                    group = "acme";
-                  };
-                };
-              }
-              {
                 enable = prefs.enableAria2;
                 config = {
                   aria2-rpc-secret = { };
-                };
-              }
-              {
-                enable = prefs.ociContainers.enableVault;
-                config = {
-                  vault-env = { };
                 };
               }
               {
@@ -353,15 +336,6 @@ let
                 };
               }
               {
-                enable = prefs.enableTraefik;
-                config = {
-                  traefik-env = {
-                    mode = "0400";
-                    owner = "traefik";
-                  };
-                };
-              }
-              {
                 enable = prefs.enablePrometheus;
                 config = {
                   prometheus-env = {
@@ -371,15 +345,6 @@ let
                   prometheus-remote-write-password = {
                     mode = "0400";
                     owner = "prometheus";
-                  };
-                };
-              }
-              {
-                enable = prefs.enablePrometheus && prefs.ociContainers.enablePostgresql;
-                config = {
-                  prometheus-postgres-env = {
-                    mode = "0400";
-                    owner = "postgres-exporter";
                   };
                 };
               }
