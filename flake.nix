@@ -1066,14 +1066,6 @@
 
                       __noChroot = true;
                     };
-
-                  coredns = pkgsToBuildLocalPackages.buildGoApplication {
-                    pname = "coredns";
-                    version = "latest";
-                    goPackagePath = "github.com/contrun/infra/coredns";
-                    src = ./coredns;
-                    modules = ./coredns/gomod2nix.toml;
-                  };
                 }
               );
           }

@@ -1575,46 +1575,6 @@ in
     davfs2 = {
       enable = prefs.enableDavfs2;
     };
-    coredns = {
-      enable = prefs.enableCoredns && pkgs ? myPackages;
-      package = pkgs.myPackages.coredns;
-      config =
-        let
-          dnsServers = builtins.concatStringsSep " " prefs.dnsServers;
-          rewriteAliases = builtins.concatStringsSep "\n" (
-            lib.mapAttrsToList (
-              alias: host:
-              "rewrite name regex (.*).${alias}.${prefs.mainDomain} ${host}.${prefs.mainDomain} answer auto"
-            ) prefs.hostAliases
-          );
-        in
-        ''
-          ${prefs.mainDomain}:${builtins.toString prefs.corednsPort} {
-              # regex ${prefs.mainDomain} is not literally the string ${prefs.mainDomain},
-              # it's OK, as this lies in the stanza for domain ${prefs.mainDomain}.
-              ${rewriteAliases}
-              # Catch-all rule, lest I must rebuild all hosts on new machines.
-              rewrite name regex (.*)\.(.*)\.${prefs.mainDomain} {2}.${prefs.mainDomain} answer auto
-              # fail fast on cache miss
-              cancel 0.01s
-              mdns ${prefs.mainDomain} 0
-              # epicmdns ${prefs.mainDomain} {
-              # mdns ${prefs.mainDomain} 0
-              #   force_unicast true
-              #   min_ttl 180
-              #   browse_period 40
-              #   cache_purge_period 300
-              #   browse _workstation._tcp.local
-              #   browse _ssh._tcp.local
-              # }
-              alternate original NXDOMAIN,SERVFAIL,REFUSED . ${dnsServers}
-          }
-
-          .:${builtins.toString prefs.corednsPort} {
-              forward . ${dnsServers}
-          }
-        '';
-    };
     dnsmasq = {
       enable = prefs.enableDnsmasq;
       resolveLocalQueries = prefs.dnsmasqResolveLocalQueries;
@@ -1639,17 +1599,9 @@ in
         # Disable stub listener so that clash can hajack the dns requests
         # See https://github.com/nelvko/clash-for-linux-install/issues/108#issuecomment-2800667360
         "DNSStubListener=no"
-        (
-          if prefs.enableCorednsForResolved then
-            ''
-              DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
-            ''
-          else
-            ''
-              # DNS=127.0.0.1:${builtins.toString prefs.corednsPort}
-              DNS=${builtins.concatStringsSep " " prefs.dnsServers}
-            ''
-        )
+        ''
+          DNS=${builtins.concatStringsSep " " prefs.dnsServers}
+        ''
       ];
     };
     x2goserver = {
@@ -5807,9 +5759,7 @@ in
               config = {
                 "avahi-daemon" = {
                   serviceConfig = {
-                    # We use avahi and openshift/coredns-mdns to discover hosts.
-                    # Coredns-mdns requires hosts to publish  _workstation._tcp.
-                    # But avahi daemon seems to be not publishing  _workstation._tcp on start up.
+                    # Avahi daemon seems to be not publishing  _workstation._tcp on start up.
                     # If it is the case, we try to restart it, because manually restarting it works.
                     Restart = "always";
                     ExecStartPost = "${pkgs.writeShellScript "maybe-restart-avahi" ''
@@ -5974,16 +5924,6 @@ in
                         fi
                     done
                   '';
-                };
-              };
-            }
-            {
-              enable = prefs.enableCoredns;
-              config = {
-                "coredns" = {
-                  serviceConfig = {
-                    CPUQuota = "20%";
-                  };
                 };
               };
             }

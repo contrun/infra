@@ -313,9 +313,6 @@ let
       "223.5.5.5"
     ];
     enableResolved = true;
-    enableCoredns = false;
-    enableCorednsForResolved = self.enableCoredns;
-    corednsPort = 5322;
     enableSmartdns = false;
     enableUrxvtd = !self.isMinimalSystem;
     enablePrivoxy = false;
