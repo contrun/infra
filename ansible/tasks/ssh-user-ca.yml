@@ -1,0 +1,118 @@
+- name: Set base User SSH public key path if not defined
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    force_sign: "{{ force_sign | default(False) }}"
+    user_ssh_pub_path: "{{ user_ssh_pub_path | default('~/.ssh/id_ed25519.pub') | expanduser }}"
+
+- name: Derive Certificate path from the public key path
+  ansible.builtin.set_fact:
+    user_ssh_cert_path: "{{ user_ssh_pub_path | regex_replace('\\.pub$', '') }}-cert.pub"
+
+- name: Verify the user public key exists on the target
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ user_ssh_pub_path }}"
+  register: user_pub_stat
+
+- name: Assert user public key is present
+  ansible.builtin.assert:
+    that:
+      - user_pub_stat.stat.exists
+    fail_msg: "User public key missing at: {{ user_ssh_pub_path }}"
+
+- name: Ensure 'pkcs11_library_path' is defined locally
+  delegate_to: localhost
+  ansible.builtin.assert:
+    that:
+      - pkcs11_library_path is defined
+      - pkcs11_library_path | length > 0
+    fail_msg: "The variable 'pkcs11_library_path' is missing or empty!"
+
+- name: Check if user certificate already exists on target
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ user_ssh_cert_path }}"
+  register: user_cert_stat
+
+- name: Assert user certificate non-existent if not force_sign
+  ansible.builtin.assert:
+    that:
+      - (not user_cert_stat.stat.exists) or (force_sign | bool)
+    fail_msg: "User certificate already exists and force_sign is False"
+
+- name: Extract User CA Pub Key from PKCS11 token
+  delegate_to: localhost
+  become: no
+  shell: |
+    ssh-keygen -D "{{ pkcs11_library_path }}" | grep "Digital Signature"
+  register: local_user_ca_pub
+  changed_when: false
+
+- name: Set user ca path prefix
+  ansible.builtin.set_fact:
+    user_ca_path: "/etc/ssh/user-ca-{{ (local_user_ca_pub.stdout | checksum)[:12] }}.pub"
+
+- name: Create local temporary directory for signing
+  delegate_to: localhost
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _ssh_user_ca
+  register: user_tmp_dir
+
+- name: Save CA pub key locally
+  delegate_to: localhost
+  become: no
+  copy:
+    content: "{{ local_user_ca_pub.stdout }}"
+    dest: "{{ user_tmp_dir.path }}/ca.pub"
+    mode: '0600'
+
+- name: Execute user signing command
+  delegate_to: localhost
+  become: no
+  shell: |
+    ssh-keygen -s "{{ user_tmp_dir.path }}/ca.pub" \
+               -D "{{ pkcs11_library_path }}" \
+               -I "user_{{ ansible_user }}" \
+               -n "{{ ansible_user }}" \
+               -V +52w \
+               "{{ user_ssh_pub_path }}"
+  # Note: -V +52w sets a 1-year validity period for the user cert
+
+- name: Ensure /etc/ssh/sshd_config.d directory exists
+  ansible.builtin.file:
+    path: "/etc/ssh/sshd_config.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy User CA Public Key to server
+  ansible.builtin.copy:
+    content: "{{ local_user_ca_pub.stdout }}"
+    dest: "{{ user_ca_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Configure sshd to trust the User CA
+  ansible.builtin.copy:
+    dest: "/etc/ssh/sshd_config.d/user-ca.conf"
+    content: "TrustedUserCAKeys {{ user_ca_path }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+    validate: "/usr/sbin/sshd -t -f %s"
+  register: user_ca_config
+
+- name: Reload SSH to apply User CA trust
+  ansible.builtin.service:
+    name: ssh
+    state: reloaded
+  when: user_ca_config.changed
+
+- name: Cleanup local temporary directory
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ user_tmp_dir.path }}"
+    state: absent
