@@ -154,13 +154,25 @@ ansible-deploy-services:
 ansible-configure-hosts:
 	cd ansible && ansible-playbook hosts.yml --extra-vars services=$(SERVICES) --extra-vars hsts=$(HOSTS)
 
-ansible-configure-ssh-host-ca-yubikey: FORCE_SIGN ?= false
-ansible-configure-ssh-host-ca-yubikey:
-	cd ansible && SSH_ASKPASS="$$(nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass" ansible-playbook hosts.yml --extra-vars services=ssh-host-ca --extra-vars pkcs11_library_path="$$(nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so" --extra-vars host_force_sign=$(FORCE_SIGN) --extra-vars hsts=$(HOSTS)
-
-ansible-configure-ssh-user-ca-yubikey: FORCE_SIGN ?= false
-ansible-configure-ssh-user-ca-yubikey:
-	cd ansible && SSH_ASKPASS="$$(nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass" ansible-playbook hosts.yml --extra-vars services=ssh-user-ca --extra-vars pkcs11_library_path="$$(nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so" --extra-vars user_force_sign=$(FORCE_SIGN) --extra-vars hsts=$(HOSTS)
+ansible-configure-ssh-ca-yubikey: TYPE ?= both
+ansible-configure-ssh-ca-yubikey: FORCE_SIGN ?=
+ansible-configure-ssh-ca-yubikey: HOST_KEY ?=
+ansible-configure-ssh-ca-yubikey: USER_KEY ?=
+ansible-configure-ssh-ca-yubikey: SERVICE_VAR = $(if $(filter host,$(TYPE)),ssh-host-ca,$(if $(filter user,$(TYPE)),ssh-user-ca,ssh-host-ca,ssh-user-ca))
+ansible-configure-ssh-ca-yubikey: ASKPASS_PATH = $(shell nix build --print-out-paths .#seahorse.out)/libexec/seahorse/ssh-askpass
+ansible-configure-ssh-ca-yubikey: LIB_PATH = $(shell nix build --print-out-paths nixpkgs#yubico-piv-tool.out)/lib/libykcs11.so
+ansible-configure-ssh-ca-yubikey:
+	cd ansible && \
+	SSH_ASKPASS="$(ASKPASS_PATH)" \
+	ansible-playbook hosts.yml \
+	--extra-vars services=$(SERVICE_VAR) \
+	--extra-vars hsts=$(HOSTS) \
+	--extra-vars pkcs11_library_path="$(LIB_PATH)" \
+	--extra-vars host_force_sign=$(FORCE_SIGN) \
+	--extra-vars user_force_sign=$(FORCE_SIGN) \
+	$(if $(USER_KEY),--extra-vars user_ssh_key_path=$(USER_KEY)) \
+	$(if $(HOST_KEY),--extra-vars host_ssh_key_path=$(HOST_KEY)) \
+	$(strip $(EXTRAANSIBLEFLAGS))
 
 ansible-generate-lock:
 	cd ansible && ./generate-lock.sh

@@ -1,6 +1,6 @@
 - name: Set base SSH private key path if not defined
   ansible.builtin.set_fact:
-    host_force_sign: "{{ host_force_sign | default(False) }}"
+    host_force_sign: "{{ host_force_sign is defined and host_force_sign and (host_force_sign | bool) }}"
     host_ssh_key_path: "{{ host_ssh_key_path | default('/etc/ssh/ssh_host_ed25519_key') }}"
 
 - name: Derive Public Key and Certificate paths from the private key path
@@ -102,6 +102,7 @@
     ssh-keygen -s "{{ tmp_dir.path }}/ca.pub" -D "{{ pkcs11_library_path }}" -I "{{ inventory_hostname }}" -h -n "{{ inventory_hostname }},{{ ansible_host }}" "{{ tmp_dir.path }}/{{ inventory_hostname }}.pub"
 
 - name: "Ensure /etc/ssh/sshd_config.d directory exists"
+  become: yes
   ansible.builtin.file:
     path: "/etc/ssh/sshd_config.d"
     state: "directory"
@@ -110,15 +111,17 @@
     mode: "0755"
 
 - name: "Ensure main sshd_config includes the config directory"
+  become: yes
   ansible.builtin.lineinfile:
     path: "/etc/ssh/sshd_config"
-    line: "Include /etc/ssh/sshd_config.d/*.conf"
+    line: "Include /etc/ssh/sshd_config.d/*"
     insertbefore: "BOF"
     state: "present"
-    validate: "/usr/sbin/sshd -t -f %s"
+    validate: "sshd -t -f %s"
   register: "include_check"
 
 - name: "Upload the signed certificate"
+  become: yes
   ansible.builtin.copy:
     src: "{{ tmp_dir.path }}/{{ inventory_hostname }}-cert.pub"
     dest: "{{ host_ssh_certificate_path }}"
@@ -128,20 +131,27 @@
   register: "cert_upload"
 
 - name: "Create dedicated SSH CA configuration file"
+  become: yes
   ansible.builtin.copy:
     dest: "/etc/ssh/sshd_config.d/host-ca.conf"
     content: "HostCertificate {{ host_ssh_certificate_path }}\n"
     owner: "root"
     group: "root"
     mode: "0600"
-    validate: "/usr/sbin/sshd -t -f %s"
+    validate: "sshd -t -f %s"
   register: "ca_config"
 
-- name: "Reload SSH if any configuration changed"
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: "Reload SSH if configuration changed and service exists"
+  become: yes
   ansible.builtin.service:
     name: "ssh"
     state: "reloaded"
-  when: "include_check.changed or cert_upload.changed or ca_config.changed"
+  when: 
+    - "ansible_facts.services['ssh.service'] is defined"
+    - "include_check.changed or cert_upload.changed or ca_config.changed"
 
 - name: Add Host CA to local known_hosts
   delegate_to: localhost
