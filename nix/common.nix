@@ -512,7 +512,6 @@ in
 
               (pkgs.myPackages.deploy-rs or null)
               (pkgs.myPackages.nix-autobahn or null)
-              (pkgs.myPackages.aioproxy or null)
               # Not working for now
               # error: store path '/nix/store/7phspaj5lxw5qja709r5j3ivcllp0gk2-hyhhrcbzng0kgkyv63mqhznhrp67fhf5-source-crate2nix' is not allowed to have references
               # See https://github.com/NixOS/nix/issues/5647
@@ -2077,7 +2076,7 @@ in
           go =
             nth: server:
             let
-              sshPort = if prefs.enableAioproxy then prefs.aioproxyPort else 22;
+              sshPort = 22;
               autosshPorts = prefs.helpers.autossh {
                 hostname = prefs.hostname;
                 serverName = server;
@@ -3262,21 +3261,6 @@ in
                 };
               };
             }
-            {
-              enable = prefs.enableAioproxy && ((pkgs.myPackages.aioproxy or null) != null);
-              config = {
-                "aioproxy" = {
-                  enable = true;
-                  description = "All-in-one Reverse Proxy";
-                  after = [ "network.target" ];
-                  wantedBy = [ "multi-user.target" ];
-                  serviceConfig = {
-                    Type = "simple";
-                    ExecStart = "${pkgs.myPackages.aioproxy}/bin/aioproxy -v 2 -l 0.0.0.0:${builtins.toString prefs.aioproxyPort} -u 127.0.0.1:8000 -p both -ssh 127.0.0.1:22 -eternal-terminal 127.0.0.1:2022 -http 127.0.0.1:8080 -tls 127.0.0.1:30443";
-                  };
-                };
-              };
-            }
           ]);
       }
 
@@ -3963,7 +3947,7 @@ in
             unitName = "${name}@";
             script = pkgs.writeShellScript "hole-puncher" ''
               set -euo pipefail
-              instance="44443-${builtins.toString (if prefs.enableAioproxy then prefs.aioproxyPort else 44443)}"
+              instance="44443-${builtins.toString 44443}"
               if [[ -n "$1" ]] && grep -Eq '[0-9]+-[0-9]+' <<< "$1"; then instance="$1"; fi
               externalPort="$(awk -F- '{print $2}' <<< "$instance")"
               internalPort="$(awk -F- '{print $1}' <<< "$instance")"

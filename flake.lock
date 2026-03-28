@@ -30,32 +30,6 @@
         "type": "github"
       }
     },
-    "aioproxy": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "gomod2nix": [
-          "gomod2nix"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1656421908,
-        "narHash": "sha256-ldKMEGoZ8Dnt7eETRXwE8yqxhE0Ni1KOfap1FpkVpvU=",
-        "owner": "contrun",
-        "repo": "aioproxy",
-        "rev": "0510e303c5d1854c9f57433753324f87107345a0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "contrun",
-        "repo": "aioproxy",
-        "type": "github"
-      }
-    },
     "android-nixpkgs": {
       "inputs": {
         "devshell": "devshell",
@@ -888,7 +862,6 @@
     },
     "root": {
       "inputs": {
-        "aioproxy": "aioproxy",
         "android-nixpkgs": "android-nixpkgs",
         "authinfo": "authinfo",
         "deploy-rs": "deploy-rs",

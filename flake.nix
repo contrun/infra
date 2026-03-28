@@ -36,11 +36,6 @@
     gomod2nix.url = "github:tweag/gomod2nix";
     gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    aioproxy.url = "github:contrun/aioproxy";
-    aioproxy.inputs.nixpkgs.follows = "nixpkgs";
-    aioproxy.inputs.gomod2nix.follows = "gomod2nix";
-    aioproxy.inputs.flake-utils.follows = "flake-utils";
-
     android-nixpkgs = {
       url = "github:tadfisher/android-nixpkgs/stable";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -718,7 +713,6 @@
                       value = inputs.${name}.packages.${system}.default or inputs.${name}.defaultPackage.${system};
                     })
                     [
-                      "aioproxy"
                       "deploy-rs"
                       "home-manager"
                       "nix-autobahn"

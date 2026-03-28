@@ -325,8 +325,6 @@ let
     enableWstunnel = !self.isMinimalSystem;
     wstunnelPort = 3275;
     sslhPort = 44443;
-    enableAioproxy = !self.isMinimalSystem;
-    aioproxyPort = 4443;
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerUnison = false;
     enableHomeManagerWayvnc = false;
@@ -1093,7 +1091,6 @@ let
           enablePromtail = false;
           enableWstunnel = false;
           enableWaydroid = true;
-          enableAioproxy = false;
           enableEternalTerminal = false;
           enableTtyd = false;
           enableWireguard = false;

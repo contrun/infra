@@ -2,7 +2,7 @@
 
 set -uo pipefail
 
-declare -a system_units=("pipewire*" vboxnet0 aioproxy tailscaled wstunnel "wg-quick-*" eternal-terminal promtail prometheus "prometheus-*.service" cadvisor docker docker.socket "docker-*.service" zerotierone "zerotierone-*" glusterd glustereventsd syncthing aria2 chronyd cups-browsed nfs-idmapd nfs-mountd nfsdcld "pcscd*" rpc-statd "rpcbind*" system-samba.slice vsftpd waydroid-container "avahi-daemon*" postfix system-cups.slice)
+declare -a system_units=("pipewire*" vboxnet0 tailscaled wstunnel "wg-quick-*" eternal-terminal promtail prometheus "prometheus-*.service" cadvisor docker docker.socket "docker-*.service" zerotierone "zerotierone-*" glusterd glustereventsd syncthing aria2 chronyd cups-browsed nfs-idmapd nfs-mountd nfsdcld "pcscd*" rpc-statd "rpcbind*" system-samba.slice vsftpd waydroid-container "avahi-daemon*" postfix system-cups.slice)
 declare -a user_units=("pipewire*" syncthing tomat emacs auto-fix-vscode-server app-unison.slice "offlineimap*")
 declare -a kernel_modules=(asus_nb_wmi asus-nb-wmi uvcvideo)
 
