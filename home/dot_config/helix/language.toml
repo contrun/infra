@@ -4,3 +4,7 @@ language-servers = ["nixd", "nil"]
 formatter = { command = "nixfmt" }
 formatter.args = ["-"]
 auto-format = true
+
+name = "yaml"
+formatter = { command = 'prettier', args = ["--parser", "yaml"] }
+auto-format = true
