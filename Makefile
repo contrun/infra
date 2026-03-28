@@ -149,10 +149,10 @@ ansible-edit-inventory-hosts:
 	cd ansible && ansible-vault edit inventory/hosts.yml
 
 ansible-deploy-services:
-	cd ansible && ansible-playbook services.yml --extra-vars services=$(SERVICES)
+	cd ansible && ansible-playbook services.yml --extra-vars services=$(SERVICES) $(strip $(EXTRAANSIBLEFLAGS))
 
 ansible-configure-hosts:
-	cd ansible && ansible-playbook hosts.yml --extra-vars services=$(SERVICES) --extra-vars hsts=$(HOSTS)
+	cd ansible && ansible-playbook hosts.yml --extra-vars services=$(SERVICES) --extra-vars hsts=$(HOSTS) $(strip $(EXTRAANSIBLEFLAGS))
 
 ansible-configure-ssh-ca-yubikey: TYPE ?= both
 ansible-configure-ssh-ca-yubikey: FORCE_SIGN ?=
