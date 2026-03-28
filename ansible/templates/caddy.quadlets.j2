@@ -1,8 +1,10 @@
 --- caddy.container
 [Unit]
 Description=caddy
+{% if not without_socket_activation %}
 After=caddy.socket
 Requires=caddy.socket
+{% endif %}
 
 [Container]
 Image=docker.io/contrun/caddy:latest
@@ -15,6 +17,9 @@ Environment=CADDY_CONFIG_URL={{ caddy_config_url }}
 {% for key, value in caddy_env.items() %}
 Environment={{ key }}={{ value | string | quote }}
 {% endfor %}
+{% if without_socket_activation %}
+Environment=PORT=443
+{% endif %}
 
 [Service]
 Type=notify

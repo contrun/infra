@@ -1,3 +1,10 @@
+- name: Set variables for socket activation
+  vars:
+    tmp: "{{ without_socket_activation | default(ansible_facts['distribution'] == 'NixOS') }}"
+  set_fact:
+    without_socket_activation: "{{ tmp }}"
+    caddy_config_url: "{{ caddy_config_url_without_socket_activation if tmp else caddy_config_url_with_socket_activation }}"
+
 - name: Create a temporary directory for staging
   ansible.builtin.tempfile:
     state: directory
@@ -39,6 +46,7 @@
     state: absent
 
 - name: Configure socket activation
+  when: not without_socket_activation
   vars:
     templates:
       - src: caddy.socket.j2
