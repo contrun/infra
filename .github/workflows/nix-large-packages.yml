@@ -57,36 +57,10 @@ jobs:
             data: "config.boot.kernelPackages.kernel"
             experimental: false
           - type: "package"
-            data: "pkgs.clojure-lsp"
-            experimental: false
-          - type: "package"
-            data: "pkgs.keepassxc"
-            experimental: false
-          - type: "package"
-            data: "pkgs.calibre"
-            experimental: false
-          - type: "package"
-            data: "pkgs.clash-verge-rev"
-          - type: "arguments"
-            data: ".#nixosConfigurations.maximal-x86_64-linux.pkgs.clash-verge-rev"
-            experimental: false
-          - type: "arguments"
-            data: ".#nixosConfigurations.maximal-x86_64-linux.pkgs.zeal"
-            experimental: true
-          - type: "arguments"
-            data: ".#nixosConfigurations.maximal-x86_64-linux.pkgs.calibre"
-            experimental: true
-          - type: "package"
-            data: "pkgs.texlab"
-            experimental: false
-          - type: "package"
             data: "pkgs.llvmPackages_latest.llvm"
             experimental: false
           - type: "package"
             data: "pkgs.myPackages.emacs"
-            experimental: false
-          - type: "package"
-            data: "pkgs.myPackages.texLive"
             experimental: false
           - type: "arguments"
             data: |
