@@ -62,22 +62,6 @@ let
       nixpkgs.config = nixpkgsConfig;
     };
 
-  # Otherwise error: attribute 'androidSdk' missing
-  # https://github.com/tadfisher/android-nixpkgs/issues/15
-  androidlNixpkgsOverlay =
-    {
-      config,
-      pkgs,
-      system,
-      inputs,
-      ...
-    }:
-    if prefs.enableAndroidDevEnv then
-      {
-        nixpkgs.overlays = [ inputs.android-nixpkgs.overlays.default ];
-      }
-    else
-      { };
 
   hostConfiguration =
     { config, pkgs, ... }:
@@ -309,16 +293,6 @@ let
                 };
               }
               {
-                enable = prefs.enablePostgresql;
-                config = {
-                  postgresql-init-script = {
-                    mode = "0440";
-                    owner = "postgres";
-                    group = "postgres";
-                  };
-                };
-              }
-              {
                 enable = prefs.enablePrometheus;
                 config = {
                   prometheus-env = {
@@ -332,15 +306,6 @@ let
                 };
               }
               {
-                enable = prefs.enableGrafana;
-                config = {
-                  grafana-env = {
-                    mode = "0400";
-                    owner = "grafana";
-                  };
-                };
-              }
-              {
                 enable = prefs.enablePromtail;
                 config = {
                   promtail-env = {
@@ -348,21 +313,6 @@ let
                     owner = "promtail";
                     group = "promtail";
                   };
-                };
-              }
-              {
-                enable = prefs.enableCfssl;
-                config = {
-                  cfssl-ca-key-pem = {
-                    owner = "cfssl";
-                  };
-                };
-              }
-              {
-                enable = prefs.enableGlusterfs;
-                config = {
-                  glusterfs-cert = { };
-                  glusterfs-cert-key = { };
                 };
               }
             ];
@@ -416,39 +366,7 @@ let
                   };
                 }
               )
-            ]
-            ++ (lib.optionals prefs.enableAndroidDevEnv [
-              inputs.android-nixpkgs.hmModule
-              {
-                home.packages = with pkgs; [
-                  android-studio
-                  flutter
-                ];
-                android-sdk.enable = true;
-                android-sdk.packages =
-                  sdkPkgs:
-                  with sdkPkgs;
-                  [
-                    build-tools-34-0-0
-                    cmdline-tools-latest
-                    ndk-bundle
-                    emulator
-                    platform-tools
-                    tools
-                    platforms-android-34
-                    sources-android-34
-                    cmake-3-22-1
-                  ]
-                  ++ (
-                    if prefs.nixosSystem == "x86_64-linux" then
-                      [
-                        system-images-android-34-default-x86-64
-                      ]
-                    else
-                      [ ]
-                  );
-              }
-            ]);
+            ];
           };
         };
       };
@@ -574,7 +492,6 @@ in
     modules = [
       systemInfo
       nixpkgsConfiguration
-      androidlNixpkgsOverlay
       hostConfiguration
       hardwareConfiguration
       commonConfiguration

@@ -70,7 +70,7 @@ let
       // {
         hub = "mdq";
       };
-    pkgsRelatedPrefs = rec {
+    pkgsRelatedPrefs = {
       kernelPackages = pkgs.linuxPackages_latest;
       extraModulePackages = [
         # super.pkgsRelatedPrefs.rtl8188gu
@@ -157,16 +157,7 @@ let
                   unit = "prometheus";
                 }
                 {
-                  enable = self.enableCadvisor;
-                  unit = "cadvisor";
-                }
-                {
                   enable = self.enableSyncthing;
-                  unit = "syncthing";
-                }
-                {
-                  enable = self.enableOfflineimap;
-                  userUnit = true;
                   unit = "syncthing";
                 }
               ];
@@ -182,7 +173,6 @@ let
     isHomeManagerOnly = false;
     homeManagerStateVersion = "21.05";
     systemStateVersion = "20.09";
-    useLargePackages = !self.isMinimalSystem;
     isVirtualMachine = builtins.match "(.*)vm$" self.hostname != null;
     enableAarch64Cross = false;
     isVagrantBox = false;
@@ -190,7 +180,6 @@ let
     ownerUid = 1000;
     ownerGroup = "users";
     ownerGroupGid = 100;
-    noproxyGroup = "noproxy";
     enablePowerSavingMode = true;
     home = "/home/${self.owner}";
     defaultHome = "/home/${self.owner}";
@@ -208,17 +197,6 @@ let
       "nrk"
       "pkn"
     ];
-    autosshDynamicPortOffset = 1090;
-    autosshServers =
-      with args.inputs.nixpkgs.lib;
-      let
-        configFiles = [ "${self.home}/.ssh/config" ];
-        goodConfigFiles = builtins.filter (x: builtins.pathExists x) configFiles;
-        lines = builtins.foldl' (a: e: a ++ (splitString "\n" (readFile e))) [ ] goodConfigFiles;
-        autosshLines = filter (x: hasPrefix "Host autossh" x) lines;
-        servers = map (x: removePrefix "Host " x) autosshLines;
-      in
-      filter (x: x != "autossh") servers;
     enableSessionVariables = true;
     enableAllFirmware = !self.isMinimalSystem;
     enableRedistributableFirmware = !self.isMinimalSystem;
@@ -260,7 +238,6 @@ let
     enableIwd = self.networkController == "iwd";
     enableBumblebee = false;
     enableMediaKeys = true;
-    enableEternalTerminal = !self.isMinimalSystem;
     # TODO: failed to build on microvm guest
     # error: access to canonical path '/nix/store/lz5pb4y9z79lc65asdx6j0wiicm3p12q-binutils-wrapper-2.35.2/nix-support/dynamic-linker' is forbidden in restricted mode
     enableNixLd = !self.enableMicrovmGuest;
@@ -284,37 +261,7 @@ let
       "223.5.5.5"
     ];
     enableResolved = true;
-    enableSmartdns = false;
-    enableUrxvtd = !self.isMinimalSystem;
-    enablePrivoxy = false;
     enableFallbackAccount = false;
-    buildZerotierone = false;
-    enableZerotierone = self.buildZerotierone;
-    zerotieroneNetworks = [ "9bee8941b5ce6172" ];
-    smartdnsSettings = {
-      bind = ":5533 -no-rule -group example";
-      cache-size = 4096;
-      server = [
-        "180.76.76.76"
-        "223.5.5.5"
-      ]
-      ++ [ "9.9.9.9" ]
-      ++ [ "192.0.2.2:53" ];
-      server-tls = [
-        "8.8.8.8:853"
-        "1.1.1.1:853"
-      ];
-      server-https = "https://cloudflare-dns.com/dns-query -exclude-default-group";
-      prefetch-domain = true;
-      speed-check-mode = "ping,tcp:80";
-      log-level = "info";
-    };
-    enableCfssl = false;
-    enableTtyd = !self.isMinimalSystem;
-    enableSslh = false;
-    enableWstunnel = !self.isMinimalSystem;
-    wstunnelPort = 3275;
-    sslhPort = 44443;
     enableTailScale = !self.isMinimalSystem;
     enableHomeManagerUnison = false;
     enableHomeManagerWayvnc = false;
@@ -323,7 +270,6 @@ let
     enableHomeManagerRcloneSync = false;
     enableHomeManagerRcloneMount = false;
     enableHomeManagerRcloneServe = false;
-    enableHomeManagerAutossh = false;
     enableHomeManagerCloudflared = false;
     enableHomeManagerGost = false;
     enableHomeManagerTailScale = false;
@@ -331,8 +277,6 @@ let
     enableHomeManagerCodeTunnel = false;
     enableHomeManagerJupyter = false;
     enableHomeManagerDufs = false;
-    enableNetbird = !self.isMinimalSystem;
-    enableX2goServer = false;
     enableDebugInfo = false;
     enableBtrfs = false;
     enableZfs = !self.isMinimalSystem;
@@ -341,17 +285,6 @@ let
     syncoidCommands = { };
     enableZfsUnstable = self.enableZfs;
     enableCrashDump = false;
-    enableDnsmasq = false;
-    dnsmasqListenAddress = "127.0.0.233";
-    dnsmasqResolveLocalQueries = false;
-    dnsmasqServers = [
-      "223.6.6.6"
-      "180.76.76.76"
-      "8.8.8.8"
-      "9.9.9.9"
-    ];
-    enableArbtt = false;
-    enableActivityWatch = false;
     xWindowManager = if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
     enableKeyd = !self.isMinimalSystem;
@@ -390,18 +323,6 @@ let
           # startupHosts.sh &
         ''
       ]
-      ++ (
-        if self.enableActivityWatch then
-          [
-            ''
-              aw-server &
-              aw-watcher-afk &
-              aw-watcher-window &
-            ''
-          ]
-        else
-          [ ]
-      )
     );
     # xSessionCommands = "";
     displayManager = if self.enableGreetd then null else "gdm";
@@ -413,12 +334,8 @@ let
     buildCores = 0;
     maxJobs = "auto";
     proxy = null;
-    enableMihomo = false;
     enableSingBox = !self.isMinimalSystem;
-    enableClashVerge = false;
-    enableNetworkWatchdog = false;
     myPath = [ "${self.home}/.bin" ];
-    enableOfflineimap = !self.isMinimalSystem;
     enableSyncthing = !self.isMinimalSystem && !self.enableHomeManagerSyncthing;
     # home-manager also manages syncthing, but has less options provided,
     # We use nixpkgs to manage syncthing when possible, home-manager otherwise.
@@ -474,20 +391,6 @@ let
           id = "KXOCACZ-26VKKOO-3NRCLSH-EFRSQC2-VMKDJHE-ITD7NZN-POSZEDL-ZRUNRA6";
         };
       };
-    yandexConfig = {
-      directory = "${self.home}/Sync";
-      excludes = "";
-      user = self.owner;
-    };
-    enableYandexDisk = false;
-    yandexExcludedDirs = [
-      "docs/org-mode/roam/.emacs.d"
-      "ltximg"
-      ".stversions"
-      ".stfolder"
-    ];
-    enableGrafana = false;
-    grafanaPort = 2342;
     enablePrometheus = false;
     enablePrometheusAgent = false;
     enablePrometheusExporters = !self.isMinimalSystem;
@@ -500,68 +403,27 @@ let
     enablePromtail = false;
     promtailHttpPort = 28183;
     promtailGrpcPort = 0;
-    enableCadvisor = !self.isMinimalSystem;
-    cadvisorPort = 28184;
-    cadvisorExtraOptions = [ ];
-    enablePostgresql = false;
-    enableClickhouse = false;
-    enableRedis = false;
-    enableVsftpd = !self.isMinimalSystem;
     enableRsyncd = false;
-    enableRcloneWebUI = !self.isMinimalSystem;
     enableMpd = false;
-    enableAccountsDaemon = !self.isMinimalSystem;
     enableFlatpak = false;
     enableXdgPortal = self.enableSway;
     enableXdgPortalWlr = self.enableSway;
-    enableJupyter = false;
     enableEmacs = !self.isMinimalSystem;
     enableLocate = false;
     enableFail2ban = true;
-    davfs2Secrets = "${self.home}/.davfs2/secrets";
-    enableDavfs2 = !self.isMinimalSystem;
-    enableGlusterfs = !self.isMinimalSystem;
     enableSamba = !self.isMinimalSystem;
-    enableContainerd = false;
+    enableVsftpd = !self.isMinimalSystem;
     enableWaydroid = false;
-    enableCrio = false;
-    enableNomad = false;
-    nomadSettings = {
-      # A minimal config example:
-      server = {
-        enabled = true;
-        bootstrap_expect = 1; # for demo; no fault tolerance
-      };
-      client = {
-        enabled = true;
-      };
-    };
-    enableConsul = false;
-    consulInterface = "wg0";
-    enableConsulWebUi = false;
     buildMachines = [ ];
     distributedBuilds = true;
-    enableNextcloud = false;
-    enableYandex = false;
-    nextcloudWhere = "/nc/sync";
     enableResticBackup = !self.isMinimalSystem;
     enableResticPrune = self.enableResticBackup;
-    nextcloudContainerDataDirectory = "/var/data/nextcloud-data";
-    ownerNextcloudContainerDataDirectory = "${self.nextcloudContainerDataDirectory}/${self.owner}/files";
-    nextcloudWhat = "https://uuuuuu.ocloud.de/remote.php/webdav/sync/";
-    yandexWhere = "${self.home}/yandex";
-    yandexWhat = "https://webdav.yandex.com/sync/";
     enableXserver = !self.isMinimalSystem && self.displayManager != null;
     enableGreetd = true;
     enableSeatd = !self.isMinimalSystem;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
-    enableAndroidDevEnv = false;
-    enableFoot = !self.isMinimalSystem;
     enableADB = self.nixosSystem == "x86_64-linux";
-    enableCalibreServer = false;
-    calibreServerLibraries = [ self.syncFolders.calibre.path ];
-    calibreServerPort = 8213;
     syncFolders = {
       calibre = {
         path = "${self.home}/Storage/Calibre";
@@ -575,7 +437,6 @@ let
       };
     };
     enablePipewire = true;
-    enablePulseaudio = !self.enablePipewire;
     enableSlock = true;
     enableZSH = true;
     enableFish = false;
@@ -600,23 +461,17 @@ let
     enableNextcloudClient = false;
     enableTaskWarriorSync = !self.isMinimalSystem;
     enableVdirsyncer = !self.isMinimalSystem;
-    enableHolePuncher = !self.isMinimalSystem;
     enableDdns = !self.isMinimalSystem;
     enableWireshark = !self.isMinimalSystem;
     enableInputMethods = !self.isMinimalSystem;
     enabledInputMethod = "fcitx5";
     enableVirtualboxHost = !self.isMinimalSystem;
-    enableDocker = !self.replaceDockerWithPodman;
-    enableDockerMetrics = self.enablePrometheusExporters && self.enableDocker;
-    dockerMetricsPort = 9323;
     enablePodman = !self.isMinimalSystem;
     replaceDockerWithPodman = self.isMinimalSystem;
     enableLibvirtd = !self.isMinimalSystem;
-    enableUnifi = false;
     enableUdisks2 = !self.isMinimalSystem;
     enableAvahi = !self.isMinimalSystem;
     avahiHostname = self.hostname;
-    enableGvfs = !self.isMinimalSystem;
     enableCodeServer = false;
     enablePrinting = !self.isMinimalSystem;
     enableBluetooth = true;
@@ -624,7 +479,6 @@ let
     enableThermald = false;
     enableAutoUpgrade = true;
     autoUpgradeChannel = "https://nixos.org/channels/nixos-unstable";
-    enableAutossh = !self.isMinimalSystem;
     enableAutoLogin = true;
     enableLibInput = true;
     enableFprintd = !self.isMinimalSystem;
@@ -738,8 +592,6 @@ let
         let
           nixosSystem = systems."${hostname}";
           isForCiCd = builtins.match "cicd-(.*)" hostname != null;
-          # Only enable essential packages.
-          isMinimal = builtins.match "minimal-(.*)" hostname != null;
           # Always enable everything to build fairly large packages.
           isMaximal = builtins.match "maximal-(.*)" hostname != null;
         in
@@ -822,8 +674,6 @@ let
         {
           isMinimalSystem = true;
           enableMicrovmGuest = true;
-          enableOfflineimap = false;
-          enablePulseaudio = false;
           microvmGuestConfig = {
             volumes = [
               {
@@ -882,8 +732,6 @@ let
           enableNetworkWatchdog = true;
           enablePrometheus = true;
           enablePromtail = true;
-          enableHolePuncher = false;
-          enableAutossh = false;
           enablePrinting = false;
           enableEternalTerminal = false;
           enableZerotierone = false;
@@ -1033,7 +881,6 @@ let
         {
           home = "/home/contrun";
           isMinimalSystem = false;
-          enableFoot = false;
           installHomePackages = true;
           enableHomeManagerCaddy = true;
           enableHomeManagerTailScale = true;
@@ -1049,7 +896,6 @@ let
         {
           home = "/home/contrun";
           isMinimalSystem = false;
-          enableFoot = false;
           installHomePackages = true;
           enableHomeManagerCaddy = true;
           enableHomeManagerTailScale = true;
@@ -1074,7 +920,6 @@ let
           enablePrometheusExporters = false;
           enableCadvisor = false;
           enablePromtail = false;
-          enableWstunnel = false;
           enableWaydroid = true;
           enableEternalTerminal = false;
           enableTtyd = false;
@@ -1090,7 +935,6 @@ let
           enableHomeManagerRcloneSync = true;
           enableHomeManagerRcloneMount = true;
           enableHomeManagerRcloneServe = true;
-          enableHomeManagerAutossh = true;
           pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
             kernelPackages = pkgs.linuxPackages_6_18;
           };

@@ -261,7 +261,6 @@ let
           "cht-sh"
           "automake"
           "assh"
-          "autossh"
           "ssh-import-id"
           # "openssh"
           "myPackages.ssh"
@@ -406,7 +405,6 @@ let
         "brotab"
         "buku"
         "sshuttle"
-        "offlineimap"
       ];
     }
     {
@@ -561,7 +559,6 @@ let
         # cfv
         "cheat"
         # cower
-        "davfs2"
         # d-feet
         "dialog"
         # dictd
@@ -1229,50 +1226,6 @@ in
         }
       )
 
-      (
-        let
-          name = "autossh@";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerAutossh {
-          services.${name} = {
-            Unit = {
-              Description = "autossh";
-              After = [
-                "network-online.target"
-                "network.target"
-              ];
-              Wants = [ "network-online.target" ];
-              # Disable start limit.
-              # https://unix.stackexchange.com/questions/289629/systemd-restart-always-is-not-honored
-              StartLimitIntervalSec = 0;
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-              DefaultInstance = "default";
-            };
-            Service = {
-              Restart = "always";
-              RestartSteps = 20;
-              RestartMaxDelaySec = 3600;
-              # It is ok to pass a non-existent key file. Ssh will warn us, but won't panic.
-              ExecStart = "${pkgs.autossh}/bin/autossh -i %h/.ssh/id_ed25519_autossh $SSH_OPTIONS %i";
-              Environment = [
-                "AUTOSSH_PORT=0"
-                "SSH_ASKPASS_REQUIRE=never"
-                "SSH_OPTIONS="
-                ''
-                  PATH=${lib.makeBinPath [ pkgs.openssh ]}
-                ''
-              ];
-              EnvironmentFile = [
-                "-%h/.config/autossh/env"
-                "-%h/.config/autossh/%i.env"
-              ];
-            };
-          };
-        }
-      )
-
       (lib.optionalAttrs prefs.enableHomeManagerWayvnc (
         let
           env = [
@@ -1504,27 +1457,6 @@ in
                 "-%h/.config/cloudflared/env"
                 "-%h/.config/cloudflared/%i.env"
               ];
-            };
-          };
-        }
-      )
-
-      (
-        let
-          name = "foot";
-        in
-        lib.optionalAttrs prefs.enableFoot {
-          services.${name} = {
-            Unit = {
-              Description = "foot server";
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-            };
-            Service = {
-              Type = "simple";
-              Restart = "always";
-              ExecStart = importEnvironmentForCommand "${pkgs.foot}/bin/foot --server";
             };
           };
         }

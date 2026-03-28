@@ -221,11 +221,6 @@ in
       "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
       "nix/path/home-manager".source = inputs.home-manager;
       "nix/path/activeconfig".source = inputs.self;
-      "davfs2/secrets" = {
-        enable = prefs.enableDavfs2 && builtins.pathExists prefs.davfs2Secrets;
-        mode = "0600";
-        source = prefs.davfs2Secrets;
-      };
       "keyd/keyd.conf" = {
         text = ''
           [ids]
@@ -270,15 +265,6 @@ in
         config = {
           "nix/path/config".source = "${prefs.home}/Workspace/infra";
           "nix/path/infra".source = "${prefs.home}/Workspace/infra";
-        };
-      }
-      {
-        enable = prefs.enableCrio && prefs.enableZfs;
-        config = {
-          "crio/crio.conf.d/01-zfs.conf".text = ''
-            [crio]
-            storage_driver = "zfs"
-          '';
         };
       }
       {
@@ -488,14 +474,6 @@ in
             ];
           }
           {
-            enable = prefs.enableDocker;
-            list = [ docker-buildx ];
-          }
-          {
-            enable = prefs.enableWstunnel;
-            list = [ wstunnel ];
-          }
-          {
             enable = prefs.enableXmonad;
             list = [ xmobar ];
           }
@@ -513,14 +491,6 @@ in
               config.boot.kernelPackages.bpftrace
               config.boot.kernelPackages.bcc
               config.boot.kernelPackages.systemtap
-            ];
-          }
-          {
-            enable = prefs.enableActivityWatch;
-            list = with inputs.jtojnar-nixfiles.packages.${prefs.nixosSystem}; [
-              aw-server-rust
-              aw-watcher-afk
-              aw-watcher-window
             ];
           }
         ])
@@ -561,7 +531,6 @@ in
       in
       rec {
         MYSHELL = if prefs.enableZSH then "zsh" else "bash";
-        MYTERMINAL = if prefs.enableUrxvtd then "urxvtc" else "alacritty";
         GOPATH = "$HOME/.go";
         CABALPATH = "$HOME/.cabal";
         CARGOPATH = "$HOME/.cargo";
@@ -1034,15 +1003,6 @@ in
       enable = prefs.enableBluetooth;
     };
     pcscd.enable = prefs.enablePcscd;
-    arbtt = {
-      enable = prefs.enableArbtt;
-    };
-    pulseaudio = {
-      # Allow VM to override this
-      enable = prefs.enablePulseaudio;
-      package = pkgs.pulseaudioFull;
-      support32Bit = true;
-    };
     fprintd = {
       enable = prefs.enableFprintd;
     };
@@ -1055,28 +1015,6 @@ in
       enable = prefs.enableFcron;
       maxSerialJobs = 5;
       systab = "";
-    };
-    offlineimap = {
-      enable = prefs.enableOfflineimap;
-      install = prefs.enableOfflineimap;
-      path = [
-        pkgs.libsecret
-        pkgs.dbus
-      ];
-    };
-    nomad = {
-      enable = prefs.enableNomad;
-      settings = prefs.nomadSettings;
-      dropPrivileges = true;
-    };
-    consul = {
-      enable = prefs.enableConsul;
-      interface = {
-        advertise = prefs.consulInterface;
-        bind = prefs.consulInterface;
-      };
-      webUi = prefs.enableConsulWebUi;
-      dropPrivileges = true;
     };
     chrony = {
       enable = prefs.enableChrony;
@@ -1262,39 +1200,6 @@ in
         ]
       );
     };
-    glusterfs = {
-      enable = prefs.enableGlusterfs;
-      tlsSettings = {
-        caCert = "/run/secrets/cfssl-ca-pem";
-        tlsKeyPath = "/run/secrets/glusterfs-cert-key";
-        tlsPem = "/run/secrets/glusterfs-cert";
-      };
-    };
-    cadvisor = {
-      enable = prefs.enableCadvisor;
-      port = prefs.cadvisorPort;
-      extraOptions = prefs.cadvisorExtraOptions;
-    };
-    davfs2 = {
-      enable = prefs.enableDavfs2;
-    };
-    dnsmasq = {
-      enable = prefs.enableDnsmasq;
-      resolveLocalQueries = prefs.dnsmasqResolveLocalQueries;
-      settings = {
-        servers = prefs.dnsmasqServers;
-        listen-address = prefs.dnsmasqListenAddress;
-        bind-interfaces = true;
-        cache-size = 1000;
-      };
-    };
-    smartdns = {
-      enable = prefs.enableSmartdns;
-      settings = prefs.smartdnsSettings;
-    };
-    urxvtd = {
-      enable = prefs.enableUrxvtd;
-    };
     resolved = {
       enable = prefs.enableResolved;
       dnssec = "false";
@@ -1303,9 +1208,6 @@ in
           DNS=${builtins.concatStringsSep " " prefs.dnsServers}
         ''
       ];
-    };
-    x2goserver = {
-      enable = prefs.enableX2goServer;
     };
     openssh = {
       enable = true;
@@ -1334,12 +1236,6 @@ in
         ])
       );
     };
-    ttyd = {
-      enable = prefs.enableTtyd;
-      clientOptions = {
-        fontSize = "16";
-      };
-    };
     samba = {
       enable = prefs.enableSamba;
       settings = {
@@ -1367,12 +1263,6 @@ in
           "force user" = prefs.owner;
           "force group" = "users";
         };
-      };
-    };
-    privoxy = {
-      enable = prefs.enablePrivoxy;
-      settings = {
-        listen-address = "0.0.0.0:8118";
       };
     };
     redshift = {
@@ -1699,18 +1589,6 @@ in
           "systemd"
           "smartctl"
         ]
-        ++ builtins.concatMap scrape [
-          {
-            name = "docker";
-            enable = prefs.enableDockerMetrics;
-            port = prefs.dockerMetricsPort;
-          }
-          {
-            name = "cadvisor";
-            enable = prefs.enableCadvisor;
-            port = prefs.cadvisorPort;
-          }
-        ]
         ++ lib.optionals config.services.prometheus.exporters.blackbox.enable (
           let
             go =
@@ -1965,67 +1843,12 @@ in
       };
     };
 
-    autossh = {
-      sessions = lib.optionals (prefs.enableAutossh) (
-        let
-          go =
-            nth: server:
-            let
-              sshPort = 22;
-              autosshPorts = prefs.helpers.autossh {
-                hostname = prefs.hostname;
-                serverName = server;
-              };
-              extraArguments =
-                let
-                  getReverseArgument = port: "-R :${builtins.toString port}:localhost:${builtins.toString sshPort}";
-                  reversePorts = builtins.concatStringsSep " " (
-                    [ "-R /tmp/autossh-${prefs.hostname}-ssh.sock:localhost:${builtins.toString sshPort}" ]
-                    ++ (builtins.map
-                      (
-                        x:
-                        let
-                          port = builtins.toString x;
-                        in
-                        "-R /tmp/autossh-${prefs.hostname}-${port}.sock:localhost:${port}"
-                      )
-                      [
-                        22
-                        80
-                        443
-                      ]
-                    )
-                    ++ (builtins.map (x: getReverseArgument x) autosshPorts)
-                  );
-                in
-                "-i ${
-                  config.sops.secrets."port-forwarding-id_ed25519".path
-                } -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o ControlMaster=no -N -D ${
-                  builtins.toString (prefs.autosshDynamicPortOffset + nth)
-                } ${reversePorts} ${server}";
-            in
-            {
-              extraArguments = extraArguments;
-              name = server;
-              user = prefs.owner;
-            };
-        in
-        lib.imap0 go prefs.autosshServers
-      );
-    };
-    eternal-terminal = {
-      enable = prefs.enableEternalTerminal;
-    };
     printing = {
       enable = prefs.enablePrinting;
       drivers = [ pkgs.hplip ];
     };
     tailscale = {
       enable = prefs.enableTailScale;
-    };
-    zerotierone = {
-      enable = prefs.buildZerotierone || prefs.enableZerotierone;
-      joinNetworks = prefs.zerotieroneNetworks;
     };
     system-config-printer.enable = prefs.enablePrinting;
     logind = {
@@ -2046,56 +1869,11 @@ in
         default_transport = "error: outside mail is not deliverable";
       };
     };
-    clickhouse = {
-      enable = prefs.enableClickhouse;
-    };
-    postgresql = {
-      enable = prefs.enablePostgresql;
-      package = pkgs.postgresql_13;
-      enableTCPIP = true;
-      settings = {
-        # password_encryption = "scram-sha-256";
-      };
-      authentication = ''
-        host  all all 0.0.0.0/0 md5
-        host  all all ::0/0 md5
-      '';
-      ensureDatabases = [
-        "nextcloud"
-        "wallabag"
-      ];
-      ensureUsers = [
-        {
-          name = "nextcloud";
-          ensurePermissions = {
-            "DATABASE nextcloud" = "ALL PRIVILEGES";
-          };
-        }
-        {
-          name = "wallabag";
-          ensurePermissions = {
-            "DATABASE wallabag" = "ALL PRIVILEGES";
-          };
-        }
-        {
-          name = "superuser";
-          ensurePermissions = {
-            "ALL TABLES IN SCHEMA public" = "ALL PRIVILEGES";
-          };
-        }
-      ];
-    };
-    postgresqlBackup = {
-      enable = prefs.enablePostgresql;
-      backupAll = true;
-    };
     udisks2.enable = prefs.enableUdisks2;
-    redis.servers.redis.enable = prefs.enableRedis;
     fail2ban.enable = prefs.enableFail2ban && config.networking.firewall.enable;
     mpd.enable = prefs.enableMpd;
     # mosquitto.enable = true;
     rsyncd.enable = prefs.enableRsyncd;
-    # accounts-daemon.enable = prefs.enableAccountsDaemon || prefs.enableFlatpak;
     flatpak.enable = prefs.enableFlatpak;
     thermald = {
       enable = prefs.enableThermald;
@@ -2110,218 +1888,6 @@ in
       interval = "hourly";
       pruneBindMounts = true;
     };
-
-    jupyterhub = with pkgs; {
-      enable = prefs.enableJupyter;
-      jupyterhubEnv = python3.withPackages (
-        p: with p; [
-          jupyterhub
-          jupyterhub-systemdspawner
-        ]
-      );
-      # TODO: the following will not produce the required binary like jupyterhub-singleuser
-      # jupyterlabEnv = prefs.helpers.mkIfAttrExists pkgs "myPackages.jupyterlab";
-      jupyterlabEnv = python3.withPackages (p: with p; [ jupyterhub ]);
-      port = 8899;
-      kernels = {
-        python3Kernel =
-          let
-            env = python3.withPackages (
-              p: with p; [
-                ipykernel
-                dask-gateway
-                numpy
-                scipy
-              ]
-            );
-          in
-          {
-            displayName = "Python 3";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "ipykernel_launcher"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "python";
-            logo32 = "${env}/${env.sitePackages}/ipykernel/resources/logo-32x32.png";
-            logo64 = "${env}/${env.sitePackages}/ipykernel/resources/logo-64x64.png";
-          };
-
-        cKernel = (
-          let
-            env = python3.withPackages (p: with p; [ jupyter-c-kernel ]);
-          in
-          {
-            displayName = "C";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "jupyter_c_kernel"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "c";
-          }
-        );
-
-        rustKernel = {
-          displayName = "Rust";
-          argv = [
-            "${evcxr}/bin/evcxr_jupyter"
-            "--control_file"
-            "{connection_file}"
-          ];
-          language = "Rust";
-        };
-
-        rKernel =
-          let
-            env = rWrapper.override {
-              packages = with rPackages; [
-                IRkernel
-                ggplot2
-              ];
-            };
-          in
-          {
-            displayName = "R";
-            argv = [
-              "${env}/bin/R"
-              "--slave"
-              "-e"
-              "IRkernel::main()"
-              "--args"
-              "{connection_file}"
-            ];
-            language = "R";
-          };
-
-        ansibleKernel =
-          with stable.pkgs;
-          let
-            # build failure on latest, see https://github.com/NixOS/nixpkgs/issues/138381
-            env =
-              (python3.withPackages (
-                p: with p; [
-                  ansible-kernel
-                  ansible
-                ]
-              )).override
-                (args: {
-                  ignoreCollisions = true;
-                });
-          in
-          {
-            displayName = "Ansible";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "ansible_kernel"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "ansible";
-          };
-
-        bashKernel =
-          let
-            env = python3.withPackages (p: with p; [ bash_kernel ]);
-          in
-          {
-            displayName = "Bash";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "bash_kernel"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "Bash";
-          };
-
-        nixKernel =
-          let
-            env = python3.withPackages (p: with p; [ nix-kernel ]);
-          in
-          {
-            displayName = "Nix";
-            argv = [
-              "${env.interpreter}"
-              "-m"
-              "nix-kernel"
-              "-f"
-              "{connection_file}"
-            ];
-            language = "Nix";
-          };
-
-        rubyKernel = {
-          displayName = "Ruby";
-          argv = [
-            "${iruby}/bin/iruby"
-            "kernel"
-            "{connection_file}"
-          ];
-          language = "ruby";
-        };
-
-        # TODO: Below build failed with
-        # RPATH of binary /nix/store/ilhgzcydg3vn4mp7k5yawlsjwfpm8xi8-ihaskell-0.10.1.2/bin/ihaskell contains a forbidden reference to /build/
-        haskellKernel =
-          with pkgs;
-          let
-            env = haskellPackages.ghcWithPackages (p: with p; [ ihaskell ]);
-            ihaskellSh = writeScriptBin "ihaskell" ''
-              #! ${stdenv.shell}
-              export GHC_PACKAGE_PATH="$(echo ${env}/lib/*/package.conf.d| tr ' ' ':'):$GHC_PACKAGE_PATH"
-              export PATH="${lib.makeBinPath ([ env ])}:$PATH"
-              ${env}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
-            '';
-          in
-          {
-            displayName = "Haskell";
-            argv = [
-              "${ihaskellSh}/bin/ihaskell"
-              "kernel"
-              "{connection_file}"
-              "+RTS"
-              "-M3g"
-              "-N2"
-              "-RTS"
-            ];
-            language = "Haskell";
-          };
-      };
-    };
-
-    cfssl = {
-      enable = prefs.enableCfssl;
-      ca = "file:/run/secrets/cfssl-ca-pem";
-      caKey = "file:/run/secrets/cfssl-ca-key-pem";
-    };
-
-    sslh = {
-      enable = prefs.enableSslh;
-      port = prefs.sslhPort;
-      settings = {
-        verbose-connections = true;
-        transparent = false;
-      };
-    }
-    // (
-      let
-        p = impure.sslhConfigFile;
-      in
-      lib.optionalAttrs (builtins.pathExists p) {
-        settings = (builtins.readFile p);
-      }
-    );
-
-    unifi.enable = prefs.enableUnifi;
-
-    # gvfs.enable = prefs.enableGvfs;
 
     emacs = {
       # enable = prefs.enableEmacs;
@@ -2681,7 +2247,6 @@ in
             "networkmanager"
             "adbusers"
             "docker"
-            "davfs2"
             "wireshark"
             "vboxusers"
             "lp"
@@ -2764,11 +2329,6 @@ in
           "--network-zone=wired"
         ];
         config = {
-          services = {
-            netbird = {
-              enable = prefs.enableNetbird;
-            };
-          };
           systemd.network.enable = prefs.enableSystemdNetworkd;
           networking.useHostResolvConf = false;
           services.resolved.fallbackDns = [
@@ -2792,29 +2352,10 @@ in
     waydroid = {
       enable = prefs.enableWaydroid;
     };
-    containerd = {
-      enable = prefs.enableContainerd;
-    };
-    cri-o = {
-      enable = prefs.enableCrio;
-    };
     podman = {
       enable = prefs.enablePodman;
       dockerCompat = prefs.replaceDockerWithPodman;
       extraPackages = if (prefs.enableZfs) then [ pkgs.zfs ] else [ ];
-    };
-    docker = {
-      enable = prefs.enableDocker && !prefs.replaceDockerWithPodman;
-      extraOptions = builtins.concatStringsSep " " (
-        [ "--experimental" ]
-        ++ (lib.optionals prefs.enableDockerMetrics [
-          "--metrics-addr=127.0.0.1:${builtins.toString prefs.dockerMetricsPort}"
-        ])
-      );
-      autoPrune.enable = true;
-    }
-    // lib.optionalAttrs prefs.enableZfs {
-      storageDriver = "zfs";
     };
   };
 
@@ -2888,71 +2429,6 @@ in
           notify-systemd-unit-failures
           // (mergeOptionalConfigs [
             {
-              enable = prefs.enableWstunnel;
-              config = {
-                # Copied from https://github.com/hmenke/nixos-modules/blob/da7bf05fd771373a8528dd00b97480c38d94c6de/modules/wstunnel/module.nix
-                "wstunnel" = {
-                  description = "wstunnel server";
-                  before =
-                    let
-                      wg-quick = map (iface: "wg-quick-${iface}.service") (
-                        lib.attrNames config.networking.wg-quick.interfaces
-                      );
-                      wireguard = lib.optionals config.networking.wireguard.enable (
-                        map (iface: "wireguard-${iface}.service") (lib.attrNames config.networking.wireguard.interfaces)
-                      );
-                    in
-                    wg-quick ++ wireguard;
-                  after = [ "network.target" ];
-                  wantedBy = [ "multi-user.target" ];
-                  path = [ pkgs.wstunnel ];
-                  serviceConfig = {
-                    Restart = "always";
-                    RestartSec = "1s";
-                    # User
-                    DynamicUser = true;
-                    # Capabilities
-                    AmbientCapabilities = [
-                      "CAP_NET_RAW"
-                      "CAP_NET_BIND_SERVICE"
-                    ];
-                    CapabilityBoundingSet = [
-                      "CAP_NET_RAW"
-                      "CAP_NET_BIND_SERVICE"
-                    ];
-                    # Security
-                    NoNewPrivileges = true;
-                    # Sandboxing
-                    ProtectSystem = "strict";
-                    ProtectHome = lib.mkDefault true;
-                    PrivateTmp = true;
-                    PrivateDevices = true;
-                    ProtectHostname = true;
-                    ProtectKernelTunables = true;
-                    ProtectKernelModules = true;
-                    ProtectControlGroups = true;
-                    RestrictAddressFamilies = [
-                      "AF_UNIX"
-                      "AF_INET"
-                      "AF_INET6"
-                    ];
-                    RestrictNamespaces = true;
-                    LockPersonality = true;
-                    MemoryDenyWriteExecute = true;
-                    RestrictRealtime = true;
-                    RestrictSUIDSGID = true;
-                    RemoveIPC = true;
-                    PrivateMounts = true;
-                    # System Call Filtering
-                    SystemCallArchitectures = "native";
-                  };
-                  script = ''
-                    exec wstunnel --verbose --server 127.0.0.1:${builtins.toString prefs.wstunnelPort}
-                  '';
-                };
-              };
-            }
-            {
               enable = prefs.enableWireguard;
               config = (
                 let
@@ -2997,73 +2473,6 @@ in
               };
             }
             {
-              enable = (prefs.buildZerotierone && !prefs.enableZerotierone);
-              config = {
-                # build zero tier one anyway, but enable it on prefs.enableZerotierone is true;
-                "zerotierone" = {
-                  wantedBy = lib.mkForce [ ];
-                };
-              };
-            }
-            {
-              enable = prefs.buildZerotierone;
-              config = {
-                "zerotierone" = {
-                  serviceConfig = {
-                    SupplementaryGroups = prefs.noproxyGroup;
-                  };
-                };
-              };
-            }
-            {
-              enable = prefs.enableSyncthing;
-              config = {
-                "syncthing" = {
-                  serviceConfig = {
-                    SupplementaryGroups = prefs.noproxyGroup;
-                  };
-                };
-              };
-            }
-            {
-              enable = prefs.enableTailScale;
-              config = {
-                "tailscaled" = {
-                  serviceConfig = {
-                    SupplementaryGroups = prefs.noproxyGroup;
-                  };
-                };
-              };
-            }
-            {
-              enable = config.virtualisation.docker.enable;
-              config = {
-                "docker" = {
-                  serviceConfig = {
-                    ExecStartPost = [
-                      "${pkgs.procps}/bin/sysctl net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0 net.bridge.bridge-nf-call-arptables=0"
-                    ];
-                  };
-                };
-              };
-            }
-            {
-              enable = prefs.enableCrio;
-              config = {
-                "crio" = {
-                  path = with pkgs; [ conntrack-tools ] ++ (lib.optionals prefs.enableZfs [ zfs ]);
-                };
-              };
-            }
-            {
-              enable = prefs.enableJupyter;
-              config = {
-                "jupyterhub" = {
-                  path = with pkgs; [ nodejs_latest ];
-                };
-              };
-            }
-            {
               enable = prefs.enablePrometheus;
               config = {
                 "prometheus" = {
@@ -3080,37 +2489,6 @@ in
                   serviceConfig = {
                     EnvironmentFile = "/run/secrets/promtail-env";
                   };
-                };
-              };
-            }
-            {
-              enable = prefs.enableGrafana;
-              config = {
-                "grafana" = {
-                  serviceConfig = {
-                    EnvironmentFile = "/run/secrets/grafana-env";
-                  };
-                };
-              };
-            }
-            {
-              enable = prefs.enablePostgresql;
-              config = {
-                "postgresql" = {
-                  serviceConfig = {
-                    SupplementaryGroups = "keys";
-                  };
-                };
-              };
-            }
-            {
-              enable = prefs.enableMihomo;
-              config = {
-                mihomo = {
-                  serviceConfig.ExecStartPre = [
-                    "${pkgs.coreutils}/bin/ln -sf ${pkgs.v2ray-geoip}/share/v2ray/geoip.dat /var/lib/private/mihomo/GeoIP.dat"
-                    "${pkgs.coreutils}/bin/ln -sf ${pkgs.v2ray-domain-list-community}/share/v2ray/geosite.dat /var/lib/private/mihomo/GeoSite.dat"
-                  ];
                 };
               };
             }
@@ -3179,58 +2557,6 @@ in
         }
       )
 
-      # For some currently unfathomable reason, wireless network periodically fails.
-      (
-        let
-          name = "network-watchdog";
-        in
-        {
-          services."${name}" = {
-            description = "network watchdog";
-            enable = prefs.enableNetworkWatchdog;
-            wantedBy = [ "default.target" ];
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-            path = [
-              pkgs.coreutils
-              pkgs.gawk
-              pkgs.systemd
-              pkgs.iputils
-              pkgs.util-linux
-            ]
-            ++ lib.optionals prefs.enableIwd [ pkgs.iwd ];
-            script = ''
-              set -euo pipefail
-
-              if ping -c3 _gateway; then
-                  exit 0
-              fi
-
-              if systemctl is-active iwd && [[ -n "$(iwctl station list | awk '{if ($2 ~ /connected/) {print $1}}')" ]]; then
-                  systemctl restart iwd
-              fi
-            '';
-            serviceConfig = {
-              Type = "oneshot";
-              Restart = "on-failure";
-            };
-          };
-
-          timers."${name}" = {
-            enable = prefs.enableNetworkWatchdog;
-            wantedBy = [ "default.target" ];
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            timerConfig = {
-              RandomizedDelaySec = 60;
-              OnCalendar = "*-*-* *:2/3:00";
-              Unit = "${name}.service";
-            };
-          };
-        }
-      )
-
       {
         services = lib.optionalAttrs prefs.enableKeyd {
           keyd = {
@@ -3263,316 +2589,10 @@ in
           };
         };
       }
-
-      (
-        let
-          name = "rclone-webui";
-        in
-        {
-          services.${name} = {
-            description = "rclone web ui";
-            enable = prefs.enableRcloneWebUI;
-            onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-            serviceConfig = {
-              Restart = "always";
-              # User
-              LoadCredential = [
-                "config:${config.sops.secrets.rclone-config.path}"
-                "htpasswd:${config.sops.secrets.rclone-webui-htpasswd.path}"
-              ];
-              DynamicUser = true;
-              # Capabilities
-              AmbientCapabilities = [
-                "CAP_NET_RAW"
-                "CAP_NET_BIND_SERVICE"
-              ];
-              CapabilityBoundingSet = [
-                "CAP_NET_RAW"
-                "CAP_NET_BIND_SERVICE"
-              ];
-              # Security
-              NoNewPrivileges = true;
-              # Sandboxing
-              ProtectSystem = "strict";
-              ProtectHome = lib.mkDefault true;
-              PrivateTmp = true;
-              PrivateDevices = true;
-              ProtectHostname = true;
-              ProtectKernelTunables = true;
-              ProtectKernelModules = true;
-              ProtectControlGroups = true;
-              RestrictAddressFamilies = [
-                "AF_UNIX"
-                "AF_INET"
-                "AF_INET6"
-              ];
-              RestrictNamespaces = true;
-              LockPersonality = true;
-              MemoryDenyWriteExecute = true;
-              RestrictRealtime = true;
-              RestrictSUIDSGID = true;
-              RemoveIPC = true;
-              PrivateMounts = true;
-              # System Call Filtering
-              SystemCallArchitectures = "native";
-              ExecStart = ''
-                ${pkgs.rclone}/bin/rclone --config ''${CREDENTIALS_DIRECTORY}/config rcd --rc-web-gui --rc-web-gui-no-open-browser --rc-htpasswd ''${CREDENTIALS_DIRECTORY}/htpasswd
-              '';
-            };
-          };
-        }
-      )
-
-      # TODO: figure out why zerotier always goes offline
-      (
-        let
-          name = "zerotierone";
-          watchdogName = "${name}-watchdog";
-        in
-        lib.optionalAttrs prefs.buildZerotierone {
-          services."${watchdogName}" = {
-            description = "zerotierone watchdog";
-            enable = true;
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            onFailure = [ "notify-systemd-unit-failures@${watchdogName}.service" ];
-            path = with pkgs; [
-              coreutils
-              systemd
-              zerotierone
-            ];
-            script = ''
-              set -euo pipefail
-              if ! systemctl is-active zerotierone; then
-                  exit 0
-              fi
-              if zerotier-cli -p${builtins.toString config.services.zerotierone.port} info | grep -q -i offline; then
-                  systemctl restart zerotierone
-              fi
-            '';
-            serviceConfig = {
-              Type = "oneshot";
-            };
-          };
-          timers."${watchdogName}" = {
-            enable = true;
-            wantedBy = if prefs.enableZerotierone then [ "default.target" ] else [ ];
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            timerConfig = {
-              RandomizedDelaySec = 2 * 60;
-              OnCalendar = "*-*-* *:3/5:00";
-              Unit = "${watchdogName}.service";
-            };
-          };
-        }
-      )
     ])
     // {
       user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
         { services = notify-systemd-unit-failures; }
-        (
-          let
-            name = "ddns";
-            unitName = "${name}@";
-            script = pkgs.writeShellScript "ddns" ''
-              set -euo pipefail
-              host="''${DDNS_HOST:-$(hostname)}"
-              if [[ -n "$1" ]] && [[ "$1" != "default" ]]; then host="$1"; fi
-              base="$DDNS_BASE_DOMAIN"
-              domain="$host.$base"
-              password="$DDNS_PASSWORD"
-              interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}')"
-              ipAddr="$(parallel -k -r -v upnpc -m {1} -s ::: $interfaces 2>/dev/null | awk '/ExternalIPAddress/ {print $3}' | head -n1 || true)"
-              if [[ -z "$ipAddr" ]]; then ipAddr="$(curl -sS myip.ipip.net | perl -pe 's/.*?([0-9]{1,3}.*[0-9]{1,3}?).*/\1/g')"; fi
-              curl -sS "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipAddr"
-              ipv6Addr="$(ip -6 addr show scope global primary | grep -v mngtmpaddr | awk '/inet6/ {print $2}' | head -n1 | awk -F/ '{print $1}')"
-              if [[ -n "$ipv6Addr" ]]; then curl -sS "https://dyn.dns.he.net/nic/update?hostname=$domain&password=$password&myip=$ipv6Addr"; fi
-            '';
-          in
-          {
-            services.${unitName} = {
-              description = "ddns worker";
-              enable = prefs.enableDdns;
-              wantedBy = [ "default.target" ];
-              onFailure = [ "notify-systemd-unit-failures@%i.service" ];
-              path = [
-                pkgs.coreutils
-                pkgs.inetutils
-                pkgs.parallel
-                pkgs.miniupnpc
-                pkgs.iproute2
-                pkgs.gawk
-                pkgs.perl
-                pkgs.curl
-              ];
-              serviceConfig = {
-                Type = "oneshot";
-                ExecStart = "${script} %i";
-                EnvironmentFile = "/run/secrets/ddns-env";
-              };
-            };
-            timers.${unitName} = {
-              enable = prefs.enableDdns;
-              wantedBy = [ "default.target" ];
-              timerConfig = {
-                OnCalendar = "*-*-* *:2/10:43";
-                Unit = "${unitName}%i.service";
-                Persistent = true;
-              };
-            };
-          }
-        )
-
-        {
-          services.nextcloud-client = {
-            enable = prefs.enableNextcloudClient;
-            description = "nextcloud client";
-            wantedBy = [ "default.target" ];
-            serviceConfig = {
-              Restart = "always";
-              EnvironmentFile = "%h/.config/Nextcloud/env";
-            };
-            path = [
-              pkgs.nextcloud-client
-              pkgs.inotify-tools
-            ];
-            script = ''
-              mkdir -p "$HOME/$localFolder"
-              while true; do
-                    nextcloudcmd --non-interactive --silent --user "$user" --password "$password" "$localFolder" "$remoteUrl" || true
-                    inotifywait -t 120 "$localFolder" > /dev/null 2>&1 || true
-              done
-            '';
-          };
-        }
-
-        (
-          let
-            name = "hole-puncher";
-            unitName = "${name}@";
-            script = pkgs.writeShellScript "hole-puncher" ''
-              set -euo pipefail
-              instance="44443-${builtins.toString 44443}"
-              if [[ -n "$1" ]] && grep -Eq '[0-9]+-[0-9]+' <<< "$1"; then instance="$1"; fi
-              externalPort="$(awk -F- '{print $2}' <<< "$instance")"
-              internalPort="$(awk -F- '{print $1}' <<< "$instance")"
-              interfaces="$(ip link show up | awk -F'[ :]' '/MULTICAST/&&/LOWER_UP/ {print $3}' | grep -v veth)"
-              ipAddresses="$(parallel -k ip addr show dev {1} ::: $interfaces | grep -Po 'inet \K[\d.]+')"
-              protocols="tcp udp"
-              result="$(parallel -r -v upnpc -m {1} -a {2} $internalPort $externalPort {3} ::: $interfaces :::+ $ipAddresses ::: $protocols || true)"
-              awk -v OFS=, '/is redirected to/ {print $2, $8, $3}' <<< "$result"
-            '';
-          in
-          {
-            services.${unitName} = {
-              description = "NAT traversal worker";
-              enable = prefs.enableHolePuncher && prefs.enableSslh;
-              wantedBy = [ "default.target" ];
-              onFailure = [ "notify-systemd-unit-failures@${unitName}_%i.service" ];
-              path = [
-                pkgs.coreutils
-                pkgs.parallel
-                pkgs.miniupnpc
-                pkgs.iproute2
-                pkgs.gawk
-              ];
-              serviceConfig = {
-                Type = "oneshot";
-                ExecStart = "${script} %i";
-              };
-            };
-            timers.${unitName} = {
-              enable = prefs.enableHolePuncher;
-              wantedBy = [ "default.target" ];
-              timerConfig = {
-                OnCalendar = "*-*-* *:3/20:00";
-                Unit = "${unitName}%i.service";
-                Persistent = true;
-              };
-            };
-          }
-        )
-        (
-          let
-            name = "task-warrior-sync";
-          in
-          {
-            services.${name} = {
-              description = "sync task warrior tasks";
-              enable = prefs.enableTaskWarriorSync;
-              onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-              serviceConfig = {
-                Type = "oneshot";
-                ExecStart = "${pkgs.taskwarrior3}/bin/task synchronize";
-              };
-            };
-            timers.${name} = {
-              enable = prefs.enableTaskWarriorSync;
-              wantedBy = [ "default.target" ];
-              timerConfig = {
-                OnCalendar = "*-*-* *:1/3:00";
-                Unit = "${name}.service";
-                Persistent = true;
-              };
-            };
-          }
-        )
-
-        (
-          let
-            name = "vdirsyncer";
-          in
-          {
-            services.${name} = {
-              description = "vdirsyncer sync";
-              enable = prefs.enableTaskWarriorSync;
-              onFailure = [ "notify-systemd-unit-failures@${name}.service" ];
-              serviceConfig = {
-                Type = "oneshot";
-                # ExecStartPre = ''
-                #   ${pkgs.bash}/bin/bash -c "${pkgs.coreutils}/bin/yes | ${pkgs.vdirsyncer}/bin/vdirsyncer discover"'';
-                ExecStartPre = "${pkgs.vdirsyncer}/bin/vdirsyncer discover";
-                ExecStart = "${pkgs.vdirsyncer}/bin/vdirsyncer sync";
-              };
-            };
-            timers.${name} = {
-              enable = prefs.enableVdirsyncer;
-              wantedBy = [ "default.target" ];
-              timerConfig = {
-                OnCalendar = "*-*-* *:1/3:00";
-                Unit = "${name}.service";
-                Persistent = true;
-              };
-            };
-          }
-        )
-
-        (
-          let
-            name = "yandex-disk";
-          in
-          if prefs.enableYandexDisk then
-            {
-              services.${name} = {
-                enable = true;
-                description = "Yandex-disk server";
-                onFailure = [ "notify-systemd-unit-failures@%i.service" ];
-                after = [ "network-online.target" ];
-                wants = [ "network-online.target" ];
-                wantedBy = [ "default.target" ];
-                unitConfig.RequiresMountsFor = prefs.syncFolder;
-                serviceConfig = {
-                  Restart = "always";
-                  ExecStart = "${pkgs.yandex-disk}/bin/yandex-disk start --no-daemon --auth=/run/secrets/yandex-passwd --dir='${prefs.syncFolder}' ${
-                    lib.concatMapStringsSep " " (dir: "--exclude-dirs='${dir}'") prefs.yandexExcludedDirs
-                  }";
-                };
-              };
-            }
-          else
-            { }
-        )
       ];
     };
 
@@ -3667,7 +2687,6 @@ in
       kernelModules = prefs.initrdKernelModules;
       availableKernelModules = prefs.initrdAvailableKernelModules;
       secrets = {
-        "/bin/hole-puncher" = config.sops.secrets.initrd-hole-puncher.path;
         "/root/.ssh/id_ed25519" = config.sops.secrets."port-forwarding-id_ed25519".path;
         "/root/.ssh/id_ed25519.pub" = config.sops.secrets."port-forwarding-id_ed25519.pub".path;
       };
