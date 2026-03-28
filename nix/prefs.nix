@@ -426,10 +426,7 @@ let
     enableMihomo = false;
     enableSingBox = !self.isMinimalSystem;
     enableClashVerge = false;
-    enableClashRedir = false;
-    enableClashRedirWatchdog = false;
     enableNetworkWatchdog = false;
-    autoStartClashRedir = self.enableClashRedir;
     myPath = [ "${self.home}/.bin" ];
     enableOfflineimap = !self.isMinimalSystem;
     enableSyncthing = !self.isMinimalSystem && !self.enableHomeManagerSyncthing;
@@ -900,7 +897,6 @@ let
           enablePrinting = false;
           enableEternalTerminal = false;
           enableZerotierone = false;
-          autoStartClashRedir = false;
           dnsServers = [
             "10.10.61.128"
             "10.10.61.129"
@@ -947,7 +943,6 @@ let
             "/dev/sda"
             "/dev/sdb"
           ];
-          enableClashRedirWatchdog = true;
           enableNetworkWatchdog = true;
           enableSyncoid = true;
           syncFolders = super.syncFolders // {
