@@ -3985,14 +3985,6 @@ in
                     {
                       "x86_64-linux" = image;
                     };
-                  "vaultwarden" =
-                    let
-                      image = "docker.io/vaultwarden/server:latest";
-                    in
-                    {
-                      "x86_64-linux" = image;
-                      "aarch64-linux" = image;
-                    };
                   "perkeep" =
                     let
                       image = "ghcr.io/contrun/perkeep:latest";
@@ -4685,19 +4677,6 @@ in
             };
           }
           {
-            name = "vaultwarden";
-            enable = prefs.ociContainers.enableVaultwarden;
-            config = {
-              dependsOn = [ "postgresql" ];
-              volumes = [ "/var/data/vaultwarden:/data" ];
-              environment = {
-                "DOMAIN" = "https://${prefs.getFullDomainName "vaultwarden"}";
-              };
-              environmentFiles = [ "/run/secrets/vaultwarden-env" ];
-              traefikForwardingPort = 80;
-            };
-          }
-          {
             name = "pleroma";
             enable = prefs.ociContainers.enablePleroma;
             config = {
@@ -5179,13 +5158,6 @@ in
                               subtitle = "personal datastore system";
                               tag = "digital-perseverance";
                               url = "https://${prefs.getFullDomainName "perkeep"}";
-                            }
-                            {
-                              enable = prefs.ociContainers.enableVaultwarden;
-                              name = "vaultwarden";
-                              subtitle = "password management";
-                              tag = "security";
-                              url = "https://${prefs.getFullDomainName "vaultwarden"}";
                             }
                             {
                               enable = prefs.ociContainers.enableVault;

@@ -232,7 +232,6 @@ let
           authelia-postgres-conf = { };
           authelia-redis-conf = { };
           etesync-env = { };
-          vaultwarden-env = { };
           pleroma-env = { };
           livebook-env = {
             mode = "0400";
