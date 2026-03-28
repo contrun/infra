@@ -847,7 +847,7 @@
 
                   containers =
                     let
-                      genContainers = import ./nix/containers.nix;
+                      genContainers = import ./nix/containers;
                     in
                     genContainers { inherit pkgs packages zotero-plugins; };
 
