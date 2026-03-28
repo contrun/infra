@@ -1,6 +1,3 @@
-let
-  internalGetSubDomain = prefix: domain: if prefix == "" then domain else "${prefix}.${domain}";
-in
 { ... }@args:
 let
   fix =
@@ -23,13 +20,6 @@ let
     ./prefs.secret.nix
   ];
 
-  # NOTE: pkgs should not be forced unless we are sure pkgs == args.pkgs
-  # This file is shared between flake.nix which generates a minimal host-specific nixos configuration and
-  # common.nix which generates a more complete host-specific configuration.
-  # When called from flake.nix, there will be no pkgs argument given. We must make sure pkgs is not forced by then.
-  hasPkgs = args ? pkgs;
-  hasInputs = args ? inputs;
-  hasHostname = args ? hostname;
   pkgs = (
     args.pkgs or (builtins.throw "Forcing pkgs in prefs.nix without given in the input parameter")
   );
@@ -880,9 +870,9 @@ let
           enableWireless = true;
           pkgsRelatedPrefs =
             super.pkgsRelatedPrefs
-            // (with super.pkgsRelatedPrefs; {
+            // {
               consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
-            });
+            };
         }
       else if hostname == "jxt" then
         {

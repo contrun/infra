@@ -10,7 +10,6 @@ let
   prefsAttr = import ./prefs.nix args;
   prefs = prefsAttr.all;
   stable = pkgs.stable;
-  unstable = pkgs.unstable;
   impure = {
     mitmproxyCAFile = "${prefs.home}/.mitmproxy/mitmproxy-ca.pem";
     sslhConfigFile = "${prefs.home}/.config/sslh/sslh.conf";
@@ -25,85 +24,6 @@ let
 
   mergeOptionalLists =
     list: builtins.foldl' (acc: e: acc ++ (lib.optionals e.enable e.list)) [ ] list;
-
-  # Copied from https://github.com/tejing1/nixos-config/blob/5c08d09dd785c569941021aedaa6ff80bc86be63/lib/sys/mkFlake.nix
-  generateFlake =
-    let
-      inherit (builtins)
-        mapAttrs
-        concatMap
-        attrValues
-        toJSON
-        listToAttrs
-        ;
-      inherit (pkgs) runCommand;
-      inherit (lib) nameValuePair concatStrings mapAttrsToList;
-      inherit (lib.strings) escapeNixIdentifier escapeNixString;
-
-      cleanNode =
-        flake:
-        let
-          spec = {
-            type = "path";
-            path = flake.outPath;
-            inherit (flake) narHash;
-          };
-        in
-        {
-          # TODO: Any reliable way to differentiate flake and non-flake inputs?
-          flake = flake ? inputs || flake ? outputs;
-          inputs = mapAttrs (_: cleanNode) (flake.inputs or { });
-          locked = spec;
-          original = spec;
-        };
-      flattenNode =
-        prefix: node:
-        let
-          ids = mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).name) node.inputs;
-          nod = concatMap (x: x) (
-            attrValues (mapAttrs (n: v: (flattenNode (prefix + "-" + n) v).value) node.inputs)
-          );
-        in
-        nameValuePair prefix ([ (nameValuePair prefix (node // { inputs = ids; })) ] ++ nod);
-
-    in
-    flakeInputs:
-    let
-      inputsCode = "{${
-        concatStrings (
-          mapAttrsToList (n: v: ''
-            ${escapeNixIdentifier n}.url=${escapeNixString "path:${v.sourceInfo.outPath}?narHash=${v.sourceInfo.narHash}"};
-          '') flakeInputs
-        )
-      }}";
-      rootNode = {
-        inputs = mapAttrs (_: cleanNode) flakeInputs;
-      };
-      lockJSON = toJSON {
-        version = 7;
-        root = "self";
-        nodes = listToAttrs (flattenNode "self" rootNode).value;
-      };
-
-    in
-    outputsCode:
-
-    runCommand "source" { } ''
-      mkdir -p $out
-      cat <<"EOF" >$out/flake.nix
-      {inputs=${inputsCode};outputs=${outputsCode};}
-      EOF
-      cat <<"EOF" >$out/default.nix
-      (import (fetchTarball {
-        url =
-          "https://github.com/edolstra/flake-compat/archive/99f1c2157fba4bfe6211a321fd0ee43199025dbf.tar.gz";
-        sha256 = "0x2jn3vrawwv9xp15674wjz9pixwjyj3j771izayl962zziivbx2";
-      }) { src = ./.; }).defaultNix.legacyPackages.${config.nixpkgs.system}
-      EOF
-      cat <<"EOF" >$out/flake.lock
-      ${lockJSON}
-      EOF
-    '';
 
   nvidiaEnabled =
     lib.elem "nvidia" config.services.xserver.videoDrivers && config.hardware.nvidia.modesetting.enable;
