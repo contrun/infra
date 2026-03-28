@@ -88,10 +88,6 @@
       flake = false;
     };
 
-    smos = {
-      url = "github:NorfairKing/smos";
-    };
-
     old-ghc-nix = {
       url = "github:mpickering/old-ghc-nix";
       flake = false;

@@ -368,16 +368,6 @@ let
                 };
               }
               {
-                enable = prefs.enableSmos;
-                config = {
-                  smos-sync-env = {
-                    mode = "0400";
-                    owner = prefs.owner;
-                    group = prefs.ownerGroup;
-                  };
-                };
-              }
-              {
                 enable = prefs.enableCfssl;
                 config = {
                   cfssl-ca-key-pem = {
@@ -475,8 +465,7 @@ let
                       [ ]
                   );
               }
-            ])
-            ++ (lib.optionals prefs.enableSmos [ (inputs.smos + "/nix/home-manager-module.nix") ]);
+            ]);
           };
         };
       };

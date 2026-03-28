@@ -591,12 +591,8 @@ let
     enableSeatd = !self.isMinimalSystem;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
-    # enableSmos = !self.isMinimalSystem && (self.nixosSystem == "x86_64-linux");
-    enableSmos = false;
     enableAndroidDevEnv = false;
-    enableSmosSync = self.enableSmos;
     enableFoot = !self.isMinimalSystem;
-    enableSmosServer = false;
     enableADB = self.nixosSystem == "x86_64-linux";
     enableCalibreServer = false;
     calibreServerLibraries = [ self.syncFolders.calibre.path ];
@@ -816,7 +812,6 @@ let
                 isMinimalSystem = false;
                 enablePrometheus = true;
                 enablePromtail = true;
-                enableSmosServer = true;
                 enableVirtualboxHost = true;
                 enableZerotierone = true;
                 enableEmacs = true;
@@ -1037,7 +1032,6 @@ let
           };
           enablePrometheus = true;
           enablePromtail = true;
-          enableSmosServer = true;
           initrdKernelModules = super.initrdKernelModules ++ [ "r8169" ];
           pkgsRelatedPrefs =
             super.pkgsRelatedPrefs
@@ -1125,7 +1119,6 @@ let
           enableAioproxy = false;
           enableEternalTerminal = false;
           enableTtyd = false;
-          enableSmosServer = false;
           enableWireguard = false;
           enableContainerWired = false;
           enableFallbackAccount = true;

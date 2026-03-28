@@ -116,56 +116,6 @@ in
       lib.filterAttrsRecursive (n: v: !builtins.elem (builtins.typeOf v) [ "lambda" ]) prefsAttr.pure
     );
   };
-  imports =
-    let
-      smosConfiguration =
-        {
-          config,
-          pkgs,
-          lib,
-          inputs,
-          ...
-        }:
-        {
-          # imports = [
-          #   (import (inputs.smos + "/nix/nixos-module.nix") {
-          #     envname = "production";
-          #   })
-          # ];
-
-          # config = {
-          #   services.smos = {
-          #     production = {
-          #       enable = true;
-          #       web-server = {
-          #         enable = true;
-          #         log-level = "Info";
-          #         hosts = prefs.getFullDomainNames "smos";
-          #         port = 8403;
-          #         api-url = "https://${
-          #           builtins.head config.services.smos.production.api-server.hosts
-          #         }";
-          #         web-url = "https://${prefs.getFullDomainName "smos"}";
-          #         # TODO: error: The option `services.smos.production.web-server.data-dir' does not exist.
-          #         # data-dir = "${prefs.syncFolder}/workflow";
-          #       };
-          #       api-server = {
-          #         enable = true;
-          #         log-level = "Info";
-          #         hosts = prefs.getFullDomainNames "smos-api";
-          #         port = 8402;
-          #         local-backup = { enable = true; };
-          #       };
-          #     };
-          #   };
-          # };
-        };
-    in
-    (builtins.filter (x: builtins.pathExists x) [
-      ./machine.nix
-      ./cache.nix
-    ])
-    ++ (lib.optionals prefs.enableSmosServer [ smosConfiguration ]);
   security = {
     polkit = {
       extraConfig = ''
@@ -2050,7 +2000,24 @@ in
               targets = builtins.map (p: "http://${p}") prefs.edgeProxyHostnames;
             }
           ]
-        );
+        )
+        ++ lib.optionals config.services.prometheus.exporters.domain.enable [
+          {
+            job_name = "domain";
+            metrics_path = "/probe";
+            relabel_configs = [
+              {
+                source_labels = [ "__address__" ];
+                target_label = "__param_target";
+              }
+              {
+                replacement = "127.0.0.1:${builtins.toString config.services.prometheus.exporters.domain.port}";
+                target_label = "__address__";
+              }
+            ];
+            static_configs = [ { targets = [ prefs.mainDomain ]; } ];
+          }
+        ];
     };
 
     promtail = {
