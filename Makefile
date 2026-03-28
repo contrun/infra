@@ -67,8 +67,8 @@ upload: pull push
 
 update: pull update-upstreams
 
-chezmoi-init chezmoi-update chezmoi-status chezmoi-apply chezmoi-purge:
-	$(CHEZMOI) $(CHEZMOIFLAGS) -D "$(DESTDIR)" -S "$(SRCDIR)" $(word 2,$(subst -, ,$@))
+chezmoi-init chezmoi-update chezmoi-status chezmoi-apply chezmoi-purge chezmoi-managed:
+	$(CHEZMOI) -D "$(DESTDIR)" -S "$(SRCDIR)" $(word 2,$(subst -, ,$@)) $(CHEZMOIFLAGS)
 
 home-install root-install:
 	$(call chezmoi,$@) -D "$(call dest,$@)" -S "$(call src,$@)" apply

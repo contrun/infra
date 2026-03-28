@@ -24,12 +24,18 @@ runs:
     - name: Install dependencies
       shell: bash
       run: |
-        nix profile install 'nixpkgs#chezmoi' 'nixpkgs#git' 'nixpkgs#gnumake' 'nixpkgs#curl'
+        nix profile add 'nixpkgs#chezmoi' 'nixpkgs#git' 'nixpkgs#gnumake' 'nixpkgs#curl'
 
     - name: Install
       if: format('{0}', inputs.install-dotfiles) == 'true'
       shell: bash
       run: |
+        # Unmanage all encrypted files
+        # https://github.com/twpayne/chezmoi/blob/c47378283418838867448e9b66448130846e8613/assets/chezmoi.io/docs/user-guide/frequently-asked-questions/encryption.md#example-migrate-from-gpg-to-age
+        make chezmoi-managed CHEZMOIFLAGS="--include encrypted --path-style source-absolute -0" | xargs -r -0 -t -n 1 rm -rf
         mkdir -p "${{ inputs.destination-directory }}"
         destdir="$(cd "${{ inputs.destination-directory }}"; pwd)"
-        make DESTDIR="$destdir" chezmoi-init chezmoi-apply
+        # A few files are encrypted, we may fail.
+        if ! make DESTDIR="$destdir" chezmoi-init chezmoi-appl; then
+          :
+        fi

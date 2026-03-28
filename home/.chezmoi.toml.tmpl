@@ -1,6 +1,16 @@
-{{ $passphrase := promptStringOnce . "passphrase" "gpg encryption passphrase" -}}
-{{ $domain := promptStringOnce . "domain" "domain to use" -}}
-{{ $githubToken := promptStringOnce . "githubToken" "github token" -}}
+{{- $passphrase := "bogus-passphrase" -}}
+{{- $domain := "home.arpa" -}}
+{{- $githubToken := "bogus-token" -}}
+
+{{- if stdinIsATTY -}}
+
+    {{- $passphrase = promptStringOnce . "passphrase" "gpg encryption passphrase" -}}
+
+    {{- $domain = promptStringOnce . "domain" "domain to use" -}}
+
+    {{- $githubToken = promptStringOnce . "githubToken" "github token" -}}
+
+{{- end -}}
 
 # Ensure that chezmoi works even if the we have not copied this repo
 # to the default ~/.local/share/chezmoi directory.
