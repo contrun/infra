@@ -1138,13 +1138,6 @@ in
       package = pkgs.pulseaudioFull;
       support32Bit = true;
     };
-    compton = {
-      enable = prefs.enableCompton;
-    };
-    aria2 = {
-      enable = prefs.enableAria2;
-      rpcSecretFile = "/run/secrets/aria2-rpc-secret";
-    };
     fprintd = {
       enable = prefs.enableFprintd;
     };
@@ -2792,7 +2785,6 @@ in
             "sysdig"
             "disk"
             "keys"
-            "aria2"
             "networkmanager"
             "adbusers"
             "docker"
@@ -3229,17 +3221,6 @@ in
               config = {
                 "jupyterhub" = {
                   path = with pkgs; [ nodejs_latest ];
-                };
-              };
-            }
-            {
-              enable = prefs.enableAria2;
-              config = {
-                "aria2" = {
-                  serviceConfig = {
-                    Environment = "ARIA2_RPC_SECRET=token_nekot";
-                    EnvironmentFile = "/run/secrets/aria2-env";
-                  };
                 };
               };
             }

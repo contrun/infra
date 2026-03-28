@@ -495,7 +495,6 @@ bindsym Mod1+space exec "rofi -show combi -combi-modi window,drun,run"
 exec --no-startup-id pkill -RTMIN+17 i3blocks
 # exec --no-startup-id startupLinux.sh
 # exec --no-startup-id dunst
-# exec --no-startup-id compton
 # exec --no-startup-id flashfocus
 # exec --no-startup-id sh -c "sleep 4; startupLinux.sh"
 # exec --no-startup-id copyq

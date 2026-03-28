@@ -364,7 +364,6 @@ let
     ];
     enableArbtt = false;
     enableActivityWatch = false;
-    enableAria2 = !self.isMinimalSystem;
     xWindowManager = if (self.nixosSystem == "x86_64-linux") then "xmonad" else "i3";
     xDefaultSession = "none+" + self.xWindowManager;
     enableKeyd = !self.isMinimalSystem;
@@ -599,7 +598,6 @@ let
     enableSysdig = false;
     enableCcache = true;
     enableFirewall = false;
-    enableCompton = false;
     enableChrony = true;
     enableFcron = false;
     enableRedshift = false;
@@ -913,7 +911,6 @@ let
       else if hostname == "shl" then
         {
           enableXserver = false;
-          enableAria2 = true;
           installHomePackages = false; # Too slow.
           kernelParams = super.kernelParams ++ [
             "cgroup_enable=cpuset"

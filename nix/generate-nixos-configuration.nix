@@ -309,28 +309,12 @@ let
                 };
               }
               {
-                enable = prefs.enableAria2;
-                config = {
-                  aria2-rpc-secret = { };
-                };
-              }
-              {
                 enable = prefs.enablePostgresql;
                 config = {
                   postgresql-init-script = {
                     mode = "0440";
                     owner = "postgres";
                     group = "postgres";
-                  };
-                };
-              }
-              {
-                enable = prefs.enableAria2;
-                config = {
-                  aria2-env = {
-                    mode = "0440";
-                    owner = "aria2";
-                    group = "aria2";
                   };
                 };
               }
