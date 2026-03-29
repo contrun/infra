@@ -1,12 +1,10 @@
 {
-  config,
   pkgs,
   lib,
-  options,
   prefs,
   inputs,
   ...
-}@args:
+}:
 let
   jupyterPkg = pkgs.python3.withPackages (
     ps: with ps; [
@@ -773,68 +771,6 @@ in
     builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
       (
         let
-          name = "dufs";
-          subdir = ".local/mnt/dufs";
-          credentialFile = "${prefs.home}/.local/dufs.cred";
-          # Credentials do not work in mount yet.
-          # Create a temporary file for password. Be sure to shred it after use.
-          # https://github.com/systemd/systemd/issues/23535
-          plaintextFile = "/tmp/dufs.cred";
-          homePrefix = builtins.substring 1 (builtins.sub (builtins.stringLength prefs.home) 1) prefs.home;
-          mountName = builtins.replaceStrings [ "/" ] [ "-" ] "${homePrefix}/${subdir}";
-          path = "${prefs.home}/${subdir}";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerDufs {
-          mounts.${mountName} = {
-            Unit = {
-              Description = "dufs directory with rclone";
-              After = [ "network.target" ];
-            };
-            Mount = {
-              Type = "rclone";
-              What = "dufs:";
-              Where = path;
-              # echo 'password' | sudo systemd-creds --name=pw encrypt - credentialFile
-              # LoadCredentialEncrypted = "pw:${credentialFile}";
-              # Options = "password-command='${pkgs.coreutils}/bin/cat %d/pw'";
-              Options = "password-command='${pkgs.coreutils}/bin/cat ${plaintextFile}' vfs-cache-mode=full";
-            };
-          };
-          automounts.${mountName} = {
-            Unit = {
-              Description = "dufs directory with rclone";
-              After = [ "network.target" ];
-              Before = [ "remote-fs.target" ];
-            };
-            Automount = {
-              Where = path;
-              TimeoutIdleSec = 600;
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-            };
-          };
-          services.${name} = {
-            Unit = {
-              Description = "Dufs file sharing service";
-              After = [ "network.target" ];
-              RequiresMountsFor = path;
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-            };
-            Service = {
-              NoNewPrivileges = true;
-              ExecStart = ''
-                ${pkgs.dufs}/bin/dufs --render-try-index --allow-all --auth @/Public --auth guest:guest@/SemiPublic --auth upload:upload@/Upload:rw --auth e:$6$3U28BoQYzEnJM5S8$NwZFhUXiekatIKVNTRFrPJOrR5qPF6rZw3TG80bgxmG4C9ZYsNUURjoudWbk74XVr7eVII3CdHxqLrTe8cGYW0@/:rw ${path}
-              '';
-            };
-          };
-        }
-      )
-
-      (
-        let
           name = "tailscaled";
         in
         lib.optionalAttrs prefs.enableHomeManagerTailScale {
@@ -852,28 +788,6 @@ in
               NoNewPrivileges = true;
               ExecStart = ''
                 ${pkgs.tailscale}/bin/tailscaled --statedir=''${STATE_DIRECTORY} --socket=''${RUNTIME_DIRECTORY}/${name}.sock --port=0 --tun=userspace-networking --verbose 5
-              '';
-            };
-          };
-        }
-      )
-
-      (
-        let
-          name = "code-tunnel";
-        in
-        lib.optionalAttrs prefs.enableHomeManagerCodeTunnel {
-          services.${name} = {
-            Unit = {
-              Description = "code tunnel";
-              After = [ "network.target" ];
-            };
-            Install = {
-              WantedBy = [ "default.target" ];
-            };
-            Service = {
-              ExecStart = ''
-                ${pkgs.vscode}/bin/code tunnel
               '';
             };
           };
@@ -976,8 +890,6 @@ in
         in
         lib.optionalAttrs prefs.enableHomeManagerRcloneMount {
           services.${name} =
-            let
-            in
             {
               Unit = {
                 Description = "rclone mount";
