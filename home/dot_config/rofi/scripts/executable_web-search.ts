@@ -8,7 +8,6 @@ import { join } from "https://deno.land/std@0.224.0/path/mod.ts";
 const DEFAULT_SEARCH = "https://duckduckgo.com/?q=";
 const BANG_DATA_URL = "https://duckduckgo.com/bang.js";
 
-
 const MY_BANG_DATA = [{
   "c": "Research",
   "d": "annas-archive.gd",
@@ -16,7 +15,31 @@ const MY_BANG_DATA = [{
   "s": "Annas Archive",
   "sc": "Academic",
   "t": "annas",
-  "u": "https://annas-archive.gd/search?q={{{s}}}"
+  "u": "https://annas-archive.gd/search?q={{{s}}}",
+}, {
+  "c": "Research",
+  "d": "annas-archive.gd",
+  "r": 0,
+  "s": "Annas Archive",
+  "sc": "Academic",
+  "t": "aa",
+  "u": "https://annas-archive.gd/search?q={{{s}}}",
+}, {
+  "c": "Research",
+  "d": "",
+  "r": 0,
+  "s": "Library Genesis",
+  "sc": "Academic",
+  "t": "lg",
+  "u": "https://libgen.li/index.php?req={{{s}}}&res=100",
+}, {
+  "c": "Research",
+  "d": "",
+  "r": 0,
+  "s": "Library Genesis",
+  "sc": "Academic",
+  "t": "libgen",
+  "u": "https://libgen.li/index.php?req={{{s}}}&res=100",
 }];
 
 function getOpener(): string {
@@ -97,8 +120,9 @@ function resolveBang(input: string, lookup: Record<string, string>): string {
  * SUGGESTIONS (DuckDuckGo API)
  */
 async function fetchSuggestions(searchString: string): Promise<string[]> {
-  const url = `https://duckduckgo.com/ac/?q=${encodeURIComponent(searchString)
-    }&type=list`;
+  const url = `https://duckduckgo.com/ac/?q=${
+    encodeURIComponent(searchString)
+  }&type=list`;
   try {
     const res = await fetch(url);
     const data = await res.json();
