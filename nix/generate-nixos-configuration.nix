@@ -171,11 +171,6 @@ let
           path = sopsSecretsFile;
         }}";
         secrets = {
-          code-server-env = {
-            mode = "0400";
-            owner = prefs.owner;
-            group = prefs.ownerGroup;
-          };
           "id_ed25519.pub" = {
             mode = "0400";
             owner = prefs.owner;

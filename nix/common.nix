@@ -459,10 +459,6 @@ in
             list = [ tailscale ];
           }
           {
-            enable = prefs.enableCodeServer;
-            list = [ code-server ];
-          }
-          {
             enable = prefs.enableZfs;
             list = [ zfsbackup ];
           }
@@ -2447,31 +2443,6 @@ in
                 "promtail" = {
                   serviceConfig = {
                     EnvironmentFile = "/run/secrets/promtail-env";
-                  };
-                };
-              };
-            }
-            {
-              enable = (prefs.enableCodeServer);
-              config = {
-                "code-server" = {
-                  enable = true;
-                  description = "Remote VSCode Server";
-                  after = [ "network.target" ];
-                  wantedBy = [ "multi-user.target" ];
-                  path = [
-                    pkgs.go
-                    pkgs.git
-                    pkgs.direnv
-                  ];
-                  serviceConfig = {
-                    Type = "simple";
-                    ExecStart = "${pkgs.code-server}/bin/code-server --disable-telemetry --disable-update-check --user-data-dir ${prefs.home}/.vscode --extensions-dir ${prefs.home}/.vscode/extensions --bind-addr 127.0.0.1:4050 --auth password";
-                    EnvironmentFile = "/run/secrets/code-server-env";
-                    WorkingDirectory = prefs.home;
-                    NoNewPrivileges = true;
-                    User = prefs.owner;
-                    Group = prefs.ownerGroup;
                   };
                 };
               };

@@ -472,7 +472,6 @@ let
     enableUdisks2 = !self.isMinimalSystem;
     enableAvahi = !self.isMinimalSystem;
     avahiHostname = self.hostname;
-    enableCodeServer = false;
     enablePrinting = !self.isMinimalSystem;
     enableBluetooth = true;
     enableAcpilight = true;
