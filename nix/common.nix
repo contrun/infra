@@ -877,6 +877,25 @@ in
           ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
         '';
       };
+      # Systemd was specifically patched disallow directories like /usr/local/lib/systemd
+      # to function under nixos (to keep purity). I used ansible to deploy some services to nixos
+      # (to avoid the split brain).
+      bypassSystemdPatch = {
+        text = ''
+          # Turn on nullglob to avoid literal '*' if directory is empty
+          shopt -s nullglob
+          files=(/usr/local/lib/systemd/system/*)
+          shopt -u nullglob
+
+          if [ ''${#files[@]} -gt 0 ]; then
+              echo "Linking ''${#files[@]} systemd files!"
+              mkdir -p /run/systemd/system/
+              ln -sfn "''${files[@]}" /run/systemd/system/
+          else
+              echo "No systemd files found."
+          fi
+        '';
+      };
     };
   };
 
