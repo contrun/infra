@@ -877,121 +877,7 @@ in
           ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
         '';
       };
-      mkCcacheDirs = {
-        text = "install -d -m 0777 -o root -g nixbld /var/cache/ccache";
-        deps = [ ];
-      };
-      usrlocalbin = {
-        text = "mkdir -m 0755 -p /usr/local/bin";
-        deps = [ ];
-      };
-      local = {
-        text = "mkdir -m 0755 -p /local/bin && mkdir -m 0755 -p /local/lib && mkdir -m 0755 -p /local/jdks";
-        deps = [ ];
-      };
-      cclibs = {
-        text = "cd /local/lib; for i in ${pkgs.gcc.cc.lib}/lib/*; do ln -sfn $i; done";
-        deps = [ "local" ];
-      };
-
-      # Fuck /bin/bash
-      binbash = {
-        text = "ln -sfn ${pkgs.bash}/bin/bash /bin/bash";
-        deps = [ "binsh" ];
-      };
-
-      # I may want to temporarily change /usr/bin/env
-      binenv = {
-        text = "ln -sfn ${pkgs.coreutils}/bin/env /bin/env";
-        deps = [ "binsh" ];
-      };
-
-      # sftpman
-      mntsshfs = {
-        text = "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/sshfs";
-        deps = [ ];
-      };
-
-      # rclone
-      mntrclone = {
-        text = "install -d -m 0700 -o ${prefs.owner} -g ${prefs.ownerGroup} /mnt/rclone";
-        deps = [ ];
-      };
-
-      # https://github.com/NixOS/nixpkgs/issues/3702
-      linger = {
-        text = ''
-          # remove all existing lingering users
-          rm -r /var/lib/systemd/linger
-          mkdir /var/lib/systemd/linger
-          # enable for the subset of declared users
-          touch /var/lib/systemd/linger/${prefs.owner}
-        '';
-        deps = [ ];
-      };
-
-      # make some symlinks to /bin, just for convenience
-      binShortcuts = {
-        text = ''
-          ln -sfn ${pkgs.neovim}/bin/nvim /usr/local/bin/nv
-        '';
-        deps = [
-          "binsh"
-          "usrlocalbin"
-        ];
-      };
-    }
-    // (mergeOptionalConfigs [
-      {
-        enable = prefs.enableJava;
-        config =
-          let
-            addjdk =
-              jdk:
-              if pkgs ? jdk then
-                let
-                  p = pkgs.${jdk}.home;
-                in
-                "ln -sfn ${p} /local/jdks/${jdk}"
-              else
-                lib.warn "jdk ${jdk} does not exists" "";
-          in
-          {
-            jdks = {
-              text = lib.concatMapStringsSep "\n" addjdk prefs.linkedJdks;
-              deps = [ "local" ];
-            };
-          };
-      }
-      {
-        enable = !prefs.enableNixLd;
-        config = {
-          # Fuck pre-built dynamic binaries
-          # copied from https://github.com/NixOS/nixpkgs/pull/69057
-          ldlinux = {
-            text =
-              with lib;
-              concatStrings (
-                mapAttrsToList
-                  (target: source: ''
-                    mkdir -m 0755 -p $(dirname ${target})
-                    ln -sfn ${escapeShellArg source} ${target}.tmp
-                    mv -f ${target}.tmp ${target} # atomically replace
-                  '')
-                  {
-                    "i686-linux"."/lib/ld-linux.so.2" = "${pkgs.glibc.out}/lib/ld-linux.so.2";
-                    "x86_64-linux"."/lib/ld-linux.so.2" = "${pkgs.pkgsi686Linux.glibc.out}/lib/ld-linux.so.2";
-                    "x86_64-linux"."/lib64/ld-linux-x86-64.so.2" = "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
-                    "aarch64-linux"."/lib/ld-linux-aarch64.so.1" = "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
-                    "armv7l-linux"."/lib/ld-linux-armhf.so.3" = "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
-                  }
-                  .${pkgs.stdenv.system} or { }
-              );
-            deps = [ ];
-          };
-        };
-      }
-    ]);
+    };
   };
 
   services = {
@@ -2266,6 +2152,7 @@ in
             shell = if prefs.enableZSH then pkgs.zsh else pkgs.bash;
             initialHashedPassword = "$6$eE6pKPpxdZLueg$WHb./PjNICw7nYnPK8R4Vscu/Rw4l5Mk24/Gi4ijAsNP22LG9L471Ox..yUfFRy5feXtjvog9DM/jJl82VHuI1";
             openssh.authorizedKeys.keys = prefs.privilegedKeys;
+            linger = true;
           };
         };
       groups = {
@@ -2388,7 +2275,9 @@ in
           DefaultLimitNOFILE = "8192:524288";
           DefaultTimeoutStopSec = "10s";
         };
+
         tmpfiles = {
+
           rules = [
             "d /root/.cache/trash - root root 30d"
             "d /root/.local/share/Trash - root root 30d"
@@ -2400,10 +2289,61 @@ in
             # We use this directory to store large files as these files might never be deleted
             # if they are snapshotted. See also https://serverfault.com/questions/293009/zfs-removing-files-from-snapshots
             "d /nosnapshot/${prefs.owner} - ${prefs.owner} ${prefs.ownerGroup} -"
+            # sftpman
+            "d /mnt/sshfs 0700 ${prefs.owner} ${prefs.ownerGroup} -"
+            # rclone
+            "d /mnt/rclone 0700 ${prefs.owner} ${prefs.ownerGroup} -"
           ]
           ++ [
             "d /var/data/warehouse - ${prefs.owner} ${prefs.ownerGroup} -"
-          ];
+          ]
+          ++ [
+            # --- Directories (mkCcacheDirs, usrlocalbin, local) ---
+            "d /var/cache/ccache 0777 root nixbld - -"
+            "d /usr/local/bin 0755 root root - -"
+            "d /local/bin 0755 root root - -"
+            "d /local/lib 0755 root root - -"
+            "d /local/jdks 0755 root root - -"
+
+            "L+ /bin/bash - - - - ${pkgs.bash}/bin/bash"
+            "L+ /bin/env - - - - ${pkgs.coreutils}/bin/env"
+          ]
+          ++ (lib.optionals (!prefs.enableNixLd) [
+            # --- Dynamic Loader Symlinks (ldlinux) ---
+            (
+              let
+                ldPath =
+                  {
+                    "i686-linux" = "/lib/ld-linux.so.2";
+                    "x86_64-linux" = "/lib64/ld-linux-x86-64.so.2";
+                    "aarch64-linux" = "/lib/ld-linux-aarch64.so.1";
+                    "armv7l-linux" = "/lib/ld-linux-armhf.so.3";
+                  }
+                  .${pkgs.stdenv.system} or null;
+
+                # Mapping source based on your original logic
+                ldSource =
+                  {
+                    "i686-linux" = "${pkgs.glibc.out}/lib/ld-linux.so.2";
+                    "x86_64-linux" = "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
+                    "aarch64-linux" = "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
+                    "armv7l-linux" = "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
+                  }
+                  .${pkgs.stdenv.system} or null;
+              in
+              if ldPath != null then "L+ ${ldPath} - - - - ${ldSource}" else ""
+            )
+          ])
+          ++ (lib.optionals prefs.enableJava
+            # --- JDK Symlinks (jdks) ---
+            map
+            (jdk: "L+ /local/jdks/${jdk} - - - - ${pkgs.${jdk}.home}")
+            prefs.linkedJdks
+          )
+          # --- GCC Libs (cclibs) ---
+          ++ (map (file: "L+ /local/lib/${builtins.baseNameOf file} - - - - ${file}") (
+            builtins.attrNames (builtins.readDir "${pkgs.gcc.cc.lib}/lib")
+          ));
         };
       }
 
