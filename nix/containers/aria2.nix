@@ -10,14 +10,7 @@ let
   webdavPort = 5573;
   aria2Port = 6801;
   mntPath = "/mnt/aria2";
-  ui =
-    let
-      version = "1.3.13";
-    in
-    fetchTarball {
-      url = "https://github.com/mayswind/AriaNg/releases/download/${version}/AriaNg-${version}.zip";
-      sha256 = "sha256:1bhq503jxnz19v1spwp9lqc0dw8gzy3hcddqrxasfw5zn93fq5ga";
-    };
+  ui = "${ariang}/share/ariang";
   configFile = "/tmp/rclone.conf";
   htpasswdFile = "/tmp/rclone.htpasswd";
   nginxConfig = writers.writeNginxConfig "nginx.conf" ''
