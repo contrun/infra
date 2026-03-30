@@ -159,7 +159,7 @@ runs:
     # github actions does not support virtualization yet https://github.com/actions/virtual-environments/issues/183
     - name: Install qemu
       if: format('{0}', inputs.setup-qemu) == 'true' && runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     # We have added a sshd config to include all files under the sshd_config.d
     # Nix building of the ssh unit will test if sshd config actually works.
