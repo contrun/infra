@@ -2007,119 +2007,49 @@ in
           "codium.desktop"
         ];
       };
-      defaultApplications = {
-        "application/pdf" = [
-          "org.pwmt.zathura.desktop"
-          "qpdfview.desktop"
-          "koreader.desktop"
-          "sioyek.desktop"
+      defaultApplications =
+        let
+          getCurrent =
+            p:
+            let
+              path = "${p}/share/applications";
+              allFiles = builtins.attrNames (builtins.readDir path);
+              isDesktopFile = str: (builtins.match "^.*\.desktop$" str) != null;
+              allDesktopFiles = builtins.map (x: path + "/${x}") (builtins.filter isDesktopFile allFiles);
+              getMimeTypes =
+                path:
+                let
+                  separator = ";";
+                  content = builtins.readFile path;
+                  lines = lib.splitString "\n" content;
+                  matched = (builtins.filter builtins.isList (map (l: builtins.match "MimeType=(.*)" l) lines));
+                  types = builtins.concatLists (builtins.map (x: lib.splitString separator x) (lib.flatten matched));
+                in
+                builtins.listToAttrs (
+                  builtins.map (type: {
+                    name = type;
+                    value = builtins.baseNameOf path;
+                  }) types
+                );
+              all = builtins.zipAttrsWith (name: values: values) (builtins.map getMimeTypes allDesktopFiles);
+            in
+            all;
+          go =
+            packages:
+            builtins.foldl' (
+              acc: p:
+              builtins.zipAttrsWith (name: values: builtins.concatLists values) [
+                acc
+                (getCurrent p)
+              ]
+            ) { } packages;
+        in
+        with pkgs;
+        go [
+          firefox-devedition
+          zathura
+          imv
         ];
-        "image/vnd.djvu" = [
-          "org.pwmt.zathura.desktop"
-          "koreader.desktop"
-        ];
-        "image/vnd.djvu+multipage" = [
-          "org.pwmt.zathura.desktop"
-          "koreader.desktop"
-        ];
-        "application/oxps" = [
-          "org.pwmt.zathura.desktop"
-          "koreader.desktop"
-        ];
-        "application/epub+zip" = [
-          "org.pwmt.zathura.desktop"
-          "koreader.desktop"
-        ];
-        "application/x-fictionbook" = [
-          "org.pwmt.zathura.desktop"
-          "koreader.desktop"
-        ];
-        "image/bmp" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/gif" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/jpeg" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/jpg" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/pjpeg" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/png" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/tiff" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-bmp" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-pcx" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-png" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-portable-anymap" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-portable-bitmap" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-portable-graymap" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-portable-pixmap" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-tga" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/x-xbitmap" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-        "image/heif" = [
-          "imv.desktop"
-          "sxiv.desktop"
-          "gimp.desktop"
-        ];
-      };
     };
     portal = {
       enable = prefs.enableXdgPortal;
