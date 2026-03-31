@@ -889,58 +889,57 @@ in
           name = "rclone-mount@";
         in
         lib.optionalAttrs prefs.enableHomeManagerRcloneMount {
-          services.${name} =
-            {
-              Unit = {
-                Description = "rclone mount";
-                After = [
-                  "network-online.target"
-                  "network.target"
-                ];
-                Wants = [ "network-online.target" ];
-              };
-              Install = {
-                WantedBy = [ "default.target" ];
-                DefaultInstance = "default";
-              };
-              Service = {
-                TimeoutStartSec = "infinity";
-                ExecStartPre = [
-                  "${createRcloneConfig}"
-                  ''${pkgs.coreutils}/bin/mkdir -p "$RCLONE_MOUNT_TARGET"''
-                ];
-                ExecStart = "${pkgs.rclone}/bin/rclone mount $RCLONE_MOUNT_ARGS $RCLONE_MOUNT_SOURCE $RCLONE_MOUNT_TARGET";
-                ExecStop =
-                  let
-                    umount = pkgs.writeShellScript "umount" ''
-                      fusermount3 -u "$RCLONE_MOUNT_TARGET"
-                    '';
-                  in
-                  "${umount}";
-                Environment = [
-                  "RCLONE_CONFIG=%T/%n.config"
-                  "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
-                  "RCLONE_MOUNT_SOURCE=mount:%I"
-                  "RCLONE_MOUNT_TARGET=%I"
-                  "RCLONE_MOUNT_ARGS="
-                  # rclone requires fusemount3, which in turn needs setuid root to work.
-                  # On Ubuntu, fusemount3 lies in /usr/bin/fusemount3
-                  # On NixOS, fusemount3 lies in /run/wrappers/bin/fusemount3
-                  ''
-                    PATH=/run/wrappers/bin:/usr/sbin:/usr/bin
-                  ''
-                ];
-                EnvironmentFile = [
-                  "-%h/.config/rclone/env"
-                  "-%h/.config/rclone/mount.env"
-                  "-%h/.config/rclone/mount.%I.env"
-                ];
-                # On, Ubuntu, using PrivateTmp will cause rclone mount fail with
-                # mount helper error: fusermount3: mount failed: Permission denied
-                # Fatal error: failed to mount FUSE fs: fusermount: exit status 1
-                # PrivateTmp = true;
-              };
+          services.${name} = {
+            Unit = {
+              Description = "rclone mount";
+              After = [
+                "network-online.target"
+                "network.target"
+              ];
+              Wants = [ "network-online.target" ];
             };
+            Install = {
+              WantedBy = [ "default.target" ];
+              DefaultInstance = "default";
+            };
+            Service = {
+              TimeoutStartSec = "infinity";
+              ExecStartPre = [
+                "${createRcloneConfig}"
+                ''${pkgs.coreutils}/bin/mkdir -p "$RCLONE_MOUNT_TARGET"''
+              ];
+              ExecStart = "${pkgs.rclone}/bin/rclone mount $RCLONE_MOUNT_ARGS $RCLONE_MOUNT_SOURCE $RCLONE_MOUNT_TARGET";
+              ExecStop =
+                let
+                  umount = pkgs.writeShellScript "umount" ''
+                    fusermount3 -u "$RCLONE_MOUNT_TARGET"
+                  '';
+                in
+                "${umount}";
+              Environment = [
+                "RCLONE_CONFIG=%T/%n.config"
+                "RCLONE_PASSWORD_COMMAND=${getRclonePassword}"
+                "RCLONE_MOUNT_SOURCE=mount:%I"
+                "RCLONE_MOUNT_TARGET=%I"
+                "RCLONE_MOUNT_ARGS="
+                # rclone requires fusemount3, which in turn needs setuid root to work.
+                # On Ubuntu, fusemount3 lies in /usr/bin/fusemount3
+                # On NixOS, fusemount3 lies in /run/wrappers/bin/fusemount3
+                ''
+                  PATH=/run/wrappers/bin:/usr/sbin:/usr/bin
+                ''
+              ];
+              EnvironmentFile = [
+                "-%h/.config/rclone/env"
+                "-%h/.config/rclone/mount.env"
+                "-%h/.config/rclone/mount.%I.env"
+              ];
+              # On, Ubuntu, using PrivateTmp will cause rclone mount fail with
+              # mount helper error: fusermount3: mount failed: Permission denied
+              # Fatal error: failed to mount FUSE fs: fusermount: exit status 1
+              # PrivateTmp = true;
+            };
+          };
         }
       )
 
@@ -1364,6 +1363,19 @@ in
       config.common.default = "*";
       configPackages = [ pkgs.xdg-desktop-portal-wlr ];
       extraPortals = [ pkgs.xdg-desktop-portal-wlr ];
+    };
+    mimeApps = {
+      enable = true;
+      defaultApplicationPackages = with pkgs; [
+        firefox-devedition
+        zathura
+        imv
+      ];
+      associations = {
+        added = {
+          "application/pdf" = "firefox-devedition.desktop";
+        };
+      };
     };
     dataFile = {
       "nix/path/nixpkgs".source = inputs.nixpkgs;

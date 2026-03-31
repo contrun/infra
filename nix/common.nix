@@ -1998,59 +1998,6 @@ in
   };
 
   xdg = {
-    mime = {
-      enable = true;
-      addedAssociations = {
-        "application/pdf" = "firefox-devedition.desktop";
-        "text/xml" = [
-          "nvim.desktop"
-          "codium.desktop"
-        ];
-      };
-      defaultApplications =
-        let
-          getCurrent =
-            p:
-            let
-              path = "${p}/share/applications";
-              allFiles = builtins.attrNames (builtins.readDir path);
-              isDesktopFile = str: (builtins.match "^.*\.desktop$" str) != null;
-              allDesktopFiles = builtins.map (x: path + "/${x}") (builtins.filter isDesktopFile allFiles);
-              getMimeTypes =
-                path:
-                let
-                  separator = ";";
-                  content = builtins.readFile path;
-                  lines = lib.splitString "\n" content;
-                  matched = (builtins.filter builtins.isList (map (l: builtins.match "MimeType=(.*)" l) lines));
-                  types = builtins.concatLists (builtins.map (x: lib.splitString separator x) (lib.flatten matched));
-                in
-                builtins.listToAttrs (
-                  builtins.map (type: {
-                    name = type;
-                    value = builtins.baseNameOf path;
-                  }) types
-                );
-              all = builtins.zipAttrsWith (name: values: values) (builtins.map getMimeTypes allDesktopFiles);
-            in
-            all;
-          go =
-            packages:
-            builtins.foldl' (
-              acc: p:
-              builtins.zipAttrsWith (name: values: builtins.concatLists values) [
-                acc
-                (getCurrent p)
-              ]
-            ) { } packages;
-        in
-        with pkgs;
-        go [
-          firefox-devedition
-          zathura
-          imv
-        ];
-    };
     portal = {
       enable = prefs.enableXdgPortal;
       wlr.enable = prefs.enableXdgPortalWlr;
