@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+import sys
+import os
+import re
+import subprocess
+import shutil
+import base64
+
+# 配置路径
+SYSTEMD_DIR_LIST = [
+    "/lib/systemd/system",
+    "/etc/systemd/system",
+    "/usr/lib/systemd/system",
+]
+SUPERVISOR_CONF_DIR = "/etc/supervisor/conf.d"
+
+
+def log(msg):
+    print(f"\033[96m[Fake-Systemctl]\033[0m {msg}")
+
+
+def find_service_file(service_name):
+    if not service_name.endswith(".service"):
+        service_name += ".service"
+
+    for d in SYSTEMD_DIR_LIST:
+        path = os.path.join(d, service_name)
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def parse_service_to_supervisor(service_path, service_name):
+    """
+    极简转换器：只提取 ExecStart, User, Environment, Directory
+    """
+    config = {
+        "program": service_name.replace(".service", ""),
+        "command": "",
+        "user": "root",
+        "autostart": "true",
+        "autorestart": "true",
+        "environment": [],
+        "directory": "",
+        "type": "simple",  # 默认 simple
+    }
+
+    with open(service_path, "r", encoding="utf-8", errors="ignore") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        line = line.strip()
+        if line.startswith("ExecStart="):
+            cmd = line.split("=", 1)[1]
+            if cmd.startswith("-"):
+                cmd = cmd[1:]
+            config["command"] = cmd
+        elif line.startswith("User="):
+            config["user"] = line.split("=", 1)[1]
+        elif line.startswith("WorkingDirectory="):
+            config["directory"] = line.split("=", 1)[1]
+        elif line.startswith("Environment="):
+            env_content = line.split("=", 1)[1]
+            # Some systemd files created from the application are not valid.
+            # E.g. they have lines like Environment=USER=root HOME=/root.
+            # We use this simple condition to check if the file is valid.
+            if env_content.count("=") == 1:
+                env_content = env_content.replace('"', "").replace("'", "")
+                config["environment"].append(env_content)
+        elif line.startswith("Type="):
+            val = line.split("=", 1)[1].lower()
+            if "forking" in val:
+                config["type"] = "forking"
+
+    if not config["command"]:
+        return None
+
+    # 通用处理 Type=forking 的后台服务
+    # 使用 tail -f /dev/null 保持 supervisor 进程存活
+    if config["type"] == "forking":
+        original_cmd = config["command"]
+        # 为了避免引号转义地狱，使用 Base64 编码
+        cmd_bytes = original_cmd.encode("utf-8")
+        cmd_b64 = base64.b64encode(cmd_bytes).decode("utf-8")
+
+        # supervisor 配置 environment="KEY=val"
+        # 使用 base64 -d 解码并执行
+        # 注意: 这里使用 eval 来确保变量和引号被正确解析
+        config["command"] = (
+            '/bin/bash -c "eval \\"$(echo $CMD_B64 | base64 -d)\\" && exec tail -f /dev/null"'
+        )
+        config["environment"].append(f'CMD_B64="{cmd_b64}"')
+
+    # 生成 Supervisor content
+    content = []
+    content.append(f"[program:{config['program']}]")
+    content.append(f"command={config['command']}")
+    content.append(f"user={config['user']}")
+    content.append(f"autostart={config['autostart']}")
+    content.append(f"autorestart={config['autorestart']}")
+
+    if config["directory"]:
+        content.append(f"directory={config['directory']}")
+
+    if config["environment"]:
+        # supervisor environment format: environment=KEY="val",KEY2="val"
+        # 确保 CMD_B64 是最后一个或者用逗号分隔
+        env_str = ",".join(config["environment"])
+        content.append(f"environment={env_str}")
+
+    # 标准日志路径
+    content.append(f"stdout_logfile=/var/log/supervisor/{config['program']}.out.log")
+    content.append(f"stderr_logfile=/var/log/supervisor/{config['program']}.err.log")
+
+    return "\n".join(content)
+
+
+def handle_enable(services):
+    for svc in services:
+        path = find_service_file(svc)
+        if not path:
+            log(f"Error: Could not find service file for {svc}")
+            continue
+
+        conf_content = parse_service_to_supervisor(path, svc)
+        if not conf_content:
+            log(f"Error: Failed to parse {svc} (No ExecStart?)")
+            continue
+
+        # 写入 supervisor 配置
+        svc_name = svc.replace(".service", "")
+        conf_path = os.path.join(SUPERVISOR_CONF_DIR, f"{svc_name}.conf")
+
+        with open(conf_path, "w") as f:
+            f.write(conf_content)
+
+        log(f"Converted {svc} -> {conf_path}")
+
+    # 通知 supervisor 更新
+    subprocess.run(["supervisorctl", "update"], check=False)
+
+
+def handle_start(services):
+    for svc in services:
+        name = svc.replace(".service", "")
+        log(f"Starting {name} via supervisorctl...")
+        subprocess.run(["supervisorctl", "start", name], check=False)
+
+
+def handle_restart(services):
+    for svc in services:
+        name = svc.replace(".service", "")
+        log(f"Restarting {name} via supervisorctl...")
+        subprocess.run(["supervisorctl", "restart", name], check=False)
+
+
+def handle_stop(services):
+    for svc in services:
+        name = svc.replace(".service", "")
+        subprocess.run(["supervisorctl", "stop", name], check=False)
+
+
+def handle_status(services):
+    subprocess.run(
+        ["supervisorctl", "status"] + [s.replace(".service", "") for s in services],
+        check=False,
+    )
+
+
+def main():
+    if len(sys.argv) < 2:
+        return
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    # 过滤掉非服务参数 (简单处理)
+    services = [a for a in args if not a.startswith("-")]
+
+    if command == "enable":
+        handle_enable(services)
+    elif command == "start":
+        handle_start(services)
+    elif command == "restart":
+        handle_restart(services)
+    elif command == "stop":
+        handle_stop(services)
+    elif command == "status":
+        handle_status(services)
+    elif command == "daemon-reload":
+        subprocess.run(["supervisorctl", "update"], check=False)
+    else:
+        # 对于不识别的命令，静默通过，返回 0 以免打断 postinst 脚本
+        pass
+
+
+if __name__ == "__main__":
+    main()
