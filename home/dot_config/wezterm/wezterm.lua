@@ -445,14 +445,102 @@ local function cmd_exists(cmd)
 end
 
 if is_windows then
-  config.default_prog = { 'powershell.exe' }
   -- https://github.com/wez/wezterm/discussions/3772#discussioncomment-7201688
   config.ssh_backend = "Ssh2"
+
+  -- Add Windows shell commands to the launch menu.
+  -- Taken from https://github.com/wezterm/wezterm/issues/5963#issuecomment-2533250740
+  local pwsh = cmd_exists 'pwsh.exe'
+  local powershell = cmd_exists 'powershell.exe'
+  local git = cmd_exists 'git.exe'
+  local elvish = cmd_exists 'elvish.exe'
+  local nu = cmd_exists 'nu.exe'
+
+  -- Use powershell to query the registry for the Git for Windows install path
+  local bash_path = ''
+  if git and (pwsh or powershell) then
+    local shell = pwsh and 'pwsh.exe' or 'powershell.exe'
+    local git_registry, git_path, stderr = wezterm.run_child_process {
+      shell,
+      '-Command',
+      [[(Get-ItemProperty -Path Registry::HKEY_LOCAL_MACHINE\SOFTWARE\GitForWindows).InstallPath]],
+    }
+    if git_registry then
+      for _, line in ipairs(wezterm.split_by_newlines(git_path)) do
+        bash_path = bash_path .. line
+      end
+      bash_path = bash_path .. [[\bin\bash.exe]]
+    end
+  end
+
+  -- Check for pwsh
+  if pwsh then
+    table.insert(config.launch_menu, {
+      label = 'PowerShell',
+      args = { 'pwsh.exe', '-NoLogo' },
+    })
+    config.default_prog = { 'pwsh.exe', '-NoLogo' }
+
+    if git and bash_path ~= '' then
+      table.insert(config.launch_menu, {
+        label = 'Git Bash',
+        args = { bash_path, '-i', '-l' },
+      })
+    end
+
+    table.insert(config.launch_menu, {
+      label = 'Command Prompt',
+      args = { os.getenv 'COMSPEC', '/k' },
+    })
+
+    -- No pwsh but we have Windows PowerShell
+  elseif powershell then
+    table.insert(config.launch_menu, {
+      label = 'Windows PowerShell',
+      args = { 'powershell.exe', '-NoLogo' },
+    })
+    config.default_prog = { 'powershell.exe', '-NoLogo' }
+
+    if git and bash_path ~= '' then
+      table.insert(config.launch_menu, {
+        label = 'Git Bash',
+        args = { bash_path, '-i', '-l' },
+      })
+    end
+
+    table.insert(config.launch_menu, {
+      label = 'Command Prompt',
+      args = { os.getenv 'COMSPEC', '/k' },
+    })
+
+    -- No powershell of any kind, just cmd.exe
+  else
+    table.insert(config.launch_menu, {
+      label = 'Command Prompt',
+      args = { os.getenv 'COMSPEC', '/k' },
+    })
+    config.default_prog = { os.getenv 'COMSPEC', '/k' }
+  end
+
+  -- Check for elvish
+  if elvish then
+    table.insert(config.launch_menu, {
+      label = 'Elvish',
+      args = { 'elvish.exe' },
+    })
+  end
+
+  -- Check for NuShell
+  if nu then
+    table.insert(config.launch_menu, {
+      label = 'NuShell',
+      args = { 'nu.exe' },
+    })
+  end
 else
   if cmd_exists('fish') then
     config.default_prog = { 'fish' }
   end
 end
-
 
 return config
