@@ -18,18 +18,31 @@ on:
       - "nix/containers/"
 
 jobs:
+  generate-matrix-docker-container:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: |
+          DYNAMIC_JSON="$(find containers -name 'Dockerfile' -printf '%h\0' | jq -Rs 'split("\u0000") | map(select(length > 0)) | map({path: ., kind: "local_directory"})')"
+
+          STATIC_JSON='[
+            {"path": "contrun/eudyptula", "kind": "github_repository"},
+            {"path": "logseq/logseq", "kind": "github_repository"}
+          ]'
+
+          COMBINED="$(jq -cn --argjson static "$STATIC_JSON" --argjson dynamic "$DYNAMIC_JSON" '$static + $dynamic')"
+          echo "matrix=$COMBINED" >> $GITHUB_OUTPUT
+
   docker-container:
+    needs: generate-matrix-docker-container
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - path: "containers/archvnc"
-            kind: "local_directory"
-          - path: "contrun/eudyptula"
-            kind: "github_repository"
-          - path: "logseq/logseq"
-            kind: "github_repository"
+        include: ${{ fromJSON(needs.generate-matrix-docker-container.outputs.matrix) }}
 
     steps:
       - name: Checkout ${{ matrix.path }}
@@ -156,7 +169,7 @@ jobs:
           cache-from: ${{ steps.variables.outputs.docker_image_cache }}
           cache-to: ${{ steps.variables.outputs.docker_image_cache }}
 
-  generate-matrix:
+  generate-matrix-flake-container:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -173,12 +186,12 @@ jobs:
           echo "matrix=$DYNAMIC_FLAKE" >> $GITHUB_OUTPUT
 
   flake-container:
-    needs: generate-matrix
+    needs: generate-matrix-flake-container
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+        include: ${{ fromJSON(needs.generate-matrix-flake-container.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
