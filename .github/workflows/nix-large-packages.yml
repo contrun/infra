@@ -132,7 +132,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.variables.outputs.shouldSkip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: "${{ inputs.branch || '' }}"
           submodules: true

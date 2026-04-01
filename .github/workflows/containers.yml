@@ -23,7 +23,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - id: set-matrix
         run: |
           DYNAMIC_JSON="$(find containers -name 'Dockerfile' -printf '%h\0' | jq -Rs 'split("\u0000") | map(select(length > 0)) | map({path: ., kind: "local_directory"})')"
@@ -47,14 +47,14 @@ jobs:
     steps:
       - name: Checkout ${{ matrix.path }}
         if: matrix.kind == 'github_repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: "${{ matrix.path }}"
           path: "${{ matrix.path }}"
 
       - name: Checkout
         if: matrix.kind != 'github_repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get docker environment
         id: variables
@@ -158,7 +158,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup nix
         uses: ./
         with:
@@ -178,7 +178,7 @@ jobs:
         include: ${{ fromJSON(needs.generate-matrix-flake-container.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup nix
         uses: ./
