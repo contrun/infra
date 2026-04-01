@@ -81,27 +81,11 @@ jobs:
           context="$directory"
           platforms="linux/amd64,linux/arm64"
 
-          case "$repository" in
-            "elasticdog/tiddlywiki-docker")
-              name=tiddlywiki
-              ;;
-            "mkorenkov/docker-perkeep")
-              name=perkeep
-              ;;
-            "karlicoss/promnesia")
-              dockerfile="$directory/docker/docker_files/Dockerfile"
-              ;;
-            "unigraph-dev/unigraph-dev")
-              name=unigraph
-              platforms="linux/amd64"
-              ;;
-            "contrun/gitpod-nix")
-              dockerfile="$directory/.gitpod.Dockerfile"
-              ;;
-          esac
-
           case "$directory" in
             "containers/archvnc")
+              platforms="linux/amd64"
+              ;;
+            "containers/ecloud-cloudcomputer")
               platforms="linux/amd64"
               ;;
           esac
