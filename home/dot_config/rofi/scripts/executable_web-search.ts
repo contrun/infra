@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-net --allow-run --allow-read --allow-write --allow-env
 
-import { join } from "https://deno.land/std@0.224.0/path/mod.ts";
+import { join } from "jsr:@std/path";
 
 /**
  * CONFIGURATION & OS DETECTION
