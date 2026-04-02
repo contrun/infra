@@ -304,6 +304,25 @@ config.keys = {
     },
   },
   {
+    key = 'b',
+    mods = 'CTRL|ALT',
+    action = wezterm.action_callback(function(win, pane)
+      local mux_win = win:mux_window()
+      local tabs = mux_win:tabs()
+      local total_panes = 0
+
+      for _, tab in ipairs(tabs) do
+        total_panes = total_panes + #tab:panes()
+      end
+
+      if total_panes > 1 then
+        pane:move_to_new_window()
+      else
+        wezterm.log_info("Movement cancelled: Only one pane remains in this window.")
+      end
+    end),
+  },
+  {
     key = 't',
     mods = 'CTRL|ALT',
     action = wezterm.action.SpawnTab 'DefaultDomain',
