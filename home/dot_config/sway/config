@@ -4,12 +4,12 @@ set $altmod $mod+Control
 set $altmod2 $mod+Shift
 set $altmod3 $mod+Control+Shift
 
-# TODO: `footclient htop` does not worki
+# TODO: `footclient htop` does not working
 set $terminal wezterm
 set $terminal_with_app_id foot -a
 set $terminal_with_title foot -T
 set $reload_command "dunstify --app-name wm 'reloading sway'; swaymsg reload"
-set $browser_command env MOZ_ENABLE_WAYLAND=1 firefox
+set $browser_command xdg-launch "$(xdg-settings get default-web-browser)"
 set $scratchpad_terminal_name scratchpad_terminal
 set $switch_output_command swaymsg -r -t get_workspaces | jq -r 'map(select(.visible == true) | select(.focused == false))[0].output' | xargs -n 1 -t -r swaymsg focus output
 set $laptop_output eDP-1
@@ -729,8 +729,8 @@ bindsym Mod5+F6 exec xbacklight -dec 10
 # rofi bindings
 bindsym Mod1+space exec rofi -show drun
 bindsym $mod+s exec rofi -show web-search -i
-bindsym $altmod+s exec rofi -show web-search -i -filter "$(wl-paste --primary)"
-bindsym $altmod2+s exec rofi -show web-search -i -filter "$(wl-paste)"
+bindsym $altmod+s exec rofi -show web-search -i -filter "$(wl-paste --primary | xargs)"
+bindsym $altmod2+s exec rofi -show web-search -i -filter "$(wl-paste | xargs)"
 
 mode "output" {
         bindsym Left exec swaymsg move workspace to output left
@@ -837,27 +837,19 @@ mode "launcher" {
         bindsym $mod+x mode "opener"
         bindsym w exec $browser_command; mode "default"
         bindsym e exec env LC_CTYPE=zh_CN.UTF-8 emacsclient -c -a emacs; mode "default"
-        # bindsym s exec kupfer; mode "default"
-        bindsym d exec goldendict; mode "default"
         bindsym a exec android-studio; mode "default"
         bindsym c exec code; mode "default"
         bindsym f exec pcmanfm; mode "default"
-        bindsym z exec zotero; mode "default"
+        bindsym r exec zotero; mode "default"
         bindsym q exec qpdfview; mode "default"
         bindsym s exec screenshot.sh; mode "default"
-        bindsym y exec geany; mode "default"
-        bindsym l exec calibre; mode "default"
-        bindsym g exec logseq; mode "default"
-        # bindsym v exec vlc; mode "default"
+        bindsym z exec zeditor; mode "default"
+        bindsym l exec logseq; mode "default"
         bindsym k exec keepassxc; mode "default"
         bindsym v exec copyq show; mode "default"
         bindsym t exec $terminal; mode "default"
-        bindsym o exec okular; mode  "default"
-        bindsym b exec wezterm connect box; mode  "default"
-        bindsym r exec okular; mode  "default"
+        bindsym m exec wechat-uos; mode "default"
         bindsym p exec rofi-zathura.sh; mode  "default"
-        bindsym m exec telegram-desktop; mode "default"
-        bindsym x exec toggle-clash-tun.sh; mode "default"
 
         bindsym $mod+m mode "$switch_modes"
         bindsym Escape mode "default"
