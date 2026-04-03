@@ -12,8 +12,10 @@ screenshot() {
     fi
   else
     if command -v grim && command -v slurp; then
-      read -r -a p1 < <(slurp -p -f '%x %y')
-      read -r -a p2 < <(slurp -p -f '%x %y')
+      coords=$(slurp -p -f '%x %y') || return 1
+      read -r -a p1 <<< "$coords"
+      coords2=$(slurp -p -f '%x %y') || return 1
+      read -r -a p2 <<< "$coords2"
       x=$((p1[0] < p2[0] ? p1[0] : p2[0]))
       y=$((p1[1] < p2[1] ? p1[1] : p2[1]))
       w=$((p1[0] > p2[0] ? p1[0] - p2[0] : p2[0] - p1[0]))
