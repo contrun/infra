@@ -2190,8 +2190,6 @@ in
             "d /var/data/warehouse - ${prefs.owner} ${prefs.ownerGroup} -"
           ]
           ++ [
-            # --- Directories (mkCcacheDirs, usrlocalbin, local) ---
-            "d /var/cache/ccache 0777 root nixbld - -"
             "d /usr/local/bin 0755 root root - -"
             "d /local/bin 0755 root root - -"
             "d /local/lib 0755 root root - -"
@@ -2489,7 +2487,9 @@ in
         configurationLimit = 25;
       };
     };
-
+    tmp = {
+      cleanOnBoot = true;
+    };
     supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
     zfs = {
       package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
