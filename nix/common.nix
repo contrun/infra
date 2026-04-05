@@ -2392,6 +2392,13 @@ in
                   '';
                 in
                 lib.mkForce "+${script}";
+              ExecStopPost =
+                let
+                  script = pkgs.writeShellScript "sing-box-pre-start-bind-mount" ''
+                    ${pkgs.util-linux}/bin/umount /run/sing-box
+                  '';
+                in
+                lib.mkForce "+${script}";
             };
           };
         };
