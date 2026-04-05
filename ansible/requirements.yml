@@ -15,3 +15,6 @@ collections:
   - name: nginxinc.nginx_core
   - name: artis3n.tailscale
   - name: containers.podman
+  - name: chocolatey.chocolatey
+  - name: ansible.windows
+

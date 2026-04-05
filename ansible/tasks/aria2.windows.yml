@@ -1,0 +1,54 @@
+- name: Save facts for later use
+  set_fact:
+    aria2_dir: 'C:\ProgramData\aria2'
+    aria2_conf_path: 'C:\ProgramData\aria2\aria2.conf'
+    rpc_secret: '{{ aria2_rpc_secret | default("YourSecureTokenHere") }}'
+    download_dir: '{{ aria2_download_dir | default("C:\Downloads") }}'
+    service_name: '{{ aria2_service_name | default("Aria2") }}'
+
+- name: Ensure aria2 directory exists
+  ansible.windows.win_file:
+    path: "{{ aria2_dir }}"
+    state: directory
+
+- name: Install aria2 and nssm via Chocolatey
+  chocolatey.chocolatey.win_chocolatey:
+    name:
+      - aria2
+      - nssm
+    state: present
+
+- name: Create basic aria2 configuration file
+  ansible.windows.win_copy:
+    dest: "{{ aria2_conf_path }}"
+    content: |
+      enable-rpc=true
+      rpc-listen-all=true
+      rpc-allow-origin-all=true
+      rpc-secret={{ rpc_secret }}
+      dir={{ download_dir }}
+      input-file={{ aria2_dir }}\aria2.session
+      save-session={{ aria2_dir }}\aria2.session
+      log={{ aria2_dir }}\aria2.log
+
+- name: Ensure session file exists (required for startup)
+  ansible.windows.win_file:
+    path: "{{ aria2_dir }}\\aria2.session"
+    state: touch
+
+- name: Get binary path via Get-Command
+  ansible.windows.win_shell: (Get-Command aria2c).Source
+  register: path_result
+  changed_when: false
+
+- name: Create aria2 service using NSSM
+  ansible.windows.win_shell: |
+    nssm install "{{ service_name }}" "{{ path_result.stdout | trim }}" "--conf-path={{ aria2_conf_path }}"
+    nssm set "{{ service_name }}" AppDirectory "{{ aria2_dir }}"
+    nssm set "{{ service_name }}" Start SERVICE_AUTO_START
+
+- name: Ensure aria2 service is running
+  ansible.windows.win_service:
+    name: "{{ service_name }}"
+    start_mode: auto
+    state: started
