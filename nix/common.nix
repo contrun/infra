@@ -2403,6 +2403,32 @@ in
       }
     ])
     // {
+      network = {
+        networks."40-bluetooth" =
+          let
+            # The wireless interface metric on nixos is 1025.
+            # We set the bluetooth interface to a higher value.
+            RouteMetric = 2000;
+          in
+          {
+            matchConfig = {
+              Type = "bluetooth";
+            };
+            networkConfig = {
+              DHCP = "yes";
+              IPv6PrivacyExtensions = "kernel";
+            };
+            extraConfig = ''
+              [DHCPv4]
+              RouteMetric=${builtins.toString RouteMetric}
+
+              [IPv6AcceptRA]
+              RouteMetric=${builtins.toString RouteMetric}
+            '';
+          };
+      };
+    }
+    // {
       user = builtins.foldl' (a: e: lib.recursiveUpdate a e) { } [
         { services = notify-systemd-unit-failures; }
       ];
