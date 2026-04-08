@@ -667,7 +667,6 @@ let
         "ghostty"
         "texinfo"
         "tk"
-        "tlp"
         # "unoconv"
         "unzip"
         "urlscan"
