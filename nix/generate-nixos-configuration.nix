@@ -1,3 +1,6 @@
+let
+  pathOr = path: default: if (builtins.pathExists path) then path else default;
+in
 {
   self,
   hostname,
@@ -6,8 +9,6 @@
   nixpkgsConfig,
 }:
 let
-  pathOr = path: default: if (builtins.pathExists path) then path else default;
-
   nixpkgs = inputs.nixpkgs;
 
   inherit (prefs)

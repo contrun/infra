@@ -1405,10 +1405,6 @@ in
       datasets = prefs.sanoidDatasets;
     };
 
-    sing-box = {
-      enable = prefs.enableSingBox;
-    };
-
     prometheus = {
       enable = prefs.enablePrometheus;
       extraFlags = [
@@ -2520,30 +2516,6 @@ in
         };
       }
 
-      {
-        services = lib.optionalAttrs prefs.enableSingBox {
-          sing-box = {
-            serviceConfig = {
-              ExecStartPre =
-                let
-                  script = pkgs.writeShellScript "sing-box-pre-start-bind-mount" ''
-                    ${pkgs.coreutils}/bin/mkdir -p /run/sing-box
-                    ${pkgs.coreutils}/bin/mkdir -p /etc/sing-box-config
-                    ${pkgs.util-linux}/bin/mount --bind /etc/sing-box-config /run/sing-box
-                  '';
-                in
-                lib.mkForce "+${script}";
-              ExecStopPost =
-                let
-                  script = pkgs.writeShellScript "sing-box-pre-start-bind-mount" ''
-                    ${pkgs.util-linux}/bin/umount /run/sing-box
-                  '';
-                in
-                lib.mkForce "+${script}";
-            };
-          };
-        };
-      }
     ])
     // {
       network = {
