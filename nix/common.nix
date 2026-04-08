@@ -915,6 +915,10 @@ in
     tlp = {
       enable = prefs.isLaptop;
     };
+    upower = {
+      enable = prefs.enableUpower;
+      criticalPowerAction = prefs.upowerCriticalPowerAction;
+    };
     fcron = {
       enable = prefs.enableFcron;
       maxSerialJobs = 5;

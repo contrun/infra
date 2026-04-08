@@ -82,11 +82,6 @@ let
           fixedRules = [
             {
               rules = [
-                # Automatically shutdown on battery low.
-                ''
-                  SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", ATTR{capacity}=="[0-10]", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
-                ''
-
                 # TPM
                 ''
                   KERNEL=="tpm[0-9]*", MODE="0660", OWNER="wheel"
@@ -169,6 +164,8 @@ let
         builtins.concatStringsSep "\n" rulesList;
     };
     isLaptop = false;
+    enableUpower = self.isLaptop;
+    upowerCriticalPowerAction = "PowerOff";
     isMinimalSystem = true;
     isMaximalSystem = false;
     isHomeManagerOnly = false;
