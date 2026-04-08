@@ -168,6 +168,7 @@ let
         in
         builtins.concatStringsSep "\n" rulesList;
     };
+    isLaptop = false;
     isMinimalSystem = true;
     isMaximalSystem = false;
     isHomeManagerOnly = false;
@@ -305,25 +306,23 @@ let
     enablePamU2f = !self.isMinimalSystem;
     enablePcscd = !self.isMinimalSystem;
     enableFontConfig = !self.isMinimalSystem;
-    xSessionCommands = builtins.concatStringsSep "\n" (
-      [
-        ''
-          dunst &
-          # alacritty &
-          kdeconnect-indicator &
-          feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
-          # shadowsocksControl.sh restart 4 1 &
-          # systemctl --user start syncthing &
-          # systemctl --user start ddns &
-          # sudo iw dev wlp2s0 set power_save off &
-          # ibus-daemon -drx &
-          copyq &
-          # # libinput-gestures-setup start &
-          # autoMount.sh &
-          # startupHosts.sh &
-        ''
-      ]
-    );
+    xSessionCommands = builtins.concatStringsSep "\n" ([
+      ''
+        dunst &
+        # alacritty &
+        kdeconnect-indicator &
+        feh --bg-fill "$(shuf -n1 -e ~/Storage/wallpapers/*)" &
+        # shadowsocksControl.sh restart 4 1 &
+        # systemctl --user start syncthing &
+        # systemctl --user start ddns &
+        # sudo iw dev wlp2s0 set power_save off &
+        # ibus-daemon -drx &
+        copyq &
+        # # libinput-gestures-setup start &
+        # autoMount.sh &
+        # startupHosts.sh &
+      ''
+    ]);
     # xSessionCommands = "";
     displayManager = if self.enableGreetd then null else "gdm";
     enableLightdm = self.displayManager == "lightdm";
@@ -717,11 +716,9 @@ let
           enablePrometheus = true;
           enablePromtail = true;
           enableWireless = true;
-          pkgsRelatedPrefs =
-            super.pkgsRelatedPrefs
-            // {
-              consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
-            };
+          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
+            consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
+          };
         }
       else if hostname == "jxt" then
         {
@@ -908,6 +905,7 @@ let
         }
       else if hostname == "aol" then
         {
+          isLaptop = true;
           isMinimalSystem = false;
           hostId = "85d4bfd4";
           systemStateVersion = "22.05";

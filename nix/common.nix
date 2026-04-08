@@ -912,6 +912,9 @@ in
       userlist = [ prefs.owner ];
       userlistEnable = true;
     };
+    tlp = {
+      enable = prefs.isLaptop;
+    };
     fcron = {
       enable = prefs.enableFcron;
       maxSerialJobs = 5;
