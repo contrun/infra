@@ -362,11 +362,25 @@ let
 
   readModulesDir =
     path:
-    builtins.map (x: path + "/${x}") (
-      builtins.filter (str: (builtins.match "^[^.]*(\.nix)?$" str) != null) (
-        builtins.attrNames (builtins.readDir path)
-      )
-    );
+    let
+      entries = builtins.readDir path;
+      files = builtins.concatLists (
+        builtins.map (
+          name:
+          let
+            fullPath = path + "/${name}";
+            type = entries.${name};
+          in
+          if type == "directory" then
+            readModulesDir fullPath
+          else if type == "regular" && (builtins.match ".*\\.nix$" name != null) then
+            [ fullPath ]
+          else
+            [ ]
+        ) (builtins.attrNames entries)
+      );
+    in
+    files;
 
   miscConfiguration =
     {
