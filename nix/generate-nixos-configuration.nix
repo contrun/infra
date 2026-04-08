@@ -1,17 +1,16 @@
-let
-  pathOr = path: default: if (builtins.pathExists path) then path else default;
-in
 {
   self,
+  hostname,
   prefs,
   inputs,
   nixpkgsConfig,
 }:
 let
+  pathOr = path: default: if (builtins.pathExists path) then path else default;
+
   nixpkgs = inputs.nixpkgs;
 
   inherit (prefs)
-    hostname
     isMinimalSystem
     isMaximalSystem
     isVirtualMachine
@@ -61,7 +60,6 @@ let
       nixpkgs.overlays = inputs.self.overlayList;
       nixpkgs.config = nixpkgsConfig;
     };
-
 
   hostConfiguration =
     { config, pkgs, ... }:
@@ -418,7 +416,13 @@ in
       tmpConfiguration
       (vmConfiguration hostname)
     ]
-    ++ (readModulesDir (getNixConfig "modules"));
+    ++ (readModulesDir ./modules)
+    ++ (
+      let
+        path = ./hosts + "/${hostname}.nix";
+      in
+      if (builtins.pathExists path) then [ path ] else [ ]
+    );
 
     specialArgs = moduleArgs;
   };

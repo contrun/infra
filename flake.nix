@@ -143,6 +143,7 @@
         import (getNixConfig "generate-nixos-configuration.nix") {
           inherit
             self
+            hostname
             prefs
             inputs
             nixpkgsConfig
