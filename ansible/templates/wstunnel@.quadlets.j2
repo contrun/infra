@@ -1,4 +1,4 @@
---- wstunnel-{{ idx }}.container
+--- wstunnel@.container
 [Unit]
 Description=wstunnel
 
@@ -6,7 +6,7 @@ Description=wstunnel
 Image=docker.io/contrun/wstunnel:latest
 ReadOnly=true
 Network=host
-Exec={{ wstunnel_arguments }}
+Exec=$WSTUNNEL_COMMAND
 
 [Service]
 Type=notify
@@ -17,6 +17,7 @@ NoNewPrivileges=true
 ProtectHome=true
 ProtectSystem=full
 AmbientCapabilities=CAP_NET_BIND_SERVICE
+EnvironmentFile=/etc/wstunnel/%i.env
 
 [Install]
 WantedBy=default.target
