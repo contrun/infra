@@ -1,0 +1,66 @@
+- name: Save facts for later use
+  vars:
+    tmp_var: 'C:\Program Files\gost'
+  set_fact:
+    gost_install_dir: "{{ tmp_var }}"
+    gost_binary: "{{ tmp_var }}\\gost.exe"
+    gost_dir: 'C:\ProgramData\gost'
+
+- name: Ensure directories exists
+  ansible.windows.win_file:
+    path: "{{ directory }}"
+    state: directory
+  loop:
+    - "{{ gost_install_dir }}"
+    - "{{ gost_dir }}"
+  loop_control:
+    loop_var: directory
+
+- name: Download and install latest GOST
+  ansible.windows.win_shell: |
+    $repo = "go-gost/gost"
+    $releases = "https://api.github.com/repos/$repo/releases/latest"
+    $latest = Invoke-RestMethod -Uri $releases
+    $latest_ver = $latest.tag_name.TrimStart('v')
+    if (Test-Path "{{ gost_binary }}") {
+        $current_output = & "{{ gost_binary }}" -V 2>&1
+        if ($current_output -like "*$latest_ver*") {
+            Write-Output "Already up to date"
+            return
+        }
+    }
+
+    $asset = $latest.assets | Where-Object { $_.name -like "*windows*amd64*.zip" } | Select-Object -First 1
+    if (-not $asset) {
+        Write-Error "Could not find a windows-amd64 zip asset in the latest release."
+        exit 1
+    }
+    $zip_path = Join-Path $env:TEMP $asset.name
+    $extract_path = Join-Path $env:TEMP "gost_extracted"
+    if (Test-Path $extract_path) { Remove-Item $extract_path -Recurse -Force }
+
+    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip_path
+    Expand-Archive -Path $zip_path -DestinationPath $extract_path -Force
+    $exe = Get-ChildItem -Path $extract_path -Filter "gost.exe" -Recurse | Select-Object -First 1
+    if ($exe) {
+        Move-Item -Path $exe.FullName -Destination "{{ gost_binary }}" -Force
+    } else {
+        Write-Error "gost.exe not found inside the downloaded zip."
+        exit 1
+    }
+
+    Remove-Item $zip_path -Force -ErrorAction SilentlyContinue
+    Remove-Item $extract_path -Recurse -Force -ErrorAction SilentlyContinue
+  register: gost_install
+  changed_when: "'Already up to date' not in gost_install.stdout"
+
+- name: Install GOST as a Windows Service using NSSM
+  community.windows.win_nssm:
+    name: gost
+    application: "{{ gost_binary }}"
+    arguments: "{{ gost_arguments }}"
+    state: started
+    start_mode: auto
+    working_directory: "{{ gost_dir }}"
+    stdout_file: "{{ gost_dir }}\\stdout.log"
+    stderr_file: "{{ gost_dir }}\\stderr.log"
