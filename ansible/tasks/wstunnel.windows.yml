@@ -1,0 +1,75 @@
+- name: Save facts for later use
+  vars:
+    tmp_var: 'C:\Program Files\wstunnel'
+  set_fact:
+    wstunnel_install_dir: "{{ tmp_var }}"
+    wstunnel_binary: "{{ tmp_var }}\\wstunnel.exe"
+    wstunnel_dir: 'C:\ProgramData\wstunnel'
+
+- name: Ensure directories exists
+  ansible.windows.win_file:
+    path: "{{ dir }}"
+    state: directory
+  loop:
+    - "{{ wstunnel_install_dir }}"
+    - "{{ wstunnel_dir }}"
+  loop_control:
+    loop_var: dir
+
+- name: Download and install latest wstunnel
+  ansible.windows.win_shell: |
+    $repo = "erebe/wstunnel"
+    $releases = "https://api.github.com/repos/$repo/releases/latest"
+    $latest = Invoke-RestMethod -Uri $releases
+    $latest_ver = $latest.tag_name.TrimStart('v')
+
+    if (Test-Path "{{ wstunnel_binary }}") {
+        $current_output = & "{{ wstunnel_binary }}" --version 2>&1
+        if ($current_output -like "*$latest_ver*") {
+            Write-Output "Already up to date"
+            return
+        }
+    }
+
+    $asset = $latest.assets | Where-Object { $_.name -like "*windows_amd64.tar.gz" } | Select-Object -First 1
+    if (-not $asset) {
+        Write-Error "Could not find a windows zip asset in the latest release."
+        exit 1
+    }
+
+    $archive_path = Join-Path $env:TEMP $asset.name
+    $extract_path = Join-Path $env:TEMP "wstunnel_extracted"
+    if (Test-Path $extract_path) { Remove-Item $extract_path -Recurse -Force }
+    New-Item -ItemType Directory -Path $extract_path -Force | Out-Null
+
+    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $archive_path
+
+    tar.exe -xf $archive_path -C $extract_path
+    
+    $exe = Get-ChildItem -Path $extract_path -Filter "wstunnel.exe" -Recurse | Select-Object -First 1
+    if ($exe) {
+        Move-Item -Path $exe.FullName -Destination "{{ wstunnel_binary }}" -Force
+    } else {
+        Write-Error "wstunnel.exe not found inside the downloaded zip."
+        exit 1
+    }
+
+    Remove-Item $archive_path -Force -ErrorAction SilentlyContinue
+    Remove-Item $extract_path -Recurse -Force -ErrorAction SilentlyContinue
+  register: wstunnel_install
+  changed_when: "'Already up to date' not in wstunnel_install.stdout"
+
+- name: Create multiple wstunnel instances using NSSM
+  community.windows.win_nssm:
+    name: "wstunnel_{{ idx }}"
+    application: "{{ wstunnel_binary }}"
+    arguments: "{{ command | string | trim }}"
+    state: started
+    start_mode: auto
+    working_directory: "{{ wstunnel_dir }}"
+    stdout_file: "{{ wstunnel_dir }}\\stdout_{{ idx }}.log"
+    stderr_file: "{{ wstunnel_dir }}\\stderr_{{ idx }}.log"
+  loop: "{{ wstunnel_instances }}"
+  loop_control:
+    loop_var: command
+    index_var: idx
