@@ -1,0 +1,45 @@
+- name: Save facts for later use
+  set_fact:
+    service_name: '{{ dumbpipe_service_name | default("DumbPipe") }}'
+    tcp_port: '{{ dumbpipe_tcp_port | default(443) }}'
+    iroh_secret: '{{ dumbpipe_iroh_secret | default("") | trim }}'
+    dumbpipe_dir: 'C:\ProgramData\dumbpipe'
+
+- name: Ensure dumbpipe directory exists
+  ansible.windows.win_file:
+    path: "{{ dumbpipe_dir }}"
+    state: directory
+
+- name: Install dumbpipe
+  ansible.windows.win_shell: |
+    iwr https://www.dumbpipe.dev/install.ps1 -useb | iex
+
+- name: Install nssm
+  chocolatey.chocolatey.win_chocolatey:
+    name:
+      - nssm
+    state: present
+
+- name: Get binary path via Get-Command
+  ansible.windows.win_shell: |
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    (Get-Command dumbpipe).Source
+  register: path_result
+  failed_when: path_result.stdout | length == 0 or path_result.rc != 0
+  changed_when: false
+
+- name: Manage dumbpipe service using win_nssm
+  community.windows.win_nssm:
+    name: "{{ service_name }}"
+    state: started
+    start_mode: auto
+    application: "{{ path_result.stdout | trim }}"
+    arguments:
+      - "listen-tcp"
+      - "--host"
+      - "127.0.0.1:{{ tcp_port }}"
+    working_directory: "{{ dumbpipe_dir }}"
+    stdout_file: "{{ dumbpipe_dir }}\\stdout.log"
+    stderr_file: "{{ dumbpipe_dir }}\\stderr.log"
+    app_environment:
+      IROH_SECRET: "{{ iroh_secret | default(omit, true) }}"
