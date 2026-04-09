@@ -19,5 +19,7 @@ in
 
   caddy = import ./caddy.nix (args // { inherit packages; });
 
+  wstunnel = import ./wstunnel.nix args;
+
   zotero = import ./zotero.nix (args // { inherit packages zotero-plugins; });
 }
