@@ -15,7 +15,7 @@ on:
       - ".github/workflows/containers.yml"
       - "containers/**/Dockerfile"
       - "nix/containers.nix"
-      - "nix/containers/"
+      - "nix/containers/**"
 
 jobs:
   generate-matrix-docker-container:
