@@ -1,0 +1,71 @@
+- name: Save facts for later use
+  set_fact:
+    wstunnel_port: '{{ wstunnel_port | default(5678) }}'
+
+- name: Create a temporary directory for staging
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _quadlet_staging
+  register: staging_dir
+
+- name: Initialize empty list
+  set_fact:
+    wstunnel_configs: []
+
+- name: Build configs list
+  set_fact:
+    wstunnel_configs: "{{ wstunnel_configs + [{'dir': staging_dir.path ~ '/wstunnel-' ~ idx, 'template': lookup('template', 'wstunnel.quadlets.j2')}] }}"
+  loop: "{{ wstunnel_instances }}"
+  loop_control:
+    loop_var: wstunnel_arguments
+    index_var: idx
+
+- name: Debug the result
+  debug:
+    var: wstunnel_configs
+
+- name: Ensure root directories exist
+  file:
+    path: "{{ config.dir }}"
+    recurse: true
+    state: directory
+  loop: "{{ wstunnel_configs }}"
+  loop_control:
+    loop_var: config
+
+- name: Create individual files from stanzas
+  ansible.builtin.copy:
+    dest: "{{ config.path }}"
+    content: "{{ config.content }}"
+    mode: '0644'
+  loop: "{{ rendered_list | from_yaml }}"
+  vars:
+    rendered_list: >-
+      {% set flat_list = [] %}
+      {% for cfg in wstunnel_configs %}
+        {% for section in cfg.template.split('---') if section | trim %}
+          {% set lines = (section | trim).split('\n') %}
+          {% set filename = lines[0] | trim %}
+          {% set path = cfg.dir + '/' + filename %}
+          {% set content = lines[1:] | join('\n') | trim %}
+          {% set _ = flat_list.append({'path': path, 'content': content}) %}
+        {% endfor %}
+      {% endfor %}
+      {{ flat_list }}
+  loop_control:
+    loop_var: config
+    label: "Dest: {{ config.path }}"
+
+- name: Apply Podman Quadlet (Daemon Reload & Start)
+  containers.podman.podman_quadlet:
+    state: present
+    src: "{{ config.dir }}"
+  loop: "{{ wstunnel_configs }}"
+  loop_control:
+    loop_var: config
+
+- name: Cleanup the temporary staging directory
+  ansible.builtin.file:
+    path: "{{ staging_dir.path }}"
+    force: true
+    state: absent
