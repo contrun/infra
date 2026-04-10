@@ -8,6 +8,7 @@
 
 let
   cfg = config.prefs.tuned;
+  profileFormat = pkgs.formats.ini { };
 in
 {
   options.prefs.tuned = {
@@ -15,6 +16,13 @@ in
       type = lib.types.bool;
       default = config.prefs.machine.hasBattery;
       inherit (options.services.tuned.enable) description;
+    };
+    extraExtremePowersaveRules = lib.mkOption {
+      type = lib.types.submodule {
+        freeformType = profileFormat.type;
+      };
+      default = { };
+      description = "Extra rules for the extreme-powersave profile";
     };
   };
 
@@ -73,6 +81,8 @@ in
                 "waydroid-container"
                 "avahi-daemon*"
                 "postfix"
+                "ydotoold"
+                "caddy"
                 "system-cups.slice"
               ];
               userUnits = getShellArgs [
@@ -149,7 +159,8 @@ in
           # Paths outside of the profile directories cannot be used in the script, ignoring script: xxx
           script = "\${i:PROFILE_DIR}/script.sh";
         };
-      };
+      }
+      // cfg.extraExtremePowersaveRules;
     }
   );
 }
