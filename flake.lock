@@ -40,25 +40,6 @@
         "type": "github"
       }
     },
-    "emacs-overlay": {
-      "inputs": {
-        "nixpkgs": "nixpkgs",
-        "nixpkgs-stable": "nixpkgs-stable"
-      },
-      "locked": {
-        "lastModified": 1775667794,
-        "narHash": "sha256-zyMQYkD5YUgeXVxMbQi3nYmZhrPir6pv12pNO2cjjyI=",
-        "owner": "nix-community",
-        "repo": "emacs-overlay",
-        "rev": "cfeea8b78511e06caf1ab4318a1a898a7f1fa523",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "emacs-overlay",
-        "type": "github"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -181,7 +162,7 @@
           "flake-utils"
         ],
         "gomod2nix": "gomod2nix",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
         "lastModified": 1773581738,
@@ -304,15 +285,15 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1775423009,
-        "narHash": "sha256-vPKLpjhIVWdDrfiUM8atW6YkIggCEKdSAlJPzzhkQlw=",
-        "owner": "NixOS",
+        "lastModified": 1772624091,
+        "narHash": "sha256-QKyJ0QGWBn6r0invrMAK8dmJoBYWoOWy7lN+UHzW1jc=",
+        "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+        "rev": "80bdc1e5ce51f56b19791b52b2901187931f5353",
         "type": "github"
       },
       "original": {
-        "owner": "NixOS",
+        "owner": "nixos",
         "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
@@ -350,39 +331,7 @@
         "type": "github"
       }
     },
-    "nixpkgs-mozilla": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774550046,
-        "narHash": "sha256-sgbaoy4molgqDLS24CmycN5v4b9FKt0YtALkfVhCWps=",
-        "owner": "mozilla",
-        "repo": "nixpkgs-mozilla",
-        "rev": "58356aa021c5d2f53958c3405e0ce4b8ea3dca44",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mozilla",
-        "repo": "nixpkgs-mozilla",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
-      "locked": {
-        "lastModified": 1775525138,
-        "narHash": "sha256-BQb70+B378ECLO8iQT3P/b1hCC5/CJVHZdeulY8futc=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "d96b37bbeb9840f1c0ebfe90585ef5067b69bbb3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-25.11",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-stable_2": {
       "locked": {
         "lastModified": 1775525138,
         "narHash": "sha256-BQb70+B378ECLO8iQT3P/b1hCC5/CJVHZdeulY8futc=",
@@ -415,22 +364,6 @@
       }
     },
     "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1772624091,
-        "narHash": "sha256-QKyJ0QGWBn6r0invrMAK8dmJoBYWoOWy7lN+UHzW1jc=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "80bdc1e5ce51f56b19791b52b2901187931f5353",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_3": {
       "locked": {
         "lastModified": 1775525138,
         "narHash": "sha256-BQb70+B378ECLO8iQT3P/b1hCC5/CJVHZdeulY8futc=",
@@ -484,27 +417,10 @@
         "type": "gitlab"
       }
     },
-    "old-ghc-nix": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1620730237,
-        "narHash": "sha256-zRrvP/EVgCvyyjBSv51jFn9rrNRFw8WI7WnSQ93E0Uk=",
-        "owner": "mpickering",
-        "repo": "old-ghc-nix",
-        "rev": "11837e907c04e941a92381fd74e404f20b772e27",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mpickering",
-        "repo": "old-ghc-nix",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "authinfo": "authinfo",
         "deploy-rs": "deploy-rs",
-        "emacs-overlay": "emacs-overlay",
         "flake-utils": "flake-utils",
         "home-manager": "home-manager",
         "microvm": "microvm",
@@ -512,11 +428,9 @@
         "nix-on-droid": "nix-on-droid",
         "nixos-generators": "nixos-generators",
         "nixos-vscode-server": "nixos-vscode-server",
-        "nixpkgs": "nixpkgs_3",
-        "nixpkgs-mozilla": "nixpkgs-mozilla",
-        "nixpkgs-stable": "nixpkgs-stable_2",
+        "nixpkgs": "nixpkgs_2",
+        "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "old-ghc-nix": "old-ghc-nix",
         "sops-nix": "sops-nix",
         "zotero-plugins": "zotero-plugins"
       }

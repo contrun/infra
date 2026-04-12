@@ -41,18 +41,6 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    emacs-overlay.url = "github:nix-community/emacs-overlay";
-
-    nixpkgs-mozilla = {
-      url = "github:mozilla/nixpkgs-mozilla";
-      flake = false;
-    };
-
-    old-ghc-nix = {
-      url = "github:mpickering/old-ghc-nix";
-      flake = false;
-    };
-
     nixos-vscode-server = {
       url = "github:msteen/nixos-vscode-server";
       flake = false;
@@ -342,11 +330,7 @@
           acc: hostname: acc // (generateDeployNode hostname)
         ) { } deployNodes;
 
-        overlayList = [
-          # inputs.nixpkgs-wayland.overlay
-          inputs.emacs-overlay.overlay
-        ]
-        ++ (lib.attrValues self.overlays);
+        overlayList = lib.attrValues self.overlays;
 
         overlays = (import (getNixConfig "overlays.nix") { inherit inputs; }) // {
           nixpkgsChannelsOverlay = self: super: {
@@ -355,21 +339,6 @@
             };
             stable = import inputs.nixpkgs-stable { inherit (super) system config; };
           };
-
-          haskellOverlay =
-            self: super:
-            let
-              originalCompiler = super.haskell.compiler;
-              newCompiler = super.callPackages inputs.old-ghc-nix { pkgs = super; };
-            in
-            {
-              haskell = super.haskell // {
-                inherit originalCompiler newCompiler;
-                compiler = newCompiler // originalCompiler;
-              };
-            };
-
-          mozillaOverlay = import inputs.nixpkgs-mozilla;
 
           myPackagesOverlay = self: super: {
             myPackages = inputs.self.packages.${super.system} // (super.myPackages or { });
