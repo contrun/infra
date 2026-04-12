@@ -19,22 +19,10 @@
       flake = false;
     };
 
-    nixpkgs-wayland = {
-      url = "github:nix-community/nixpkgs-wayland";
-    };
-    nixpkgs-wayland.inputs.nixpkgs.follows = "nixpkgs";
-
-    nix-autobahn.url = "github:Lassulus/nix-autobahn";
-    nix-autobahn.inputs.nixpkgs.follows = "nixpkgs";
-    nix-autobahn.inputs.flake-utils.follows = "flake-utils";
-
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
     deploy-rs.inputs.utils.follows = "flake-utils";
     deploy-rs.inputs.flake-compat.follows = "flake-compat";
-
-    gomod2nix.url = "github:tweag/gomod2nix";
-    gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-on-droid.url = "github:t184256/nix-on-droid";
     nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";
@@ -51,15 +39,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nur-no-pkgs.url = "github:nix-community/NUR";
-
     zotero-plugins = {
       url = "github:zotero-chinese/zotero-plugins/gh-pages";
-      flake = false;
-    };
-
-    wallabag-client = {
-      url = "github:artur-shaik/wallabag-client";
       flake = false;
     };
 
@@ -83,14 +64,6 @@
       flake = false;
     };
 
-    jtojnar-nixfiles = {
-      url = "github:jtojnar/nixfiles";
-      inputs = {
-        home-manager.follows = "home-manager";
-        flake-compat.follows = "flake-compat";
-      };
-    };
-
     nixos-vscode-server = {
       url = "github:msteen/nixos-vscode-server";
       flake = false;
@@ -103,7 +76,6 @@
       nixpkgs,
       home-manager,
       flake-utils,
-      gomod2nix,
       nix-on-droid,
       zotero-plugins,
       ...
@@ -443,11 +415,6 @@
               useLLVM = true;
             };
 
-            pkgsToBuildLocalPackages = import nixpkgs {
-              inherit system config;
-              overlays = [ (import "${gomod2nix}/overlay.nix") ];
-            };
-
             pkgsWithOverlays = import nixpkgs {
               inherit system config;
               overlays = self.overlayList;
@@ -475,10 +442,9 @@
             legacyPackages = pkgs;
 
             devShell =
-              with pkgsToBuildLocalPackages;
+              with pkgs;
               mkShell {
                 buildInputs = [
-                  go
                   ansible
                   cachix
                   deploy-rs

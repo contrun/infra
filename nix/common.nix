@@ -416,8 +416,6 @@ in
 
               lldb
 
-              (pkgs.myPackages.deploy-rs or null)
-              (pkgs.myPackages.nix-autobahn or null)
               # Not working for now
               # error: store path '/nix/store/7phspaj5lxw5qja709r5j3ivcllp0gk2-hyhhrcbzng0kgkyv63mqhznhrp67fhf5-source-crate2nix' is not allowed to have references
               # See https://github.com/NixOS/nix/issues/5647

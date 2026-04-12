@@ -383,7 +383,6 @@ let
         "tcpdump"
         "geoipWithDatabase"
         "syncthing"
-        # "myPackages.wallabag-client"
         "strongswan"
         "stunnel"
         "gost"
