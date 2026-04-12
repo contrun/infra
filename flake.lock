@@ -18,9 +18,7 @@
     },
     "deploy-rs": {
       "inputs": {
-        "flake-compat": [
-          "flake-compat"
-        ],
+        "flake-compat": "flake-compat",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -74,23 +72,6 @@
       "original": {
         "owner": "edolstra",
         "repo": "flake-compat",
-        "type": "github"
-      }
-    },
-    "flake-compat-result": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1631705391,
-        "narHash": "sha256-PzP6vikNJZiS7yANC6sZWQlIDf4E2MTckvAsJxwV0DQ=",
-        "owner": "teto",
-        "repo": "flake-compat",
-        "rev": "8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed",
-        "type": "github"
-      },
-      "original": {
-        "owner": "teto",
-        "repo": "flake-compat",
-        "rev": "8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed",
         "type": "github"
       }
     },
@@ -524,8 +505,6 @@
         "authinfo": "authinfo",
         "deploy-rs": "deploy-rs",
         "emacs-overlay": "emacs-overlay",
-        "flake-compat": "flake-compat",
-        "flake-compat-result": "flake-compat-result",
         "flake-utils": "flake-utils",
         "home-manager": "home-manager",
         "microvm": "microvm",

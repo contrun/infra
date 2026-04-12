@@ -9,20 +9,9 @@
 
     flake-utils.url = "github:numtide/flake-utils";
 
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
-    # Waiting for https://github.com/edolstra/flake-compat/pull/26
-    flake-compat-result = {
-      url = "github:teto/flake-compat/8e15c6e3c0f15d0687a2ab6ae92cc7fab896bfed";
-      flake = false;
-    };
-
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
     deploy-rs.inputs.utils.follows = "flake-utils";
-    deploy-rs.inputs.flake-compat.follows = "flake-compat";
 
     nix-on-droid.url = "github:t184256/nix-on-droid";
     nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";
