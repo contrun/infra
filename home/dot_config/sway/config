@@ -80,6 +80,16 @@ for_window [title=".*mpsyt$" class="^Xfce4-terminal$"] move --no-auto-back-and-f
 # Run with `exec swaymsg "[con_mark=scratchpad_pyradio] scratchpad show" || $terminal_with_app_id scratchpad_pyradio`
 for_window [app_id="(?i)scratchpad.*"] exec swaymsg mark "$(swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused==true).app_id')", floating enable, move to scratchpad, scratchpad show
 
+for_window [app_id="com/xiaoyifang/goldendict-ng\.https://github\."] {
+    floating enable
+    move position center
+}
+
+for_window [class="GoldenDict(-ng)?"] {
+    floating enable
+    move position center
+}
+
 # specific window settings
 for_window [class="wechat" tiling] move --no-auto-back-and-forth to workspace c
 for_window [class="Firefox" tiling] move --no-auto-back-and-forth to workspace w
