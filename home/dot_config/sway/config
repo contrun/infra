@@ -314,6 +314,8 @@ bindsym $mod+p    workspace p
 bindsym $mod+c    workspace c
 # v for video
 bindsym $mod+v    workspace v
+# z for zen
+bindsym $mod+z    workspace z
 
 # move focused container to workspace
 bindsym $altmod+KP_1 move container to workspace number 1
@@ -354,7 +356,8 @@ bindsym $altmod+p    move container to workspace p
 bindsym $altmod+c    move container to workspace c
 # v for video
 bindsym $altmod+v    move container to workspace v
-
+# z for zen
+bindsym $altmod+z    move container to workspace z
 
 bindsym $altmod+F1    move container to workspace prev
 bindsym $altmod+F2    move container to workspace next
@@ -706,10 +709,10 @@ bar {
 }
 
 # Make the currently focused window a scratchpad
-bindsym $altmod+z move scratchpad
+# bindsym $altmod+z move scratchpad
 
 # Show the first scratchpad window
-bindsym $mod+z scratchpad show
+# bindsym $mod+z scratchpad show
 
 # Hides vertical and horizontal borders when there's only one window.
 # hide_edge_borders both
