@@ -116,6 +116,27 @@
             inherit inputs hostname prefs;
             inherit (prefs) isMinimalSystem isVirtualMachine system;
           };
+          readModulesDir =
+            path:
+            let
+              entries = builtins.readDir path;
+              files = builtins.concatLists (
+                builtins.map (
+                  name:
+                  let
+                    fullPath = path + "/${name}";
+                    type = entries.${name};
+                  in
+                  if type == "directory" then
+                    readModulesDir fullPath
+                  else if type == "regular" && (builtins.match ".*\\.nix$" name != null) then
+                    [ fullPath ]
+                  else
+                    [ ]
+                ) (builtins.attrNames entries)
+              );
+            in
+            files;
         in
         {
           "${configName}" = inputs.home-manager.lib.homeManagerConfiguration {
@@ -129,7 +150,6 @@
                   };
                 }
               )
-              (getNixConfig "/home.nix")
               {
                 home = {
                   inherit username;
@@ -137,7 +157,14 @@
                   stateVersion = prefs.homeManagerStateVersion;
                 };
               }
-            ];
+            ]
+            ++ (readModulesDir ./nix/home-modules)
+            ++ (
+              let
+                path = ./hosts/home + "/${configName}.nix";
+              in
+              if (builtins.pathExists path) then [ path ] else [ ]
+            );
           };
         };
 
