@@ -1,10 +1,14 @@
 [[language]]
 name = "nix"
 language-servers = ["nixd", "nil"]
-formatter = { command = "nixfmt" }
-formatter.args = ["-"]
+formatter = { command = "nixfmt", args = ["-"] }
 auto-format = true
 
+[[language]]
 name = "yaml"
-formatter = { command = 'prettier', args = ["--parser", "yaml"] }
+formatter = { command = "prettier", args = ["--parser", "yaml"] }
+auto-format = true
+
+[[language]]
+name = "typescript"
 auto-format = true
