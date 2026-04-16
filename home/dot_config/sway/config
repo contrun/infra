@@ -76,6 +76,7 @@ for_window [instance="Browser" window_role="^(?!GtkFileChooserDialog)"] floating
 for_window [title=".*mpsyt$" class="^Xfce4-terminal$"] move --no-auto-back-and-forth to workspace w
 
 # for_window [app_id="(?i)$scratchpad_terminal_name"] floating enable, move to scratchpad, scratchpad show, move position 1000px 20px, mark $scratchpad_terminal_name
+for_window [app_id="river"] fullscreen, mode "passthrough"
 
 # Run with `exec swaymsg "[con_mark=scratchpad_pyradio] scratchpad show" || $terminal_with_app_id scratchpad_pyradio`
 for_window [app_id="(?i)scratchpad.*"] exec swaymsg mark "$(swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused==true).app_id')", floating enable, move to scratchpad, scratchpad show
@@ -883,6 +884,7 @@ input 2:7:SynPS\/2_Synaptics_TouchPad {
         tap enabled
 }
 
+seat * xcursor_theme Adwaita 26
+
 # Pick up configuration created by nwg-display
 include ~/.config/sway/outputs
-seat * xcursor_theme Adwaita 26
