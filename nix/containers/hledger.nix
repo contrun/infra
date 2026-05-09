@@ -7,11 +7,11 @@ let
   ugid = "${builtins.toString uid}:${builtins.toString gid}";
   exposedPort = 5000;
   webdavPort = 4999;
-  baseHledgerPort = 5001;
   basicAuthRealm = "hledger";
   lang = "en_US.UTF-8";
   locale_archive = "${glibcLocales}/lib/locale/locale-archive";
   mntPath = "/mnt/hledger";
+  socketPath = "/tmp/hledger";
   configFile = "/tmp/rclone.conf";
   htpasswdFile = "/tmp/rclone.htpasswd";
   nginxConfig = writers.writeNginxConfig "nginx.conf" ''
@@ -33,11 +33,6 @@ let
         server 127.0.0.1:${builtins.toString webdavPort};
       }
 
-      init_by_lua_block {
-          local port_counter = ngx.shared.port_counter
-          port_counter:set("next_port", ${builtins.toString baseHledgerPort})
-      }
-
       server {
         listen *:${builtins.toString exposedPort};
         server_name _;
@@ -46,82 +41,16 @@ let
           proxy_pass http://webdav;
         }
 
-        location ~ ^/(?<ledger_name>[^/]+) {
-          set $maybe_skip_auth "${basicAuthRealm}";
-          if ($uri ~* "/static/") {
-            set $auth_state "off";
-          }
-          auth_basic $maybe_skip_auth;
+        location ~ ^/(?<name>[^/]+)(?<path>.*) {
+          auth_basic "${basicAuthRealm}";
           auth_basic_user_file "${htpasswdFile}";
 
-          access_by_lua_block {
-              local ngx = require "ngx"
-              local ledger_name = ngx.var.ledger_name
-              local remote_user = ngx.var.remote_user
+          proxy_pass http://unix:${socketPath}/$remote_user:$path;
 
-              -- Verify user 'default' is accessing path '/default'
-              if remote_user ~= ledger_name then
-                  ngx.log(ngx.ERR, "User " .. remote_user .. " denied access to " .. ledger_name)
-                  return ngx.exit(ngx.HTTP_FORBIDDEN)
-              end
-
-              local ports = ngx.shared.ledger_ports
-              local port = ports:get(ledger_name)
-
-              if not port then
-                  local counter = ngx.shared.port_counter
-                  local next_port = counter:incr("next_port", 1) - 1
-                  local log_file = "/tmp/hledger-" .. ledger_name .. ".log"
-                  local ngx_pipe = require "ngx.pipe"
-                  local cmd = {
-                      "${lib.getExe hledger-web}",
-                      "--serve",
-                      "--file", "${mntPath}/" .. ledger_name .. ".hledger",
-                      "--port", tostring(next_port),
-                      "--base-url", ngx.var.scheme .. "://" .. ngx.var.host .. ":" .. tostring(ngx.var.server_port) .. "/" .. ledger_name,
-                  }
-                  local opts = {
-                      environ = {
-                        "LANG=${lang}",
-                        "LC_ALL=${lang}",
-                        "LOCALE_ARCHIVE=${locale_archive}",
-                      },
-                  }
-                  ngx.log(ngx.INFO, "Spawning hledger-web for " .. ledger_name .. " on port " .. next_port .. ". Logs: " .. log_file .. " Command: " .. table.concat(cmd, " "))
-                  local proc, err = ngx_pipe.spawn(cmd, opts)
-                  if not proc then
-                      ngx.log(ngx.ERR, "Failed to spawn hledger: ", err)
-                      return ngx.exit(500)
-                  end
-
-                  ngx.thread.spawn(function()
-                      while true do
-                          local data, err = proc:stdout_read_any(8096)
-                          if not data then break end
-                          ngx.log(ngx.INFO, "hledger-web stdout: ", data)
-                      end
-                  end)
-
-                  ngx.thread.spawn(function()
-                      while true do
-                          local data, err = proc:stderr_read_any(8096)
-                          if not data then break end
-                          ngx.log(ngx.ERR, "hledger-web stderr: ", data)
-                      end
-                  end)
-
-                  ports:set(ledger_name, next_port)
-                  port = next_port
-              end
-              ngx.var.target_port = port
-          }
-
-          set $target_port "";
-          proxy_pass http://127.0.0.1:$target_port;
-          # Standard proxy headers
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-User $remote_user;
         }
       }
     }
@@ -133,8 +62,14 @@ let
       set -x
       rclone copyurl "$RCLONE_CONFIG_URL" "${configFile}"
       rclone copyurl "$RCLONE_CONFIG_URL&htpasswd=hledger" "${htpasswdFile}"
-      rclone --config "${configFile}" mount --vfs-cache-mode=full "$RCLONE_REMOTE" "${mntPath}" &
+      rclone --config "${configFile}" mount --vfs-cache-mode=full --log-file /tmp/rclone.log --log-format pid --daemon "$RCLONE_REMOTE" "${mntPath}"
       rclone --config "${configFile}" serve webdav --addr=":${builtins.toString webdavPort}" --baseurl=webdav --realm="${basicAuthRealm}" --htpasswd="${htpasswdFile}" "${mntPath}" &
+      mkdir -p "${socketPath}"
+      cut -d: -f1 /tmp/rclone.htpasswd | while read -r i; do
+        if [[ $i ]] && [[ -f "${mntPath}/$i.hledger" ]]; then
+          ${lib.getExe hledger-web} --serve --file "${mntPath}/$i.hledger" --socket "${socketPath}/$i" --base-url "http://127.0.0.1:${builtins.toString exposedPort}/$i" &
+        fi
+      done
       nginx -e stderr -p . -c "${nginxConfig}" -g 'daemon off; pid /tmp/nginx.pid; error_log stderr info;' &
       wait -n
     '';
