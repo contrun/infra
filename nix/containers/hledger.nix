@@ -5,16 +5,15 @@ let
   uid = 1000;
   gid = 100;
   ugid = "${builtins.toString uid}:${builtins.toString gid}";
-  exposedPort = 10000;
+  exposedPort = 5000;
+  webdavPort = 4999;
+  baseHledgerPort = 5001;
   basicAuthRealm = "hledger";
-  webdavPort = 5573;
-  hledgerPort = 5001;
   mntPath = "/mnt/hledger";
   configFile = "/tmp/rclone.conf";
   htpasswdFile = "/tmp/rclone.htpasswd";
   nginxConfig = writers.writeNginxConfig "nginx.conf" ''
     events {}
-
     http {
       sendfile on;
       client_max_body_size 0;
@@ -22,24 +21,77 @@ let
       tcp_nodelay on;
       keepalive_timeout 65;
       access_log /dev/stdout;
+
+      # Shared memory to track which ledger is on which port
+      lua_shared_dict ledger_ports 64k;
+      # To ensure port assignment is atomic
+      lua_shared_dict port_counter 12k;
+
       upstream webdav {
         server 127.0.0.1:${builtins.toString webdavPort};
       }
-      upstream hledger {
-        server 127.0.0.1:${builtins.toString hledgerPort};
+
+      init_by_lua_block {
+          local port_counter = ngx.shared.port_counter
+          port_counter:set("next_port", ${builtins.toString baseHledgerPort})
       }
 
       server {
         listen *:${builtins.toString exposedPort};
         server_name _;
 
+        auth_basic "${basicAuthRealm}";
+        auth_basic_user_file "${htpasswdFile}";
+
         location /webdav {
           proxy_pass http://webdav;
         }
-        location / {
-          proxy_pass http://hledger;
-          auth_basic "${basicAuthRealm}";
-          auth_basic_user_file "${htpasswdFile}";
+
+        location ~ ^/(?<ledger_name>[^/]+) {
+          access_by_lua_block {
+              local ngx = require "ngx"
+              local ledger_name = ngx.var.ledger_name
+              local remote_user = ngx.var.remote_user
+
+              -- Verify user 'default' is accessing path '/default'
+              if remote_user ~= ledger_name then
+                  ngx.log(ngx.ERR, "User " .. remote_user .. " denied access to " .. ledger_name)
+                  return ngx.exit(ngx.HTTP_FORBIDDEN)
+              end
+
+              local ports = ngx.shared.ledger_ports
+              local port = ports:get(ledger_name)
+
+              if not port then
+                  local counter = ngx.shared.port_counter
+                  local next_port = counter:incr("next_port", 1) - 1
+                  ngx.log(ngx.INFO, "Spawning hledger-web for " .. ledger_name .. " on port " .. next_port)
+                  local ngx_pipe = require "ngx.pipe"
+                  local cmd = {
+                      "${lib.getExe hledger-web}",
+                      "--file", "${mntPath}/" .. ledger_name .. ".hledger",
+                      "--port", tostring(next_port),
+                      "--base-url", "http://127.0.0.1:" .. tostring(next_port) .. "/" .. ledger_name
+                  }
+                  -- Spawn as a background process (piped)
+                  local proc, err = ngx_pipe.spawn(cmd)
+                  if not proc then
+                      ngx.log(ngx.ERR, "Failed to spawn hledger: ", err)
+                      return ngx.exit(500)
+                  end
+
+                  ports:set(ledger_name, next_port)
+                  port = next_port
+              end
+              ngx.var.target_port = port
+          }
+
+          set $target_port "";
+          proxy_pass http://127.0.0.1:$target_port;
+          # Standard proxy headers
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
       }
     }
@@ -53,7 +105,6 @@ let
       rclone copyurl "$RCLONE_CONFIG_URL&htpasswd=hledger" "${htpasswdFile}"
       rclone --config "${configFile}" mount --vfs-cache-mode=full "$RCLONE_REMOTE" "${mntPath}" &
       rclone --config "${configFile}" serve webdav --addr=":${builtins.toString webdavPort}" --baseurl=webdav --realm="${basicAuthRealm}" --htpasswd="${htpasswdFile}" "${mntPath}" &
-      hledger-web --port="${builtins.toString hledgerPort}" &
       nginx -e stderr -p . -c "${nginxConfig}" -g 'daemon off; pid /tmp/nginx.pid; error_log stderr info;' &
       wait -n
     '';
