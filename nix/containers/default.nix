@@ -5,21 +5,23 @@
 }:
 let
   inherit (pkgs) lib;
-  # Common arguments passed to most sub-modules
-  args = { inherit pkgs lib; };
+
+  allArgs = {
+    inherit
+      pkgs
+      lib
+      packages
+      zotero-plugins
+      ;
+  };
+
+  dirContents = builtins.readDir ./.;
+
+  validFiles = lib.filterAttrs (
+    name: type: type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix"
+  ) dirContents;
+
 in
-{
-  rclone = import ./rclone.nix args;
-
-  aria2 = import ./aria2.nix args;
-
-  owntracks = import ./owntracks.nix args;
-
-  tailscale = import ./tailscale.nix args;
-
-  caddy = import ./caddy.nix (args // { inherit packages; });
-
-  wstunnel = import ./wstunnel.nix args;
-
-  zotero = import ./zotero.nix (args // { inherit packages zotero-plugins; });
-}
+lib.mapAttrs' (
+  name: value: lib.nameValuePair (lib.removeSuffix ".nix" name) (import (./. + "/${name}") allArgs)
+) validFiles
