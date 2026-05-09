@@ -47,7 +47,11 @@ let
         }
 
         location ~ ^/(?<ledger_name>[^/]+) {
-          auth_basic "${basicAuthRealm}";
+          set $maybe_skip_auth "${basicAuthRealm}";
+          if ($uri ~* "/static/") {
+            set $auth_state "off";
+          }
+          auth_basic $maybe_skip_auth;
           auth_basic_user_file "${htpasswdFile}";
 
           access_by_lua_block {
