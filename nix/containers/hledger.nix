@@ -9,6 +9,8 @@ let
   webdavPort = 4999;
   baseHledgerPort = 5001;
   basicAuthRealm = "hledger";
+  lang = "en_US.UTF-8";
+  locale_archive = "${glibcLocales}/lib/locale/locale-archive";
   mntPath = "/mnt/hledger";
   configFile = "/tmp/rclone.conf";
   htpasswdFile = "/tmp/rclone.htpasswd";
@@ -40,14 +42,14 @@ let
         listen *:${builtins.toString exposedPort};
         server_name _;
 
-        auth_basic "${basicAuthRealm}";
-        auth_basic_user_file "${htpasswdFile}";
-
         location /webdav {
           proxy_pass http://webdav;
         }
 
         location ~ ^/(?<ledger_name>[^/]+) {
+          auth_basic "${basicAuthRealm}";
+          auth_basic_user_file "${htpasswdFile}";
+
           access_by_lua_block {
               local ngx = require "ngx"
               local ledger_name = ngx.var.ledger_name
@@ -65,20 +67,44 @@ let
               if not port then
                   local counter = ngx.shared.port_counter
                   local next_port = counter:incr("next_port", 1) - 1
-                  ngx.log(ngx.INFO, "Spawning hledger-web for " .. ledger_name .. " on port " .. next_port)
+                  local log_file = "/tmp/hledger-" .. ledger_name .. ".log"
                   local ngx_pipe = require "ngx.pipe"
                   local cmd = {
                       "${lib.getExe hledger-web}",
+                      "--serve",
                       "--file", "${mntPath}/" .. ledger_name .. ".hledger",
                       "--port", tostring(next_port),
-                      "--base-url", "http://127.0.0.1:" .. tostring(next_port) .. "/" .. ledger_name
+                      "--base-url", ngx.var.scheme .. "://" .. ngx.var.host .. ":" .. tostring(ngx.var.server_port) .. "/" .. ledger_name,
                   }
-                  -- Spawn as a background process (piped)
-                  local proc, err = ngx_pipe.spawn(cmd)
+                  local opts = {
+                      environ = {
+                        "LANG=${lang}",
+                        "LC_ALL=${lang}",
+                        "LOCALE_ARCHIVE=${locale_archive}",
+                      },
+                  }
+                  ngx.log(ngx.INFO, "Spawning hledger-web for " .. ledger_name .. " on port " .. next_port .. ". Logs: " .. log_file .. " Command: " .. table.concat(cmd, " "))
+                  local proc, err = ngx_pipe.spawn(cmd, opts)
                   if not proc then
                       ngx.log(ngx.ERR, "Failed to spawn hledger: ", err)
                       return ngx.exit(500)
                   end
+
+                  ngx.thread.spawn(function()
+                      while true do
+                          local data, err = proc:stdout_read_any(8096)
+                          if not data then break end
+                          ngx.log(ngx.INFO, "hledger-web stdout: ", data)
+                      end
+                  end)
+
+                  ngx.thread.spawn(function()
+                      while true do
+                          local data, err = proc:stderr_read_any(8096)
+                          if not data then break end
+                          ngx.log(ngx.ERR, "hledger-web stderr: ", data)
+                      end
+                  end)
 
                   ports:set(ledger_name, next_port)
                   port = next_port
@@ -117,6 +143,7 @@ dockerTools.buildLayeredImage {
     usrBinEnv
     binSh
     caCertificates
+    glibcLocales
     coreutils
     openssl
 
@@ -186,6 +213,10 @@ dockerTools.buildLayeredImage {
       "HOME=${home}"
       # $PATH seems to be unset in fly.io
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      # Fix local errors for hledger
+      "LANG=${lang}"
+      "LC_ALL=${lang}"
+      "LOCALE_ARCHIVE=${locale_archive}"
     ];
   };
 }
