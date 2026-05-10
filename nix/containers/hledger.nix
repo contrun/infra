@@ -5,7 +5,7 @@ let
   uid = 1000;
   gid = 100;
   ugid = "${builtins.toString uid}:${builtins.toString gid}";
-  exposedPort = 5000;
+  exposedPort = 10000;
   webdavPort = 4999;
   basicAuthRealm = "hledger";
   lang = "en_US.UTF-8";
@@ -67,7 +67,7 @@ let
       mkdir -p "${socketPath}"
       cut -d: -f1 /tmp/rclone.htpasswd | while read -r i; do
         if [[ $i ]] && [[ -f "${mntPath}/$i.hledger" ]]; then
-          ${lib.getExe hledger-web} --serve --file "${mntPath}/$i.hledger" --socket "${socketPath}/$i" --base-url "http://127.0.0.1:${builtins.toString exposedPort}/$i" &
+          ${lib.getExe hledger-web} --serve --file "${mntPath}/$i.hledger" --socket "${socketPath}/$i" --base-url "$BASE_URL/$i" &
         fi
       done
       nginx -e stderr -p . -c "${nginxConfig}" -g 'daemon off; pid /tmp/nginx.pid; error_log stderr info;' &
@@ -149,6 +149,7 @@ dockerTools.buildLayeredImage {
       "/bin/${entrypointName}"
     ];
     Env = [
+      "BASE_URL=http://127.0.0.1:${builtins.toString exposedPort}"
       "HOME=${home}"
       # $PATH seems to be unset in fly.io
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
