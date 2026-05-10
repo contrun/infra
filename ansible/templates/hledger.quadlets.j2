@@ -7,7 +7,7 @@ Image=docker.io/contrun/hledger:latest
 # TODO: Make cache non-volatile.
 # Below does not work because of file system permission
 # Volume=%C/hledger:/data
-PublishPort=5000:5000
+PublishPort=5000:10000
 AddDevice=/dev/fuse:/dev/fuse:rwm
 AddCapability=SYS_ADMIN
 UserNS=keep-id:uid=1000,gid=100
@@ -22,6 +22,9 @@ UserNS=keep-id:uid=1000,gid=100
 PodmanArgs=--privileged
 Environment=RCLONE_CONFIG_URL={{ rclone_config_url }}
 Environment=RCLONE_REMOTE=hledger:
+{% if hledger_base_url %}
+Environment=BASE_URL={{ hledger_base_url }}
+{% endif %}
 
 [Service]
 Type=notify
