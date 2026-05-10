@@ -1,0 +1,38 @@
+--- hledger.container
+[Unit]
+Description=hledger
+
+[Container]
+Image=docker.io/contrun/hledger:latest
+# TODO: Make cache non-volatile.
+# Below does not work because of file system permission
+# Volume=%C/hledger:/data
+PublishPort=5000:5000
+AddDevice=/dev/fuse:/dev/fuse:rwm
+AddCapability=SYS_ADMIN
+UserNS=keep-id:uid=1000,gid=100
+# Don't know which permission is requried to run
+# But we are able to run it locally with above options.
+# According to https://github.com/containers/podman/issues/22487
+# PodmanArgs=--privileged is equivalent to
+# Unmask=all
+# SecurityLabelDisable=true
+# AddCapability=all
+# SeccompProfile=unconfined
+PodmanArgs=--privileged
+Environment=RCLONE_CONFIG_URL={{ rclone_config_url }}
+Environment=RCLONE_REMOTE=hledger:
+
+[Service]
+Type=notify
+# CacheDirectory=hledger
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+AmbientCapabilities=SYS_ADMIN
+
+[Install]
+WantedBy=default.target

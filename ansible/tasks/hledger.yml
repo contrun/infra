@@ -1,0 +1,38 @@
+- name: Create a temporary directory for staging
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _quadlet_staging
+  register: staging_dir
+
+- name: Set root directory
+  set_fact:
+    # Basename of directory is used as app name, so we append a name here
+    root_dir: "{{ staging_dir.path }}/hledger"
+    raw_template: "{{ lookup('template', 'hledger.quadlets.j2') }}"
+
+- name: Ensure root directory exists
+  file:
+    path: "{{ root_dir }}"
+    recurse: true
+    state: directory
+
+- name: Create individual files from stanzas
+  ansible.builtin.copy:
+    dest: "{{ root_dir }}/{{ file.split('\n')[0] | trim }}"
+    content: "{{ file.split('\n')[1:] | join('\n') | trim }}"
+    mode: '0644'
+  loop: "{{ raw_template.split('---') | map('trim') | select() | list }}"
+  loop_control:
+    loop_var: file
+    label: "File: {{ file.splitlines()[0] | default('unknown') | trim }}"
+
+- name: Apply Podman Quadlet (Daemon Reload & Start)
+  containers.podman.podman_quadlet:
+    state: present
+    src: "{{ root_dir }}"
+
+- name: Cleanup the temporary staging directory
+  ansible.builtin.file:
+    path: "{{ staging_dir.path }}"
+    force: true
+    state: absent
