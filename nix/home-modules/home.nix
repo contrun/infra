@@ -547,7 +547,6 @@ let
         "cachix"
         "barcode"
         "bitlbee"
-        "blueberry"
         "calcurse"
         "castget"
         "xfce.catfish"
