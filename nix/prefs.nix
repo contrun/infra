@@ -408,7 +408,6 @@ let
     enableResticPrune = self.enableResticBackup;
     enableXserver = !self.isMinimalSystem && self.displayManager != null;
     enableGreetd = true;
-    enableSeatd = !self.isMinimalSystem;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
     syncFolders = {
