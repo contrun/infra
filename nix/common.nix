@@ -298,7 +298,7 @@ in
           niv
           nix-serve
           (pkgs.myPackage.home-manager or home-manager)
-          nixfmt-rfc-style
+          nixfmt
           nix-du
           nix-index
           nix-top
@@ -448,7 +448,6 @@ in
               i3lock
               i3status-rust
               firefox-devedition
-              termite
               foot
             ];
           }
@@ -621,7 +620,6 @@ in
       '';
     };
     # vim.defaultEditor = true;
-    adb.enable = prefs.enableADB;
     slock.enable = prefs.enableSlock;
     bash = {
       completion = {
@@ -697,7 +695,6 @@ in
           wlrctl
           wlsunset
           i3status-rust
-          termite
           alacritty
           rofi
           bemenu
@@ -1101,12 +1098,12 @@ in
     };
     resolved = {
       enable = prefs.enableResolved;
-      dnssec = "false";
-      extraConfig = builtins.concatStringsSep "\n" [
-        ''
-          DNS=${builtins.concatStringsSep " " prefs.dnsServers}
-        ''
-      ];
+      settings = {
+        Resolve = {
+          DNSSEC = false;
+          DNS = prefs.dnsServers;
+        };
+      };
     };
     openssh = {
       enable = true;
@@ -1558,98 +1555,6 @@ in
         ];
     };
 
-    promtail = {
-      enable = prefs.enablePromtail;
-      extraFlags = [ "-config.expand-env=true" ];
-      configuration = {
-        server = {
-          http_listen_port = prefs.promtailHttpPort;
-          grpc_listen_port = prefs.promtailGrpcPort;
-        };
-        clients = [
-          { url = "\${LOKI_URL}"; }
-        ]
-        ++ (lib.optionals prefs.enableLoki [
-          {
-            url = "http://127.0.0.1:${builtins.toString prefs.lokiHttpPort}/loki/api/v1/push";
-          }
-        ]);
-        positions = {
-          "filename" = "/var/cache/promtail/positions.yaml";
-        };
-        scrape_configs = [
-          {
-            job_name = "journal";
-            journal = {
-              labels = {
-                job = "journald";
-                nodename = prefs.hostname;
-              };
-              max_age = "12h";
-            };
-            relabel_configs = [
-              {
-                source_labels = [ "__journal__boot_id" ];
-                target_label = "boot_id";
-              }
-              {
-                source_labels = [ "__journal__comm" ];
-                target_label = "command";
-              }
-              {
-                source_labels = [ "__journal__cmdline" ];
-                target_label = "command_line";
-              }
-              {
-                source_labels = [ "__journal__exe" ];
-                target_label = "executable";
-              }
-              {
-                source_labels = [ "__journal__hostname" ];
-                target_label = "nodename";
-              }
-              {
-                source_labels = [ "__journal__systemd_unit" ];
-                target_label = "systemd_unit";
-              }
-              {
-                source_labels = [ "__journal__systemd_user_unit" ];
-                target_label = "systemd_user_unit";
-              }
-              {
-                source_labels = [ "__journal__syslog_identifier" ];
-                target_label = "syslog_identifier";
-              }
-              {
-                source_labels = [ "__journal_priority" ];
-                target_label = "journal_priority";
-              }
-              {
-                source_labels = [ "__journal__transport" ];
-                target_label = "journal_transport";
-              }
-              {
-                source_labels = [ "__journal_image_name" ];
-                target_label = "container_image_name";
-              }
-              {
-                source_labels = [ "__journal_container_name" ];
-                target_label = "container_name";
-              }
-              {
-                source_labels = [ "__journal_container_id" ];
-                target_label = "container_id";
-              }
-              {
-                source_labels = [ "__journal_container_tag" ];
-                target_label = "container_tag";
-              }
-            ];
-          }
-        ];
-      };
-    };
-
     loki = {
       enable = prefs.enableLoki;
       configuration = {
@@ -1955,7 +1860,6 @@ in
         i3 = {
           enable = prefs.enableI3;
         };
-        awesome.enable = prefs.enableAwesome;
       }
       // (lib.optionalAttrs prefs.enableXmonad {
         xmonad = {
@@ -2104,7 +2008,7 @@ in
         config = {
           systemd.network.enable = prefs.enableSystemdNetworkd;
           networking.useHostResolvConf = false;
-          services.resolved.fallbackDns = [
+          services.resolved.settings.Resolve.FallbackDNS = [
             "223.6.6.6"
             "119.29.29.29"
           ];
@@ -2306,16 +2210,6 @@ in
                 };
               };
             }
-            {
-              enable = prefs.enablePromtail;
-              config = {
-                "promtail" = {
-                  serviceConfig = {
-                    EnvironmentFile = "/run/secrets/promtail-env";
-                  };
-                };
-              };
-            }
           ]);
       }
 
@@ -2489,6 +2383,7 @@ in
     supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
     zfs = {
       package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
+      forceImportRoot = false;
     };
     crashDump = {
       enable = prefs.enableCrashDump;
