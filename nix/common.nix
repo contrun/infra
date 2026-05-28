@@ -621,7 +621,6 @@ in
       '';
     };
     # vim.defaultEditor = true;
-    adb.enable = prefs.enableADB;
     slock.enable = prefs.enableSlock;
     bash = {
       completion = {

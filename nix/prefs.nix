@@ -412,7 +412,6 @@ let
     enableSeatd = !self.isMinimalSystem;
     enableXautolock = self.enableXserver;
     enableGPGAgent = !self.isMinimalSystem;
-    enableADB = self.nixosSystem == "x86_64-linux";
     syncFolders = {
       calibre = {
         path = "${self.home}/Storage/Calibre";
