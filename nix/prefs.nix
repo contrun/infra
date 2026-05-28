@@ -144,10 +144,6 @@ let
               )
               [
                 {
-                  enable = self.enablePromtail;
-                  unit = "promtail";
-                }
-                {
                   enable = self.enablePrometheus;
                   unit = "prometheus";
                 }
@@ -396,9 +392,6 @@ let
     enableLoki = false;
     lokiHttpPort = 3100;
     lokiGrpcPort = 9096;
-    enablePromtail = false;
-    promtailHttpPort = 28183;
-    promtailGrpcPort = 0;
     enableRsyncd = false;
     enableMpd = false;
     enableFlatpak = false;
@@ -621,7 +614,6 @@ let
                 isMaximalSystem = true;
                 isMinimalSystem = false;
                 enablePrometheus = true;
-                enablePromtail = true;
                 enableVirtualboxHost = true;
                 enableZerotierone = true;
                 enableEmacs = true;
@@ -711,7 +703,6 @@ let
           smartctlExporterDevices = [ "/dev/nvme0n1" ];
           enableCfssl = true;
           enablePrometheus = true;
-          enablePromtail = true;
           enableWireless = true;
           pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
             consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
@@ -724,7 +715,6 @@ let
           smartctlExporterDevices = [ "/dev/nvme0n1" ];
           enableNetworkWatchdog = true;
           enablePrometheus = true;
-          enablePromtail = true;
           enablePrinting = false;
           enableEternalTerminal = false;
           enableZerotierone = false;
@@ -832,7 +822,6 @@ let
             };
           };
           enablePrometheus = true;
-          enablePromtail = true;
           initrdKernelModules = super.initrdKernelModules ++ [ "r8169" ];
           pkgsRelatedPrefs =
             super.pkgsRelatedPrefs
@@ -913,7 +902,6 @@ let
           enablePrometheusAgent = false;
           enablePrometheusExporters = false;
           enableCadvisor = false;
-          enablePromtail = false;
           enableWaydroid = true;
           enableEternalTerminal = false;
           enableTtyd = false;

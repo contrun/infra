@@ -217,16 +217,6 @@ let
                   };
                 };
               }
-              {
-                enable = prefs.enablePromtail;
-                config = {
-                  promtail-env = {
-                    mode = "0400";
-                    owner = "promtail";
-                    group = "promtail";
-                  };
-                };
-              }
             ];
       };
     };
