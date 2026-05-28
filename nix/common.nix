@@ -298,7 +298,7 @@ in
           niv
           nix-serve
           (pkgs.myPackage.home-manager or home-manager)
-          nixfmt-rfc-style
+          nixfmt
           nix-du
           nix-index
           nix-top
