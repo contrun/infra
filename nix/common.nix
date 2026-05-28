@@ -2384,6 +2384,7 @@ in
     supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
     zfs = {
       package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
+      forceImportRoot = false;
     };
     crashDump = {
       enable = prefs.enableCrashDump;
