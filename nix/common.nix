@@ -1860,7 +1860,6 @@ in
         i3 = {
           enable = prefs.enableI3;
         };
-        awesome.enable = prefs.enableAwesome;
       }
       // (lib.optionalAttrs prefs.enableXmonad {
         xmonad = {

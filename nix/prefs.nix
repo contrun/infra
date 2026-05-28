@@ -285,7 +285,6 @@ let
     enableYdotool = !self.isMinimalSystem;
     enableXmonad = false && self.xWindowManager == "xmonad" && !self.isMinimalSystem;
     enableI3 = !self.isMinimalSystem;
-    enableAwesome = !self.isMinimalSystem;
     enableSway = !self.isMinimalSystem;
     enableKdeConnect =
       !self.isMinimalSystem
