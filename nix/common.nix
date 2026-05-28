@@ -448,7 +448,6 @@ in
               i3lock
               i3status-rust
               firefox-devedition
-              termite
               foot
             ];
           }
@@ -696,7 +695,6 @@ in
           wlrctl
           wlsunset
           i3status-rust
-          termite
           alacritty
           rofi
           bemenu
