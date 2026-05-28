@@ -1101,11 +1101,11 @@ in
     resolved = {
       enable = prefs.enableResolved;
       dnssec = "false";
-      extraConfig = builtins.concatStringsSep "\n" [
-        ''
-          DNS=${builtins.concatStringsSep " " prefs.dnsServers}
-        ''
-      ];
+      settings = {
+        Resolve = {
+          DNS = prefs.dnsServers;
+        };
+      };
     };
     openssh = {
       enable = true;
