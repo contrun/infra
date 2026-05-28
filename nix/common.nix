@@ -1098,9 +1098,9 @@ in
     };
     resolved = {
       enable = prefs.enableResolved;
-      dnssec = "false";
       settings = {
         Resolve = {
+          DNSSEC = false;
           DNS = prefs.dnsServers;
         };
       };
@@ -2009,7 +2009,7 @@ in
         config = {
           systemd.network.enable = prefs.enableSystemdNetworkd;
           networking.useHostResolvConf = false;
-          services.resolved.fallbackDns = [
+          services.resolved.settings.Resolve.FallbackDNS = [
             "223.6.6.6"
             "119.29.29.29"
           ];
