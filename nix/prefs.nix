@@ -71,11 +71,6 @@ let
         hub = "mdq";
       };
     pkgsRelatedPrefs = {
-      kernelPackages = pkgs.linuxPackages_latest;
-      extraModulePackages = [
-        # super.pkgsRelatedPrefs.rtl8188gu
-      ];
-      rtl8188gu = (self.pkgsRelatedPrefs.kernelPackages.callPackage ./hardware/rtl8188gu.nix { });
       extraUdevRules =
         let
           getOptionalRules = x: if (x.enable or true) then x.rules else [ ];
@@ -483,67 +478,6 @@ let
         ]
       else
         [ ];
-    extraModulePackages = [ ];
-    kernelPatches = [ ];
-    kernelParams = [ "boot.shell_on_fail" ];
-    blacklistedKernelModules = [ ];
-    initrdAvailableKernelModules = [ ];
-    initrdKernelModules = [
-      "usbnet"
-      "cdc_ether"
-      "rndis_host"
-    ];
-    kernelModules = [
-      # For the sysctl net.bridge.bridge-nf-call-* options to work
-      "br_netfilter"
-    ];
-    kernelSysctl = {
-      "fs.file-max" = 131071;
-      "net.core.rmem_max" = 67108864;
-      "net.core.wmem_max" = 67108864;
-      "net.core.netdev_max_backlog" = 250000;
-      "net.core.somaxconn" = 4096;
-      "net.core.default_qdisc" = "fq";
-      "net.ipv4.tcp_syncookies" = 1;
-      "net.ipv4.tcp_tw_reuse" = 1;
-      "net.ipv4.tcp_fin_timeout" = 30;
-      "net.ipv4.tcp_keepalive_time" = 1200;
-      "net.ipv4.ip_local_port_range" = "10000 65000";
-      "net.ipv4.tcp_max_syn_backlog" = 8192;
-      "net.ipv4.tcp_max_tw_buckets" = 5000;
-      "net.ipv4.tcp_fastopen" = 3;
-      "net.ipv4.tcp_mem" = "25600 51200 102400";
-      "net.ipv4.tcp_rmem" = "4096 87380 67108864";
-      "net.ipv4.tcp_wmem" = "4096 65536 67108864";
-      "net.ipv4.tcp_mtu_probing" = 1;
-      "net.ipv4.tcp_congestion_control" = "bbr";
-      # https://github.com/springzfx/cgproxy/blob/aaa628a76b2911018fc93b2e3276c177e85e0861/readme.md#known-issues
-      # Transparent proxy does not work with these options on.
-      # See also https://linuxconfig.org/how-to-use-bridged-networking-with-libvirt-and-kvm
-      # See also https://wiki.libvirt.org/page/Net.bridge.bridge-nf-call_and_sysctl.conf
-      "net.bridge.bridge-nf-call-arptables" = 0;
-      "net.bridge.bridge-nf-call-ip6tables" = 0;
-      "net.bridge.bridge-nf-call-iptables" = 0;
-      "vfs.usermount" = 1;
-      "net.ipv4.igmp_max_memberships" = 256;
-      "fs.inotify.max_user_instances" = 256;
-      "fs.inotify.max_user_watches" = 524288;
-      "kernel.kptr_restrict" = 0;
-      "kernel.perf_event_paranoid" = 1;
-      "net.ipv4.conf.all.route_localnet" = 1;
-      "net.ipv4.conf.default.route_localnet" = 1;
-    }
-    // (
-      if self.enablePowerSavingMode then
-        {
-          # See https://wiki.archlinux.org/title/Power_management
-          "kernel.nmi_watchdog" = 0;
-          "vm.laptop_mode" = 5;
-          "vm.dirty_writeback_centisecs" = 1500;
-        }
-      else
-        { }
-    );
     networkingInterfaces = { };
     nixosStableVersion = "20.09";
     enableUnstableNixosChannel = false;
@@ -627,26 +561,11 @@ let
           };
           hostId = "80d17333";
           enableX2goServer = true;
-          # kernelPatches = [{
-          #   # See https://github.com/NixOS/nixpkgs/issues/91367
-          #   name = "anbox-kernel-config";
-          #   patch = null;
-          #   extraConfig = ''
-          #     CONFIG_ASHMEM=y
-          #     CONFIG_ANDROID=y
-          #     CONFIG_ANDROID_BINDER_IPC=y
-          #     CONFIG_ANDROID_BINDERFS=y
-          #     CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
-          #   '';
-          # }];
         }
       else if hostname == "dbx" then
         {
           isMinimalSystem = true;
           isVagrantBox = true;
-          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-            kernelPackages = pkgs.linuxPackages;
-          };
         }
       else if hostname == "adx" then
         {
@@ -724,17 +643,9 @@ let
         {
           enableXserver = false;
           installHomePackages = false; # Too slow.
-          kernelParams = super.kernelParams ++ [
-            "cgroup_enable=cpuset"
-            "cgroup_enable=memory"
-            "cgroup_memory=1"
-          ];
           nixosSystem = "aarch64-linux";
           isMinimalSystem = true;
           hostId = "6fce2459";
-          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-            kernelPackages = pkgs.linuxPackages_rpi4;
-          };
           enableZerotierone = false;
           enableTailScale = false;
           enableVirtualboxHost = false;
@@ -819,42 +730,6 @@ let
             };
           };
           enablePrometheus = true;
-          initrdKernelModules = super.initrdKernelModules ++ [ "r8169" ];
-          pkgsRelatedPrefs =
-            super.pkgsRelatedPrefs
-            // (with super.pkgsRelatedPrefs; {
-              extraModulePackages = extraModulePackages ++ [ kernelPackages.rtl88x2bu ];
-              consoleFont = "${pkgs.terminus_font}/share/consolefonts/ter-g20n.psf.gz";
-              extraUdevRules =
-                let
-                  name = "rfkill-wrapper";
-                  application =
-                    with pkgs;
-                    writeShellApplication {
-                      inherit name;
-                      text = ''
-                        action="$1"
-                        device_name="$2"
-                        id="$(rfkill --output-all | grep -Po "([0-9]+)(?=.*$device_name)")"
-                        rfkill "$action" "$id"
-                      '';
-                      runtimeInputs = [
-                        util-linux
-                        coreutils
-                      ];
-                    };
-                  wrapper = "${application}/bin/${name}";
-                  internalWirelessDevice = "acer-wireless";
-                in
-                builtins.concatStringsSep "\n" [
-                  extraUdevRules
-                  # Internal wireless card "acer-wireless" seems to be defunct
-                  ''
-                    ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} unblock ${internalWirelessDevice}"
-                    ACTION=="add", SUBSYSTEM=="usb", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="1841", RUN+="${wrapper} block ${internalWirelessDevice}"
-                  ''
-                ];
-            });
         }
       else if hostname == "zklab-5" then
         {
@@ -914,9 +789,6 @@ let
           enableHomeManagerRcloneSync = true;
           enableHomeManagerRcloneMount = true;
           enableHomeManagerRcloneServe = true;
-          pkgsRelatedPrefs = super.pkgsRelatedPrefs // {
-            kernelPackages = pkgs.linuxPackages_6_18;
-          };
         }
       else if hostname == "madbox" then
         {

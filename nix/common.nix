@@ -2350,7 +2350,6 @@ in
 
   boot = {
     binfmt = { inherit (prefs) emulatedSystems; };
-    kernel.sysctl = prefs.kernelSysctl;
     loader = {
       generationsDir = {
         enable = prefs.enableGenerationsDir;
@@ -2385,8 +2384,6 @@ in
       enable = prefs.enableCrashDump;
     };
     initrd = {
-      kernelModules = prefs.initrdKernelModules;
-      availableKernelModules = prefs.initrdAvailableKernelModules;
       network = {
         enable = true;
         ssh =
@@ -2405,16 +2402,5 @@ in
           };
       };
     };
-  }
-  # microvm use its own kernel config.
-  // lib.optionalAttrs (!prefs.enableMicrovmGuest) {
-    inherit (prefs)
-      kernelParams
-      extraModulePackages
-      kernelModules
-      kernelPatches
-      kernelPackages
-      blacklistedKernelModules
-      ;
   };
 }
