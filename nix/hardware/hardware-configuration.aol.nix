@@ -82,25 +82,7 @@
 
   hardware = {
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-
-    nvidia = {
-      # TODO: Suspend not working with the new open source nvidia driver
-      # https://github.com/NVIDIA/open-gpu-kernel-modules/issues/472
-      # https://wiki.hyprland.org/Nvidia/
-      open = false;
-      modesetting.enable = true;
-      powerManagement.enable = false;
-      powerManagement.finegrained = false;
-      package = config.boot.kernelPackages.nvidiaPackages.production;
-      prime = {
-        offload = {
-          enable = true;
-          enableOffloadCmd = true;
-        };
-        nvidiaBusId = "PCI:1:0:0";
-        intelBusId = "PCI:0:2:0";
-      };
-    };
+    nvidia.open = false;
   };
 
   nixpkgs.config.cudaSupport = true;
