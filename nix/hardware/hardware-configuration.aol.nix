@@ -82,8 +82,5 @@
 
   hardware = {
     cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-    nvidia.open = false;
   };
-
-  nixpkgs.config.cudaSupport = true;
 }
