@@ -11,7 +11,7 @@ in
   options.prefs.nvidia = {
     open = lib.mkOption {
       type = lib.types.bool;
-      default = false;
+      default = true;
       description = "Whether to use open source kernel module";
     };
     enableNixpkgsCudaSupport = lib.mkOption {
