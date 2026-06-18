@@ -41,7 +41,8 @@
     "dev": "linux",
     "devts": "linux",
     "aol": "linux",
-    "devnts": "linux"
+    "devnts": "linux",
+    "wstunnel-adk": "windows"
   },
   "editor.multiCursorModifier": "alt",
   "editor.wordWrap": "on",
@@ -85,9 +86,6 @@
       }
     }
   },
-  "remote.SSH.defaultExtensions": [
-    "gitpod.gitpod-remote-ssh"
-  ],
   "agdaMode.connection.agdaLanguageServer": true,
   "window.zoomLevel": 1,
   "dart.checkForSdkUpdates": false,
@@ -135,7 +133,7 @@
   "task.problemMatchers.neverPrompt": {
     "shell": true
   },
-  "workbench.colorTheme": "Default Light Modern",
+  "workbench.colorTheme": "Light Modern",
   "cSpell.diagnosticLevel": "Hint",
   "[nix]": {
     "editor.defaultFormatter": "jnoortheen.nix-ide"
@@ -203,4 +201,20 @@
   "workbench.activityBar.location": "hidden",
   "dataWrangler.outputRenderer.pagination.defaultSize": 50,
   "debug.javascript.autoAttachFilter": "onlyWithFlag",
+  "json.schemaDownload.trustedDomains": {
+    "https://schemastore.azurewebsites.net/": true,
+    "https://raw.githubusercontent.com/microsoft/vscode/": true,
+    "https://raw.githubusercontent.com/devcontainers/spec/": true,
+    "https://www.schemastore.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://json-schema.org/": true,
+    "https://developer.microsoft.com/json-schemas/": true,
+    "https://biomejs.dev": true
+  },
+  "remote.SSH.showLoginTerminal": true,
+  "remote.SSH.localServerDownload": "always",
+  "python.analysis.typeCheckingMode": "standard",
+  "jupyter.interactiveWindow.creationMode": "perFile",
+  "workbench.secondarySideBar.defaultVisibility": "visible",
+  "chat.viewSessions.orientation": "stacked",
 }
