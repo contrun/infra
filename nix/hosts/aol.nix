@@ -60,4 +60,5 @@
       "/sys/bus/usb/devices/usb2/power/wakeup" = "disabled";
     };
   };
+  services.ssh-tpm-agent.enable = true;
 }
