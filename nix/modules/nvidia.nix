@@ -25,6 +25,6 @@ in
     hardware.nvidia = {
       inherit (cfg) open;
     };
-  nixpkgs.config.cudaSupport = cfg.enableNixpkgsCudaSupport;
+    nixpkgs.config.cudaSupport = cfg.enableNixpkgsCudaSupport;
   };
 }
