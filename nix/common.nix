@@ -613,12 +613,6 @@ in
     sysdig = {
       enable = prefs.enableSysdig;
     };
-    ssh = {
-      startAgent = true;
-      extraConfig = ''
-        Include ssh_config.d/*
-      '';
-    };
     # vim.defaultEditor = true;
     slock.enable = prefs.enableSlock;
     bash = {

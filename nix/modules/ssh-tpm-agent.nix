@@ -48,7 +48,7 @@
       environment = {
         systemPackages = [ cfg.package ];
         # Set variable for POSIX complient shells
-        extraInit = lib.optionalString proxy-set ''
+        extraInit = ''
           export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-tpm-agent.sock"
         '';
       };
