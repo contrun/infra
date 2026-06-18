@@ -1919,7 +1919,8 @@ in
             "input"
             "mlocate"
             "postfix"
-          ];
+          ]
+          ++ [ config.security.tpm2.tssGroup ];
         in
         {
           "${prefs.owner}" = {
