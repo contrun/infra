@@ -30,7 +30,7 @@ jobs:
           - emacs_version: snapshot
             ignore_warnings: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: purcell/setup-emacs@master
         with:
