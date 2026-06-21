@@ -2332,15 +2332,14 @@ in
     };
     nixPath = [ "/etc/nix/path" ];
 
-    registry.nixpkgs.flake = inputs.nixpkgs;
-    registry.nixpkgs-stable.flake = inputs.nixpkgs-stable;
-    registry.nixpkgs-unstable.flake = inputs.nixpkgs-unstable;
-    registry.home-manager.flake = inputs.home-manager;
-    registry.activeconfig.flake = inputs.self;
-    registry.config.to = {
+    registry.infra.to = {
       type = "path";
       path = "${prefs.home}/Workspace/infra";
     };
+    registry.infra-readonly.flake = inputs.self;
+    registry.infra-nixpkgs.flake = inputs.nixpkgs;
+    registry.infra-nixpkgs-stable.flake = inputs.nixpkgs-stable;
+    registry.infra-nixpkgs-unstable.flake = inputs.nixpkgs-unstable;
   };
 
   boot = {
