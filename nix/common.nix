@@ -216,11 +216,6 @@ in
 
   environment = {
     etc = {
-      "nix/path/nixpkgs".source = inputs.nixpkgs;
-      "nix/path/nixpkgs-stable".source = inputs.nixpkgs-stable;
-      "nix/path/nixpkgs-unstable".source = inputs.nixpkgs-unstable;
-      "nix/path/home-manager".source = inputs.home-manager;
-      "nix/path/activeconfig".source = inputs.self;
       "keyd/keyd.conf" = {
         text = ''
           [ids]
@@ -2330,7 +2325,6 @@ in
       # It is better that optimise comes after gc.
       dates = [ "3:45" ];
     };
-    nixPath = [ "/etc/nix/path" ];
 
     registry.infra.to = {
       type = "path";
