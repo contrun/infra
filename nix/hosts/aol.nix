@@ -2,6 +2,7 @@
   ...
 }:
 {
+  hardware.wireless.regulatoryDomain = "CN";
   prefs.machine.type = "laptop";
   prefs.ssh = {
     enableTpmAgent = true;
