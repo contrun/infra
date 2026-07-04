@@ -58,6 +58,7 @@ ignore = Regex .*/\.devenv
 ignore = Regex .*/\.venv
 ignore = Regex .*/\.parcel-cache
 ignore = Regex .*/target
+ignore = Regex .*/__pycache__
 ignore = Regex .*/dist
 ignore = Regex .*/dist-.*
 ignore = Regex .*/\.stack-work
@@ -106,3 +107,6 @@ ignore = Regex .*/\.pre-commit-config.yaml
 
 ignore = Regex .*/\.stversions
 ignore = Regex .*/\.syncthing.*tmp
+
+# local git config
+ignore = Regex .*/\.git/info/exclude
