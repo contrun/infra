@@ -10,3 +10,7 @@ function fish_greeting
         fortune -a
     end
 end
+
+if type -q devenv
+    devenv hook fish | source
+end
