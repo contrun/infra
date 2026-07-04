@@ -2,4 +2,5 @@
   ...
 }:
 {
+  prefs.emacs.enable = true;
 }

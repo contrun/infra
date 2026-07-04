@@ -158,10 +158,10 @@
                 };
               }
             ]
-            ++ (readModulesDir ./nix/home-modules)
+            ++ (readModulesDir ./nix/home-manager)
             ++ (
               let
-                path = ./hosts/home + "/${configName}.nix";
+                path = ./nix/hosts/home + "/${configName}.nix";
               in
               if (builtins.pathExists path) then [ path ] else [ ]
             );
