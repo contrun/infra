@@ -370,6 +370,16 @@
           myPackagesOverlay = self: super: {
             myPackages = inputs.self.packages.${super.system} // (super.myPackages or { });
           };
+
+          patchedPkgs = (
+            final: prev: {
+              xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (old: {
+                patches = [ ./patches/xdg-desktop-portal-wlr/00-remote-desktop.patch ];
+                buildInputs = old.buildInputs ++ [ prev.libxkbcommon ];
+                nativeBuildInputs = old.nativeBuildInputs ++ [ prev.libxkbcommon ];
+              });
+            }
+          );
         };
 
         checks = builtins.mapAttrs (
