@@ -15,7 +15,12 @@ let
 in
 {
   options.prefs.kernel = {
-    packages = overrideOptionWithDefault options.boot.kernelPackages pkgs.linuxPackages_latest;
+    packages = overrideOptionWithDefault options.boot.kernelPackages (
+      if config.boot.supportedFilesystems.zfs then
+        config.boot.zfs.package.latestCompatibleLinuxPackages
+      else
+        pkgs.linuxPackages_latest
+    );
     modules = overrideOptionWithDefault options.boot.kernelModules [
       # For the sysctl net.bridge.bridge-nf-call-* options to work
       "br_netfilter"

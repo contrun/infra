@@ -2363,7 +2363,9 @@ in
     tmp = {
       cleanOnBoot = true;
     };
-    supportedFilesystems = if (prefs.enableZfs) then [ "zfs" ] else [ ];
+    supportedFilesystems = {
+      zfs = prefs.enableZfs;
+    };
     zfs = {
       package = lib.mkIf prefs.enableZfsUnstable pkgs.zfs_unstable;
       forceImportRoot = false;
