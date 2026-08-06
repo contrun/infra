@@ -540,15 +540,6 @@ pressing `<leader> m`. Set it to `nil` to disable it.")
 
 (use-package fzf)
 
-(use-package wakatime-mode
-  :config
-  (let ((api-key (shell-command-to-string "sed -En '/api_key\s*=\s*/ s/api_key\s*=\s*//p' ~/.wakatime.cfg")))
-    (when api-key
-      (customize-set-variable 'wakatime-api-key (substring api-key 0 -1))))
-  (setq wakatime-disable-on-error t)
-  :hook
-  (after-init . global-wakatime-mode))
-
 (use-package sunrise-commander
   :straight (sunrise-commander :type git :host github :repo "escherdragon/sunrise-commander"))
 
