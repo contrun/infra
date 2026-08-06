@@ -84,11 +84,19 @@ for_window [app_id="(?i)scratchpad.*"] exec swaymsg mark "$(swaymsg -t get_tree 
 for_window [app_id="com/xiaoyifang/goldendict-ng\.https://github\."] {
     floating enable
     move position center
+    resize set 50 ppt 50 ppt
+}
+
+for_window [app_id="io\.github\.xiaoyifang\.goldendict_ng"] {
+    floating enable
+    move position center
+    resize set 50 ppt 50 ppt
 }
 
 for_window [class="GoldenDict(-ng)?"] {
     floating enable
     move position center
+    resize set 50 ppt 50 ppt
 }
 
 # specific window settings
