@@ -1,3 +1,5 @@
+
+
 # nixos tasks
 
 ## nixos switch to new configuration
@@ -21,6 +23,8 @@ make ansible-inventory-hosts
 ```
 
 ## Run deployment tasks
+
+Set `SERVICES` to the service(s) to deploy.
 
 ```
 make SERVICES=tailscale ansible-deploy
