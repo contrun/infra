@@ -4,6 +4,9 @@
 {
   hardware.wireless.regulatoryDomain = "CN";
   prefs.machine.type = "laptop";
+  prefs.nvidia = {
+    open = false;
+  };
   prefs.ssh = {
     enableTpmAgent = true;
   };
