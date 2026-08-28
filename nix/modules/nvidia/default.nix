@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.prefs.nvidia;
-  nvidiaEnabled = config.hardware.nvidia.enabled;
+  nvidiaEnabled = config.hardware.nvidia.enabled && !cfg.disable;
 in
 {
   options.prefs.nvidia = {
@@ -17,7 +17,7 @@ in
     enableNixpkgsCudaSupport = lib.mkOption {
       type = lib.types.bool;
       default = nvidiaEnabled;
-      description = "Whether enable cuda support for nixpkgs, default to `hardware.nvidia.enabled`";
+      description = "Whether enable cuda support for nixpkgs, default to `hardware.nvidia.enabled && !prefs.nvidia.disable`";
     };
   };
 
