@@ -424,6 +424,7 @@ in
               # font-manager
 
               dunst
+              fuzzel
               rofi
               picom
               blueman
