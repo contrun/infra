@@ -17,7 +17,7 @@ in
   options.prefs.kernel = {
     packages = overrideOptionWithDefault options.boot.kernelPackages (
       if config.boot.supportedFilesystems.zfs then
-        config.boot.zfs.package.latestCompatibleLinuxPackages
+        pkgs.linuxPackages
       else
         pkgs.linuxPackages_latest
     );
