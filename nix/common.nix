@@ -222,15 +222,14 @@ in
           *
 
           [main]
-          capslock = layer(control)
-          rightalt = layer(alt)
-          leftmeta = layer(metaalt)
-          rightmeta = oneshot(altgr)
-          rightcontrol = layer(meta)
-
+          capslock = layer(myctrl)
+          leftmeta = layer(mymetaalt)
+          rightalt = oneshot(altgr)
+          leftcontrol = layer(meta)
           space = overload(myspace, space)
 
-          [metaalt:M-A]
+          [myctrl:C]
+          [mymetaalt:M-A]
 
           [myspace]
           w = home
