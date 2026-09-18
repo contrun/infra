@@ -1,0 +1,32 @@
+;; Kanata Configuration
+;; Saved as config.kbd
+
+(defcfg
+  ;; Automatically process unmapped keys so they retain their default OS behavior
+  process-unmapped-keys yes
+)
+
+(defsrc
+  ;; Physical keys intercepted by Kanata
+  caps  spc
+  w  s  n  p  h  j  k  l  d  i  b  o  e  m  t  c
+)
+
+(defalias
+  ;; Tap-Hold: Tap space for a regular "space", hold to temporarily activate the "myspace" layer.
+  ;; The parameters represent a 200ms tap-repress timeout and a 200ms hold timeout.
+  spc-nav (tap-hold 200 200 spc (layer-while-held myspace))
+)
+
+(deflayer main
+  ;; Default base layer mapping Caps Lock to Right Control, and Space to your custom navigation trigger
+  rctl  @spc-nav
+  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+)
+
+(deflayer myspace
+  ;; Navigation and editing layer activated while holding Space
+  ;; Modifiers/triggers are set to transparent '_' to prevent accidental repeating outputs
+  _     _
+  home  end   pgdn  pgup  left  down  up    rght  del   ins   bspc  ret   esc   menu  tab   caps
+)
