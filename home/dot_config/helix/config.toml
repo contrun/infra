@@ -2,6 +2,7 @@
 true-color = true
 auto-save = true
 auto-format = true
+default-line-ending = "lf"
 
 [editor.soft-wrap]
 enable = true
