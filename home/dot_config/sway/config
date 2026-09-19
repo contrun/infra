@@ -62,6 +62,7 @@ exec wlsunset -l 39.9 -L 116.4
 exec kdeconnectd
 exec fcitx5 -d --replace
 exec copyq
+exec waynergy --backend wlr
 exec_always systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 # WAYLAND_DISPLAY XDG_CURRENT_DESKTOP requried to share screen
 # https://github.com/emersion/xdg-desktop-portal-wlr/wiki/%22It-doesn't-work%22-Troubleshooting-Checklist
