@@ -2,14 +2,49 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["artscraper", "tqdm"]
+# dependencies = ["artscraper", "requests", "tqdm"]
 # ///
 
 import glob
 import json
+import os
 
 from artscraper import WikiArtScraper
+import requests
 from tqdm import tqdm
+
+
+def fetch_txt_files():
+    base_url = "https://storage.googleapis.com/muzeifeaturedart/archivemeta/"
+    year = 2014
+    month = 2
+    while True:
+        filename = f"{year}{month:02d}.txt"
+        url = f"{base_url}{filename}"
+        if not os.path.exists(filename):
+            try:
+                response = requests.get(url, timeout=15)
+                if response.status_code == 200:
+                    with open(filename, "wb") as f:
+                        f.write(response.content)
+                    print(f"Downloaded {filename}")
+                elif response.status_code in (403, 404):
+                    # End of available archives on server
+                    break
+                else:
+                    print(f"Failed to fetch {filename}: HTTP {response.status_code}")
+                    break
+            except Exception as e:
+                print(f"Error fetching {filename}: {e}")
+                break
+
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+
+
+fetch_txt_files()
 
 txt_files = glob.glob('./*.txt')
 
@@ -41,3 +76,4 @@ with WikiArtScraper(output_dir="data") as scraper:
             scraper.save_metadata()
         except Exception as e:
             print(f"failed to download {u}: {e}\n")
+
