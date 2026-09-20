@@ -1,90 +1,88 @@
 [user]
-	email = uuuuuu@protonmail.com
-	name = YI
+    name = YI
+    email = uuuuuu@protonmail.com
 
 [http]
-	cookiefile = gitcookies
+    cookiefile = gitcookies
 
 [color]
-	ui = auto
+    ui = auto
 
 [pull]
-	rebase = true
-	autosquash = true
-	autostash = true
+    rebase = true
+    autosquash = true
+    autostash = true
 
 [push]
-	autoSetupRemote = true
-	default = simple
-	followTags = true
+    autoSetupRemote = true
+    default = simple
+    followTags = true
 
 [commit]
-	verbose = true
+    verbose = true
 
 [rerere]
-	enabled = true
-	autoupdate = true
+    enabled = true
+    autoupdate = true
 
 [github]
-	user = contrun
+    user = contrun
 
 [alias]
-	ignore = "!gi() { curl -sL https://www.gitignore.io/api/$@ ;}; gi"
+    ignore = "!gi() { curl -sL https://www.gitignore.io/api/$@ ;}; gi"
 
 [rebase]
-	autoStash = true
-	autoStash = true
-	updateRefs = true
+    autoStash = true
+    updateRefs = true
 
 [init]
-	defaultBranch = main
+    defaultBranch = main
 
 [core]
-;	excludesFile = ~/.gitignore
-	pager = delta
-;	https://stackoverflow.com/questions/66366582/github-unexpected-disconnect-while-reading-sideband-packet
-	packedGitLimit = 512m
-	packedGitWindowSize = 512m
+    # excludesFile = ~/.gitignore
+    pager = delta
+    # https://stackoverflow.com/questions/66366582/github-unexpected-disconnect-while-reading-sideband-packet
+    packedGitLimit = 512m
+    packedGitWindowSize = 512m
 
-[pack] 
-	deltaCacheSize = 2047m
-	packSizeLimit = 2047m
-	windowMemory = 2047m
+[pack]
+    deltaCacheSize = 2047m
+    packSizeLimit = 2047m
+    windowMemory = 2047m
 
 [interactive]
-	diffFilter = delta --color-only
+    diffFilter = delta --color-only
 
 [delta]
-	navigate = true
+    navigate = true
 
 [merge]
-	conflictstyle = diff3
+    conflictstyle = diff3
 
 [diff]
-	ui = auto
-	colorMoved = default
-	algorithm = histogram
-	mnemonicPrefix = true
-	renames = true
+    ui = auto
+    colorMoved = default
+    algorithm = histogram
+    mnemonicPrefix = true
+    renames = true
 
 [protocol "file"]
-	allow = always
+    allow = always
 
 [branch]
-	sort = -committerdate
+    sort = -committerdate
 
 [tag]
-	sort = version:refname
+    sort = version:refname
 
 [fetch]
-	prune = true
-	pruneTags = true
-	all = true
+    prune = true
+    pruneTags = true
+    all = true
 
 [help]
-	autocorrect = prompt
+    autocorrect = prompt
 
 [include]
-	path = config.sensitive
-	path = config.local
-
+    path = config.sensitive
+    path = config.local
