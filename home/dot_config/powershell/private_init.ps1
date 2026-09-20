@@ -1,3 +1,1 @@
-Install-Module PSReadLine -Repository PSGallery -Scope CurrentUser -Force
-Install-Module PSFzf -Repository PSGallery -Scope CurrentUser -Force
-Install-Module posh-git -Repository PSGallery -Scope CurrentUser -Force
+Install-Module -Repository PSGallery -Scope CurrentUser -Force -Name PSReadLine, PSFzf, posh-git
