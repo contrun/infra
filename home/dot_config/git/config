@@ -39,6 +39,7 @@
     defaultBranch = main
 
 [core]
+	autocrlf = false
     # excludesFile = ~/.gitignore
     pager = delta
     # https://stackoverflow.com/questions/66366582/github-unexpected-disconnect-while-reading-sideband-packet
