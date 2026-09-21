@@ -1,0 +1,24 @@
+{{ if eq .chezmoi.os "windows" -}}
+$profilePath = "$PROFILE"
+$profileDir = Split-Path $profilePath -Parent
+
+if (-not (Test-Path $profileDir)) {
+    New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+}
+
+$snippet = @'
+$commonProfile = Join-Path $HOME ".config" "powershell" (Split-Path $PROFILE -Leaf)
+if (Test-Path $commonProfile) {
+    . $commonProfile
+}
+'@
+
+if (Test-Path $profilePath) {
+    $currentContent = Get-Content -Path $profilePath -Raw
+    if ($currentContent -notlike "*$snippet*") {
+        Add-Content -Path $profilePath -Value "`n$snippet"
+    }
+} else {
+    Set-Content -Path $profilePath -Value $snippet
+}
+{{ end -}}
