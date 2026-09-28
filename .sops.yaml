@@ -1,0 +1,7 @@
+creation_rules:
+  - path_regex: (\.enc\.(yaml|json)|\.env(\.[^.]*)*\.enc)$
+    key_groups:
+      - age:
+          # Created with age-plugin-tpm --generate -o ~/.config/sops/age/tpm_key.txt
+          # Edit the file with export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/tpm_key.txt"
+          - age1tag1qffp240kjhp9s9q7mmw4wgk7h3ljzgrrzu2pnu225wxdt9eka6aas6wzzd0

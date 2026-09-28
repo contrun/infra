@@ -2,6 +2,10 @@ import io
 import json
 import os
 import urllib.request
+import subprocess
+
+from dotenv import dotenv_values
+from pykeepass import PyKeePass
 
 from pyinfra import host
 from pyinfra.facts.server import Command
@@ -14,6 +18,17 @@ if "SSL_CERT_FILE" not in os.environ:
         os.environ["SSL_CERT_FILE"] = certifi.where()
     except ImportError:
         pass
+
+cmd = ["sops", "decrypt", "--input-type", "dotenv", "--output-type", "dotenv", "pyinfra/.env.enc"]
+result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+config = dotenv_values(stream=io.StringIO(result.stdout))
+
+kp = PyKeePass(config['KEEPASS_FILE_PATH'], password=config['KEEPASS_FILE_PASSWORD'])
+
+group = kp.find_groups(name='network', first=True)
+entry = kp.find_entries(title='sing-box', group=group, first=True)
+if not entry.username or not entry.password:
+    raise RuntimeError("Failed to fetch sing-box username/password from keepass file")
 
 req = urllib.request.Request(
     "https://api.github.com/repos/SagerNet/sing-box/releases/latest",
@@ -65,14 +80,14 @@ CONFIG_JSON = json.dumps(
                 "tag": "http-in",
                 "listen": "::",
                 "listen_port": 3330,
-                "users": [{"username": "user", "password": "password"}],
+                "users": [{"username": entry.username, "password": entry.password}],
             },
             {
                 "type": "socks",
                 "tag": "socks-in",
                 "listen": "::",
                 "listen_port": 3331,
-                "users": [{"username": "user", "password": "password"}],
+                "users": [{"username": entry.username, "password": entry.password}],
             },
             {
                 "type": "shadowsocks",
@@ -80,7 +95,7 @@ CONFIG_JSON = json.dumps(
                 "listen": "::",
                 "listen_port": 3333,
                 "method": "chacha20-ietf-poly1305",
-                "password": "password",
+                "password": entry.password,
             },
         ],
         "outbounds": [{"type": "direct", "tag": "direct"}],
