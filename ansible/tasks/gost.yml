@@ -8,17 +8,19 @@
     if [[ -n "$latest_version" ]] && command -v gost && gost -V | grep "$latest_version"; then
         exit 0
     fi
-    download_url=$(curl https://api.github.com/repos/go-gost/gost/releases | awk -F'"' '/browser_download_url.*linux-amd64.*gz/ {print $4}' | head -n1)
+    download_url=$(curl https://api.github.com/repos/go-gost/gost/releases | awk -F'"' '/browser_download_url.*linux_amd64\.tar\.gz/ {print $4}' | head -n1)
     if [[ -z "$download_url" ]]; then
         echo "Download url not found. Please Check out the output."
     fi
     filename="$(basename $download_url)"
-    curl -L "$download_url" > "$filename" 
-    gunzip -f "$filename"
+    curl -L --output "$filename" "$download_url"
+    tar -axvf "$filename" --wildcards --no-anchored 'gost*'
     rm -f "$filename"
     chmod +x gost*
     mv gost* /usr/local/bin/gost
-    gost -V
+    if ! /usr/local/bin/gost -V | grep -q "$latest_version"; then
+        exit 1
+    fi
   args:
     executable: /bin/bash
 
