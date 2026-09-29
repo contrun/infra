@@ -1,21 +1,12 @@
-from pathlib import PurePosixPath
-
-from pyinfra import host
-from pyinfra.facts.server import User, Home
-from pyinfra.operations import files, server
-from pyinfra.api import FactBase
-
-import os
-import base64
 import urllib.request
+from pathlib import Path, PurePosixPath
 
-# Set SSL_CERT_FILE using certifi if not present in environment (e.g., Nix / standalone Python builds)
-if "SSL_CERT_FILE" not in os.environ:
-    try:
-        import certifi
-        os.environ["SSL_CERT_FILE"] = certifi.where()
-    except ImportError:
-        pass
+from lib.ssl import setup_ssl_cert
+from pyinfra.context import host
+from pyinfra.facts.server import Home, User
+from pyinfra.operations import files, server
+
+setup_ssl_cert()
 
 github_user = "contrun"
 keys_url = f"https://github.com/{github_user}.keys"
@@ -30,7 +21,7 @@ keys = [i.strip() for i in keys_content.strip().splitlines() if i.strip()]
 
 current_user = host.get_fact(User)
 path_home = host.get_fact(Home)
-dir_path = PurePosixPath(path_home) / ".ssh"
+dir_path = Path(path_home) / ".ssh"
 file_path = dir_path / "authorized_keys"
 current_user = host.get_fact(User)
 

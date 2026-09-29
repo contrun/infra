@@ -1,34 +1,19 @@
 import io
 import json
-import os
 import urllib.request
-import subprocess
 
-from dotenv import dotenv_values
-from pykeepass import PyKeePass
-
-from pyinfra import host
+from lib.keepass import must_get_keepass_entry
+from lib.ssl import setup_ssl_cert
+from pyinfra.context import host
 from pyinfra.facts.server import Command
 from pyinfra.operations import files, server, systemd
 
-# Set SSL_CERT_FILE using certifi if not present in environment (e.g., Nix / standalone Python builds)
-if "SSL_CERT_FILE" not in os.environ:
-    try:
-        import certifi
-        os.environ["SSL_CERT_FILE"] = certifi.where()
-    except ImportError:
-        pass
+setup_ssl_cert()
 
-cmd = ["sops", "decrypt", "--input-type", "dotenv", "--output-type", "dotenv", "pyinfra/.env.enc"]
-result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-config = dotenv_values(stream=io.StringIO(result.stdout))
-
-kp = PyKeePass(config['KEEPASS_FILE_PATH'], password=config['KEEPASS_FILE_PASSWORD'])
-
-group = kp.find_groups(name='network', first=True)
-entry = kp.find_entries(title='sing-box', group=group, first=True)
-if not entry.username or not entry.password:
-    raise RuntimeError("Failed to fetch sing-box username/password from keepass file")
+entry = must_get_keepass_entry(
+    group_name="network",
+    entry_title="sing-box",
+)
 
 req = urllib.request.Request(
     "https://api.github.com/repos/SagerNet/sing-box/releases/latest",
@@ -147,4 +132,3 @@ systemd.service(
     enabled=True,
     restarted=installation_required or config_file.changed or service_file.changed,
 )
-
