@@ -5,7 +5,7 @@ import subprocess
 from dotenv import dotenv_values
 
 script_path = pathlib.Path(__file__)
-default_env_path = script_path.parent.parent / ".env.enc"
+default_env_path = script_path.parent.parent / ".env.secret"
 
 
 def load_sops_env(env_path: str = str(default_env_path)) -> dict[str, str | None]:

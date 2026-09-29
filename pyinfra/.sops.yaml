@@ -1,5 +1,5 @@
 creation_rules:
-  - path_regex: (\.enc\.(yaml|json)|\.env(\.[^.]*)*\.enc)$
+  - path_regex: (\.secret\.(yaml|json)|\.env(\.[^.]*)*\.secret)$
     key_groups:
       - age:
           # Created with age-plugin-tpm --generate -o ~/.config/sops/age/tpm_key.txt
