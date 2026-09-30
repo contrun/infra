@@ -18,13 +18,14 @@ from invoke.program import Program
 from invoke.tasks import task
 
 # --- Project Paths & Defaults ---
-SCRIPT_DIR = Path(__file__).resolve().parent
-IGNORED_DIR = SCRIPT_DIR / "ignored"
-TMP_DIR = SCRIPT_DIR / "tmp"
+TOP_DIR = Path(__file__).resolve().parent
+IGNORED_DIR = TOP_DIR / "ignored"
+TMP_DIR = TOP_DIR / "tmp"
+HOME_DIR = Path.home()
 
 DEFAULT_HOST = socket.gethostname()
 DEFAULT_USER = os.getlogin()
-DEFAULT_HOME = str(Path.home())
+DEFAULT_HOME = str(HOME_DIR)
 
 
 # --- Helper Methods ---
@@ -102,22 +103,38 @@ def clean(c: Context):
     if TMP_DIR.exists():
         shutil.rmtree(TMP_DIR)
 
-    result_link = SCRIPT_DIR / "result"
+    result_link = TOP_DIR / "result"
     if result_link.is_symlink() and os.readlink(result_link).startswith("/nix/store/"):
         result_link.unlink()
 
 
 @task
-def sops(c: Context):
+def edit_nix_secrets(c: Context):
     """Edit SOPS secrets."""
     c.run("sops ./nix/sops/secrets.yaml")
 
 
+@task
+def edit_pyinfra_inventory(c: Context):
+    """Decrypt sops encrypted pyinfra inventory file and edit it."""
+    pyinfra_dir = TOP_DIR / "pyinfra"
+    inventory_file = pyinfra_dir / "inventory.secret.json"
+    sops_config_file = pyinfra_dir / ".sops.yaml"
+    age_key_files = [HOME_DIR / ".config" / "sops" / "age" / "tpm_key.txt"]
+    age_key_file = next(iter([k for k in age_key_files if k.exists()]), None)
+    env = {}
+    if age_key_file:
+        env["SOPS_AGE_KEY_FILE"] = age_key_file
+    c.run(
+        f"sops --config {sops_config_file} --input-type json --output-type json --encrypt --in-place  edit {inventory_file}",
+        pty=True,
+        env=env,
+    )
+
+
 # --- Chezmoi Management Tasks ---
 @task
-def chezmoi_cmd(
-    c: Context, action, dest=DEFAULT_HOME, src=str(SCRIPT_DIR), verbose=False
-):
+def chezmoi_cmd(c: Context, action, dest=DEFAULT_HOME, src=str(TOP_DIR), verbose=False):
     """Run generic chezmoi command (init, update, status, apply, purge, managed)."""
     v_flag = "-v" if verbose else ""
     c.run(f'chezmoi -D "{dest}" -S "{src}" {action} {v_flag} --keep-going')
@@ -127,14 +144,14 @@ def chezmoi_cmd(
 def home_install(c: Context, dest=DEFAULT_HOME, verbose=False):
     """Apply chezmoi configurations for home directory."""
     v_flag = "-v" if verbose else ""
-    c.run(f'chezmoi {v_flag} --keep-going -D "{dest}" -S "{SCRIPT_DIR}" apply')
+    c.run(f'chezmoi {v_flag} --keep-going -D "{dest}" -S "{TOP_DIR}" apply')
 
 
 @task
 def home_uninstall(c: Context, dest=DEFAULT_HOME, verbose=False):
     """Purge chezmoi home configurations."""
     v_flag = "-v" if verbose else ""
-    c.run(f'chezmoi {v_flag} --keep-going -D "{dest}" -S "{SCRIPT_DIR}" purge')
+    c.run(f'chezmoi {v_flag} --keep-going -D "{dest}" -S "{TOP_DIR}" purge')
 
 
 # --- Home Manager Tasks ---
