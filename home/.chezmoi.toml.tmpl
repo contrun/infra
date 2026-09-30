@@ -1,6 +1,8 @@
 {{- $passphrase := "" -}}
 {{- $domain := "" -}}
 {{- $githubToken := "" -}}
+{{- $gitName := "" -}}
+{{- $gitEmail := "" -}}
 
 {{- if stdinIsATTY -}}
 
@@ -9,6 +11,10 @@
     {{- $domain = promptStringOnce . "domain" "domain to use" -}}
 
     {{- $githubToken = promptStringOnce . "githubToken" "github token" -}}
+
+    {{- $gitName = promptStringOnce . "gitName" "git name" -}}
+
+    {{- $gitEmail = promptStringOnce . "gitEmail" "git email" -}}
 
 {{- end -}}
 
@@ -28,6 +34,12 @@ encryption = "gpg"
 {{- end }}
 {{- if $githubToken }}
     githubToken = {{ $githubToken | quote }}
+{{- end }}
+{{- if $gitName }}
+    gitName = {{ $gitName | quote }}
+{{- end }}
+{{- if $gitEmail }}
+    gitEmail = {{ $gitEmail | quote }}
 {{- end }}
 
 [gpg]

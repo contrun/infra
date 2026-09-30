@@ -5,3 +5,7 @@
 [url "https://{{- .githubToken -}}@github.com/"]
 	insteadOf = https://github.com/
 {{- end }}
+
+[user]
+    name = {{ .gitName | default "Your Name" }}
+    email = {{ .gitEmail | default "your.email@example.com" }}
