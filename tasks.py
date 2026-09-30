@@ -13,12 +13,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from invoke.collection import Collection
+from invoke.context import Context
 from invoke.program import Program
 from invoke.tasks import task
 
 # --- Project Paths & Defaults ---
 SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT_DIR = SCRIPT_DIR / "root"
 IGNORED_DIR = SCRIPT_DIR / "ignored"
 TMP_DIR = SCRIPT_DIR / "tmp"
 
@@ -28,14 +28,14 @@ DEFAULT_HOME = str(Path.home())
 
 
 # --- Helper Methods ---
-def get_command(c, name: str, fallback_cmd: str) -> str:
+def get_command(c: Context, name: str, fallback_cmd: str) -> str:
     """Check if a command exists on PATH; if not, return the nix run fallback."""
     if shutil.which(name):
         return name
     return fallback_cmd
 
 
-def get_nix_flags(system: str | None = None, extra_flags: str = "") -> str:
+def get_nix_flags(system: str | None = None, extra_flags: str | None = None) -> str:
     flags = []
     if system:
         flags.extend(["--system", system, "--extra-extra-platforms", system])
@@ -47,13 +47,13 @@ def get_nix_flags(system: str | None = None, extra_flags: str = "") -> str:
 
 # --- Git Tasks ---
 @task
-def pull(c):
+def pull(c: Context):
     """Pull upstream changes with rebase and autostash."""
     c.run("git pull --rebase --autostash")
 
 
 @task
-def push(c):
+def push(c: Context):
     """Commit and push changes interactively."""
     c.run("git status")
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -65,7 +65,7 @@ def push(c):
 
 
 @task
-def autopush(c):
+def autopush(c: Context):
     """Auto-commit and push without prompt."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     c.run(f'git commit -a -m "auto push at {now}"')
@@ -73,31 +73,31 @@ def autopush(c):
 
 
 @task(pre=[pull, push])
-def upload(c):
+def upload(c: Context):
     """Pull and push changes."""
 
 
 @task(pre=[pull])
-def update(c, host=DEFAULT_HOST):
+def update(c: Context, host=DEFAULT_HOST):
     """Pull changes and update nix flake inputs."""
     update_upstreams(c)
 
 
 @task
-def update_upstreams(c):
+def update_upstreams(c: Context):
     """Update Nix flake dependencies."""
     c.run("nix flake update")
 
 
 # --- Utility Tasks ---
 @task
-def create_dirs(c):
+def create_tmp_dirs(c: Context):
     """Ensure temporary directories exist."""
     TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @task
-def clean(c):
+def clean(c: Context):
     """Remove build artifacts and temporary files."""
     if TMP_DIR.exists():
         shutil.rmtree(TMP_DIR)
@@ -108,61 +108,39 @@ def clean(c):
 
 
 @task
-def sops(c):
+def sops(c: Context):
     """Edit SOPS secrets."""
     c.run("sops ./nix/sops/secrets.yaml")
 
 
 # --- Chezmoi Management Tasks ---
 @task
-def chezmoi_cmd(c, action, dest=DEFAULT_HOME, src=str(SCRIPT_DIR), verbose=False):
+def chezmoi_cmd(
+    c: Context, action, dest=DEFAULT_HOME, src=str(SCRIPT_DIR), verbose=False
+):
     """Run generic chezmoi command (init, update, status, apply, purge, managed)."""
     v_flag = "-v" if verbose else ""
     c.run(f'chezmoi -D "{dest}" -S "{src}" {action} {v_flag} --keep-going')
 
 
 @task
-def home_install(c, dest=DEFAULT_HOME, verbose=False):
+def home_install(c: Context, dest=DEFAULT_HOME, verbose=False):
     """Apply chezmoi configurations for home directory."""
     v_flag = "-v" if verbose else ""
     c.run(f'chezmoi {v_flag} --keep-going -D "{dest}" -S "{SCRIPT_DIR}" apply')
 
 
 @task
-def root_install(c, dest="/", verbose=False):
-    """Apply chezmoi configurations for root directory using sudo."""
-    v_flag = "-v" if verbose else ""
-    c.run(f'sudo chezmoi {v_flag} --keep-going -D "{dest}" -S "{ROOT_DIR}" apply')
-
-
-@task(pre=[home_install, root_install])
-def all_install(c):
-    """Apply both home and root chezmoi configurations."""
-
-
-@task
-def home_uninstall(c, dest=DEFAULT_HOME, verbose=False):
+def home_uninstall(c: Context, dest=DEFAULT_HOME, verbose=False):
     """Purge chezmoi home configurations."""
     v_flag = "-v" if verbose else ""
     c.run(f'chezmoi {v_flag} --keep-going -D "{dest}" -S "{SCRIPT_DIR}" purge')
 
 
-@task
-def root_uninstall(c, dest="/", verbose=False):
-    """Purge chezmoi root configurations using sudo."""
-    v_flag = "-v" if verbose else ""
-    c.run(f'sudo chezmoi {v_flag} --keep-going -D "{dest}" -S "{ROOT_DIR}" purge')
-
-
-@task(pre=[home_uninstall, root_uninstall])
-def all_uninstall(c):
-    """Uninstall all chezmoi configurations."""
-
-
 # --- Home Manager Tasks ---
 @task
 def home_manager(
-    c, host=DEFAULT_HOST, user=DEFAULT_USER, system=None, extra_nix_flags=""
+    c: Context, host=DEFAULT_HOST, user=DEFAULT_USER, system=None, extra_nix_flags=""
 ):
     """Switch Home Manager configuration."""
     cmd = get_command(c, "home-manager", "nix run .#home-manager --")
@@ -172,7 +150,7 @@ def home_manager(
 
 @task
 def home_manager_build(
-    c, host=DEFAULT_HOST, user=DEFAULT_USER, system=None, extra_nix_flags=""
+    c: Context, host=DEFAULT_HOST, user=DEFAULT_USER, system=None, extra_nix_flags=""
 ):
     """Build Home Manager configuration."""
     cmd = get_command(c, "home-manager", "nix run .#home-manager --")
@@ -181,7 +159,7 @@ def home_manager_build(
 
 
 @task
-def home_manager_bootstrap(c, system=None, extra_nix_flags=""):
+def home_manager_bootstrap(c: Context, system=None, extra_nix_flags=""):
     """Bootstrap Home Manager configuration on current system."""
     cmd = get_command(c, "home-manager", "nix run .#home-manager --")
     flags = get_nix_flags(system, extra_nix_flags)
@@ -192,8 +170,8 @@ def home_manager_bootstrap(c, system=None, extra_nix_flags=""):
 
 
 # --- NixOS Operations ---
-@task(pre=[create_dirs])
-def nixos_prefs(c, host=DEFAULT_HOST):
+@task(pre=[create_tmp_dirs])
+def nixos_prefs(c: Context, host=DEFAULT_HOST):
     """Export host NixOS preferences to JSON."""
     jq = "jq" if shutil.which("jq") else "cat"
     cmd = (
@@ -206,7 +184,7 @@ def nixos_prefs(c, host=DEFAULT_HOST):
 
 @task
 def nixos_deploy(
-    c,
+    c: Context,
     host=DEFAULT_HOST,
     no_rollback=False,
     no_fast_connection=False,
@@ -231,7 +209,9 @@ def nixos_deploy(
 
 
 @task
-def nixos_build(c, host=DEFAULT_HOST, build_type="toplevel", extra_nix_flags=""):
+def nixos_build(
+    c: Context, host=DEFAULT_HOST, build_type="toplevel", extra_nix_flags=""
+):
     """Build NixOS configuration."""
     flags = get_nix_flags(extra_flags=extra_nix_flags)
     c.run(
@@ -240,21 +220,21 @@ def nixos_build(c, host=DEFAULT_HOST, build_type="toplevel", extra_nix_flags="")
 
 
 @task
-def nixos_switch(c, host=DEFAULT_HOST, extra_nix_flags=""):
+def nixos_switch(c: Context, host=DEFAULT_HOST, extra_nix_flags=""):
     """Switch to target NixOS configuration."""
     flags = get_nix_flags(extra_flags=extra_nix_flags)
     c.run(f'sudo nixos-rebuild switch --flake ".#{host}" {flags}')
 
 
 @task
-def nixos_bootloader(c, host=DEFAULT_HOST, extra_nix_flags=""):
+def nixos_bootloader(c: Context, host=DEFAULT_HOST, extra_nix_flags=""):
     """Switch NixOS system configuration and reinstall bootloader."""
     flags = get_nix_flags(extra_flags=extra_nix_flags)
     c.run(f'sudo nixos-rebuild switch --flake ".#{host}" --install-bootloader {flags}')
 
 
-@task(pre=[create_dirs])
-def nixos_profile_path_info(c, host=DEFAULT_HOST, extra_nix_flags=""):
+@task(pre=[create_tmp_dirs])
+def nixos_profile_path_info(c: Context, host=DEFAULT_HOST, extra_nix_flags=""):
     """Inspect and sort Nix store output size paths."""
     flags = get_nix_flags(extra_flags=extra_nix_flags)
     out_path = c.run(
@@ -269,34 +249,24 @@ def nixos_profile_path_info(c, host=DEFAULT_HOST, extra_nix_flags=""):
 
 
 @task
-def nixos_generate(c, host=DEFAULT_HOST, format="iso"):
+def nixos_generate(c: Context, host=DEFAULT_HOST, format="iso"):
     """Generate NixOS images (ISO, VM, etc.) using nixos-generate."""
     gen = get_command(c, "nixos-generate", "nix run .#nixos-generate --")
     c.run(f'{gen} -f {format} --flake ".#{host}"')
 
 
 @task
-def nixos_update_channels(c):
-    """Update root nix-channels."""
-    c.run("sudo nix-channel --update")
-
-
-@task
-def nixos_vagrant_box(c):
+def nixos_vagrant_box(c: Context):
     """Generate Vagrant VirtualBox target."""
     gen = get_command(c, "nixos-generate", "nix run .#nixos-generate --")
     c.run(f'{gen} -f vagrant-virtualbox --flake ".#dbx"')
 
 
 # --- Cachix Binary Cache ---
-@task(pre=[create_dirs])
-def cachix_push(c, host=DEFAULT_HOST):
+@task(pre=[create_tmp_dirs])
+def cachix_push(c: Context, host=DEFAULT_HOST):
     """Push derivation dependencies to Cachix binary cache."""
-    try:
-        nixos_build(c, host=host)
-    except Exception:
-        pass
-
+    nixos_build(c, host=host)
     flags = get_nix_flags()
     paths_file = TMP_DIR / "cachix-push.paths"
 
@@ -317,7 +287,7 @@ def cachix_push(c, host=DEFAULT_HOST):
 
 
 @task
-def cachix_push_all(c):
+def cachix_push_all(c: Context):
     """Push closure paths for multi-arch build environments."""
     cachix_push(c, host="cicd-x86_64-linux")
     cachix_push(c, host="cicd-aarch64-linux")
@@ -325,7 +295,7 @@ def cachix_push_all(c):
 
 # --- Ansible Workflows ---
 @task
-def ansible_install_requirements(c):
+def ansible_install_requirements(c: Context):
     """Install required Ansible collections and roles."""
     with c.cd("ansible"):
         c.run(
@@ -335,7 +305,7 @@ def ansible_install_requirements(c):
 
 
 @task
-def ansible_diff_inventory_hosts(c):
+def ansible_diff_inventory_hosts(c: Context):
     """Diff decrypted Ansible inventory against Git HEAD."""
     with c.cd("ansible"):
         c.run(
@@ -344,21 +314,21 @@ def ansible_diff_inventory_hosts(c):
 
 
 @task
-def ansible_view_inventory_hosts(c):
+def ansible_view_inventory_hosts(c: Context):
     """Decrypt and display inventory file."""
     with c.cd("ansible"):
         c.run("ansible-vault view inventory/hosts.yml")
 
 
 @task
-def ansible_edit_inventory_hosts(c):
+def ansible_edit_inventory_hosts(c: Context):
     """Edit encrypted inventory file."""
     with c.cd("ansible"):
         c.run("ansible-vault edit inventory/hosts.yml")
 
 
 @task
-def ansible_deploy_services(c, services="", extra_flags=""):
+def ansible_deploy_services(c: Context, services="", extra_flags=""):
     """Deploy ansible services playbook."""
     with c.cd("ansible"):
         c.run(
@@ -367,7 +337,7 @@ def ansible_deploy_services(c, services="", extra_flags=""):
 
 
 @task
-def ansible_configure_hosts(c, services="", hosts="", extra_flags=""):
+def ansible_configure_hosts(c: Context, services="", hosts="", extra_flags=""):
     """Configure target Ansible hosts."""
     with c.cd("ansible"):
         c.run(
@@ -377,7 +347,7 @@ def ansible_configure_hosts(c, services="", hosts="", extra_flags=""):
 
 @task
 def ansible_configure_ssh_ca_yubikey(
-    c,
+    c: Context,
     type="both",
     hosts="",
     force_sign="",
@@ -425,7 +395,7 @@ def ansible_configure_ssh_ca_yubikey(
 
 
 @task
-def ansible_generate_lock(c):
+def ansible_generate_lock(c: Context):
     """Generate lockfile for Ansible configs."""
     with c.cd("ansible"):
         c.run("./generate-lock.sh")
@@ -433,7 +403,7 @@ def ansible_generate_lock(c):
 
 # --- Deployment Services ---
 @task
-def flyctl_deploy(c, service):
+def flyctl_deploy(c: Context, service):
     """Deploy target service to Fly.io."""
     c.run(f"flyctl deploy -c fly/{service}/fly.toml")
 
