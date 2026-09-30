@@ -1,6 +1,6 @@
-{{- $passphrase := "bogus-passphrase" -}}
-{{- $domain := "home.arpa" -}}
-{{- $githubToken := "bogus-token" -}}
+{{- $passphrase := "" -}}
+{{- $domain := "" -}}
+{{- $githubToken := "" -}}
 
 {{- if stdinIsATTY -}}
 
@@ -20,13 +20,26 @@ sourceDir = "{{ .chezmoi.sourceDir }}"
 encryption = "gpg"
 
 [data]
+{{- if $passphrase }}
     passphrase = {{ $passphrase | quote }}
+{{- end }}
+{{- if $domain }}
     domain = {{ $domain | quote }}
+{{- end }}
+{{- if $githubToken }}
     githubToken = {{ $githubToken | quote }}
+{{- end }}
 
 [gpg]
     symmetric = true
-    args = ["--quiet", "--batch", "--passphrase", {{ $passphrase | quote }}, "--no-symkey-cache"]
+    args = [
+        "--quiet",
+        "--batch",
+        {{- if $passphrase }}
+        "--passphrase", {{ $passphrase | quote }},
+        {{- end }}
+        "--no-symkey-cache"
+    ]
 
 [keepassxc]
 # It is too tedious to enter keepass word everytime when I try to apply changes.
