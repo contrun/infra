@@ -8,6 +8,7 @@ set $altmod3 $mod+Control+Shift
 set $terminal wezterm
 set $terminal_with_app_id foot -a
 set $terminal_with_title foot -T
+set $lock_command sh -c "find ~/Storage/muzei -type f -name 'artwork.*' | shuf -n1 | xargs --no-run-if-empty swaylock --image || swaylock --color 000000"
 set $reload_command "dunstify --app-name wm 'reloading sway'; swaymsg reload"
 set $browser_command xdg-launch "$(xdg-settings get default-web-browser)"
 set $scratchpad_terminal_name scratchpad_terminal
@@ -67,7 +68,7 @@ exec_always systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURR
 # WAYLAND_DISPLAY XDG_CURRENT_DESKTOP requried to share screen
 # https://github.com/emersion/xdg-desktop-portal-wlr/wiki/%22It-doesn't-work%22-Troubleshooting-Checklist
 exec_always dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-exec_always sh -c "pkill swaybg; find ~/Storage/muzei -type f -name 'artwork.*' | shuf -n1 | xargs --no-run-if-empty swaybg -m fit -i"
+exec_always artwork.ts --set-wallpaper
 
 # move specific application to specific workspace
 for_window [class="Pale moon" window_role="^(?!GtkFileChooserDialog)"] floating enable
@@ -180,7 +181,7 @@ output "Unknown 0xC199 Unknown" {
 }
 
 output "AU Optronics 0xC199 Unknown" {
-       scale 1.4
+       scale 1.5
 }
 
 output "Technical Concepts Ltd TCL Smart TV 0x00000001" {
@@ -374,6 +375,8 @@ bindsym $altmod+F2    move container to workspace next
 
 bindsym $altmod3+s output $laptop_output toggle
 bindsym $altmod3+c exec $reload_command
+bindsym $altmod3+v exec $reload_command
+bindsym Control+Alt+Shift+l exec $lock_command
 
 bindsym $mod+grave exec $switch_output_command
 # zw-type failed with error: ImeUnavailable
@@ -385,7 +388,7 @@ bindsym $altmod2+v exec zw-type "$(wl-paste)" || wlrctl keyboard type "$(wl-past
 
 set $mode_system (l)ock, r(e)start sway, log(o)ut, reload (c)onfig, (s)uspend, (h)ibernate, (r)eboot, (p)oweroff
 mode "$mode_system" {
-        bindsym l exec swaylock --color 000000; mode  "default"
+        bindsym l exec $lock_command; mode  "default"
         bindsym e restart; mode "default"
         bindsym o exec swaymsg exit, mode "default"
         bindsym c exec $reload_command, mode "default"
