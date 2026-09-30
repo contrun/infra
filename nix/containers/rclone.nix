@@ -35,6 +35,7 @@ let
                 "s3"
                 "webdav"
                 "restic"
+                "temp"
                 "public"
               ];
           mkCommand =
@@ -69,6 +70,14 @@ let
                     checkRcdOnlineCommand
                     ''
                       ${rcCommand} serve/start vfs_cache_mode=full type=restic fs=restic: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="${htpasswdFile}"
+                    ''
+                  ]
+                else if name == "temp" then
+                  [
+                    downloadCommand
+                    checkRcdOnlineCommand
+                    ''
+                      ${rcCommand} serve/start vfs_cache_mode=full type=webdav fs=temp: addr=:${builtins.toString port} baseurl=${url} realm=${name} htpasswd="${htpasswdFile}"
                     ''
                   ]
                 else if name == "public" then
