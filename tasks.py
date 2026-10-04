@@ -6,6 +6,7 @@
 # ///
 
 import os
+import shlex
 import shutil
 import socket
 import sys
@@ -19,16 +20,19 @@ from invoke.tasks import task
 
 # --- Project Paths & Defaults ---
 TOP_DIR = Path(__file__).resolve().parent
-IGNORED_DIR = TOP_DIR / "ignored"
 TMP_DIR = TOP_DIR / "tmp"
 HOME_DIR = Path.home()
+PYINFRA_DIR = TOP_DIR / "pyinfra"
 
 DEFAULT_HOST = socket.gethostname()
 DEFAULT_USER = os.getlogin()
 DEFAULT_HOME = str(HOME_DIR)
 
+def get_passthru_args_from_argv() -> list[str]:
+    if "--" in sys.argv:
+        return sys.argv[sys.argv.index("--") + 1 :]
+    return []
 
-# --- Helper Methods ---
 def get_command(c: Context, name: str, fallback_cmd: str) -> str:
     """Check if a command exists on PATH; if not, return the nix run fallback."""
     if shutil.which(name):
@@ -117,9 +121,8 @@ def edit_nix_secrets(c: Context):
 @task
 def edit_pyinfra_inventory(c: Context):
     """Decrypt sops encrypted pyinfra inventory file and edit it."""
-    pyinfra_dir = TOP_DIR / "pyinfra"
-    inventory_file = pyinfra_dir / "inventory.secret.json"
-    sops_config_file = pyinfra_dir / ".sops.yaml"
+    inventory_file = PYINFRA_DIR / "inventory.secret.json"
+    sops_config_file = PYINFRA_DIR / ".sops.yaml"
     age_key_files = [HOME_DIR / ".config" / "sops" / "age" / "tpm_key.txt"]
     age_key_file = next(iter([k for k in age_key_files if k.exists()]), None)
     env = {}
@@ -130,6 +133,22 @@ def edit_pyinfra_inventory(c: Context):
         pty=True,
         env=env,
     )
+
+
+@task
+def deploy_pyinfra_task(c: Context, task: str):
+    """Decrypt sops encrypted pyinfra inventory file and edit it."""
+    age_key_files = [HOME_DIR / ".config" / "sops" / "age" / "tpm_key.txt"]
+    age_key_file = next(iter([k for k in age_key_files if k.exists()]), None)
+    env = {}
+    args = get_passthru_args_from_argv()
+    if age_key_file:
+        env["SOPS_AGE_KEY_FILE"] = age_key_file
+    with c.cd(PYINFRA_DIR):
+        c.run(
+            f"uv run pyinfra inventory.make_prod tasks/{task}.py {shlex.join(args)}".strip(),
+            env=env,
+        )
 
 
 # --- Chezmoi Management Tasks ---
