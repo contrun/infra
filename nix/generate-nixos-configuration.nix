@@ -28,7 +28,6 @@ let
       isMinimalSystem
       isMaximalSystem
       isVirtualMachine
-      system
       ;
   };
 
@@ -53,7 +52,6 @@ let
     {
       config,
       pkgs,
-      system,
       inputs,
       ...
     }:
@@ -376,7 +374,6 @@ let
     {
       config,
       pkgs,
-      system,
       inputs,
       ...
     }:
@@ -388,24 +385,13 @@ let
     in
     nixos-vscode-server;
 
-  tmpConfiguration =
-    {
-      config,
-      pkgs,
-      system,
-      inputs,
-      ...
-    }:
-    { };
-
 in
 {
   # TODO: Remove makeOverridable.
   # Workaround for `nixos-generate --flake`, see https://github.com/nix-community/nixos-generators/issues/110
   "${hostname}" = (with inputs.nixpkgs.lib; makeOverridable nixosSystem) {
-    inherit system;
-
     modules = [
+      { nixpkgs.hostPlatform = system; }
       systemInfo
       nixpkgsConfiguration
       hostConfiguration
@@ -418,7 +404,6 @@ in
       microvmGuestConfiguration
       inputs.home-manager.nixosModules.home-manager
       miscConfiguration
-      tmpConfiguration
       (vmConfiguration hostname)
     ]
     ++ (readModulesDir ./modules)
