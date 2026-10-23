@@ -2,13 +2,18 @@
   pkgs,
   lib,
   packages,
-  zotero-plugins,
   ...
 }:
 
 with pkgs;
 let
   zotero = packages.zotero;
+  zotero-plugins = fetchFromGitHub {
+    owner = "zotero-chinese";
+    repo = "zotero-plugins";
+    rev = "cc94fd59f93401fa809f8e4326e7478540421f70";
+    hash = "sha256-K0LyYQUJIFARiUb6q6SeNKDe+EDkjzEwkUW071usRBY=";
+  };
   zoteroHome = "/home/e";
   htpasswdPath = "/tmp/.htpasswd";
   zoteroVersion = with builtins; elemAt (splitVersion zotero.version) 0;

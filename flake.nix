@@ -28,11 +28,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    zotero-plugins = {
-      url = "github:zotero-chinese/zotero-plugins/gh-pages";
-      flake = false;
-    };
-
     authinfo = {
       url = "github:aartamonau/authinfo";
       flake = false;
@@ -54,7 +49,6 @@
       home-manager,
       flake-utils,
       nix-on-droid,
-      zotero-plugins,
       ...
     }@inputs:
     let
@@ -601,7 +595,7 @@
                     let
                       genContainers = import ./nix/containers;
                     in
-                    genContainers { inherit pkgs packages zotero-plugins; };
+                    genContainers { inherit pkgs packages; };
 
                   getSecret =
                     with pkgs;

@@ -1,7 +1,6 @@
 {
   pkgs,
   packages,
-  zotero-plugins,
 }:
 let
   inherit (pkgs) lib;
@@ -11,7 +10,6 @@ let
       pkgs
       lib
       packages
-      zotero-plugins
       ;
   };
 

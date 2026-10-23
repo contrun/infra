@@ -431,8 +431,7 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "sops-nix": "sops-nix",
-        "zotero-plugins": "zotero-plugins"
+        "sops-nix": "sops-nix"
       }
     },
     "scss-reset": {
@@ -514,23 +513,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "zotero-plugins": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1789518748,
-        "narHash": "sha256-K0LyYQUJIFARiUb6q6SeNKDe+EDkjzEwkUW071usRBY=",
-        "owner": "zotero-chinese",
-        "repo": "zotero-plugins",
-        "rev": "cc94fd59f93401fa809f8e4326e7478540421f70",
-        "type": "github"
-      },
-      "original": {
-        "owner": "zotero-chinese",
-        "ref": "gh-pages",
-        "repo": "zotero-plugins",
         "type": "github"
       }
     }
