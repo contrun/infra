@@ -489,7 +489,6 @@ let
         "texlab"
         # "mupdf"
         "graphviz"
-        "logseq"
         "gnuplot"
         "goldendict-ng"
         "zathura"
@@ -535,7 +534,7 @@ let
         "adbfs-rootless"
         "asciinema"
         "pcmanfm"
-        "xfce.thunar"
+        "thunar"
         "android-file-transfer"
         "qalculate-gtk"
         "bc"
@@ -549,7 +548,7 @@ let
         "bitlbee"
         "calcurse"
         "castget"
-        "xfce.catfish"
+        "catfish"
         # ccat
         # cfv
         "cheat"
@@ -561,8 +560,7 @@ let
         # emms
         "entr"
         "evtest"
-        "xfce.exo"
-        "xorg.xwd"
+        "xwd"
         "fakeroot"
         # fbgrab
         "fbida"
