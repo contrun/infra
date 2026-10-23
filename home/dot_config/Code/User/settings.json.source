@@ -217,4 +217,5 @@
   "jupyter.interactiveWindow.creationMode": "perFile",
   "workbench.secondarySideBar.defaultVisibility": "visible",
   "chat.viewSessions.orientation": "stacked",
+  "chat.viewSessions.enabled": false,
 }
