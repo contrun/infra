@@ -1,21 +1,5 @@
 {
   "nodes": {
-    "authinfo": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1573803694,
-        "narHash": "sha256-6517AdiFUvLPmaaigJyPOQCTrfJoxVM/NXdz10n0wDg=",
-        "owner": "aartamonau",
-        "repo": "authinfo",
-        "rev": "0098545479fa81234ebc1c2951610cb8c70f5c44",
-        "type": "github"
-      },
-      "original": {
-        "owner": "aartamonau",
-        "repo": "authinfo",
-        "type": "github"
-      }
-    },
     "deploy-rs": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -419,7 +403,6 @@
     },
     "root": {
       "inputs": {
-        "authinfo": "authinfo",
         "deploy-rs": "deploy-rs",
         "flake-utils": "flake-utils",
         "home-manager": "home-manager",

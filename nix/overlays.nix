@@ -498,31 +498,6 @@ let
               LIBGIT2_SYS_USE_PKG_CONFIG = true;
             };
           };
-
-        authinfo =
-          with super;
-          stdenv.mkDerivation rec {
-            pname = "authinfo";
-            version = inputs.authinfo.shortRev or "HEAD";
-            src = inputs.authinfo;
-
-            buildInputs = [
-              gpgme
-              libassuan
-              python
-            ];
-            nativeBuildInputs = [
-              autoreconfHook
-              pkgconfig
-            ];
-
-            meta = with lib; {
-              description = "KISS password manager";
-              homepage = "https://github.com/aartamonau/authinfo";
-              platforms = platforms.all;
-            };
-          };
-
       }
       // (super.myPackages or { });
   };
