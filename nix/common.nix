@@ -2082,32 +2082,6 @@ in
             "L+ /bin/bash - - - - ${pkgs.bash}/bin/bash"
             "L+ /bin/env - - - - ${pkgs.coreutils}/bin/env"
           ]
-          ++ (lib.optionals (!prefs.enableNixLd) [
-            # --- Dynamic Loader Symlinks (ldlinux) ---
-            (
-              let
-                ldPath =
-                  {
-                    "i686-linux" = "/lib/ld-linux.so.2";
-                    "x86_64-linux" = "/lib64/ld-linux-x86-64.so.2";
-                    "aarch64-linux" = "/lib/ld-linux-aarch64.so.1";
-                    "armv7l-linux" = "/lib/ld-linux-armhf.so.3";
-                  }
-                  .${pkgs.stdenv.system} or null;
-
-                # Mapping source based on your original logic
-                ldSource =
-                  {
-                    "i686-linux" = "${pkgs.glibc.out}/lib/ld-linux.so.2";
-                    "x86_64-linux" = "${pkgs.glibc.out}/lib64/ld-linux-x86-64.so.2";
-                    "aarch64-linux" = "${pkgs.glibc.out}/lib/ld-linux-aarch64.so.1";
-                    "armv7l-linux" = "${pkgs.glibc.out}/lib/ld-linux-armhf.so.3";
-                  }
-                  .${pkgs.stdenv.system} or null;
-              in
-              if ldPath != null then "L+ ${ldPath} - - - - ${ldSource}" else ""
-            )
-          ])
           ++ (lib.optionals prefs.enableJava
             # --- JDK Symlinks (jdks) ---
             map
