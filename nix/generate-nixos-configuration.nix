@@ -2,11 +2,11 @@ let
   pathOr = path: default: if (builtins.pathExists path) then path else default;
 in
 {
-  self,
   hostname,
   prefs,
   inputs,
   nixpkgsConfig,
+  ...
 }:
 let
   nixpkgs = inputs.nixpkgs;
@@ -16,7 +16,6 @@ let
     isMaximalSystem
     isVirtualMachine
     system
-    getDotfile
     getNixConfig
     ;
 
@@ -34,8 +33,6 @@ let
   systemInfo =
     {
       lib,
-      pkgs,
-      config,
       ...
     }:
     {
@@ -50,8 +47,6 @@ let
 
   nixpkgsConfiguration =
     {
-      config,
-      pkgs,
       inputs,
       ...
     }:
@@ -61,7 +56,7 @@ let
     };
 
   hostConfiguration =
-    { config, pkgs, ... }:
+    { ... }:
     (
       if hostname == "ssg" then
         {
@@ -93,10 +88,6 @@ let
   hardwareConfiguration =
     if isVirtualMachine then
       {
-        config,
-        lib,
-        pkgs,
-        modulesPath,
         ...
       }:
       { }
@@ -115,8 +106,6 @@ let
 
   microvmHostConfiguration =
     {
-      config,
-      pkgs,
       lib,
       inputs,
       ...
@@ -137,8 +126,6 @@ let
 
   microvmGuestConfiguration =
     {
-      config,
-      pkgs,
       lib,
       inputs,
       ...
@@ -150,10 +137,7 @@ let
 
   sopsConfiguration =
     {
-      config,
-      pkgs,
       lib,
-      inputs,
       ...
     }:
     let
@@ -219,59 +203,6 @@ let
       };
     };
 
-  homeManagerConfiguration =
-    {
-      config,
-      pkgs,
-      lib,
-      inputs,
-      ...
-    }@args:
-    {
-      home-manager = {
-        useGlobalPkgs = true;
-        useUserPackages = true;
-        backupFileExtension = "backup";
-        users = {
-          ${prefs.owner} = {
-            _module.args = moduleArgs;
-            imports = [
-              (getNixConfig "/home.nix")
-              (
-                {
-                  config,
-                  pkgs,
-                  lib,
-                  inputs,
-                  ...
-                }@args:
-                {
-                  home = {
-                    activation = {
-                      chezmoi = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-                        oldstate=$(set +o)
-                        set -x +e
-                        if ! [[ -f ~/.dotfiles-initialized ]]; then
-                            PATH="${
-                              lib.makeBinPath [
-                                pkgs.chezmoi
-                                pkgs.git
-                                pkgs.curl
-                              ]
-                            }:$PATH" $DRY_RUN_CMD make --keep-going -C ${inputs.self} home-install deps-install
-                        fi
-                        eval "$oldstate"
-                      '';
-                    };
-                  };
-                }
-              )
-            ];
-          };
-        };
-      };
-    };
-
   vmConfiguration =
     hostname:
     let
@@ -279,10 +210,7 @@ let
         bigvm = {
           module =
             {
-              config,
               lib,
-              pkgs,
-              modulesPath,
               ...
             }:
             {
@@ -372,8 +300,6 @@ let
 
   miscConfiguration =
     {
-      config,
-      pkgs,
       inputs,
       ...
     }:
