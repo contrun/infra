@@ -3,7 +3,7 @@ set -euo pipefail
 
 declare -a all_servers=()
 
-dns_lookup=$(dig +short all.api.radio-browser.info)
+dns_lookup=$(dig +tls @1.1.1.1 +short all.api.radio-browser.info)
 
 while IFS= read -r ip; do
   reverse_dns=$(dig +short -x "$ip")
