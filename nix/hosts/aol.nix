@@ -7,9 +7,6 @@
   prefs.nvidia = {
     open = false;
   };
-  prefs.kernel = {
-    params = [ "NVreg_EnableGspFirmware=0" ];
-  };
   prefs.ssh = {
     enableTpmAgent = true;
   };
