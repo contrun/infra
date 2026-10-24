@@ -181,7 +181,7 @@ output "Unknown 0xC199 Unknown" {
 }
 
 output "AU Optronics 0xC199 Unknown" {
-       scale 1.5
+       scale 1.7
 }
 
 output "Technical Concepts Ltd TCL Smart TV 0x00000001" {
