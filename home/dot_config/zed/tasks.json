@@ -1,0 +1,98 @@
+// Static tasks configuration.
+//
+// Example:
+[
+  {
+    "label": "gitu",
+    "command": "gitu",
+    "shell": {
+      "program": "sh",
+    },
+    "hide": "on_success",
+    "reveal_target": "center",
+    "show_summary": false,
+    "show_command": false,
+    "allow_concurrent_runs": false,
+    "use_new_terminal": false,
+    "save": "current",
+    "env": {
+      "EDITOR": "zeditor --wait",
+    },
+  },
+  {
+    "label": "magit",
+    "command": "magitc",
+    "shell": {
+      "program": "sh",
+    },
+    "hide": "on_success",
+    "reveal_target": "center",
+    "show_summary": false,
+    "show_command": false,
+    "allow_concurrent_runs": false,
+    "use_new_terminal": false,
+    "save": "current",
+    "env": {
+      "GIT_SEQUENCE_EDITOR": "zeditor --wait",
+    },
+  },
+  {
+    "label": "lazygit",
+    "command": "lazygit",
+    "shell": {
+      "program": "sh",
+    },
+    "hide": "on_success",
+    "reveal_target": "center",
+    "show_summary": false,
+    "show_command": false,
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true,
+  },
+  {
+    "label": "magit terminal",
+    "command": "magitc",
+    "shell": {
+      "program": "sh",
+    },
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal_target": "center",
+    "show_summary": false,
+    "show_command": false,
+    "save": "current",
+    "env": {
+      "GIT_SEQUENCE_EDITOR": "zeditor --wait",
+    },
+  },
+  {
+    "label": "Run pnpm test with Current File",
+    "command": "pnpm",
+    "shell": {
+      "program": "sh",
+    },
+    "args": ["run", "test", "run", "$ZED_FILE"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+  },
+  {
+    "label": "tsx run",
+    "command": "pnpm",
+    "shell": {
+      "program": "sh",
+    },
+    "args": ["exec", "tsx", "$ZED_FILE"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+  },
+  {
+    "label": "tsx debug",
+    "command": "pnpm",
+    "shell": {
+      "program": "sh",
+    },
+    "args": ["exec", "tsx", "--inspect-brk", "$ZED_FILE"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+  },
+]

@@ -1,0 +1,38 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "Attach to Node Process (9228)",
+    "adapter": "JavaScript",
+    "type": "pwa-node",
+    "request": "attach",
+    "port": 9228,
+  },
+  {
+    "label": "Attach to Node Process (9229)",
+    "adapter": "JavaScript",
+    "type": "pwa-node",
+    "request": "attach",
+    "port": 9229,
+  },
+  {
+    "label": "Debug Vitest Test",
+    "adapter": "JavaScript",
+    "type": "pwa-node",
+    "request": "launch",
+    "runtimeExecutable": "pnpm",
+    "runtimeArgs": ["run", "test"],
+    "attachSimplePort": 9129,
+    "args": [
+      "run",
+      "--inspect=9129",
+      "--no-file-parallelism",
+      "--test-timeout=0",
+      "$ZED_FILE",
+    ],
+    "console": "integratedTerminal",
+    "sourceMaps": true,
+  },
+]

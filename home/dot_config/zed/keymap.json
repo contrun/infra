@@ -1,0 +1,10 @@
+[
+  {
+    "bindings": {
+      "alt-shift-g": [
+        "task::Spawn",
+        { "task_name": "gitu", "reveal_target": "center" },
+      ],
+    },
+  },
+]
