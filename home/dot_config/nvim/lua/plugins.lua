@@ -126,22 +126,23 @@ require("lazy").setup({
 
     -- LSP server
     {
+      "mason-org/mason.nvim",
+      opts = {},
+    },
+    {
       'neovim/nvim-lspconfig',
       dependencies = { "mfussenegger/nvim-jdtls" },
       config = function() require('plugins.lspconfig') end
     },
-
     {
-      "williamboman/mason.nvim",
-      config = function() require('mason') end
-    },
-
-    {
-      "williamboman/mason-lspconfig.nvim",
-      after = { "mason.nvim", "nvim-lspconfig" },
-      config = function()
-        require("mason-lspconfig").setup({})
-      end
+      "mason-org/mason-lspconfig.nvim",
+      dependencies = {
+        "mason-org/mason.nvim",
+        "neovim/nvim-lspconfig",
+      },
+      opts = {
+        automatic_enable = true,
+      },
     },
 
     { "Hoffs/omnisharp-extended-lsp.nvim" },

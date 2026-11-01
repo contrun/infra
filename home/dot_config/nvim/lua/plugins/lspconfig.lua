@@ -1,81 +1,103 @@
-local get_servers_to_install = function()
-  local servers_to_install = {
-    "clangd", "pyright", "jsonls", "dockerls", "rust_analyzer", "elixirls",
-    "zls", "gopls", "texlab", "denols"
+-- lua/plugins/lspconfig.lua
+
+local function common_on_attach(client, bufnr)
+  -- Set omnifunc.
+  vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
+
+  -- Buffer-local keybindings.
+  local opts = {
+    noremap = false,
+    silent = true,
+    buffer = bufnr,
   }
-  return servers_to_install
-end
 
-local get_no_installing_servers = function()
-  local servers_unable_to_install = {
-    "bashls", "hls", "ts_ls", "jsonls", "omnisharp", "fsautocomplete", "nixd"
-  }
-  return servers_unable_to_install
-end
-
-local lsp_config = require('lspconfig')
-local lsp_utils = require('lsp.utils')
-
-local common_on_attach = lsp_utils.common_on_attach
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
-
-local setup_servers = function()
-  local setup_server = function(server)
-    local default_options = {
-      on_attach = common_on_attach,
-      capabilities = capabilities
-    }
-
-    -- Now we'll create a server_default table where we'll specify our custom LSP server configuration
-    local server_specific_options = {
-      ["denols"] = function(options)
-        options.single_file_support = true
-        return options
-      end,
-      ["bashls"] = function(options)
-        options.single_file_support = true
-        return options
-      end,
-      -- Provide settings that should only apply to the "eslintls" server
-      ["eslintls"] = function(options)
-        options.settings = { format = { enable = true } }
-        return options
-      end,
-      ["omnisharp"] = function(options)
-        options.handlers = {
-          ["textDocument/definition"] = require('omnisharp_extended').handler
-        }
-        local omnisharp_bin
-        for _, bin in ipairs({ "omnisharp", "OmniSharp" }) do
-          if vim.fn.executable(bin) == 1 then
-            omnisharp_bin = bin
-            break
-          end
-        end
-        if omnisharp_bin then
-          local pid = vim.fn.getpid()
-          options.cmd = {
-            omnisharp_bin, "--languageserver", "--hostPID",
-            tostring(pid)
-          }
-        end
-        return options
-      end
-    }
-
-    local options = server_specific_options[server] and
-        server_specific_options[server](default_options) or
-        default_options
-
-    if lsp_config[server] then lsp_config[server].setup(options) end
+  local function map(lhs, rhs)
+    vim.keymap.set("n", lhs, rhs, opts)
   end
 
-  for _, server in ipairs(get_servers_to_install()) do setup_server(server) end
+  -- Navigation.
+  map("gd", vim.lsp.buf.definition)
+  map("gD", vim.lsp.buf.declaration)
+  map("gi", "<cmd>Telescope lsp_implementations<CR>")
+  map("gr", "<cmd>Telescope lsp_references<CR>")
+  map("gR", vim.lsp.buf.rename)
 
-  for _, server in ipairs(get_no_installing_servers()) do
-    setup_server(server)
+  -- Documentation and signature help.
+  map("K", vim.lsp.buf.hover)
+  map("<C-k>", vim.lsp.buf.signature_help)
+
+  -- Workspace folders.
+  map("<leader>lw", vim.lsp.buf.add_workspace_folder)
+  map("<leader>lr", vim.lsp.buf.remove_workspace_folder)
+
+  map("<leader>lW", function()
+    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  end)
+
+  -- Symbols and navigation.
+  map("<leader>lv", "<cmd>Vista nvim_lsp<CR>")
+  map("<leader>lt", vim.lsp.buf.type_definition)
+  map("<leader>ls", "<cmd>Telescope lsp_document_symbols<CR>")
+  map("<leader>l/", "<cmd>Telescope lsp_workspace_symbols<CR>")
+
+  -- Code actions.
+  map("<leader>la", vim.lsp.buf.code_action)
+
+  -- Diagnostics.
+  map("<leader>le", vim.diagnostic.open_float)
+  map("[d", vim.diagnostic.goto_prev)
+  map("]d", vim.diagnostic.goto_next)
+  map("<leader>lq", vim.diagnostic.setloclist)
+
+  -- OmniSharp semantic-token workaround.
+  if client.name == "omnisharp"
+      and client.server_capabilities.semanticTokensProvider then
+    client.server_capabilities.semanticTokensProvider.legend = {
+      tokenModifiers = { "static" },
+      tokenTypes = {
+        "comment", "excluded", "identifier", "keyword", "keyword",
+        "number", "operator", "operator", "preprocessor", "string",
+        "whitespace", "text", "static", "preprocessor", "punctuation",
+        "string", "string", "class", "delegate", "enum", "interface",
+        "module", "struct", "typeParameter", "field", "enumMember",
+        "constant", "local", "parameter", "method", "method",
+        "property", "event", "namespace", "label", "xml", "xml",
+        "xml", "xml", "xml", "xml", "xml", "xml", "xml", "xml",
+        "xml", "xml", "regexp", "regexp", "regexp", "regexp",
+        "regexp", "regexp", "regexp",
+      },
+    }
   end
+
+  -- Formatting integration.
+  require("lsp-format").on_attach(client)
 end
 
-setup_servers()
-require('lsp.sumneko')
+-- Floating-window highlights.
+local highlight_group = vim.api.nvim_create_augroup(
+  "LspFloatHighlights",
+  { clear = true }
+)
+
+local function set_float_highlights()
+  vim.api.nvim_set_hl(0, "NormalFloat", {
+    bg = "#1f2335",
+  })
+
+  vim.api.nvim_set_hl(0, "FloatBorder", {
+    fg = "white",
+    bg = "#1f2335",
+  })
+end
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = highlight_group,
+  callback = set_float_highlights,
+})
+
+set_float_highlights()
+
+-- Export the shared on_attach callback.
+return {
+  common_on_attach = common_on_attach,
+}
